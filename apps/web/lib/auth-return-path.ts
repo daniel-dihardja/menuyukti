@@ -7,7 +7,8 @@ export const AUTH_RETURN_TO_QUERY = 'next'
 export const AUTH_RETURN_TO_STORAGE_KEY = 'menuyukti:authReturnTo'
 
 /**
- * Only allow same-app relative paths on public location surfaces (`/m/*`, `/l/*`).
+ * Only allow same-app relative paths on public location surfaces
+ * (`/{slug}`, `/{slug}/menu…`, `/{slug}/prediction`, legacy `/m/*`, `/l/*`).
  * Rejects open redirects (`//…`, absolute URLs, other app routes).
  */
 export function getSafeAuthReturnPath(raw: string | null | undefined): string | null {
@@ -38,7 +39,7 @@ export function buildAuthContinueUrl(returnTo?: string | null): string {
   return routes.authContinue
 }
 
-/** `/login` or `/login?next=/m/slug` for email sign-in from a guest surface. */
+/** `/login` or `/login?next=/{slug}/menu` for email sign-in from a guest surface. */
 export function buildLoginUrl(returnTo?: string | null): string {
   const safe = getSafeAuthReturnPath(returnTo)
   if (!safe) return routes.login

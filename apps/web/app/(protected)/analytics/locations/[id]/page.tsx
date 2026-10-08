@@ -90,6 +90,7 @@ async function LocationDetailContent({ params }: { params: Promise<{ id: string 
           city: location.city ?? '',
           country: location.country ?? '',
           currency: location.currency ?? '',
+          publicSlug: location.publicSlug ?? '',
           openingHours: weekdays.map((day) => {
             const slot = openingHoursByDay.get(day)
             const hasSlot = Boolean(slot?.open && slot?.close)

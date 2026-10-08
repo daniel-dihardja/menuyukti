@@ -24,9 +24,10 @@ const EMPTY_SELECT_VALUE = '__none__'
 
 export function LocationBasicsSection() {
   const t = useTranslations('analytics.branches.form')
-  const { loading, name, street, city, countryId, currency, showCurrencyAutoHint } =
+  const { loading, name, street, city, countryId, currency, publicSlug, showCurrencyAutoHint } =
     useLocationFormState()
-  const { setName, setStreet, setCity, setCountryId, setCurrency } = useLocationFormActions()
+  const { setName, setStreet, setCity, setCountryId, setCurrency, setPublicSlug } =
+    useLocationFormActions()
 
   return (
     <TabsContent value="basics" className="flex flex-col gap-4">
@@ -43,6 +44,23 @@ export function LocationBasicsSection() {
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
+        </Field>
+
+        <Field className="sm:col-span-2">
+          <FieldLabel htmlFor="public-slug">{t('publicSlugLabel')}</FieldLabel>
+          <Input
+            id="public-slug"
+            name="publicSlug"
+            value={publicSlug}
+            onChange={(e) => setPublicSlug(e.target.value)}
+            placeholder={t('publicSlugPlaceholder')}
+            maxLength={128}
+            disabled={loading}
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+          />
+          <FieldDescription>{t('publicSlugHint')}</FieldDescription>
         </Field>
 
         <Field className="sm:col-span-2">

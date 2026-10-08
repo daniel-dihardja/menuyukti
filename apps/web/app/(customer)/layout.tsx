@@ -1,6 +1,7 @@
 import { WorkspacePlanProvider } from '@/components/workspace-plan-provider'
 import { WorkspacePlanRouteGuard } from '@/components/workspace-plan-route-guard'
 import { auth } from '@clerk/nextjs/server'
+import { connection } from 'next/server'
 import { redirect } from 'next/navigation'
 import { routes } from '@/lib/routes'
 import { enforceWorkspacePlanRoute } from '@/lib/workspace-plan-route'
@@ -14,6 +15,8 @@ import { getWorkspacePlanForUser } from '@/lib/workspace-plan-server'
 export const instant = false
 
 export default async function CustomerLayout({ children }: { children: React.ReactNode }) {
+  // Same as AdminLayout: Clerk may read current time during auth under Cache Components.
+  await connection()
   const { isAuthenticated } = await auth()
   if (!isAuthenticated) {
     // Prefer middleware `auth.protect`; this is defense-in-depth only.

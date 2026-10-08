@@ -7,6 +7,8 @@ import { redirect } from 'next/navigation'
 
 import { CustomerPointsSection } from '@/app/(customer)/home/_components/customer-points-section'
 import { CustomerPointsSkeleton } from '@/app/(customer)/home/_components/customer-points-skeleton'
+import { CustomerPredictionsSection } from '@/app/(customer)/home/_components/customer-predictions-section'
+import { CustomerPredictionsSkeleton } from '@/app/(customer)/home/_components/customer-predictions-skeleton'
 import { CustomerPageShell } from '@/components/customer/customer-page-shell'
 import { PwaInstallGuide } from '@/components/pwa/pwa-install-guide'
 import { graphqlQuery } from '@/lib/graphql/client'
@@ -16,6 +18,10 @@ import {
   type MyPointBalancesData,
   type MyPointEntriesData,
 } from '@/lib/graphql/queries/point-ledger'
+import {
+  MY_OPEN_PREDICTIONS_QUERY,
+  type MyOpenPredictionsData,
+} from '@/lib/graphql/queries/predictions'
 import { routes } from '@/lib/routes'
 import { isProPlan } from '@/lib/workspace-plan'
 import { getWorkspacePlanForUser } from '@/lib/workspace-plan-server'
@@ -56,6 +62,31 @@ async function CustomerPointsData() {
   }
 }
 
+async function CustomerPredictionsData() {
+  const { isAuthenticated, userId } = await auth()
+  if (!isAuthenticated || !userId) {
+    return <CustomerPredictionsSection predictions={[]} loadError />
+  }
+
+  try {
+    const data = await graphqlQuery<MyOpenPredictionsData>(
+      MY_OPEN_PREDICTIONS_QUERY,
+      {},
+      userId,
+      'MyOpenPredictions',
+    )
+    return (
+      <CustomerPredictionsSection
+        key={data.myOpenPredictions.map((p) => `${p.id}:${p.myVote?.outcomeId ?? ''}`).join('|')}
+        predictions={data.myOpenPredictions}
+      />
+    )
+  } catch (error) {
+    console.error('[customer/home] predictions', error)
+    return <CustomerPredictionsSection predictions={[]} loadError />
+  }
+}
+
 export default async function CustomerHomePage() {
   const { plan } = await getWorkspacePlanForUser()
   if (isProPlan(plan)) {
@@ -74,6 +105,10 @@ export default async function CustomerHomePage() {
           {t('lead')}
         </p>
       </div>
+
+      <Suspense fallback={<CustomerPredictionsSkeleton />}>
+        <CustomerPredictionsData />
+      </Suspense>
 
       <Suspense fallback={<CustomerPointsSkeleton />}>
         <CustomerPointsData />

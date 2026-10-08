@@ -1,5 +1,30 @@
 {
   "public": {
+    "locationHome": {
+      "notFoundTitle": "Location not found",
+      "metaDescription": "Visit {name} on Menuyukti.",
+      "lead": "Choose where to go.",
+      "greetingLead": "Welcome to {name}.",
+      "greetingEmpty": "More coming soon.",
+      "services": {
+        "digital_menu": "Menu",
+        "prediction": "Predictions"
+      }
+    },
+    "prediction": {
+      "title": "Predictions",
+      "lead": "Pick an outcome before voting closes. Sign in to cast your vote.",
+      "empty": "No open predictions right now.",
+      "notFoundTitle": "Predictions not found",
+      "metaTitle": "Predictions · {name}",
+      "metaDescription": "Vote on predictions at {name}.",
+      "rewardSocial": "Social reward — bragging rights",
+      "rewardPoints": "+{vote} for voting · +{correct} if correct",
+      "yourPick": "Your pick",
+      "voting": "Voting…",
+      "voteFailed": "Could not cast your vote.",
+      "signInHint": "Sign in to vote."
+    },
     "wall": {
       "eyebrow": "Tonight’s wall",
       "favoritesHeading": "Guest favorites",

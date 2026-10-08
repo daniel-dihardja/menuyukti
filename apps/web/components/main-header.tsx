@@ -9,7 +9,7 @@ import * as React from 'react'
 
 import { AccountMenu } from '@/components/account/account-menu'
 import { GuestSignInMenu } from '@/components/guest-sign-in-menu'
-import { routes } from '@/lib/routes'
+import { isPublicLocationSurfacePath, routes } from '@/lib/routes'
 import { cn } from '@workspace/ui/lib/utils'
 
 export function MainHeader() {
@@ -19,6 +19,7 @@ export function MainHeader() {
   const isSignUp =
     pathname === routes.signUp || (pathname?.startsWith(`${routes.signUp}/`) ?? false)
   const isAbout = pathname === routes.about || (pathname?.startsWith(`${routes.about}/`) ?? false)
+  const isGuestLocation = isPublicLocationSurfacePath(pathname)
   /** Hide sign-in chrome on auth pages (user is already signing in / up). */
   const showSignIn = !isLogin && !isSignUp
   const [isScrolled, setIsScrolled] = React.useState(false)
@@ -51,18 +52,20 @@ export function MainHeader() {
             <span className="text-sm font-semibold tracking-tight md:text-base">{t('brand')}</span>
           </Link>
 
-          <nav aria-label={t('navAria')} className="hidden min-w-0 items-center gap-1 md:flex">
-            <Link
-              href={routes.about}
-              aria-current={isAbout ? 'page' : undefined}
-              className={cn(
-                'rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors',
-                isAbout ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
-              )}
-            >
-              {t('navAbout')}
-            </Link>
-          </nav>
+          {!isGuestLocation ? (
+            <nav aria-label={t('navAria')} className="hidden min-w-0 items-center gap-1 md:flex">
+              <Link
+                href={routes.about}
+                aria-current={isAbout ? 'page' : undefined}
+                className={cn(
+                  'rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors',
+                  isAbout ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
+                )}
+              >
+                {t('navAbout')}
+              </Link>
+            </nav>
+          ) : null}
         </div>
 
         <div className="flex shrink-0 items-center gap-2 pe-3 sm:pe-4">

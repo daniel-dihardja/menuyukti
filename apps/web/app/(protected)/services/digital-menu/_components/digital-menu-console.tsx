@@ -9,7 +9,6 @@ import { MediaCatalogPicker } from '@/components/media/media-catalog-picker'
 import { mediaDownloadHref, type MediaCatalogItem } from '@/lib/media/client-api'
 import { parsePublicMenuTableLabel } from '@/lib/public-menu/table-label'
 import { routes } from '@/lib/routes'
-import { suggestMenuSlugFromName } from '@/lib/services/suggest-menu-slug'
 
 import { DigitalMenuQr, useClientAbsoluteUrl } from './digital-menu-qr'
 import {
@@ -45,14 +44,10 @@ export function DigitalMenuConsole({
   const t = useTranslations('services.digitalMenu.console')
   const router = useRouter()
   const [publicEnabled, setPublicEnabled] = useState(initialPublicEnabled)
-  const [publicSlug, setPublicSlug] = useState(
-    () => initialPublicSlug || suggestMenuSlugFromName(locationName),
-  )
   const [headerImageFilename, setHeaderImageFilename] = useState<string | null>(
     initialHeaderImageFilename,
   )
   const [persistedPublicEnabled, setPersistedPublicEnabled] = useState(initialPublicEnabled)
-  const [persistedPublicSlug, setPersistedPublicSlug] = useState(initialPublicSlug)
   const [copied, setCopied] = useState(false)
   const [loading, setLoading] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -61,26 +56,23 @@ export function DigitalMenuConsole({
   const [pendingDisable, setPendingDisable] = useState(false)
   const [tableLabelInput, setTableLabelInput] = useState('')
 
-  const draftPublicPath = publicSlug.trim() ? routes.public.locationMenu(publicSlug.trim()) : null
+  const locationSlug = initialPublicSlug.trim()
+  const hasSlug = Boolean(locationSlug)
   const livePublicPath =
-    persistedPublicEnabled && persistedPublicSlug.trim()
-      ? routes.public.locationMenu(persistedPublicSlug.trim())
-      : null
+    persistedPublicEnabled && hasSlug ? routes.public.locationMenu(locationSlug) : null
+  const liveLocationHomePath = hasSlug ? routes.public.locationHome(locationSlug) : null
   const needsPublishSave = publicEnabled && !persistedPublicEnabled
-  // Show the draft URL while editing; Open/Copy only use livePublicPath.
-  const displayPublicPath = livePublicPath ?? draftPublicPath
-  const slugDraftChanged =
-    Boolean(livePublicPath) && publicSlug.trim() !== persistedPublicSlug.trim()
+  const locationBasicsHref = routes.analytics.branchesDetail(locationId)
 
   const validatedTableLabel = parsePublicMenuTableLabel(tableLabelInput)
   const liveTablePath =
-    livePublicPath && validatedTableLabel && persistedPublicSlug.trim()
-      ? routes.public.locationMenuTable(persistedPublicSlug.trim(), validatedTableLabel)
+    livePublicPath && validatedTableLabel
+      ? routes.public.locationMenuTable(locationSlug, validatedTableLabel)
       : null
   const absoluteTableUrl = useClientAbsoluteUrl(liveTablePath)
   const qrDownloadFileName = validatedTableLabel
-    ? `${persistedPublicSlug.trim() || 'menu'}-table-${validatedTableLabel.replaceAll(/[^\w.-]+/g, '-')}-qr.png`
-    : `${persistedPublicSlug.trim() || 'menu'}-table-qr.png`
+    ? `${locationSlug || 'menu'}-table-${validatedTableLabel.replaceAll(/[^\w.-]+/g, '-')}-qr.png`
+    : `${locationSlug || 'menu'}-table-qr.png`
 
   function handleEnabledChange(next: boolean) {
     if (!next && publicEnabled) {
@@ -107,8 +99,7 @@ export function DigitalMenuConsole({
   async function saveSettings() {
     setError(null)
     setSaved(false)
-    const slug = publicSlug.trim()
-    if (publicEnabled && !slug) {
+    if (publicEnabled && !hasSlug) {
       setError(t('errors.slugRequired'))
       return
     }
@@ -119,7 +110,6 @@ export function DigitalMenuConsole({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           publicEnabled,
-          publicSlug: slug || null,
           headerImageFilename,
         }),
       })
@@ -129,18 +119,14 @@ export function DigitalMenuConsole({
         if (message.toLowerCase().includes('digital_menu subscription')) {
           throw new Error(t('errors.subscriptionRequired'))
         }
+        if (message.toLowerCase().includes('publicslug')) {
+          throw new Error(t('errors.slugRequired'))
+        }
         throw new Error(message)
       }
       const body = (await res.json()) as {
-        publicSlug?: string | null
         publicEnabled?: boolean
         menu?: { headerImageFilename?: string | null }
-      }
-      if (typeof body.publicSlug === 'string') {
-        setPublicSlug(body.publicSlug)
-        setPersistedPublicSlug(body.publicSlug)
-      } else if (body.publicSlug === null) {
-        setPersistedPublicSlug('')
       }
       if (typeof body.publicEnabled === 'boolean') {
         setPublicEnabled(body.publicEnabled)
@@ -193,25 +179,18 @@ export function DigitalMenuConsole({
                 disabled={loading || pendingDisable}
               />
             </Field>
-            <Field>
-              <FieldLabel htmlFor="digital-menu-slug">{t('publicSlug')}</FieldLabel>
-              <Input
-                id="digital-menu-slug"
-                value={publicSlug}
-                onChange={(e) => {
-                  setPublicSlug(e.target.value)
-                  setSaved(false)
-                }}
-                placeholder={t('publicSlugPlaceholder')}
-                maxLength={128}
-                disabled={loading}
-                autoCapitalize="none"
-                autoCorrect="off"
-                spellCheck={false}
-              />
-              <p className="text-muted-foreground text-xs">{t('publicSlugHint')}</p>
-            </Field>
-            {publicEnabled && displayPublicPath ? (
+            {!hasSlug ? (
+              <p className="text-muted-foreground text-sm">
+                {t('slugMissingHint')}{' '}
+                <Link
+                  href={locationBasicsHref}
+                  className="text-foreground underline-offset-4 hover:underline"
+                >
+                  {t('editLocationBasics')}
+                </Link>
+              </p>
+            ) : null}
+            {publicEnabled && hasSlug ? (
               <Field>
                 <FieldLabel htmlFor="digital-menu-url">{t('publicUrl')}</FieldLabel>
                 {needsPublishSave ? (
@@ -220,7 +199,7 @@ export function DigitalMenuConsole({
                 <div className="flex flex-wrap items-center gap-2">
                   <Input
                     id="digital-menu-url"
-                    value={displayPublicPath}
+                    value={livePublicPath ?? routes.public.locationMenu(locationSlug)}
                     readOnly
                     className="font-mono text-xs"
                   />
@@ -246,6 +225,24 @@ export function DigitalMenuConsole({
                 </div>
               </Field>
             ) : null}
+            {liveLocationHomePath ? (
+              <Field>
+                <FieldLabel htmlFor="digital-menu-home-url">{t('locationHomeUrl')}</FieldLabel>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Input
+                    id="digital-menu-home-url"
+                    value={liveLocationHomePath}
+                    readOnly
+                    className="font-mono text-xs"
+                  />
+                  <Button asChild type="button" variant="ghost">
+                    <Link href={liveLocationHomePath} target="_blank" rel="noreferrer">
+                      {t('openLocationHome')}
+                    </Link>
+                  </Button>
+                </div>
+              </Field>
+            ) : null}
             {publicEnabled && livePublicPath ? (
               <Field>
                 <FieldLabel htmlFor="digital-menu-table-label">{t('tableLabel')}</FieldLabel>
@@ -266,7 +263,7 @@ export function DigitalMenuConsole({
                     absoluteUrl={absoluteTableUrl}
                     locationName={locationName}
                     downloadFileName={qrDownloadFileName}
-                    showSlugChangedHint={slugDraftChanged}
+                    showSlugChangedHint={false}
                     title={t('qrTitle')}
                     cta={t('qrCta')}
                     downloadPngLabel={t('qrDownloadPng')}
@@ -346,7 +343,11 @@ export function DigitalMenuConsole({
             />
           ) : (
             <p className="text-muted-foreground px-4 text-center text-xs">
-              {needsPublishSave ? t('saveToPublishHint') : t('previewPlaceholder')}
+              {!hasSlug
+                ? t('slugMissingHint')
+                : needsPublishSave
+                  ? t('saveToPublishHint')
+                  : t('previewPlaceholder')}
             </p>
           )}
         </div>

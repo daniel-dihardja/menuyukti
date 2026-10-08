@@ -5,6 +5,7 @@ import { WorkspacePlanProvider } from '@/components/workspace-plan-provider'
 import { WorkspacePlanRouteGuard } from '@/components/workspace-plan-route-guard'
 import { auth } from '@clerk/nextjs/server'
 import { cookies } from 'next/headers'
+import { connection } from 'next/server'
 import { redirect } from 'next/navigation'
 import { routes } from '@/lib/routes'
 import { enforceWorkspacePlanRoute } from '@/lib/workspace-plan-route'
@@ -15,6 +16,9 @@ import { AnalyticsProvider } from './analytics/analytics-provider'
 export const instant = false
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  // Clerk session validation can read the current time; bind this layout to the request
+  // before auth so Cache Components does not treat Date.now() as a static prerender value.
+  await connection()
   const { isAuthenticated } = await auth()
   if (!isAuthenticated) {
     redirect(routes.login)

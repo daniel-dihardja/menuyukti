@@ -16,8 +16,8 @@ describe('getLandingSampleMenu', () => {
     vi.stubEnv('NEXT_PUBLIC_LANDING_SAMPLE_MENU_SLUG', 'demo-kitchen')
     const { getLandingSampleMenu, LANDING_SITE_URL } = await import('@/lib/landing/sample-menu')
     expect(getLandingSampleMenu()).toEqual({
-      path: '/m/demo-kitchen',
-      absoluteUrl: `${LANDING_SITE_URL}/m/demo-kitchen`,
+      path: '/demo-kitchen/menu',
+      absoluteUrl: `${LANDING_SITE_URL}/demo-kitchen/menu`,
     })
   })
 })

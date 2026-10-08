@@ -26,6 +26,8 @@ export async function CustomerPointsSection({ balances, entries, loadError = fal
   const actionLabel = (actionKey: string): string => {
     if (actionKey === 'open_menu_qr') return t('actions.open_menu_qr')
     if (actionKey === 'complete_order') return t('actions.complete_order')
+    if (actionKey === 'prediction_vote') return t('actions.prediction_vote')
+    if (actionKey === 'prediction_correct') return t('actions.prediction_correct')
     return actionKey
   }
 

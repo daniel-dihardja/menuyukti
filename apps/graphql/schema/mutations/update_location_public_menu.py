@@ -3,14 +3,13 @@
 from __future__ import annotations
 
 import strawberry
-from sqlalchemy import select
 from strawberry import UNSET
 
 from graphql.context import request_session_scope
 from graphql.data_sources import Location
 from graphql.schema.auth import require_location_owner, user_id_from_info
 from graphql.schema.mappers.menu import menu_to_gql
-from graphql.schema.mutations.public_slug import normalize_public_slug
+from graphql.schema.mutations.public_slug import apply_location_public_slug
 from graphql.schema.types.menu import MenuType
 from graphql.services.menu import get_or_create_menu
 from graphql.services.service_subscriptions import (
@@ -55,19 +54,7 @@ class UpdateLocationPublicMenuMutation:
                 raise ValueError("Location not found")
 
             if public_slug is not UNSET:
-                normalized_slug = normalize_public_slug(public_slug)
-                if normalized_slug is not None:
-                    conflict = session.scalars(
-                        select(Location).where(
-                            Location.public_slug == normalized_slug,
-                            Location.id != location_id,
-                        )
-                    ).one_or_none()
-                    if conflict is not None:
-                        raise ValueError("publicSlug is already in use")
-                    location.public_slug = normalized_slug
-                else:
-                    location.public_slug = None
+                apply_location_public_slug(session, location, public_slug)
 
             menu = get_or_create_menu(session, location_id)
 

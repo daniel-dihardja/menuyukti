@@ -138,6 +138,7 @@ export const createLocationSchema = z.object({
   countryId: optionalEmptyCountryIdSchema.optional().default(''),
   country: optionalEmptyCountrySchema.optional().default(''),
   currency: optionalEmptyCurrencySchema.optional().default(''),
+  publicSlug: z.string().max(128).optional().default(''),
   openingHours: openingHoursWeekSchema.optional(),
 })
 export const createLocationParsedSchema = createLocationSchema.transform((value) => {
@@ -149,6 +150,7 @@ export const createLocationParsedSchema = createLocationSchema.transform((value)
     countryId: normalized.countryId,
     country: normalized.country,
     currency: normalized.currency,
+    publicSlug: trimString(value.publicSlug),
   }
 })
 
@@ -161,6 +163,7 @@ export const updateLocationSchema = z.object({
   countryId: optionalEmptyCountryIdSchema.optional().default(''),
   country: optionalEmptyCountrySchema.optional().default(''),
   currency: optionalEmptyCurrencySchema.optional().default(''),
+  publicSlug: z.string().max(128).optional().default(''),
   openingHours: openingHoursWeekSchema,
   /** Owner brief hints; omit to leave unchanged, `{}` clears stored profile. */
   quickProfile: z.record(z.string(), z.unknown()).optional(),
@@ -174,6 +177,7 @@ export const updateLocationParsedSchema = updateLocationSchema.transform((value)
     countryId: normalized.countryId,
     country: normalized.country,
     currency: normalized.currency,
+    publicSlug: trimString(value.publicSlug),
   }
 })
 

@@ -15,7 +15,7 @@ function firstParam(value: string | string[] | undefined): string | null {
 
 /**
  * Plan-aware post-auth landing used by Clerk client finish URLs.
- * Optional `?next=/m/slug` returns guests to the public menu they signed in from.
+ * Optional `?next=/{slug}/menu` returns guests to the public menu they signed in from.
  * Otherwise free → `/`, pro → `/analytics/locations`.
  */
 export default async function ContinuePage({ searchParams }: ContinuePageProps) {

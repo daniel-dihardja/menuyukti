@@ -8,7 +8,11 @@ import {
 } from '@/lib/auth-return-path'
 
 describe('getSafeAuthReturnPath', () => {
-  it('allows public menu and legacy wall paths', () => {
+  it('allows public location hub, menu, prediction, and legacy paths', () => {
+    expect(getSafeAuthReturnPath('/warung-sunda')).toBe('/warung-sunda')
+    expect(getSafeAuthReturnPath('/warung-sunda/menu')).toBe('/warung-sunda/menu')
+    expect(getSafeAuthReturnPath('/cafe/menu/t/12')).toBe('/cafe/menu/t/12')
+    expect(getSafeAuthReturnPath('/cafe/prediction')).toBe('/cafe/prediction')
     expect(getSafeAuthReturnPath('/m/warung-sunda')).toBe('/m/warung-sunda')
     expect(getSafeAuthReturnPath('/m/cafe/t/12')).toBe('/m/cafe/t/12')
     expect(getSafeAuthReturnPath('/l/venue')).toBe('/l/venue')
@@ -24,12 +28,13 @@ describe('getSafeAuthReturnPath', () => {
 })
 
 describe('buildAuthContinueUrl / buildLoginUrl', () => {
-  it('returns the guest menu path directly (avoids /continue → /login race)', () => {
-    expect(buildAuthContinueUrl('/m/cafe')).toBe('/m/cafe')
-    expect(buildAuthContinueUrl('/m/cafe/t/12')).toBe('/m/cafe/t/12')
-    expect(buildLoginUrl('/m/cafe')).toBe(`/login?${AUTH_RETURN_TO_QUERY}=%2Fm%2Fcafe`)
-    expect(buildLoginUrl('/m/cafe/t/12')).toBe(
-      `/login?${AUTH_RETURN_TO_QUERY}=${encodeURIComponent('/m/cafe/t/12')}`,
+  it('returns the guest surface path directly (avoids /continue → /login race)', () => {
+    expect(buildAuthContinueUrl('/cafe/menu')).toBe('/cafe/menu')
+    expect(buildAuthContinueUrl('/cafe/menu/t/12')).toBe('/cafe/menu/t/12')
+    expect(buildAuthContinueUrl('/cafe/prediction')).toBe('/cafe/prediction')
+    expect(buildLoginUrl('/cafe/menu')).toBe(`/login?${AUTH_RETURN_TO_QUERY}=%2Fcafe%2Fmenu`)
+    expect(buildLoginUrl('/cafe/menu/t/12')).toBe(
+      `/login?${AUTH_RETURN_TO_QUERY}=${encodeURIComponent('/cafe/menu/t/12')}`,
     )
   })
 

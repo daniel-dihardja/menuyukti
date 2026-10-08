@@ -12,7 +12,8 @@ import {
 
 const updatePublicMenuSchema = z.object({
   publicEnabled: z.boolean(),
-  publicSlug: z.string().max(128).nullable(),
+  /** Optional; omit to leave the location public slug unchanged. */
+  publicSlug: z.string().max(128).nullable().optional(),
   headerImageFilename: z.string().max(512).nullable(),
 })
 
@@ -42,14 +43,18 @@ export async function PATCH(req: Request, context: RouteContext) {
     const json = await req.json()
     const payload = updatePublicMenuSchema.parse(json)
 
+    const variables: Record<string, unknown> = {
+      locationId: locId,
+      publicEnabled: payload.publicEnabled,
+      headerImageFilename: payload.headerImageFilename,
+    }
+    if (payload.publicSlug !== undefined) {
+      variables.publicSlug = payload.publicSlug
+    }
+
     const data = await graphqlQuery<UpdateLocationPublicMenuData>(
       UPDATE_LOCATION_PUBLIC_MENU_MUTATION,
-      {
-        locationId: locId,
-        publicEnabled: payload.publicEnabled,
-        publicSlug: payload.publicSlug,
-        headerImageFilename: payload.headerImageFilename,
-      },
+      variables,
       userId,
       'UpdateLocationPublicMenu',
     )

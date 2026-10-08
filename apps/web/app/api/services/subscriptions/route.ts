@@ -10,6 +10,7 @@ import {
   SERVICE_KEY_CASHBACK,
   SERVICE_KEY_DIGITAL_MENU,
   SERVICE_KEY_POINT_SYSTEM,
+  SERVICE_KEY_PREDICTION,
   SERVICE_KEY_STAMP_CARD,
   type ActivateServiceSubscriptionData,
   type CancelServiceSubscriptionData,
@@ -20,6 +21,7 @@ const serviceKeySchema = z.enum([
   SERVICE_KEY_POINT_SYSTEM,
   SERVICE_KEY_STAMP_CARD,
   SERVICE_KEY_CASHBACK,
+  SERVICE_KEY_PREDICTION,
 ])
 
 const bodySchema = z.object({

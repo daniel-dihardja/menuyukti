@@ -9,10 +9,7 @@ import {
 
 describe('normalizeDietaryTags / normalizeAllergens', () => {
   it('dedupes and sorts known keys', () => {
-    expect(normalizeDietaryTags(['spicy', 'vegan', 'spicy', 'unknown'])).toEqual([
-      'vegan',
-      'spicy',
-    ])
+    expect(normalizeDietaryTags(['spicy', 'vegan', 'spicy', 'unknown'])).toEqual(['vegan', 'spicy'])
     expect(normalizeAllergens(['soy', 'gluten', 'soy'])).toEqual(['gluten', 'soy'])
   })
 
@@ -34,12 +31,10 @@ describe('itemMatchesMenuAttributeFilters', () => {
 
   it('requires all selected dietary tags (AND)', () => {
     expect(itemMatchesMenuAttributeFilters(item, new Set(['vegan']), new Set())).toBe(true)
-    expect(itemMatchesMenuAttributeFilters(item, new Set(['vegan', 'spicy']), new Set())).toBe(
-      true,
+    expect(itemMatchesMenuAttributeFilters(item, new Set(['vegan', 'spicy']), new Set())).toBe(true)
+    expect(itemMatchesMenuAttributeFilters(item, new Set(['vegan', 'halal']), new Set())).toBe(
+      false,
     )
-    expect(
-      itemMatchesMenuAttributeFilters(item, new Set(['vegan', 'halal']), new Set()),
-    ).toBe(false)
   })
 
   it('excludes items that contain any selected allergen', () => {

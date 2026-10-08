@@ -4,7 +4,7 @@ import { routes } from '@/lib/routes'
 export const LANDING_SITE_URL = 'https://menuyukti.com'
 
 export type LandingSampleMenu = {
-  /** Public path, e.g. `/m/demo`. */
+  /** Public path, e.g. `/demo/menu`. */
   path: string
   /** Absolute URL encoded in the landing QR. */
   absoluteUrl: string

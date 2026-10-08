@@ -50,7 +50,7 @@ type Props = {
   publicSlug: string
   categories: PublicMenuCategoryView[]
   currencyCode: string
-  /** Locked table from `/m/{slug}/t/{label}`; null on the shared menu URL. */
+  /** Locked table from `/{slug}/menu/t/{label}`; null on the shared menu URL. */
   tableLabel: string | null
 }
 
@@ -264,7 +264,7 @@ export function PublicMenuCatalog({
 
   const redirectToSignIn = () => {
     savePublicMenuCart(locationId, cart)
-    const returnPath = pathname || `/m/${encodeURIComponent(publicSlug)}`
+    const returnPath = pathname || `/${encodeURIComponent(publicSlug)}/menu`
     rememberAuthReturnPath(returnPath)
     window.location.assign(buildLoginUrl(returnPath))
   }

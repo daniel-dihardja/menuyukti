@@ -73,7 +73,6 @@ For client-side conditional rendering based on auth state:
 
 ```tsx
 import { Show } from '@clerk/nextjs'
-
 ;<Show when="signed-in" fallback={<p>Please sign in</p>}>
   <Dashboard />
 </Show>

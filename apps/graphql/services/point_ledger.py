@@ -148,6 +148,70 @@ def _existing_entry(
     )
 
 
+def _insert_ledger_entry(
+    session: Session,
+    *,
+    clerk_user_id: str,
+    location_id: int,
+    amount: int,
+    action_key: str,
+    source_ref: str,
+    label: str | None,
+) -> PointEarnResult:
+    """Idempotent insert of a ledger credit. Assumes amount > 0 and auth already checked."""
+    existing = _existing_entry(
+        session,
+        clerk_user_id=clerk_user_id,
+        location_id=location_id,
+        action_key=action_key,
+        source_ref=source_ref,
+    )
+    if existing is not None:
+        return PointEarnResult(
+            awarded=False,
+            balance=balance_for_location(
+                session, clerk_user_id=clerk_user_id, location_id=location_id
+            ),
+            entry=existing,
+        )
+
+    try:
+        with session.begin_nested():
+            entry = PointLedgerEntry(
+                clerk_user_id=clerk_user_id,
+                location_id=location_id,
+                amount=int(amount),
+                action_key=action_key,
+                source_ref=source_ref,
+                label=label,
+            )
+            session.add(entry)
+            session.flush()
+    except IntegrityError:
+        existing = _existing_entry(
+            session,
+            clerk_user_id=clerk_user_id,
+            location_id=location_id,
+            action_key=action_key,
+            source_ref=source_ref,
+        )
+        return PointEarnResult(
+            awarded=False,
+            balance=balance_for_location(
+                session, clerk_user_id=clerk_user_id, location_id=location_id
+            ),
+            entry=existing,
+        )
+
+    return PointEarnResult(
+        awarded=True,
+        balance=balance_for_location(
+            session, clerk_user_id=clerk_user_id, location_id=location_id
+        ),
+        entry=entry,
+    )
+
+
 def award_for_action(
     session: Session,
     *,
@@ -191,50 +255,68 @@ def award_for_action(
             entry=None,
         )
 
-    existing = _existing_entry(
+    return _insert_ledger_entry(
         session,
         clerk_user_id=user_id,
         location_id=location_id,
+        amount=int(rule.points),
         action_key=key,
         source_ref=ref,
+        label=label,
     )
-    if existing is not None:
+
+
+def award_fixed_amount(
+    session: Session,
+    *,
+    clerk_user_id: str,
+    location_id: int,
+    amount: int,
+    action_key: str,
+    source_ref: str,
+    label: str | None = None,
+) -> PointEarnResult:
+    """Credit an explicit point amount when Point System is active.
+
+    Used by Prediction (and similar) where points come from the feature config,
+    not the global earn-rule catalog. Soft no-op when Points is off or amount ≤ 0.
+    Idempotent on ``(clerk_user_id, location_id, action_key, source_ref)``.
+    """
+    user_id = (clerk_user_id or "").strip()
+    if not user_id:
+        return PointEarnResult(awarded=False, balance=0, entry=None)
+
+    ref = (source_ref or "").strip()
+    if not ref:
+        raise ValueError("source_ref is required")
+
+    key = (action_key or "").strip().lower()
+    if not key:
+        raise ValueError("action_key is required")
+
+    pts = int(amount)
+    if pts <= 0:
         return PointEarnResult(
             awarded=False,
             balance=balance_for_location(session, clerk_user_id=user_id, location_id=location_id),
-            entry=existing,
+            entry=None,
         )
 
-    try:
-        with session.begin_nested():
-            entry = PointLedgerEntry(
-                clerk_user_id=user_id,
-                location_id=location_id,
-                amount=int(rule.points),
-                action_key=key,
-                source_ref=ref,
-                label=label,
-            )
-            session.add(entry)
-            session.flush()
-    except IntegrityError:
-        existing = _existing_entry(
-            session,
-            clerk_user_id=user_id,
-            location_id=location_id,
-            action_key=key,
-            source_ref=ref,
-        )
+    if not is_active_subscription(session, location_id, SERVICE_KEY_POINT_SYSTEM):
         return PointEarnResult(
             awarded=False,
             balance=balance_for_location(session, clerk_user_id=user_id, location_id=location_id),
-            entry=existing,
+            entry=None,
         )
 
-    return PointEarnResult(
-        awarded=True,
-        balance=balance_for_location(session, clerk_user_id=user_id, location_id=location_id),
-        entry=entry,
+    return _insert_ledger_entry(
+        session,
+        clerk_user_id=user_id,
+        location_id=location_id,
+        amount=pts,
+        action_key=key,
+        source_ref=ref,
+        label=label,
     )
 
 

@@ -46,7 +46,7 @@ The marketing landing (`/`) can show a QR (desktop) and “Open a sample menu”
 NEXT_PUBLIC_LANDING_SAMPLE_MENU_SLUG=your-published-slug
 ```
 
-The QR encodes `https://menuyukti.com/m/{slug}`. If unset, the landing still renders (headline + menu preview) without QR or CTA.
+The QR encodes `https://menuyukti.com/{slug}/menu`. If unset, the landing still renders (headline + menu preview) without QR or CTA.
 
 ## Google Analytics
 

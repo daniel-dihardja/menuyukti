@@ -38,12 +38,7 @@ describe('orderClientFlatNav', () => {
       { key: 'services' },
       { key: 'inventar' },
     ])
-    expect(ordered.map((item) => item.key)).toEqual([
-      'branches',
-      'inventar',
-      'team',
-      'services',
-    ])
+    expect(ordered.map((item) => item.key)).toEqual(['branches', 'inventar', 'team', 'services'])
   })
 
   it('keeps other keys after core and services without reordering them relative to each other', () => {
