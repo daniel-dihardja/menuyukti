@@ -46,6 +46,7 @@ class ClearServiceDataResultType:
     workspace_id: strawberry.ID
     location_ids: list[strawberry.ID]
     predictions_deleted: int
+    votings_deleted: int
     ledger_entries_deleted: int
     earn_rules_deleted: int
     pos_orders_deleted: int
@@ -60,6 +61,7 @@ def _to_gql(result: ClearServiceDataResult) -> ClearServiceDataResultType:
         workspace_id=strawberry.ID(str(result.workspace_id)),
         location_ids=[strawberry.ID(str(lid)) for lid in result.location_ids],
         predictions_deleted=result.predictions_deleted,
+        votings_deleted=result.votings_deleted,
         ledger_entries_deleted=result.ledger_entries_deleted,
         earn_rules_deleted=result.earn_rules_deleted,
         pos_orders_deleted=result.pos_orders_deleted,

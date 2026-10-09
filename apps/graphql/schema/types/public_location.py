@@ -21,6 +21,14 @@ class PublicLocationPredictionTeaserType:
 
 
 @strawberry.type(
+    description="Teaser for open votings shown on the public location hub.",
+)
+class PublicLocationVotingTeaserType:
+    question: str
+    open_count: int
+
+
+@strawberry.type(
     description=(
         "Public location hub by slug. Returned when the slug exists; "
         "services may all be unavailable (greeting-only home)."
@@ -36,3 +44,4 @@ class PublicLocationType:
     media_owner_clerk_user_id: str | None
     menu_dish_count: int | None
     prediction_teaser: PublicLocationPredictionTeaserType | None
+    voting_teaser: PublicLocationVotingTeaserType | None

@@ -1,6 +1,7 @@
 /** Public location hub GraphQL documents. */
 
 import type { Prediction } from '@/lib/graphql/queries/predictions'
+import type { Voting } from '@/lib/graphql/queries/votings'
 
 export type PublicLocationService = {
   key: string
@@ -9,6 +10,11 @@ export type PublicLocationService = {
 }
 
 export type PublicLocationPredictionTeaser = {
+  question: string
+  openCount: number
+}
+
+export type PublicLocationVotingTeaser = {
   question: string
   openCount: number
 }
@@ -23,6 +29,7 @@ export type PublicLocation = {
   mediaOwnerClerkUserId: string | null
   menuDishCount: number | null
   predictionTeaser: PublicLocationPredictionTeaser | null
+  votingTeaser: PublicLocationVotingTeaser | null
 }
 
 export const PUBLIC_LOCATION_QUERY = `
@@ -41,6 +48,10 @@ export const PUBLIC_LOCATION_QUERY = `
       mediaOwnerClerkUserId
       menuDishCount
       predictionTeaser {
+        question
+        openCount
+      }
+      votingTeaser {
         question
         openCount
       }
@@ -85,6 +96,41 @@ export const PUBLIC_LOCATION_PREDICTIONS_QUERY = `
 
 export type PublicLocationPredictionsData = {
   publicLocationPredictions: Prediction[]
+}
+
+export const PUBLIC_LOCATION_VOTINGS_QUERY = `
+  query PublicLocationVotings($slug: String!) {
+    publicLocationVotings(slug: $slug) {
+      id
+      locationId
+      locationName
+      question
+      status
+      closesAt
+      rewardMode
+      pointsForVote
+      pointsForCorrect
+      winningOutcomeId
+      createdAt
+      resolvedAt
+      outcomes {
+        id
+        label
+        sortOrder
+      }
+      myVote {
+        id
+        outcomeId
+        clerkUserId
+        createdAt
+      }
+      voteCount
+    }
+  }
+`
+
+export type PublicLocationVotingsData = {
+  publicLocationVotings: Voting[]
 }
 
 export const UPDATE_LOCATION_PUBLIC_SLUG_MUTATION = `

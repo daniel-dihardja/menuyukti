@@ -13,6 +13,7 @@ describe('getSafeAuthReturnPath', () => {
     expect(getSafeAuthReturnPath('/warung-sunda/menu')).toBe('/warung-sunda/menu')
     expect(getSafeAuthReturnPath('/cafe/menu/t/12')).toBe('/cafe/menu/t/12')
     expect(getSafeAuthReturnPath('/cafe/pick-and-win')).toBe('/cafe/pick-and-win')
+    expect(getSafeAuthReturnPath('/cafe/voting')).toBe('/cafe/voting')
     expect(getSafeAuthReturnPath('/m/warung-sunda')).toBe('/m/warung-sunda')
     expect(getSafeAuthReturnPath('/m/cafe/t/12')).toBe('/m/cafe/t/12')
     expect(getSafeAuthReturnPath('/l/venue')).toBe('/l/venue')

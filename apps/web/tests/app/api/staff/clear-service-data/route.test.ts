@@ -76,6 +76,7 @@ describe('POST /api/staff/clear-service-data', () => {
         workspaceId: '42',
         locationIds: ['7'],
         predictionsDeleted: 3,
+        votingsDeleted: 0,
         ledgerEntriesDeleted: 2,
         earnRulesDeleted: 0,
         posOrdersDeleted: 0,

@@ -13,6 +13,8 @@ type HubCopy = {
   menuDishCount: (count: number) => string
   predictionTitle: string
   predictionOpenCount: (count: number) => string
+  votingTitle: string
+  votingOpenCount: (count: number) => string
 }
 
 type PublicLocationHubProps = {
@@ -29,13 +31,16 @@ function truncateTeaser(text: string, max = 88): string {
 export function PublicLocationHub({ location, copy }: PublicLocationHubProps) {
   const menuService = location.services.find((s) => s.key === 'digital_menu')
   const predictionService = location.services.find((s) => s.key === 'pick_and_win')
+  const votingService = location.services.find((s) => s.key === 'voting')
   const menuAvailable = Boolean(menuService?.available)
   const predictionAvailable = Boolean(predictionService?.available)
-  const hasServices = menuAvailable || predictionAvailable
+  const votingAvailable = Boolean(votingService?.available)
+  const hasServices = menuAvailable || predictionAvailable || votingAvailable
   const hasHeaderImage = Boolean(location.headerImageUrl)
 
   const menuHref = routes.public.locationMenu(location.publicSlug)
   const predictionHref = routes.public.locationPickAndWin(location.publicSlug)
+  const votingHref = routes.public.locationVoting(location.publicSlug)
 
   const menuSubtitle =
     menuAvailable && location.menuDishCount != null && location.menuDishCount > 0
@@ -50,6 +55,17 @@ export function PublicLocationHub({ location, copy }: PublicLocationHubProps) {
         ? copy.predictionOpenCount(teaser.openCount)
         : truncateTeaser(teaser.question)
   }
+
+  let votingSubtitle: string | null = null
+  if (votingAvailable && location.votingTeaser) {
+    const teaser = location.votingTeaser
+    votingSubtitle =
+      teaser.openCount > 1
+        ? copy.votingOpenCount(teaser.openCount)
+        : truncateTeaser(teaser.question)
+  }
+
+  const outlineWhenPrimaryExists = menuAvailable
 
   return (
     <PublicGuestShell>
@@ -93,10 +109,10 @@ export function PublicLocationHub({ location, copy }: PublicLocationHubProps) {
             <Button
               asChild
               size="lg"
-              variant={menuAvailable ? 'outline' : 'default'}
+              variant={outlineWhenPrimaryExists ? 'outline' : 'default'}
               className={cn(
                 'public-hub-enter-cta-secondary h-auto min-h-14 w-full flex-col items-center gap-0.5 whitespace-normal py-3.5 text-base',
-                menuAvailable &&
+                outlineWhenPrimaryExists &&
                   'border-foreground/15 bg-background/70 backdrop-blur-sm hover:bg-background/90',
               )}
             >
@@ -105,6 +121,28 @@ export function PublicLocationHub({ location, copy }: PublicLocationHubProps) {
                 {predictionSubtitle ? (
                   <span className="line-clamp-2 max-w-full text-sm font-normal opacity-80">
                     {predictionSubtitle}
+                  </span>
+                ) : null}
+              </Link>
+            </Button>
+          ) : null}
+
+          {votingAvailable ? (
+            <Button
+              asChild
+              size="lg"
+              variant={menuAvailable || predictionAvailable ? 'outline' : 'default'}
+              className={cn(
+                'public-hub-enter-cta-secondary h-auto min-h-14 w-full flex-col items-center gap-0.5 whitespace-normal py-3.5 text-base',
+                (menuAvailable || predictionAvailable) &&
+                  'border-foreground/15 bg-background/70 backdrop-blur-sm hover:bg-background/90',
+              )}
+            >
+              <Link href={votingHref}>
+                <span className="font-semibold">{copy.votingTitle}</span>
+                {votingSubtitle ? (
+                  <span className="line-clamp-2 max-w-full text-sm font-normal opacity-80">
+                    {votingSubtitle}
                   </span>
                 ) : null}
               </Link>

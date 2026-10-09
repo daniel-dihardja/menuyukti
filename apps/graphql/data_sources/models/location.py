@@ -25,6 +25,7 @@ if TYPE_CHECKING:
     from graphql.data_sources.models.pos_order import PosOrder
     from graphql.data_sources.models.prediction import Prediction
     from graphql.data_sources.models.service_subscription import ServiceSubscription
+    from graphql.data_sources.models.voting import Voting
     from graphql.data_sources.models.workspace import Workspace
 
 
@@ -148,4 +149,10 @@ class Location(Base):
         back_populates="location",
         cascade="all, delete-orphan",
         order_by="Prediction.created_at.desc()",
+    )
+    votings: Mapped[list[Voting]] = relationship(
+        "Voting",
+        back_populates="location",
+        cascade="all, delete-orphan",
+        order_by="Voting.created_at.desc()",
     )

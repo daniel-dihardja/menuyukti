@@ -1,0 +1,710 @@
+"""Voting service: create, vote, resolve, points vs social rewards."""
+
+from __future__ import annotations
+
+import asyncio
+from datetime import UTC, datetime, timedelta
+
+import pytest
+from graphql.data_sources import (
+    Location,
+    PointLedgerEntry,
+    ServiceSubscription,
+    SessionLocal,
+    Workspace,
+    WorkspaceMembership,
+)
+from graphql.data_sources.models.pos_order import PosOrder
+from graphql.schema import schema
+from graphql.services.service_subscriptions import (
+    SERVICE_KEY_VOTING,
+    SERVICE_KEY_POINT_SYSTEM,
+)
+from graphql.services.workspace_plan import WORKSPACE_PLAN_PRO
+from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID, graphql_auth_context
+
+GUEST_A = "clerk_guest_pred_a"
+GUEST_B = "clerk_guest_pred_b"
+
+ACTIVATE = """
+mutation Activate($locationId: Int!, $serviceKey: String!) {
+  activateServiceSubscription(locationId: $locationId, serviceKey: $serviceKey) {
+    id
+    serviceKey
+    status
+  }
+}
+"""
+
+CREATE = """
+mutation CreatePred($input: CreateVotingInput!) {
+  createVoting(input: $input) {
+    id
+    question
+    status
+    rewardMode
+    pointsForVote
+    pointsForCorrect
+    outcomes { id label sortOrder }
+    voteCount
+  }
+}
+"""
+
+VOTE = """
+mutation Vote($votingId: Int!, $outcomeId: Int!) {
+  voteVoting(votingId: $votingId, outcomeId: $outcomeId) {
+    id
+    voteCount
+    myVote { outcomeId }
+    status
+  }
+}
+"""
+
+RESOLVE = """
+mutation Resolve($votingId: Int!, $winningOutcomeId: Int!) {
+  resolveVoting(votingId: $votingId, winningOutcomeId: $winningOutcomeId) {
+    id
+    status
+    winningOutcomeId
+    resolvedAt
+  }
+}
+"""
+
+CLOSE = """
+mutation Close($votingId: Int!) {
+  closeVoting(votingId: $votingId) {
+    id
+    status
+  }
+}
+"""
+
+LIST = """
+query Votings($locationId: Int!) {
+  votings(locationId: $locationId) {
+    id
+    question
+    status
+  }
+}
+"""
+
+MY_OPEN = """
+query MyOpen {
+  myOpenVotings {
+    id
+    question
+    locationId
+    status
+    winningOutcomeId
+    resolvedAt
+    voteCount
+    myVote { outcomeId }
+  }
+}
+"""
+
+BALANCES = """
+query MyBalances {
+  myPointBalances {
+    locationId
+    balance
+  }
+}
+"""
+
+
+def _clear(session) -> None:
+    session.query(PointLedgerEntry).filter(
+        PointLedgerEntry.clerk_user_id.in_([GUEST_A, GUEST_B, GRAPHQL_TEST_USER_ID])
+    ).delete(synchronize_session=False)
+    from graphql.data_sources.models.voting import (
+        Voting,
+        VotingOutcome,
+        VotingVote,
+    )
+
+    session.query(VotingVote).delete(synchronize_session=False)
+    session.query(Voting).update(
+        {Voting.winning_outcome_id: None},
+        synchronize_session=False,
+    )
+    session.query(VotingOutcome).delete(synchronize_session=False)
+    session.query(Voting).delete(synchronize_session=False)
+    session.query(PosOrder).filter(PosOrder.opened_by_clerk_user_id.in_([GUEST_A, GUEST_B])).delete(
+        synchronize_session=False
+    )
+    session.query(ServiceSubscription).filter(
+        ServiceSubscription.location_id.in_(
+            session.query(Location.id).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID)
+        )
+    ).delete(synchronize_session=False)
+    session.query(Location).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
+    session.query(WorkspaceMembership).filter(
+        WorkspaceMembership.clerk_user_id == GRAPHQL_TEST_USER_ID
+    ).delete()
+    session.query(Workspace).filter(Workspace.owner_clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
+    session.commit()
+
+
+@pytest.fixture
+def pred_venue():
+    session = SessionLocal()
+    try:
+        _clear(session)
+        ws = Workspace(
+            name="Pred WS",
+            owner_clerk_user_id=GRAPHQL_TEST_USER_ID,
+            plan=WORKSPACE_PLAN_PRO,
+        )
+        session.add(ws)
+        session.flush()
+        session.add(
+            WorkspaceMembership(
+                workspace_id=ws.id,
+                clerk_user_id=GRAPHQL_TEST_USER_ID,
+                role="owner",
+            )
+        )
+        loc = Location(
+            name="Pred Cafe",
+            clerk_user_id=GRAPHQL_TEST_USER_ID,
+            workspace_id=ws.id,
+            currency="EUR",
+        )
+        session.add(loc)
+        session.commit()
+        session.refresh(loc)
+        lid = loc.id
+    finally:
+        session.close()
+
+    yield {"location_id": lid}
+
+    session = SessionLocal()
+    try:
+        _clear(session)
+    finally:
+        session.close()
+
+
+def _activate(location_id: int, service_key: str) -> None:
+    result = asyncio.run(
+        schema.execute(
+            ACTIVATE,
+            variable_values={"locationId": location_id, "serviceKey": service_key},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert result.errors is None, result.errors
+
+
+def _closes_at(hours: int = 24) -> str:
+    return (datetime.now(UTC) + timedelta(hours=hours)).isoformat()
+
+
+def _touch_guest(location_id: int, clerk_user_id: str) -> None:
+    """Guest becomes eligible for myOpenVotings via a POS order touch."""
+    session = SessionLocal()
+    try:
+        session.add(
+            PosOrder(
+                location_id=location_id,
+                status="open",
+                bill_number=f"T-{clerk_user_id[-4:]}",
+                opened_by_clerk_user_id=clerk_user_id,
+                note="digital_menu",
+            )
+        )
+        session.commit()
+    finally:
+        session.close()
+
+
+def test_create_requires_subscription(pred_venue):
+    lid = pred_venue["location_id"]
+    result = asyncio.run(
+        schema.execute(
+            CREATE,
+            variable_values={
+                "input": {
+                    "locationId": lid,
+                    "question": "Who wins?",
+                    "closesAt": _closes_at(),
+                    "outcomes": ["Home", "Away"],
+                    "rewardMode": "social",
+                }
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert result.errors is not None
+    assert "voting subscription" in str(result.errors[0]).lower()
+
+
+def test_create_vote_resolve_social(pred_venue):
+    lid = pred_venue["location_id"]
+    _activate(lid, SERVICE_KEY_VOTING)
+
+    created = asyncio.run(
+        schema.execute(
+            CREATE,
+            variable_values={
+                "input": {
+                    "locationId": lid,
+                    "question": "Tonight's winner?",
+                    "closesAt": _closes_at(),
+                    "outcomes": ["Team A", "Team B"],
+                    "rewardMode": "social",
+                }
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert created.errors is None, created.errors
+    pred = created.data["createVoting"]
+    assert pred["status"] == "open"
+    assert len(pred["outcomes"]) == 2
+    outcome_a = pred["outcomes"][0]["id"]
+    outcome_b = pred["outcomes"][1]["id"]
+    pred_id = pred["id"]
+
+    vote = asyncio.run(
+        schema.execute(
+            VOTE,
+            variable_values={"votingId": pred_id, "outcomeId": outcome_a},
+            context_value={"user_id": GUEST_A},
+        )
+    )
+    assert vote.errors is None, vote.errors
+    assert vote.data["voteVoting"]["voteCount"] == 1
+    assert vote.data["voteVoting"]["myVote"]["outcomeId"] == outcome_a
+
+    dup = asyncio.run(
+        schema.execute(
+            VOTE,
+            variable_values={"votingId": pred_id, "outcomeId": outcome_b},
+            context_value={"user_id": GUEST_A},
+        )
+    )
+    assert dup.errors is not None
+
+    asyncio.run(
+        schema.execute(
+            VOTE,
+            variable_values={"votingId": pred_id, "outcomeId": outcome_b},
+            context_value={"user_id": GUEST_B},
+        )
+    )
+
+    resolved = asyncio.run(
+        schema.execute(
+            RESOLVE,
+            variable_values={
+                "votingId": pred_id,
+                "winningOutcomeId": outcome_a,
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert resolved.errors is None, resolved.errors
+    assert resolved.data["resolveVoting"]["status"] == "resolved"
+    assert resolved.data["resolveVoting"]["winningOutcomeId"] == outcome_a
+
+    session = SessionLocal()
+    try:
+        assert (
+            session.query(PointLedgerEntry)
+            .filter(PointLedgerEntry.clerk_user_id.in_([GUEST_A, GUEST_B]))
+            .count()
+            == 0
+        )
+    finally:
+        session.close()
+
+
+def test_points_mode_requires_point_system(pred_venue):
+    lid = pred_venue["location_id"]
+    _activate(lid, SERVICE_KEY_VOTING)
+    result = asyncio.run(
+        schema.execute(
+            CREATE,
+            variable_values={
+                "input": {
+                    "locationId": lid,
+                    "question": "Score?",
+                    "closesAt": _closes_at(),
+                    "outcomes": ["Over", "Under"],
+                    "rewardMode": "points",
+                    "pointsForCorrect": 20,
+                }
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert result.errors is not None
+    assert "point_system" in str(result.errors[0]).lower()
+
+
+def test_points_mode_awards_on_resolve(pred_venue):
+    lid = pred_venue["location_id"]
+    _activate(lid, SERVICE_KEY_VOTING)
+    _activate(lid, SERVICE_KEY_POINT_SYSTEM)
+
+    created = asyncio.run(
+        schema.execute(
+            CREATE,
+            variable_values={
+                "input": {
+                    "locationId": lid,
+                    "question": "Next goal?",
+                    "closesAt": _closes_at(),
+                    "outcomes": ["Home", "Away"],
+                    "rewardMode": "points",
+                    "pointsForVote": 5,
+                    "pointsForCorrect": 25,
+                }
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert created.errors is None, created.errors
+    pred = created.data["createVoting"]
+    pred_id = pred["id"]
+    outcome_home = pred["outcomes"][0]["id"]
+    outcome_away = pred["outcomes"][1]["id"]
+
+    asyncio.run(
+        schema.execute(
+            VOTE,
+            variable_values={"votingId": pred_id, "outcomeId": outcome_home},
+            context_value={"user_id": GUEST_A},
+        )
+    )
+    asyncio.run(
+        schema.execute(
+            VOTE,
+            variable_values={"votingId": pred_id, "outcomeId": outcome_away},
+            context_value={"user_id": GUEST_B},
+        )
+    )
+
+    asyncio.run(
+        schema.execute(
+            RESOLVE,
+            variable_values={
+                "votingId": pred_id,
+                "winningOutcomeId": outcome_home,
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+
+    bal_a = asyncio.run(schema.execute(BALANCES, context_value={"user_id": GUEST_A}))
+    bal_b = asyncio.run(schema.execute(BALANCES, context_value={"user_id": GUEST_B}))
+    assert bal_a.errors is None, bal_a.errors
+    assert bal_b.errors is None, bal_b.errors
+    assert bal_a.data["myPointBalances"][0]["balance"] == 30  # 5 vote + 25 correct
+    assert bal_b.data["myPointBalances"][0]["balance"] == 5  # vote only
+
+
+def test_points_award_soft_skip_without_point_system_at_resolve(pred_venue):
+    """If Points was on at create but canceled before resolve, awards soft no-op."""
+    lid = pred_venue["location_id"]
+    _activate(lid, SERVICE_KEY_VOTING)
+    _activate(lid, SERVICE_KEY_POINT_SYSTEM)
+
+    created = asyncio.run(
+        schema.execute(
+            CREATE,
+            variable_values={
+                "input": {
+                    "locationId": lid,
+                    "question": "Soft skip?",
+                    "closesAt": _closes_at(),
+                    "outcomes": ["Yes", "No"],
+                    "rewardMode": "points",
+                    "pointsForCorrect": 10,
+                }
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    pred = created.data["createVoting"]
+    pred_id = pred["id"]
+    outcome_yes = pred["outcomes"][0]["id"]
+
+    asyncio.run(
+        schema.execute(
+            VOTE,
+            variable_values={"votingId": pred_id, "outcomeId": outcome_yes},
+            context_value={"user_id": GUEST_A},
+        )
+    )
+
+    cancel = """
+    mutation Cancel($locationId: Int!, $serviceKey: String!) {
+      cancelServiceSubscription(locationId: $locationId, serviceKey: $serviceKey) {
+        status
+      }
+    }
+    """
+    asyncio.run(
+        schema.execute(
+            cancel,
+            variable_values={
+                "locationId": lid,
+                "serviceKey": SERVICE_KEY_POINT_SYSTEM,
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+
+    resolved = asyncio.run(
+        schema.execute(
+            RESOLVE,
+            variable_values={
+                "votingId": pred_id,
+                "winningOutcomeId": outcome_yes,
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert resolved.errors is None, resolved.errors
+    assert resolved.data["resolveVoting"]["status"] == "resolved"
+
+    bal = asyncio.run(schema.execute(BALANCES, context_value={"user_id": GUEST_A}))
+    assert bal.data["myPointBalances"] == []
+
+
+def test_my_open_votings_scoped_to_touched_locations(pred_venue):
+    lid = pred_venue["location_id"]
+    _activate(lid, SERVICE_KEY_VOTING)
+
+    created = asyncio.run(
+        schema.execute(
+            CREATE,
+            variable_values={
+                "input": {
+                    "locationId": lid,
+                    "question": "Visible after visit?",
+                    "closesAt": _closes_at(),
+                    "outcomes": ["Y", "N"],
+                    "rewardMode": "social",
+                }
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    pred_id = created.data["createVoting"]["id"]
+
+    empty = asyncio.run(schema.execute(MY_OPEN, context_value={"user_id": GUEST_A}))
+    assert empty.errors is None, empty.errors
+    assert empty.data["myOpenVotings"] == []
+
+    _touch_guest(lid, GUEST_A)
+    opened = asyncio.run(schema.execute(MY_OPEN, context_value={"user_id": GUEST_A}))
+    assert opened.errors is None, opened.errors
+    assert len(opened.data["myOpenVotings"]) == 1
+    assert opened.data["myOpenVotings"][0]["id"] == pred_id
+
+
+def test_close_then_cannot_vote(pred_venue):
+    lid = pred_venue["location_id"]
+    _activate(lid, SERVICE_KEY_VOTING)
+    created = asyncio.run(
+        schema.execute(
+            CREATE,
+            variable_values={
+                "input": {
+                    "locationId": lid,
+                    "question": "Closed?",
+                    "closesAt": _closes_at(),
+                    "outcomes": ["A", "B"],
+                    "rewardMode": "social",
+                }
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    pred_id = created.data["createVoting"]["id"]
+    outcome_id = created.data["createVoting"]["outcomes"][0]["id"]
+
+    closed = asyncio.run(
+        schema.execute(
+            CLOSE,
+            variable_values={"votingId": pred_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert closed.errors is None, closed.errors
+    assert closed.data["closeVoting"]["status"] == "closed"
+
+    vote = asyncio.run(
+        schema.execute(
+            VOTE,
+            variable_values={"votingId": pred_id, "outcomeId": outcome_id},
+            context_value={"user_id": GUEST_A},
+        )
+    )
+    assert vote.errors is not None
+
+
+def test_owner_list(pred_venue):
+    lid = pred_venue["location_id"]
+    _activate(lid, SERVICE_KEY_VOTING)
+    asyncio.run(
+        schema.execute(
+            CREATE,
+            variable_values={
+                "input": {
+                    "locationId": lid,
+                    "question": "List me",
+                    "closesAt": _closes_at(),
+                    "outcomes": ["1", "2"],
+                    "rewardMode": "social",
+                }
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    listed = asyncio.run(
+        schema.execute(
+            LIST,
+            variable_values={"locationId": lid},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert listed.errors is None, listed.errors
+    assert len(listed.data["votings"]) == 1
+
+
+def test_guest_home_closed_and_resolved_only_when_voted(pred_venue):
+    """Home keeps closed/resolved cards only for guests who voted."""
+    lid = pred_venue["location_id"]
+    _activate(lid, SERVICE_KEY_VOTING)
+    _touch_guest(lid, GUEST_A)
+    _touch_guest(lid, GUEST_B)
+
+    created = asyncio.run(
+        schema.execute(
+            CREATE,
+            variable_values={
+                "input": {
+                    "locationId": lid,
+                    "question": "Result visibility?",
+                    "closesAt": _closes_at(),
+                    "outcomes": ["Yes", "No"],
+                    "rewardMode": "social",
+                }
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    pred_id = created.data["createVoting"]["id"]
+    outcome_yes = created.data["createVoting"]["outcomes"][0]["id"]
+
+    vote_a = asyncio.run(
+        schema.execute(
+            VOTE,
+            variable_values={"votingId": pred_id, "outcomeId": outcome_yes},
+            context_value={"user_id": GUEST_A},
+        )
+    )
+    assert vote_a.errors is None, vote_a.errors
+
+    closed = asyncio.run(
+        schema.execute(
+            CLOSE,
+            variable_values={"votingId": pred_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert closed.errors is None, closed.errors
+
+    home_voter = asyncio.run(schema.execute(MY_OPEN, context_value={"user_id": GUEST_A}))
+    assert home_voter.errors is None, home_voter.errors
+    assert len(home_voter.data["myOpenVotings"]) == 1
+    assert home_voter.data["myOpenVotings"][0]["status"] == "closed"
+    assert home_voter.data["myOpenVotings"][0]["myVote"]["outcomeId"] == outcome_yes
+
+    home_non_voter = asyncio.run(schema.execute(MY_OPEN, context_value={"user_id": GUEST_B}))
+    assert home_non_voter.errors is None, home_non_voter.errors
+    assert home_non_voter.data["myOpenVotings"] == []
+
+    resolved = asyncio.run(
+        schema.execute(
+            RESOLVE,
+            variable_values={"votingId": pred_id, "winningOutcomeId": outcome_yes},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert resolved.errors is None, resolved.errors
+
+    home_after = asyncio.run(schema.execute(MY_OPEN, context_value={"user_id": GUEST_A}))
+    assert home_after.errors is None, home_after.errors
+    assert len(home_after.data["myOpenVotings"]) == 1
+    card = home_after.data["myOpenVotings"][0]
+    assert card["status"] == "resolved"
+    assert card["winningOutcomeId"] == outcome_yes
+
+    home_b_after = asyncio.run(schema.execute(MY_OPEN, context_value={"user_id": GUEST_B}))
+    assert home_b_after.data["myOpenVotings"] == []
+
+
+def test_guest_home_drops_resolved_outside_retention(pred_venue):
+    lid = pred_venue["location_id"]
+    _activate(lid, SERVICE_KEY_VOTING)
+    _touch_guest(lid, GUEST_A)
+
+    created = asyncio.run(
+        schema.execute(
+            CREATE,
+            variable_values={
+                "input": {
+                    "locationId": lid,
+                    "question": "Old result?",
+                    "closesAt": _closes_at(),
+                    "outcomes": ["A", "B"],
+                    "rewardMode": "social",
+                }
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    pred_id = created.data["createVoting"]["id"]
+    outcome_a = created.data["createVoting"]["outcomes"][0]["id"]
+
+    asyncio.run(
+        schema.execute(
+            VOTE,
+            variable_values={"votingId": pred_id, "outcomeId": outcome_a},
+            context_value={"user_id": GUEST_A},
+        )
+    )
+    asyncio.run(
+        schema.execute(
+            RESOLVE,
+            variable_values={"votingId": pred_id, "winningOutcomeId": outcome_a},
+            context_value=graphql_auth_context(),
+        )
+    )
+
+    from graphql.data_sources.models.voting import Voting
+    from graphql.services.votings import GUEST_RESOLVED_RETENTION_DAYS
+
+    session = SessionLocal()
+    try:
+        row = session.get(Voting, pred_id)
+        assert row is not None
+        row.resolved_at = datetime.now(UTC) - timedelta(days=GUEST_RESOLVED_RETENTION_DAYS + 1)
+        session.commit()
+    finally:
+        session.close()
+
+    home = asyncio.run(schema.execute(MY_OPEN, context_value={"user_id": GUEST_A}))
+    assert home.errors is None, home.errors
+    assert home.data["myOpenVotings"] == []

@@ -36,6 +36,7 @@ query Hub($slug: String!) {
     mediaOwnerClerkUserId
     menuDishCount
     predictionTeaser { question openCount }
+    votingTeaser { question openCount }
   }
 }
 """
@@ -166,13 +167,16 @@ def test_public_location_greeting_only_no_services(hub_venue):
     by_key = {s["key"]: s for s in hub["services"]}
     assert by_key["digital_menu"]["available"] is False
     assert by_key["pick_and_win"]["available"] is False
+    assert by_key["voting"]["available"] is False
     assert by_key["digital_menu"]["hrefSegment"] == "menu"
     assert by_key["pick_and_win"]["hrefSegment"] == "pick-and-win"
+    assert by_key["voting"]["hrefSegment"] == "voting"
     assert hub["headerImageFilename"] is None
     assert hub["workspaceId"] is None
     assert hub["mediaOwnerClerkUserId"] is None
     assert hub["menuDishCount"] is None
     assert hub["predictionTeaser"] is None
+    assert hub["votingTeaser"] is None
 
 
 def test_public_location_menu_and_prediction_flags(hub_venue):

@@ -75,12 +75,13 @@
         "point_system": "Point System",
         "stamp_card": "Stamp Card",
         "cashback": "Cashback",
-        "pick_and_win": "Pick & Win"
+        "pick_and_win": "Pick & Win",
+        "voting": "Voting"
       },
       "confirm": "Clear all “{service}” data for this user’s workspace? This cannot be undone.",
       "save": "Clear service data",
       "saving": "Clearing…",
-      "success": "Cleared {service} for workspace {workspaceId} ({locations} locations): predictions {predictions}, ledger {ledger}, earn rules {rules}, POS {posOrders}, menu categories {menuCategories}.",
+      "success": "Cleared {service} for workspace {workspaceId} ({locations} locations): predictions {predictions}, votings {votings}, ledger {ledger}, earn rules {rules}, POS {posOrders}, menu categories {menuCategories}.",
       "error": "Could not clear service data."
     }
   }

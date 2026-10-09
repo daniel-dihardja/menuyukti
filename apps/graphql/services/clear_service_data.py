@@ -21,6 +21,11 @@ from graphql.data_sources.models.prediction import (
     PredictionOutcome,
     PredictionVote,
 )
+from graphql.data_sources.models.voting import (
+    Voting,
+    VotingOutcome,
+    VotingVote,
+)
 from graphql.data_sources.models.workspace import Workspace, WorkspaceMembership
 from graphql.services.menu import get_menu_for_location, replace_menu_categories
 from graphql.services.predictions import (
@@ -34,13 +39,25 @@ from graphql.services.service_subscriptions import (
     SERVICE_KEY_PICK_AND_WIN,
     SERVICE_KEY_POINT_SYSTEM,
     SERVICE_KEY_STAMP_CARD,
+    SERVICE_KEY_VOTING,
     normalize_service_key,
+)
+from graphql.services.votings import (
+    ACTION_KEY_VOTING_CORRECT,
+    ACTION_KEY_VOTING_VOTE,
 )
 
 PREDICTION_LEDGER_ACTION_KEYS = frozenset(
     {
         ACTION_KEY_PREDICTION_VOTE,
         ACTION_KEY_PREDICTION_CORRECT,
+    }
+)
+
+VOTING_LEDGER_ACTION_KEYS = frozenset(
+    {
+        ACTION_KEY_VOTING_VOTE,
+        ACTION_KEY_VOTING_CORRECT,
     }
 )
 
@@ -52,6 +69,7 @@ class ClearServiceDataResult:
     workspace_id: int
     location_ids: list[int] = field(default_factory=list)
     predictions_deleted: int = 0
+    votings_deleted: int = 0
     ledger_entries_deleted: int = 0
     earn_rules_deleted: int = 0
     pos_orders_deleted: int = 0
@@ -143,6 +161,46 @@ def _clear_pick_and_win(
     result.predictions_deleted += int(deleted or 0)
 
 
+def _clear_voting(
+    session: Session, location_ids: list[int], result: ClearServiceDataResult
+) -> None:
+    if not location_ids:
+        return
+
+    ledger_deleted = (
+        session.query(PointLedgerEntry)
+        .filter(
+            PointLedgerEntry.location_id.in_(location_ids),
+            PointLedgerEntry.action_key.in_(VOTING_LEDGER_ACTION_KEYS),
+        )
+        .delete(synchronize_session=False)
+    )
+    result.ledger_entries_deleted += int(ledger_deleted or 0)
+
+    voting_ids = [
+        int(row[0])
+        for row in session.query(Voting.id).filter(Voting.location_id.in_(location_ids)).all()
+    ]
+    if not voting_ids:
+        return
+
+    session.query(VotingVote).filter(VotingVote.voting_id.in_(voting_ids)).delete(
+        synchronize_session=False
+    )
+    session.query(Voting).filter(Voting.id.in_(voting_ids)).update(
+        {Voting.winning_outcome_id: None},
+        synchronize_session=False,
+    )
+    session.flush()
+    session.query(VotingOutcome).filter(VotingOutcome.voting_id.in_(voting_ids)).delete(
+        synchronize_session=False
+    )
+    deleted = (
+        session.query(Voting).filter(Voting.id.in_(voting_ids)).delete(synchronize_session=False)
+    )
+    result.votings_deleted += int(deleted or 0)
+
+
 def _clear_point_system(
     session: Session, location_ids: list[int], result: ClearServiceDataResult
 ) -> None:
@@ -229,6 +287,7 @@ def _clear_cashback(
 
 _CLEAR_HANDLERS: dict[str, Callable[[Session, list[int], ClearServiceDataResult], None]] = {
     SERVICE_KEY_PICK_AND_WIN: _clear_pick_and_win,
+    SERVICE_KEY_VOTING: _clear_voting,
     SERVICE_KEY_POINT_SYSTEM: _clear_point_system,
     SERVICE_KEY_DIGITAL_MENU: _clear_digital_menu,
     SERVICE_KEY_STAMP_CARD: _clear_stamp_card,

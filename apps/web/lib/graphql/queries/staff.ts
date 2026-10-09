@@ -68,6 +68,7 @@ export const CLEAR_WORKSPACE_SERVICE_DATA_MUTATION = `
       workspaceId
       locationIds
       predictionsDeleted
+      votingsDeleted
       ledgerEntriesDeleted
       earnRulesDeleted
       posOrdersDeleted
@@ -83,6 +84,7 @@ export type ClearWorkspaceServiceDataResult = {
   workspaceId: string
   locationIds: string[]
   predictionsDeleted: number
+  votingsDeleted: number
   ledgerEntriesDeleted: number
   earnRulesDeleted: number
   posOrdersDeleted: number

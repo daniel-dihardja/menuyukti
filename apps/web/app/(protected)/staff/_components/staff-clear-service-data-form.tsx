@@ -51,6 +51,7 @@ export function StaffClearServiceDataForm() {
       workspaceId: data.workspaceId,
       locations: data.locationIds.length,
       predictions: data.predictionsDeleted,
+      votings: data.votingsDeleted,
       ledger: data.ledgerEntriesDeleted,
       rules: data.earnRulesDeleted,
       posOrders: data.posOrdersDeleted,

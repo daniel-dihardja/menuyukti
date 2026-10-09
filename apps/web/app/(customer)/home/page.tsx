@@ -9,6 +9,8 @@ import { CustomerPointsSection } from '@/app/(customer)/home/_components/custome
 import { CustomerPointsSkeleton } from '@/app/(customer)/home/_components/customer-points-skeleton'
 import { CustomerPredictionsSection } from '@/app/(customer)/home/_components/customer-predictions-section'
 import { CustomerPredictionsSkeleton } from '@/app/(customer)/home/_components/customer-predictions-skeleton'
+import { CustomerVotingsSection } from '@/app/(customer)/home/_components/customer-votings-section'
+import { CustomerVotingsSkeleton } from '@/app/(customer)/home/_components/customer-votings-skeleton'
 import { CustomerPageShell } from '@/components/customer/customer-page-shell'
 import { PwaInstallGuide } from '@/components/pwa/pwa-install-guide'
 import { graphqlQuery } from '@/lib/graphql/client'
@@ -22,6 +24,7 @@ import {
   MY_OPEN_PREDICTIONS_QUERY,
   type MyOpenPredictionsData,
 } from '@/lib/graphql/queries/predictions'
+import { MY_OPEN_VOTINGS_QUERY, type MyOpenVotingsData } from '@/lib/graphql/queries/votings'
 import { routes } from '@/lib/routes'
 import { isProPlan } from '@/lib/workspace-plan'
 import { getWorkspacePlanForUser } from '@/lib/workspace-plan-server'
@@ -92,6 +95,36 @@ async function CustomerPredictionsData() {
   }
 }
 
+async function CustomerVotingsData() {
+  const { isAuthenticated, userId } = await auth()
+  if (!isAuthenticated || !userId) {
+    return <CustomerVotingsSection votings={[]} loadError />
+  }
+
+  try {
+    const data = await graphqlQuery<MyOpenVotingsData>(
+      MY_OPEN_VOTINGS_QUERY,
+      {},
+      userId,
+      'MyOpenVotings',
+    )
+    return (
+      <CustomerVotingsSection
+        key={data.myOpenVotings
+          .map(
+            (v) =>
+              `${v.id}:${v.status}:${v.winningOutcomeId ?? ''}:${v.resolvedAt ?? ''}:${v.myVote?.outcomeId ?? ''}`,
+          )
+          .join('|')}
+        votings={data.myOpenVotings}
+      />
+    )
+  } catch (error) {
+    console.error('[customer/home] votings', error)
+    return <CustomerVotingsSection votings={[]} loadError />
+  }
+}
+
 export default async function CustomerHomePage() {
   const { plan } = await getWorkspacePlanForUser()
   if (isProPlan(plan)) {
@@ -113,6 +146,10 @@ export default async function CustomerHomePage() {
 
       <Suspense fallback={<CustomerPredictionsSkeleton />}>
         <CustomerPredictionsData />
+      </Suspense>
+
+      <Suspense fallback={<CustomerVotingsSkeleton />}>
+        <CustomerVotingsData />
       </Suspense>
 
       <Suspense fallback={<CustomerPointsSkeleton />}>

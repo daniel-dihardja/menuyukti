@@ -65,6 +65,8 @@ export default async function PublicLocationHomePage({ params }: PageProps) {
         menuDishCount: (count) => t('menuDishCount', { count }),
         predictionTitle: t('predictionTitle'),
         predictionOpenCount: (count) => t('predictionOpenCount', { count }),
+        votingTitle: t('votingTitle'),
+        votingOpenCount: (count) => t('votingOpenCount', { count }),
       }}
     />
   )

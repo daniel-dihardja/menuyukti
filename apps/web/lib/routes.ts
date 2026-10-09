@@ -66,7 +66,7 @@ export function isOperatorAppShellPath(pathname: string | null): boolean {
 
 /**
  * Guest location surfaces — MainHeader uses guest sign-in instead of product chrome.
- * Includes `/{slug}`, `/{slug}/menu…`, `/{slug}/pick-and-win`, plus legacy `/m` and `/l`.
+ * Includes `/{slug}`, `/{slug}/menu…`, `/{slug}/pick-and-win`, `/{slug}/voting`, plus legacy `/m` and `/l`.
  */
 export function isPublicLocationSurfacePath(pathname: string | null): boolean {
   if (pathname == null) return false
@@ -86,7 +86,10 @@ export function isPublicLocationSurfacePath(pathname: string | null): boolean {
   if (segments.length === 1) return true
   if (
     segments.length === 2 &&
-    (segments[1] === 'menu' || segments[1] === 'pick-and-win' || segments[1] === 'prediction')
+    (segments[1] === 'menu' ||
+      segments[1] === 'pick-and-win' ||
+      segments[1] === 'prediction' ||
+      segments[1] === 'voting')
   ) {
     return true
   }
@@ -230,6 +233,9 @@ export const routes = {
   servicesPickAndWin: '/services/pick-and-win',
   servicesPickAndWinLocation: (locationId: string | number) =>
     `/services/pick-and-win/${encodeURIComponent(String(locationId))}`,
+  servicesVoting: '/services/voting',
+  servicesVotingLocation: (locationId: string | number) =>
+    `/services/voting/${encodeURIComponent(String(locationId))}`,
   /** Custom profile overview (name, email, avatar). */
   profile: '/profile',
   /** Workspace team management (invite existing users) — operator shell. */
@@ -241,7 +247,7 @@ export const routes = {
   shopProduct: (slug: string) => `/shop/${slug}`,
   shopDownload: (slug: string) => `/api/shop/download?slug=${encodeURIComponent(slug)}`,
 
-  /** Public location surfaces (`/{slug}`, menu, pick-and-win; legacy `/m` `/l` redirect). */
+  /** Public location surfaces (`/{slug}`, menu, pick-and-win, voting; legacy `/m` `/l` redirect). */
   public: {
     locationHome: (slug: string) => `/${encodeURIComponent(slug)}`,
     locationMenu: (slug: string) => `/${encodeURIComponent(slug)}/menu`,
@@ -249,6 +255,7 @@ export const routes = {
     locationMenuTable: (slug: string, tableLabel: string) =>
       `/${encodeURIComponent(slug)}/menu/t/${encodeURIComponent(tableLabel)}`,
     locationPickAndWin: (slug: string) => `/${encodeURIComponent(slug)}/pick-and-win`,
+    locationVoting: (slug: string) => `/${encodeURIComponent(slug)}/voting`,
     /** @deprecated Use `locationMenu`; `/l/` redirects to `/{slug}/menu`. */
     locationWall: (slug: string) => `/l/${encodeURIComponent(slug)}`,
   },

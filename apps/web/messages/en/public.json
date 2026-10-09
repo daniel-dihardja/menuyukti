@@ -14,7 +14,9 @@
       "menuTitle": "See what’s cooking",
       "menuDishCount": "{count, plural, one {# dish on the menu} other {# dishes on the menu}}",
       "predictionTitle": "Tonight’s Pick & Win",
-      "predictionOpenCount": "{count, plural, one {# open pick} other {# open picks}}"
+      "predictionOpenCount": "{count, plural, one {# open pick} other {# open picks}}",
+      "votingTitle": "Cast a vote",
+      "votingOpenCount": "{count, plural, one {# open vote} other {# open votes}}"
     },
     "prediction": {
       "title": "Pick & Win",
@@ -103,6 +105,28 @@
         "soy": "Soy",
         "sesame": "Sesame"
       }
+    },
+    "voting": {
+      "title": "Voting",
+      "lead": "Choose an outcome before voting closes, then check back for the result.",
+      "leadSignedOut": "Choose an outcome before voting closes, then check back for the result. Sign in to cast your vote.",
+      "empty": "No votes right now.",
+      "notFoundTitle": "Voting not found",
+      "metaTitle": "Voting · {name}",
+      "metaDescription": "Vote at {name}.",
+      "rewardSocial": "Social reward — bragging rights",
+      "rewardPoints": "+{vote} for voting · +{correct} if correct",
+      "yourPick": "Your vote",
+      "voting": "Voting…",
+      "voteFailed": "Could not cast your vote.",
+      "signInHint": "Sign in to vote.",
+      "statusClosed": "Closed",
+      "statusResolved": "Resolved",
+      "awaitingResult": "Voting closed — result soon.",
+      "youWereCorrect": "You were right",
+      "youWereIncorrect": "You were incorrect",
+      "winnerLabel": "Winner",
+      "voteCount": "{count, plural, one {# vote} other {# votes}}"
     }
   }
 }

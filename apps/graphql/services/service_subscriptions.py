@@ -15,6 +15,7 @@ SERVICE_KEY_POINT_SYSTEM = "point_system"
 SERVICE_KEY_STAMP_CARD = "stamp_card"
 SERVICE_KEY_CASHBACK = "cashback"
 SERVICE_KEY_PICK_AND_WIN = "pick_and_win"
+SERVICE_KEY_VOTING = "voting"
 
 KNOWN_SERVICE_KEYS = frozenset(
     {
@@ -23,6 +24,7 @@ KNOWN_SERVICE_KEYS = frozenset(
         SERVICE_KEY_STAMP_CARD,
         SERVICE_KEY_CASHBACK,
         SERVICE_KEY_PICK_AND_WIN,
+        SERVICE_KEY_VOTING,
     }
 )
 

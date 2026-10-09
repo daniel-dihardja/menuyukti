@@ -25,6 +25,7 @@ from .pos_orders import PosOrdersQuery
 from .posts import PostsQuery
 from .predictions import PredictionsQuery
 from .promotion_menu_items import PromotionMenuItemsQuery
+from .votings import VotingsQuery
 from .public_holidays import PublicHolidaysQuery
 from .public_location import PublicLocationQuery
 from .public_location_menu import PublicLocationMenuQuery
@@ -62,6 +63,7 @@ __all__ = [
     "MyPointsQuery",
     "PointEarnRulesQuery",
     "PredictionsQuery",
+    "VotingsQuery",
     "ServiceSubscriptionsQuery",
     "PublicHolidaysQuery",
     "PublicLocationQuery",

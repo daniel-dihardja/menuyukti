@@ -26,6 +26,7 @@ import {
   SERVICE_KEY_DIGITAL_MENU,
   SERVICE_KEY_POINT_SYSTEM,
   SERVICE_KEY_PICK_AND_WIN,
+  SERVICE_KEY_VOTING,
   SERVICE_STATUS_ACTIVE,
   type MyServiceSubscriptionsData,
 } from '@/lib/graphql/queries/service-subscriptions'
@@ -137,6 +138,24 @@ function PredictionPreview() {
   )
 }
 
+function VotingPreview() {
+  return (
+    <div className="border-border bg-background flex w-48 flex-col gap-3 rounded-xl border p-4 shadow-sm">
+      <div className="bg-muted h-2 w-2/3 rounded" />
+      <div className="flex flex-col gap-2">
+        <div className="border-border flex items-center gap-2 rounded-md border px-2 py-1.5">
+          <div className="bg-muted size-3 rounded-sm" />
+          <div className="bg-muted h-2 flex-1 rounded" />
+        </div>
+        <div className="border-border flex items-center gap-2 rounded-md border px-2 py-1.5">
+          <div className="border-border size-3 rounded-sm border" />
+          <div className="bg-muted h-2 w-3/4 rounded" />
+        </div>
+      </div>
+    </div>
+  )
+}
+
 type CatalogCardProps = {
   title: string
   benefit: string
@@ -237,6 +256,10 @@ export default async function ServicesPage() {
     (row) => row.serviceKey === SERVICE_KEY_PICK_AND_WIN,
   ).length
 
+  const votingSubCount = activeSubscriptions.filter(
+    (row) => row.serviceKey === SERVICE_KEY_VOTING,
+  ).length
+
   const overviewRows = activeSubscriptions.flatMap((row) => {
     const locationId = Number(row.locationId)
     if (!Number.isInteger(locationId) || locationId < 1) return []
@@ -268,6 +291,22 @@ export default async function ServicesPage() {
         pricingComingSoon={pricingComingSoon}
         preview={<PredictionPreview />}
         href={routes.servicesPickAndWin}
+        ctaLabel={tCatalog('viewCta')}
+      />,
+      <CatalogCard
+        key="voting"
+        title={tCatalog('voting.title')}
+        benefit={tCatalog('voting.benefit')}
+        status={
+          <Badge variant="secondary">
+            {votingSubCount > 0
+              ? tCatalog('voting.statusOn', { count: votingSubCount })
+              : tCatalog('voting.statusAvailable')}
+          </Badge>
+        }
+        pricingComingSoon={pricingComingSoon}
+        preview={<VotingPreview />}
+        href={routes.servicesVoting}
         ctaLabel={tCatalog('viewCta')}
       />,
       <CatalogCard
