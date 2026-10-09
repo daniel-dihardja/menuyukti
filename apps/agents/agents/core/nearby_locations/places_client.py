@@ -67,7 +67,8 @@ def _parse_place(raw: dict[str, Any]) -> dict[str, Any] | None:
     place_id = raw.get("id")
     if isinstance(place_id, str) and place_id.startswith("places/"):
         place_id = place_id.removeprefix("places/")
-    types = raw.get("types") if isinstance(raw.get("types"), list) else []
+    raw_types = raw.get("types")
+    types: list[Any] = raw_types if isinstance(raw_types, list) else []
     rating = raw.get("rating")
     return {
         "placeId": place_id if isinstance(place_id, str) else None,
