@@ -6,11 +6,13 @@ import { notFound } from 'next/navigation'
 import { PublicGuestHeader, PublicGuestShell } from '@/app/(public)/_components/public-guest-shell'
 import { PublicVenueHomeLink } from '@/app/(public)/_components/public-venue-home-link'
 import { PublicVotingsClient } from '@/app/(public)/[slug]/voting/_components/public-votings-client'
+import { PublicGuestPointsSync } from '@/components/public-guest-points-context'
 import { graphqlQuery } from '@/lib/graphql/client'
 import {
   PUBLIC_LOCATION_VOTINGS_QUERY,
   type PublicLocationVotingsData,
 } from '@/lib/graphql/queries/public-location'
+import { loadGuestPointBalance } from '@/lib/public-location/load-guest-point-balance'
 import { isReservedPublicSlug } from '@/lib/public-location/reserved-slugs'
 import { loadPublicLocation } from '@/lib/public-location/load-public-location'
 
@@ -48,17 +50,21 @@ export default async function PublicLocationVotingPage({ params }: PageProps) {
   if (!votingService?.available) notFound()
 
   const { userId } = await auth()
-  const data = await graphqlQuery<PublicLocationVotingsData>(
-    PUBLIC_LOCATION_VOTINGS_QUERY,
-    { slug: location.publicSlug },
-    userId ?? undefined,
-    'PublicLocationVotings',
-  )
+  const [data, pointBalance] = await Promise.all([
+    graphqlQuery<PublicLocationVotingsData>(
+      PUBLIC_LOCATION_VOTINGS_QUERY,
+      { slug: location.publicSlug },
+      userId ?? undefined,
+      'PublicLocationVotings',
+    ),
+    loadGuestPointBalance(location, userId),
+  ])
 
   const hasHeaderImage = Boolean(location.headerImageUrl)
 
   return (
     <PublicGuestShell>
+      <PublicGuestPointsSync balance={pointBalance} />
       <PublicGuestHeader headerImageUrl={location.headerImageUrl}>
         <PublicVenueHomeLink
           slug={location.publicSlug}

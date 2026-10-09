@@ -51,7 +51,7 @@ export function VotingOptionCard({
   }
 
   return (
-    <li className="rounded-md border border-border px-3 py-3">
+    <li className="rounded-xl border border-card-border bg-card px-3 py-3 text-card-foreground">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <p className="text-sm font-medium">{voting.question}</p>
       </div>

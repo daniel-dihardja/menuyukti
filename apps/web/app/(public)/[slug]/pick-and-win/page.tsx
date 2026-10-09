@@ -6,11 +6,13 @@ import { notFound } from 'next/navigation'
 import { PublicGuestHeader, PublicGuestShell } from '@/app/(public)/_components/public-guest-shell'
 import { PublicVenueHomeLink } from '@/app/(public)/_components/public-venue-home-link'
 import { PublicPredictionsClient } from '@/app/(public)/[slug]/pick-and-win/_components/public-predictions-client'
+import { PublicGuestPointsSync } from '@/components/public-guest-points-context'
 import { graphqlQuery } from '@/lib/graphql/client'
 import {
   PUBLIC_LOCATION_PREDICTIONS_QUERY,
   type PublicLocationPredictionsData,
 } from '@/lib/graphql/queries/public-location'
+import { loadGuestPointBalance } from '@/lib/public-location/load-guest-point-balance'
 import { isReservedPublicSlug } from '@/lib/public-location/reserved-slugs'
 import { loadPublicLocation } from '@/lib/public-location/load-public-location'
 
@@ -48,17 +50,21 @@ export default async function PublicLocationPredictionPage({ params }: PageProps
   if (!predictionService?.available) notFound()
 
   const { userId } = await auth()
-  const data = await graphqlQuery<PublicLocationPredictionsData>(
-    PUBLIC_LOCATION_PREDICTIONS_QUERY,
-    { slug: location.publicSlug },
-    userId ?? undefined,
-    'PublicLocationPredictions',
-  )
+  const [data, pointBalance] = await Promise.all([
+    graphqlQuery<PublicLocationPredictionsData>(
+      PUBLIC_LOCATION_PREDICTIONS_QUERY,
+      { slug: location.publicSlug },
+      userId ?? undefined,
+      'PublicLocationPredictions',
+    ),
+    loadGuestPointBalance(location, userId),
+  ])
 
   const hasHeaderImage = Boolean(location.headerImageUrl)
 
   return (
     <PublicGuestShell>
+      <PublicGuestPointsSync balance={pointBalance} />
       <PublicGuestHeader headerImageUrl={location.headerImageUrl}>
         <PublicVenueHomeLink
           slug={location.publicSlug}

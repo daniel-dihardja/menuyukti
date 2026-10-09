@@ -69,7 +69,7 @@ export function PredictionOutcomeCard({
     isResolved && votedOutcomeId != null && winningId != null && votedOutcomeId !== winningId
 
   return (
-    <li className="rounded-md border border-border px-3 py-3">
+    <li className="rounded-xl border border-card-border bg-card px-3 py-3 text-card-foreground">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <p className="text-sm font-medium">{prediction.question}</p>
         {statusBadge(prediction.status, labels)}

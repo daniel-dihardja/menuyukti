@@ -6,15 +6,12 @@ import { notFound } from 'next/navigation'
 import { PublicLocationHub } from '@/app/(public)/[slug]/_components/public-location-hub'
 import { graphqlQuery } from '@/lib/graphql/client'
 import {
-  MY_POINT_BALANCES_QUERY,
-  type MyPointBalancesData,
-} from '@/lib/graphql/queries/point-ledger'
-import {
   PUBLIC_LOCATION_PREDICTIONS_QUERY,
   PUBLIC_LOCATION_VOTINGS_QUERY,
   type PublicLocationPredictionsData,
   type PublicLocationVotingsData,
 } from '@/lib/graphql/queries/public-location'
+import { loadGuestPointBalance } from '@/lib/public-location/load-guest-point-balance'
 import { isReservedPublicSlug } from '@/lib/public-location/reserved-slugs'
 import { loadPublicLocation } from '@/lib/public-location/load-public-location'
 
@@ -71,11 +68,8 @@ export default async function PublicLocationHomePage({ params }: PageProps) {
     location.services.find((s) => s.key === 'pick_and_win')?.available,
   )
   const votingAvailable = Boolean(location.services.find((s) => s.key === 'voting')?.available)
-  const pointSystemAvailable = Boolean(
-    location.services.find((s) => s.key === 'point_system')?.available,
-  )
 
-  const [predictionsResult, votingsResult, balancesResult] = await Promise.all([
+  const [predictionsResult, votingsResult, pointBalance] = await Promise.all([
     predictionAvailable
       ? graphqlQuery<PublicLocationPredictionsData>(
           PUBLIC_LOCATION_PREDICTIONS_QUERY,
@@ -92,16 +86,8 @@ export default async function PublicLocationHomePage({ params }: PageProps) {
           'PublicLocationVotings',
         )
       : Promise.resolve(null),
-    userId && pointSystemAvailable
-      ? graphqlQuery<MyPointBalancesData>(MY_POINT_BALANCES_QUERY, {}, userId, 'MyPointBalances')
-      : Promise.resolve(null),
+    loadGuestPointBalance(location, userId),
   ])
-
-  let pointBalance: number | null = null
-  if (userId && pointSystemAvailable) {
-    const row = balancesResult?.myPointBalances.find((b) => b.locationId === location.id)
-    pointBalance = row?.balance ?? 0
-  }
 
   return (
     <PublicLocationHub
