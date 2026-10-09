@@ -1,7 +1,8 @@
-import { ArrowUpRight, Gift, Sparkles, Trophy, Vote } from 'lucide-react'
+import { ArrowUpRight, Gift, Sparkles, Trophy } from 'lucide-react'
 import Link from 'next/link'
 
 import { PublicHubServiceCard } from '@/app/(public)/[slug]/_components/public-hub-service-card'
+import { PublicHubVoteRow } from '@/app/(public)/[slug]/_components/public-hub-vote-row'
 import { PublicGuestHeader, PublicGuestShell } from '@/app/(public)/_components/public-guest-shell'
 import { PublicGuestPointsSync } from '@/components/public-guest-points-context'
 import { buildLoginUrl } from '@/lib/auth-return-path'
@@ -10,6 +11,8 @@ import type { Voting } from '@/lib/graphql/queries/votings'
 import type { PublicLocationView } from '@/lib/public-location/load-public-location'
 import { routes } from '@/lib/routes'
 import { cn } from '@workspace/ui/lib/utils'
+
+const MAX_HUB_VOTE_ROWS = 3
 
 type HubCopy = {
   lead: string
@@ -23,14 +26,15 @@ type HubCopy = {
   predictionDescription: string
   predictionOpenCount: (count: number) => string
   predictionPoints: (points: number) => string
+  predictionPointsWithCorrect: (vote: number, correct: number) => string
+  predictionRewardInvite: string
   predictionCta: string
   predictionCtaDone: string
-  votingTitle: string
-  votingDescription: string
-  votingOpenCount: (count: number) => string
   votingPoints: (points: number) => string
+  votingRewardInvite: string
   votingCta: string
   votingCtaDone: string
+  votingSeeAll: string
   rewardsTitle: string
   rewardsLead: string
   rewardsCta: string
@@ -70,8 +74,12 @@ export function PublicLocationHub({
   const votingAvailable = serviceAvailable(location, 'voting')
   const pointSystemAvailable = serviceAvailable(location, 'point_system')
   const hasServices = menuAvailable || predictionAvailable || votingAvailable
-  const hasInteractive = predictionAvailable || votingAvailable
   const hasHeaderImage = Boolean(location.headerImageUrl)
+  const openVotings = votings.filter((v) => v.status === 'open')
+  const hubVoteRows = openVotings.slice(0, MAX_HUB_VOTE_ROWS)
+  const hasMoreVotes = openVotings.length > MAX_HUB_VOTE_ROWS
+  const showVotingRows = votingAvailable && hubVoteRows.length > 0
+  const hasInteractive = predictionAvailable || showVotingRows
 
   const menuHref = routes.public.locationMenu(location.publicSlug)
   const predictionHref = routes.public.locationPickAndWin(location.publicSlug)
@@ -98,33 +106,30 @@ export function PublicLocationHub({
   } else if (predictionAvailable) {
     predictionDescription = copy.predictionDescription
   }
-  const predictionPoints =
-    location.predictionTeaser?.rewardMode === 'points' &&
-    location.predictionTeaser.pointsForVote > 0
-      ? copy.predictionPoints(location.predictionTeaser.pointsForVote)
-      : primaryPrediction?.rewardMode === 'points' && primaryPrediction.pointsForVote > 0
-        ? copy.predictionPoints(primaryPrediction.pointsForVote)
-        : null
-
-  const openVotings = votings.filter((v) => v.status === 'open')
-  const primaryVoting = openVotings[0] ?? votings[0] ?? null
-  const votingCompleted = Boolean(primaryVoting?.myVote)
-  let votingDescription: string | null = null
-  if (votingAvailable && location.votingTeaser) {
-    const teaser = location.votingTeaser
-    votingDescription =
-      teaser.openCount > 1
-        ? copy.votingOpenCount(teaser.openCount)
-        : truncateTeaser(teaser.question) || copy.votingDescription
-  } else if (votingAvailable) {
-    votingDescription = copy.votingDescription
+  const predictionRewardMode =
+    location.predictionTeaser?.rewardMode ?? primaryPrediction?.rewardMode ?? null
+  const predictionVotePoints =
+    location.predictionTeaser?.pointsForVote ?? primaryPrediction?.pointsForVote ?? 0
+  const predictionCorrectPoints =
+    location.predictionTeaser?.pointsForCorrect ?? primaryPrediction?.pointsForCorrect ?? 0
+  let predictionPoints: string | null = null
+  if (predictionAvailable) {
+    if (predictionRewardMode === 'points' && predictionVotePoints > 0) {
+      predictionPoints =
+        predictionCorrectPoints > 0
+          ? copy.predictionPointsWithCorrect(predictionVotePoints, predictionCorrectPoints)
+          : copy.predictionPoints(predictionVotePoints)
+    } else {
+      predictionPoints = copy.predictionRewardInvite
+    }
   }
-  const votingPoints =
-    location.votingTeaser?.rewardMode === 'points' && location.votingTeaser.pointsForVote > 0
-      ? copy.votingPoints(location.votingTeaser.pointsForVote)
-      : primaryVoting?.rewardMode === 'points' && primaryVoting.pointsForVote > 0
-        ? copy.votingPoints(primaryVoting.pointsForVote)
-        : null
+
+  function votingRowPoints(voting: Voting): string | null {
+    if (voting.rewardMode === 'points' && voting.pointsForVote > 0) {
+      return copy.votingPoints(voting.pointsForVote)
+    }
+    return copy.votingRewardInvite
+  }
 
   return (
     <PublicGuestShell>
@@ -155,22 +160,22 @@ export function PublicLocationHub({
             href={menuHref}
             aria-label={copy.menuCtaAria}
             className={cn(
-              'public-hub-enter-cta group relative flex w-full flex-col gap-2 overflow-hidden rounded-xl bg-primary px-5 py-5 text-primary-foreground shadow-[var(--shadow-warm-sm)] transition-[transform,box-shadow] duration-200',
-              'hover:shadow-[var(--shadow-warm-md)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+              'public-hub-enter-cta group relative flex w-full flex-col gap-2 overflow-hidden rounded-xl border border-card-border bg-card px-5 py-5 text-card-foreground shadow-[var(--shadow-warm-sm)] transition-[border-color,box-shadow,transform] duration-200',
+              'hover:border-[var(--color-border-strong)] hover:shadow-[var(--shadow-warm-md)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
             )}
           >
             <ArrowUpRight
-              className="absolute end-4 top-4 size-5 opacity-80 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+              className="absolute end-4 top-4 size-5 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
               aria-hidden
             />
             <span className="pe-8 text-xl font-semibold tracking-tight sm:text-2xl">
               {copy.menuTitle}
             </span>
             {menuSubtitle ? (
-              <span className="text-sm font-normal opacity-90">{menuSubtitle}</span>
+              <span className="text-sm font-normal text-muted-foreground">{menuSubtitle}</span>
             ) : null}
             {location.menuOpenPoints != null && location.menuOpenPoints > 0 ? (
-              <span className="mt-1 inline-flex items-center gap-1.5 text-xs font-medium opacity-90">
+              <span className="mt-1 inline-flex items-center gap-1.5 text-xs font-medium text-warning">
                 <Sparkles className="size-3.5 shrink-0" aria-hidden />
                 {copy.menuEarnPoints}
               </span>
@@ -201,21 +206,33 @@ export function PublicLocationHub({
                   completed={predictionCompleted}
                   icon={Trophy}
                   iconWrapClassName="tone-creative text-foreground"
-                  primaryCta
                 />
               ) : null}
 
-              {votingAvailable ? (
-                <PublicHubServiceCard
-                  href={votingHref}
-                  title={copy.votingTitle}
-                  description={votingDescription}
-                  pointsLabel={votingPoints}
-                  ctaLabel={votingCompleted ? copy.votingCtaDone : copy.votingCta}
-                  completed={votingCompleted}
-                  icon={Vote}
-                  iconWrapClassName="tone-analytics text-foreground"
-                />
+              {showVotingRows ? (
+                <div className="flex flex-col gap-2">
+                  {hubVoteRows.map((voting) => {
+                    const completed = Boolean(voting.myVote)
+                    return (
+                      <PublicHubVoteRow
+                        key={voting.id}
+                        href={votingHref}
+                        question={voting.question}
+                        pointsLabel={votingRowPoints(voting)}
+                        ctaLabel={completed ? copy.votingCtaDone : copy.votingCta}
+                        completed={completed}
+                      />
+                    )
+                  })}
+                  {hasMoreVotes ? (
+                    <Link
+                      href={votingHref}
+                      className="self-start pt-1 text-sm font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      {copy.votingSeeAll}
+                    </Link>
+                  ) : null}
+                </div>
               ) : null}
             </div>
           </section>

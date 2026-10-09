@@ -16,7 +16,6 @@ type PublicHubServiceCardProps = {
   icon: LucideIcon
   iconClassName?: string
   iconWrapClassName?: string
-  primaryCta?: boolean
   className?: string
 }
 
@@ -30,7 +29,6 @@ export function PublicHubServiceCard({
   icon: Icon,
   iconClassName,
   iconWrapClassName,
-  primaryCta = false,
   className,
 }: PublicHubServiceCardProps) {
   return (
@@ -65,15 +63,16 @@ export function PublicHubServiceCard({
         <Button
           asChild
           size="lg"
-          variant={primaryCta && !completed ? 'default' : 'outline'}
+          variant="outline"
           className={cn(
-            'h-auto min-h-11 w-full justify-between gap-2 whitespace-normal px-4 py-2.5 text-sm',
-            !primaryCta || completed ? 'border-border bg-card hover:bg-muted/60' : undefined,
+            'h-auto min-h-11 w-full justify-between gap-2 border-border bg-transparent px-4 py-2.5 text-sm font-medium text-foreground shadow-none',
+            'hover:border-[var(--color-border-strong)] hover:bg-muted/40',
+            completed && 'text-muted-foreground',
           )}
         >
           <Link href={href}>
             <span>{ctaLabel}</span>
-            <ArrowRight className="size-4 shrink-0 opacity-80" aria-hidden />
+            <ArrowRight className="size-4 shrink-0 opacity-60" aria-hidden />
           </Link>
         </Button>
       </CardContent>
