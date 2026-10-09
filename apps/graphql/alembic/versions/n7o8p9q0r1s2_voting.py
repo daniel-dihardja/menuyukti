@@ -34,7 +34,7 @@ def upgrade() -> None:
         sa.Column(
             "reward_mode",
             sa.String(length=32),
-            server_default=sa.text("'social'"),
+            server_default=sa.text("'points'"),
             nullable=False,
         ),
         sa.Column(
