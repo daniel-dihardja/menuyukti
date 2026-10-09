@@ -4,7 +4,7 @@ import { cn } from '@workspace/ui/lib/utils'
 
 /** Shared paper wallpaper shell for guest venue surfaces (hub + digital menu). */
 export const publicGuestShellClassName =
-  "text-foreground min-h-screen bg-[#efeae2] bg-[url('/images/public-menu-wallpaper.svg')] bg-repeat bg-[length:360px_360px]"
+  "text-foreground min-h-screen bg-background bg-[url('/images/public-menu-wallpaper.svg')] bg-repeat bg-[length:360px_360px]"
 
 type PublicGuestShellProps = {
   children: ReactNode

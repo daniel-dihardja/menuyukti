@@ -12,11 +12,16 @@ export type PublicLocationService = {
 export type PublicLocationPredictionTeaser = {
   question: string
   openCount: number
+  rewardMode: string
+  pointsForVote: number
+  pointsForCorrect: number
 }
 
 export type PublicLocationVotingTeaser = {
   question: string
   openCount: number
+  rewardMode: string
+  pointsForVote: number
 }
 
 export type PublicLocation = {
@@ -28,6 +33,7 @@ export type PublicLocation = {
   workspaceId: string | null
   mediaOwnerClerkUserId: string | null
   menuDishCount: number | null
+  menuOpenPoints: number | null
   predictionTeaser: PublicLocationPredictionTeaser | null
   votingTeaser: PublicLocationVotingTeaser | null
 }
@@ -47,13 +53,19 @@ export const PUBLIC_LOCATION_QUERY = `
       workspaceId
       mediaOwnerClerkUserId
       menuDishCount
+      menuOpenPoints
       predictionTeaser {
         question
         openCount
+        rewardMode
+        pointsForVote
+        pointsForCorrect
       }
       votingTeaser {
         question
         openCount
+        rewardMode
+        pointsForVote
       }
     }
   }

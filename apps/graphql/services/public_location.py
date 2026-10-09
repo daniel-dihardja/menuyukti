@@ -12,9 +12,14 @@ from graphql.data_sources.models.location import Location
 from graphql.data_sources.models.menu import Menu, MenuItem
 from graphql.data_sources.models.prediction import PREDICTION_STATUS_OPEN, Prediction
 from graphql.data_sources.models.voting import VOTING_STATUS_OPEN, Voting
+from graphql.services.point_earn_rules import (
+    ACTION_KEY_OPEN_MENU_QR,
+    list_rules_for_location,
+)
 from graphql.services.service_subscriptions import (
     SERVICE_KEY_DIGITAL_MENU,
     SERVICE_KEY_PICK_AND_WIN,
+    SERVICE_KEY_POINT_SYSTEM,
     SERVICE_KEY_VOTING,
     is_active_subscription,
 )
@@ -22,6 +27,7 @@ from graphql.services.service_subscriptions import (
 HREF_SEGMENT_MENU = "menu"
 HREF_SEGMENT_PICK_AND_WIN = "pick-and-win"
 HREF_SEGMENT_VOTING = "voting"
+HREF_SEGMENT_POINT_SYSTEM = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -35,12 +41,17 @@ class PublicLocationServiceView:
 class PublicLocationPredictionTeaserView:
     question: str
     open_count: int
+    reward_mode: str
+    points_for_vote: int
+    points_for_correct: int
 
 
 @dataclass(frozen=True, slots=True)
 class PublicLocationVotingTeaserView:
     question: str
     open_count: int
+    reward_mode: str
+    points_for_vote: int
 
 
 @dataclass(frozen=True, slots=True)
@@ -53,6 +64,7 @@ class PublicLocationView:
     workspace_id: str | None
     media_owner_clerk_user_id: str | None
     menu_dish_count: int | None
+    menu_open_points: int | None
     prediction_teaser: PublicLocationPredictionTeaserView | None
     voting_teaser: PublicLocationVotingTeaserView | None
 
@@ -68,6 +80,20 @@ def _menu_dish_count(session: Session, menu_id: int) -> int:
     )
 
 
+def _menu_open_points(
+    session: Session, location_id: int, point_system_available: bool
+) -> int | None:
+    if not point_system_available:
+        return None
+    for rule in list_rules_for_location(session, location_id):
+        if rule.action_key != ACTION_KEY_OPEN_MENU_QR:
+            continue
+        if rule.enabled and rule.points > 0:
+            return int(rule.points)
+        return None
+    return None
+
+
 def _prediction_teaser(
     session: Session, location_id: int
 ) -> PublicLocationPredictionTeaserView | None:
@@ -81,9 +107,13 @@ def _prediction_teaser(
     ).all()
     if not rows:
         return None
+    first = rows[0]
     return PublicLocationPredictionTeaserView(
-        question=rows[0].question,
+        question=first.question,
         open_count=len(rows),
+        reward_mode=str(first.reward_mode),
+        points_for_vote=int(first.points_for_vote),
+        points_for_correct=int(first.points_for_correct),
     )
 
 
@@ -98,9 +128,12 @@ def _voting_teaser(session: Session, location_id: int) -> PublicLocationVotingTe
     ).all()
     if not rows:
         return None
+    first = rows[0]
     return PublicLocationVotingTeaserView(
-        question=rows[0].question,
+        question=first.question,
         open_count=len(rows),
+        reward_mode=str(first.reward_mode),
+        points_for_vote=int(first.points_for_vote),
     )
 
 
@@ -125,6 +158,9 @@ def get_public_location(session: Session, slug: str) -> PublicLocationView | Non
         session, int(location.id), SERVICE_KEY_PICK_AND_WIN
     )
     voting_available = is_active_subscription(session, int(location.id), SERVICE_KEY_VOTING)
+    point_system_available = is_active_subscription(
+        session, int(location.id), SERVICE_KEY_POINT_SYSTEM
+    )
 
     header_image_filename: str | None = None
     workspace_id: str | None = None
@@ -149,6 +185,8 @@ def get_public_location(session: Session, slug: str) -> PublicLocationView | Non
     if voting_available:
         voting_teaser = _voting_teaser(session, int(location.id))
 
+    menu_open_points = _menu_open_points(session, int(location.id), point_system_available)
+
     return PublicLocationView(
         id=int(location.id),
         name=location.name,
@@ -169,11 +207,17 @@ def get_public_location(session: Session, slug: str) -> PublicLocationView | Non
                 href_segment=HREF_SEGMENT_VOTING,
                 available=voting_available,
             ),
+            PublicLocationServiceView(
+                key=SERVICE_KEY_POINT_SYSTEM,
+                href_segment=HREF_SEGMENT_POINT_SYSTEM,
+                available=point_system_available,
+            ),
         ],
         header_image_filename=header_image_filename,
         workspace_id=workspace_id,
         media_owner_clerk_user_id=media_owner,
         menu_dish_count=menu_dish_count,
+        menu_open_points=menu_open_points,
         prediction_teaser=prediction_teaser,
         voting_teaser=voting_teaser,
     )

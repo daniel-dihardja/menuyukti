@@ -18,6 +18,9 @@ class PublicLocationServiceType:
 class PublicLocationPredictionTeaserType:
     question: str
     open_count: int
+    reward_mode: str
+    points_for_vote: int
+    points_for_correct: int
 
 
 @strawberry.type(
@@ -26,6 +29,8 @@ class PublicLocationPredictionTeaserType:
 class PublicLocationVotingTeaserType:
     question: str
     open_count: int
+    reward_mode: str
+    points_for_vote: int
 
 
 @strawberry.type(
@@ -43,5 +48,6 @@ class PublicLocationType:
     workspace_id: strawberry.ID | None
     media_owner_clerk_user_id: str | None
     menu_dish_count: int | None
+    menu_open_points: int | None
     prediction_teaser: PublicLocationPredictionTeaserType | None
     voting_teaser: PublicLocationVotingTeaserType | None

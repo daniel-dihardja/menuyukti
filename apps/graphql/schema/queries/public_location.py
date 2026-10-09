@@ -29,12 +29,17 @@ def _hub_to_gql(view: hub_svc.PublicLocationView) -> PublicLocationType:
         teaser = PublicLocationPredictionTeaserType(
             question=view.prediction_teaser.question,
             open_count=view.prediction_teaser.open_count,
+            reward_mode=view.prediction_teaser.reward_mode,
+            points_for_vote=view.prediction_teaser.points_for_vote,
+            points_for_correct=view.prediction_teaser.points_for_correct,
         )
     voting_teaser = None
     if view.voting_teaser is not None:
         voting_teaser = PublicLocationVotingTeaserType(
             question=view.voting_teaser.question,
             open_count=view.voting_teaser.open_count,
+            reward_mode=view.voting_teaser.reward_mode,
+            points_for_vote=view.voting_teaser.points_for_vote,
         )
     return PublicLocationType(
         id=view.id,
@@ -52,6 +57,7 @@ def _hub_to_gql(view: hub_svc.PublicLocationView) -> PublicLocationType:
         workspace_id=strawberry.ID(view.workspace_id) if view.workspace_id else None,
         media_owner_clerk_user_id=view.media_owner_clerk_user_id,
         menu_dish_count=view.menu_dish_count,
+        menu_open_points=view.menu_open_points,
         prediction_teaser=teaser,
         voting_teaser=voting_teaser,
     )
