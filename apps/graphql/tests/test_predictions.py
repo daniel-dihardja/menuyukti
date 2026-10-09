@@ -17,8 +17,8 @@ from graphql.data_sources import (
 from graphql.data_sources.models.pos_order import PosOrder
 from graphql.schema import schema
 from graphql.services.service_subscriptions import (
-    SERVICE_KEY_POINT_SYSTEM,
     SERVICE_KEY_PICK_AND_WIN,
+    SERVICE_KEY_POINT_SYSTEM,
 )
 from graphql.services.workspace_plan import WORKSPACE_PLAN_PRO
 from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID, graphql_auth_context

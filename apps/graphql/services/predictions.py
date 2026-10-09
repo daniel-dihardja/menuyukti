@@ -24,8 +24,8 @@ from graphql.data_sources.models.prediction import (
 from graphql.data_sources.models.service_subscription import ServiceSubscription
 from graphql.services.point_ledger import award_fixed_amount
 from graphql.services.service_subscriptions import (
-    SERVICE_KEY_POINT_SYSTEM,
     SERVICE_KEY_PICK_AND_WIN,
+    SERVICE_KEY_POINT_SYSTEM,
     SERVICE_STATUS_ACTIVE,
     is_active_subscription,
 )
