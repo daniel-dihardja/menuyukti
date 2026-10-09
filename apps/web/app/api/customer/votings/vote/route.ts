@@ -8,7 +8,7 @@ import { VOTE_VOTING_MUTATION, type VoteVotingData } from '@/lib/graphql/queries
 
 const bodySchema = z.object({
   votingId: z.number().int().positive(),
-  outcomeId: z.number().int().positive(),
+  optionId: z.number().int().positive(),
 })
 
 export async function POST(req: Request) {
@@ -19,10 +19,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { votingId, outcomeId } = bodySchema.parse(await req.json())
+    const { votingId, optionId } = bodySchema.parse(await req.json())
     const data = await graphqlQuery<VoteVotingData>(
       VOTE_VOTING_MUTATION,
-      { votingId, outcomeId },
+      { votingId, optionId },
       userId,
       'VoteVoting',
     )

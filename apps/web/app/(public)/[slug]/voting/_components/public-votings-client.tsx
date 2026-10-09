@@ -6,9 +6,9 @@ import { useAuth } from '@clerk/nextjs'
 import { useTranslations } from 'next-intl'
 
 import {
-  VotingOutcomeCard,
-  type VotingOutcomeCardLabels,
-} from '@/components/votings/voting-outcome-card'
+  VotingOptionCard,
+  type VotingOptionCardLabels,
+} from '@/components/votings/voting-option-card'
 import { buildLoginUrl } from '@/lib/auth-return-path'
 import { type Voting } from '@/lib/graphql/queries/votings'
 import { routes } from '@/lib/routes'
@@ -28,19 +28,19 @@ export function PublicVotingsClient({ slug, votings: initial }: Props) {
 
   const returnPath = routes.public.locationVoting(slug)
 
-  async function handleVote(votingId: number, outcomeId: number) {
+  async function handleVote(votingId: number, optionId: number) {
     if (!isSignedIn) {
       router.push(buildLoginUrl(returnPath))
       return
     }
     setError(null)
-    const key = `${votingId}:${outcomeId}`
+    const key = `${votingId}:${optionId}`
     setBusyKey(key)
     try {
       const res = await fetch('/api/customer/votings/vote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ votingId, outcomeId }),
+        body: JSON.stringify({ votingId, optionId }),
       })
       if (!res.ok) {
         const body = (await res.json().catch(() => null)) as { message?: string } | null
@@ -56,22 +56,14 @@ export function PublicVotingsClient({ slug, votings: initial }: Props) {
     }
   }
 
-  function labelsFor(voting: Voting): VotingOutcomeCardLabels {
+  function labelsFor(voting: Voting): VotingOptionCardLabels {
     return {
       yourPick: t('yourPick'),
       voting: t('voting'),
-      rewardSocial: t('rewardSocial'),
       rewardPoints: t('rewardPoints', {
-        correct: voting.pointsForCorrect,
         vote: voting.pointsForVote,
       }),
-      statusClosed: t('statusClosed'),
-      statusResolved: t('statusResolved'),
-      awaitingResult: t('awaitingResult'),
-      youWereCorrect: t('youWereCorrect'),
-      youWereIncorrect: t('youWereIncorrect'),
-      winnerLabel: t('winnerLabel'),
-      voteCount: t('voteCount', { count: voting.voteCount }),
+      thanks: t('thanks'),
     }
   }
 
@@ -91,13 +83,13 @@ export function PublicVotingsClient({ slug, votings: initial }: Props) {
       ) : (
         <ul className="flex flex-col gap-4">
           {votings.map((voting) => (
-            <VotingOutcomeCard
+            <VotingOptionCard
               key={voting.id}
               voting={voting}
               labels={labelsFor(voting)}
               busyKey={busyKey}
               voteDisabled={!isLoaded}
-              onVote={(outcomeId) => void handleVote(voting.id, outcomeId)}
+              onVote={(optionId) => void handleVote(voting.id, optionId)}
               footer={
                 isLoaded && !isSignedIn && voting.status === 'open' && !voting.myVote ? (
                   <p className="text-xs text-muted-foreground">{t('signInHint')}</p>

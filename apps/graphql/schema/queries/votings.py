@@ -8,7 +8,7 @@ import graphql.services.votings as voting_svc
 from graphql.context import request_session_scope
 from graphql.schema.auth import is_location_owner, user_id_from_info
 from graphql.schema.types.voting import (
-    VotingOutcomeType,
+    VotingOptionType,
     VotingType,
     VotingVoteType,
 )
@@ -17,7 +17,7 @@ from graphql.schema.types.voting import (
 def _vote_to_gql(vote: voting_svc.VoteView) -> VotingVoteType:
     return VotingVoteType(
         id=vote.id,
-        outcome_id=vote.outcome_id,
+        option_id=vote.option_id,
         clerk_user_id=vote.clerk_user_id,
         created_at=vote.created_at,
     )
@@ -34,16 +34,16 @@ def voting_to_gql(view: voting_svc.VotingView) -> VotingType:
         reward_mode=view.reward_mode,
         points_for_vote=view.points_for_vote,
         points_for_correct=view.points_for_correct,
-        winning_outcome_id=view.winning_outcome_id,
+        winning_option_id=view.winning_option_id,
         created_at=view.created_at,
         resolved_at=view.resolved_at,
-        outcomes=[
-            VotingOutcomeType(
+        options=[
+            VotingOptionType(
                 id=o.id,
                 label=o.label,
                 sort_order=o.sort_order,
             )
-            for o in view.outcomes
+            for o in view.options
         ],
         my_vote=_vote_to_gql(view.my_vote) if view.my_vote else None,
         vote_count=view.vote_count,
@@ -76,10 +76,9 @@ class VotingsQuery:
 
     @strawberry.field(
         description=(
-            "Guest votings at locations the authenticated guest has visited "
+            "Open guest votings at locations the authenticated guest has visited "
             "(point ledger or digital-menu orders), with an active voting subscription. "
-            "Includes open votings, plus closed and recently resolved ones the guest voted on. "
-            "Empty when unauthenticated."
+            "Closed votings are hidden. Empty when unauthenticated."
         )
     )
     def my_open_votings(self, info: strawberry.Info) -> list[VotingType]:

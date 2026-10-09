@@ -87,9 +87,7 @@ def _prediction_teaser(
     )
 
 
-def _voting_teaser(
-    session: Session, location_id: int
-) -> PublicLocationVotingTeaserView | None:
+def _voting_teaser(session: Session, location_id: int) -> PublicLocationVotingTeaserView | None:
     rows = session.scalars(
         select(Voting)
         .where(
@@ -123,7 +121,9 @@ def get_public_location(session: Session, slug: str) -> PublicLocationView | Non
         and menu.public_enabled
         and is_active_subscription(session, int(location.id), SERVICE_KEY_DIGITAL_MENU)
     )
-    prediction_available = is_active_subscription(session, int(location.id), SERVICE_KEY_PICK_AND_WIN)
+    prediction_available = is_active_subscription(
+        session, int(location.id), SERVICE_KEY_PICK_AND_WIN
+    )
     voting_available = is_active_subscription(session, int(location.id), SERVICE_KEY_VOTING)
 
     header_image_filename: str | None = None

@@ -37,20 +37,13 @@
     "predictionsVoteCount": "{count, plural, one {# vote} other {# votes}}",
     "profileCta": "Open profile",
     "votingsTitle": "Voting",
-    "votingsLead": "Vote on outcomes at venues you’ve visited, then check back for results. Rewards may be social or points, depending on the venue.",
-    "votingsEmpty": "No votes yet. Visit a venue with Voting on, cast a vote, then check back here for results.",
+    "votingsLead": "Share your preferences at venues you’ve visited. Earn points for casting a vote.",
+    "votingsEmpty": "No votes yet. Visit a venue with Voting on to cast a vote.",
     "votingsLoadError": "Could not load Voting right now. Try again later.",
-    "votingsRewardSocial": "Social reward — bragging rights",
-    "votingsRewardPoints": "+{vote} for voting · +{correct} if correct",
+    "votingsRewardPoints": "+{vote} for voting",
     "votingsYourPick": "Your vote",
+    "votingsThanks": "Thanks for voting!",
     "votingsVoting": "Voting…",
-    "votingsVoteFailed": "Could not cast your vote.",
-    "votingsStatusClosed": "Closed",
-    "votingsStatusResolved": "Resolved",
-    "votingsAwaitingResult": "Voting closed — result soon.",
-    "votingsYouWereCorrect": "You were right",
-    "votingsYouWereIncorrect": "You were incorrect",
-    "votingsWinnerLabel": "Winner",
-    "votingsVoteCount": "{count, plural, one {# vote} other {# votes}}"
+    "votingsVoteFailed": "Could not cast your vote."
   }
 }

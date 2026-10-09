@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
@@ -24,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@workspace/ui/components/select'
+import { GuestSurfacePreview } from '@/components/services/guest-surface-preview'
 import {
   REWARD_MODE_POINTS,
   REWARD_MODE_SOCIAL,
@@ -72,11 +73,20 @@ export function PredictionConsole({
   const [actionError, setActionError] = useState<string | null>(null)
   const [busyId, setBusyId] = useState<number | null>(null)
   const [resolvePick, setResolvePick] = useState<Record<number, string>>({})
+  const [previewNonce, setPreviewNonce] = useState(0)
+
+  useEffect(() => {
+    setPredictions(initialPredictions)
+  }, [initialPredictions])
 
   const locationSlug = initialPublicSlug?.trim() || ''
   const liveHomePath = locationSlug ? routes.public.locationHome(locationSlug) : null
   const livePredictionPath = locationSlug ? routes.public.locationPickAndWin(locationSlug) : null
   const locationBasicsHref = routes.analytics.branchesDetail(locationId)
+
+  function bumpPreview() {
+    setPreviewNonce((n) => n + 1)
+  }
 
   async function handleCopyPath(path: string, key: string) {
     try {
@@ -147,6 +157,7 @@ export function PredictionConsole({
       setQuestion('')
       setOutcomes(['', ''])
       setClosesAt(defaultClosesAtLocal())
+      bumpPreview()
       router.refresh()
     } catch (err) {
       setCreateError(err instanceof Error ? err.message : t('createFailed'))
@@ -170,6 +181,7 @@ export function PredictionConsole({
       }
       const updated = (await res.json()) as Prediction
       setPredictions((prev) => prev.map((p) => (p.id === updated.id ? updated : p)))
+      bumpPreview()
       router.refresh()
     } catch (err) {
       setActionError(err instanceof Error ? err.message : t('closeFailed'))
@@ -199,6 +211,7 @@ export function PredictionConsole({
       }
       const updated = (await res.json()) as Prediction
       setPredictions((prev) => prev.map((p) => (p.id === updated.id ? updated : p)))
+      bumpPreview()
       router.refresh()
     } catch (err) {
       setActionError(err instanceof Error ? err.message : t('resolveFailed'))
@@ -214,14 +227,302 @@ export function PredictionConsole({
   }
 
   return (
-    <div className="flex max-w-2xl flex-col gap-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">{t('publicLinksTitle')}</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          {!locationSlug ? (
-            <p className="text-muted-foreground text-sm">
+    <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
+      <div className="flex min-w-0 max-w-2xl flex-1 flex-col gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">{t('publicLinksTitle')}</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            {!locationSlug ? (
+              <p className="text-muted-foreground text-sm">
+                {t('slugMissingHint')}{' '}
+                <Link
+                  href={locationBasicsHref}
+                  className="text-foreground underline-offset-4 hover:underline"
+                >
+                  {t('editLocationBasics')}
+                </Link>
+              </p>
+            ) : null}
+            {liveHomePath ? (
+              <Field>
+                <FieldLabel htmlFor="pred-home-url">{t('locationHomeUrl')}</FieldLabel>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Input
+                    id="pred-home-url"
+                    value={liveHomePath}
+                    readOnly
+                    className="font-mono text-xs"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => void handleCopyPath(liveHomePath, 'home')}
+                  >
+                    {copiedKey === 'home' ? t('copiedLink') : t('copyLink')}
+                  </Button>
+                  <Button asChild type="button" variant="ghost">
+                    <Link href={liveHomePath} target="_blank" rel="noreferrer">
+                      {t('openLink')}
+                    </Link>
+                  </Button>
+                </div>
+              </Field>
+            ) : null}
+            {livePredictionPath ? (
+              <Field>
+                <FieldLabel htmlFor="pred-page-url">{t('predictionUrl')}</FieldLabel>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Input
+                    id="pred-page-url"
+                    value={livePredictionPath}
+                    readOnly
+                    className="font-mono text-xs"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => void handleCopyPath(livePredictionPath, 'pick-and-win')}
+                  >
+                    {copiedKey === 'pick-and-win' ? t('copiedLink') : t('copyLink')}
+                  </Button>
+                  <Button asChild type="button" variant="ghost">
+                    <Link href={livePredictionPath} target="_blank" rel="noreferrer">
+                      {t('openLink')}
+                    </Link>
+                  </Button>
+                </div>
+              </Field>
+            ) : null}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">{t('createTitle')}</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            <Field>
+              <FieldLabel htmlFor="pred-question">{t('questionLabel')}</FieldLabel>
+              <Input
+                id="pred-question"
+                value={question}
+                onChange={(e) => setQuestion(e.target.value)}
+                placeholder={t('questionPlaceholder')}
+                disabled={creating}
+              />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="pred-closes">{t('closesAtLabel')}</FieldLabel>
+              <DateTimePicker
+                id="pred-closes"
+                value={closesAt}
+                onChange={setClosesAt}
+                disabled={creating}
+                placeholder={t('closesAtPlaceholder')}
+                timeLabel={t('closesAtTimeLabel')}
+              />
+            </Field>
+            <div className="flex flex-col gap-2">
+              <FieldLabel>{t('outcomesLabel')}</FieldLabel>
+              {outcomes.map((outcome, index) => (
+                <div key={index} className="flex gap-2">
+                  <Input
+                    value={outcome}
+                    onChange={(e) =>
+                      setOutcomes((prev) => prev.map((v, i) => (i === index ? e.target.value : v)))
+                    }
+                    placeholder={t('outcomePlaceholder', { index: index + 1 })}
+                    disabled={creating}
+                  />
+                  {outcomes.length > 2 ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setOutcomes((prev) => prev.filter((_, i) => i !== index))}
+                      disabled={creating}
+                    >
+                      {t('removeOutcome')}
+                    </Button>
+                  ) : null}
+                </div>
+              ))}
+              <Button
+                type="button"
+                variant="secondary"
+                className="w-fit"
+                onClick={() => setOutcomes((prev) => [...prev, ''])}
+                disabled={creating}
+              >
+                {t('addOutcome')}
+              </Button>
+            </div>
+            <Field>
+              <FieldLabel>{t('rewardModeLabel')}</FieldLabel>
+              <Select
+                value={rewardMode}
+                onValueChange={(v) => setRewardMode(v as PredictionRewardMode)}
+                disabled={creating}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={REWARD_MODE_SOCIAL}>{t('rewardModeSocial')}</SelectItem>
+                  <SelectItem value={REWARD_MODE_POINTS} disabled={!pointSystemActive}>
+                    {t('rewardModePoints')}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              {!pointSystemActive ? (
+                <p className="text-muted-foreground text-xs">{t('pointsRequiredHint')}</p>
+              ) : null}
+            </Field>
+            {rewardMode === REWARD_MODE_POINTS ? (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field>
+                  <FieldLabel htmlFor="pred-vote-pts">{t('pointsForVoteLabel')}</FieldLabel>
+                  <Input
+                    id="pred-vote-pts"
+                    type="number"
+                    min={0}
+                    step={1}
+                    value={pointsForVote}
+                    onChange={(e) => setPointsForVote(e.target.value)}
+                    disabled={creating}
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="pred-correct-pts">{t('pointsForCorrectLabel')}</FieldLabel>
+                  <Input
+                    id="pred-correct-pts"
+                    type="number"
+                    min={0}
+                    step={1}
+                    value={pointsForCorrect}
+                    onChange={(e) => setPointsForCorrect(e.target.value)}
+                    disabled={creating}
+                  />
+                </Field>
+                <p className="text-muted-foreground text-xs sm:col-span-2">{t('pointsHelp')}</p>
+              </div>
+            ) : null}
+            {createError ? <p className="text-destructive text-sm">{createError}</p> : null}
+            <Button
+              type="button"
+              className="w-fit"
+              onClick={() => void handleCreate()}
+              disabled={creating}
+            >
+              {creating ? t('creating') : t('createCta')}
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">{t('listTitle')}</CardTitle>
+            {actionError ? (
+              <CardDescription className="text-destructive">{actionError}</CardDescription>
+            ) : null}
+          </CardHeader>
+          <CardContent>
+            {predictions.length === 0 ? (
+              <p className="text-muted-foreground text-sm">{t('listEmpty')}</p>
+            ) : (
+              <ul className="divide-border divide-y">
+                {predictions.map((prediction) => {
+                  const busy = busyId === prediction.id
+                  return (
+                    <li
+                      key={prediction.id}
+                      className="flex flex-col gap-3 py-4 first:pt-0 last:pb-0"
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <div className="flex min-w-0 flex-col gap-1">
+                          <p className="text-sm font-medium">{prediction.question}</p>
+                          <p className="text-muted-foreground text-xs">
+                            {t('voteCount', { count: prediction.voteCount })} ·{' '}
+                            {prediction.rewardMode === REWARD_MODE_POINTS
+                              ? t('rewardModePoints')
+                              : t('rewardModeSocial')}
+                          </p>
+                        </div>
+                        {statusBadge(prediction.status)}
+                      </div>
+                      <ul className="text-muted-foreground flex flex-wrap gap-2 text-xs">
+                        {prediction.outcomes.map((outcome) => (
+                          <li
+                            key={outcome.id}
+                            className="border-border rounded-md border px-2 py-1"
+                          >
+                            {outcome.label}
+                            {prediction.winningOutcomeId === outcome.id ? ' ✓' : ''}
+                          </li>
+                        ))}
+                      </ul>
+                      {prediction.status === 'open' || prediction.status === 'closed' ? (
+                        <div className="flex flex-wrap items-end gap-2">
+                          {prediction.status === 'open' ? (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              disabled={busy}
+                              onClick={() => void handleClose(prediction.id)}
+                            >
+                              {busy ? t('closing') : t('closeCta')}
+                            </Button>
+                          ) : null}
+                          <div className="flex min-w-[12rem] flex-1 flex-col gap-1">
+                            <FieldLabel className="text-xs">{t('winningOutcomeLabel')}</FieldLabel>
+                            <Select
+                              value={resolvePick[prediction.id] ?? ''}
+                              onValueChange={(v) =>
+                                setResolvePick((prev) => ({ ...prev, [prediction.id]: v }))
+                              }
+                              disabled={busy}
+                            >
+                              <SelectTrigger className="w-full">
+                                <SelectValue placeholder={t('winningOutcomePlaceholder')} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {prediction.outcomes.map((outcome) => (
+                                  <SelectItem key={outcome.id} value={String(outcome.id)}>
+                                    {outcome.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <Button
+                            type="button"
+                            size="sm"
+                            disabled={busy || !resolvePick[prediction.id]}
+                            onClick={() => void handleResolve(prediction.id)}
+                          >
+                            {busy ? t('resolving') : t('resolveCta')}
+                          </Button>
+                        </div>
+                      ) : null}
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <GuestSurfacePreview
+        livePath={livePredictionPath}
+        previewKey={previewNonce}
+        title={t('previewTitle')}
+        openLabel={t('previewOpen')}
+        placeholder={
+          !locationSlug ? (
+            <p>
               {t('slugMissingHint')}{' '}
               <Link
                 href={locationBasicsHref}
@@ -230,269 +531,11 @@ export function PredictionConsole({
                 {t('editLocationBasics')}
               </Link>
             </p>
-          ) : null}
-          {liveHomePath ? (
-            <Field>
-              <FieldLabel htmlFor="pred-home-url">{t('locationHomeUrl')}</FieldLabel>
-              <div className="flex flex-wrap items-center gap-2">
-                <Input
-                  id="pred-home-url"
-                  value={liveHomePath}
-                  readOnly
-                  className="font-mono text-xs"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => void handleCopyPath(liveHomePath, 'home')}
-                >
-                  {copiedKey === 'home' ? t('copiedLink') : t('copyLink')}
-                </Button>
-                <Button asChild type="button" variant="ghost">
-                  <Link href={liveHomePath} target="_blank" rel="noreferrer">
-                    {t('openLink')}
-                  </Link>
-                </Button>
-              </div>
-            </Field>
-          ) : null}
-          {livePredictionPath ? (
-            <Field>
-              <FieldLabel htmlFor="pred-page-url">{t('predictionUrl')}</FieldLabel>
-              <div className="flex flex-wrap items-center gap-2">
-                <Input
-                  id="pred-page-url"
-                  value={livePredictionPath}
-                  readOnly
-                  className="font-mono text-xs"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => void handleCopyPath(livePredictionPath, 'pick-and-win')}
-                >
-                  {copiedKey === 'pick-and-win' ? t('copiedLink') : t('copyLink')}
-                </Button>
-                <Button asChild type="button" variant="ghost">
-                  <Link href={livePredictionPath} target="_blank" rel="noreferrer">
-                    {t('openLink')}
-                  </Link>
-                </Button>
-              </div>
-            </Field>
-          ) : null}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">{t('createTitle')}</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          <Field>
-            <FieldLabel htmlFor="pred-question">{t('questionLabel')}</FieldLabel>
-            <Input
-              id="pred-question"
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              placeholder={t('questionPlaceholder')}
-              disabled={creating}
-            />
-          </Field>
-          <Field>
-            <FieldLabel htmlFor="pred-closes">{t('closesAtLabel')}</FieldLabel>
-            <DateTimePicker
-              id="pred-closes"
-              value={closesAt}
-              onChange={setClosesAt}
-              disabled={creating}
-              placeholder={t('closesAtPlaceholder')}
-              timeLabel={t('closesAtTimeLabel')}
-            />
-          </Field>
-          <div className="flex flex-col gap-2">
-            <FieldLabel>{t('outcomesLabel')}</FieldLabel>
-            {outcomes.map((outcome, index) => (
-              <div key={index} className="flex gap-2">
-                <Input
-                  value={outcome}
-                  onChange={(e) =>
-                    setOutcomes((prev) => prev.map((v, i) => (i === index ? e.target.value : v)))
-                  }
-                  placeholder={t('outcomePlaceholder', { index: index + 1 })}
-                  disabled={creating}
-                />
-                {outcomes.length > 2 ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setOutcomes((prev) => prev.filter((_, i) => i !== index))}
-                    disabled={creating}
-                  >
-                    {t('removeOutcome')}
-                  </Button>
-                ) : null}
-              </div>
-            ))}
-            <Button
-              type="button"
-              variant="secondary"
-              className="w-fit"
-              onClick={() => setOutcomes((prev) => [...prev, ''])}
-              disabled={creating}
-            >
-              {t('addOutcome')}
-            </Button>
-          </div>
-          <Field>
-            <FieldLabel>{t('rewardModeLabel')}</FieldLabel>
-            <Select
-              value={rewardMode}
-              onValueChange={(v) => setRewardMode(v as PredictionRewardMode)}
-              disabled={creating}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={REWARD_MODE_SOCIAL}>{t('rewardModeSocial')}</SelectItem>
-                <SelectItem value={REWARD_MODE_POINTS} disabled={!pointSystemActive}>
-                  {t('rewardModePoints')}
-                </SelectItem>
-              </SelectContent>
-            </Select>
-            {!pointSystemActive ? (
-              <p className="text-muted-foreground text-xs">{t('pointsRequiredHint')}</p>
-            ) : null}
-          </Field>
-          {rewardMode === REWARD_MODE_POINTS ? (
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field>
-                <FieldLabel htmlFor="pred-vote-pts">{t('pointsForVoteLabel')}</FieldLabel>
-                <Input
-                  id="pred-vote-pts"
-                  type="number"
-                  min={0}
-                  step={1}
-                  value={pointsForVote}
-                  onChange={(e) => setPointsForVote(e.target.value)}
-                  disabled={creating}
-                />
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="pred-correct-pts">{t('pointsForCorrectLabel')}</FieldLabel>
-                <Input
-                  id="pred-correct-pts"
-                  type="number"
-                  min={0}
-                  step={1}
-                  value={pointsForCorrect}
-                  onChange={(e) => setPointsForCorrect(e.target.value)}
-                  disabled={creating}
-                />
-              </Field>
-              <p className="text-muted-foreground text-xs sm:col-span-2">{t('pointsHelp')}</p>
-            </div>
-          ) : null}
-          {createError ? <p className="text-destructive text-sm">{createError}</p> : null}
-          <Button
-            type="button"
-            className="w-fit"
-            onClick={() => void handleCreate()}
-            disabled={creating}
-          >
-            {creating ? t('creating') : t('createCta')}
-          </Button>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">{t('listTitle')}</CardTitle>
-          {actionError ? (
-            <CardDescription className="text-destructive">{actionError}</CardDescription>
-          ) : null}
-        </CardHeader>
-        <CardContent>
-          {predictions.length === 0 ? (
-            <p className="text-muted-foreground text-sm">{t('listEmpty')}</p>
           ) : (
-            <ul className="divide-border divide-y">
-              {predictions.map((prediction) => {
-                const busy = busyId === prediction.id
-                return (
-                  <li key={prediction.id} className="flex flex-col gap-3 py-4 first:pt-0 last:pb-0">
-                    <div className="flex flex-wrap items-start justify-between gap-2">
-                      <div className="flex min-w-0 flex-col gap-1">
-                        <p className="text-sm font-medium">{prediction.question}</p>
-                        <p className="text-muted-foreground text-xs">
-                          {t('voteCount', { count: prediction.voteCount })} ·{' '}
-                          {prediction.rewardMode === REWARD_MODE_POINTS
-                            ? t('rewardModePoints')
-                            : t('rewardModeSocial')}
-                        </p>
-                      </div>
-                      {statusBadge(prediction.status)}
-                    </div>
-                    <ul className="text-muted-foreground flex flex-wrap gap-2 text-xs">
-                      {prediction.outcomes.map((outcome) => (
-                        <li key={outcome.id} className="border-border rounded-md border px-2 py-1">
-                          {outcome.label}
-                          {prediction.winningOutcomeId === outcome.id ? ' ✓' : ''}
-                        </li>
-                      ))}
-                    </ul>
-                    {prediction.status === 'open' || prediction.status === 'closed' ? (
-                      <div className="flex flex-wrap items-end gap-2">
-                        {prediction.status === 'open' ? (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            disabled={busy}
-                            onClick={() => void handleClose(prediction.id)}
-                          >
-                            {busy ? t('closing') : t('closeCta')}
-                          </Button>
-                        ) : null}
-                        <div className="flex min-w-[12rem] flex-1 flex-col gap-1">
-                          <FieldLabel className="text-xs">{t('winningOutcomeLabel')}</FieldLabel>
-                          <Select
-                            value={resolvePick[prediction.id] ?? ''}
-                            onValueChange={(v) =>
-                              setResolvePick((prev) => ({ ...prev, [prediction.id]: v }))
-                            }
-                            disabled={busy}
-                          >
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder={t('winningOutcomePlaceholder')} />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {prediction.outcomes.map((outcome) => (
-                                <SelectItem key={outcome.id} value={String(outcome.id)}>
-                                  {outcome.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <Button
-                          type="button"
-                          size="sm"
-                          disabled={busy || !resolvePick[prediction.id]}
-                          onClick={() => void handleResolve(prediction.id)}
-                        >
-                          {busy ? t('resolving') : t('resolveCta')}
-                        </Button>
-                      </div>
-                    ) : null}
-                  </li>
-                )
-              })}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
+            <p>{t('previewPlaceholder')}</p>
+          )
+        }
+      />
     </div>
   )
 }

@@ -111,10 +111,7 @@ async function CustomerVotingsData() {
     return (
       <CustomerVotingsSection
         key={data.myOpenVotings
-          .map(
-            (v) =>
-              `${v.id}:${v.status}:${v.winningOutcomeId ?? ''}:${v.resolvedAt ?? ''}:${v.myVote?.outcomeId ?? ''}`,
-          )
+          .map((v) => `${v.id}:${v.status}:${v.myVote?.optionId ?? ''}:${v.voteCount}`)
           .join('|')}
         votings={data.myOpenVotings}
       />

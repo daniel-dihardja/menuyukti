@@ -15,8 +15,9 @@ from graphql.schema.types.voting import CreateVotingInput, VotingType
 class CreateVotingMutation:
     @strawberry.mutation(
         description=(
-            "Create a voting for a location. Requires location ownership and an "
-            "active voting subscription. reward_mode=points also requires point_system."
+            "Create a voting for a location. Requires location ownership, an "
+            "active voting subscription, and an active point_system subscription. "
+            "Rewards are points-only. The vote stays open until the owner closes it."
         )
     )
     def create_voting(
@@ -33,11 +34,9 @@ class CreateVotingMutation:
                 session,
                 location_id=input.location_id,
                 question=input.question,
-                closes_at=input.closes_at,
-                outcome_labels=list(input.outcomes),
+                option_labels=list(input.options),
                 reward_mode=input.reward_mode,
                 points_for_vote=input.points_for_vote,
-                points_for_correct=input.points_for_correct,
             )
             session.commit()
             return voting_to_gql(view)

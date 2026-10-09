@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import Link from 'next/link'
@@ -34,13 +34,24 @@ type Props = {
   open: boolean
   onOpenChange: (open: boolean) => void
   locations: EnableLocationOption[]
+  pointSystemLocationIds: number[]
 }
 
-export function EnableLocationDialog({ open, onOpenChange, locations }: Props) {
+export function EnableLocationDialog({
+  open,
+  onOpenChange,
+  locations,
+  pointSystemLocationIds,
+}: Props) {
   const t = useTranslations('services.voting.enable')
   const router = useRouter()
+  const pointSystemIds = useMemo(() => new Set(pointSystemLocationIds), [pointSystemLocationIds])
+  const eligibleLocations = useMemo(
+    () => locations.filter((location) => pointSystemIds.has(location.id)),
+    [locations, pointSystemIds],
+  )
   const [locationId, setLocationId] = useState<string>(
-    locations.length === 1 ? String(locations[0]!.id) : '',
+    eligibleLocations.length === 1 ? String(eligibleLocations[0]!.id) : '',
   )
   const [isActivating, setIsActivating] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -48,6 +59,10 @@ export function EnableLocationDialog({ open, onOpenChange, locations }: Props) {
   async function handleConfirm() {
     const id = Number(locationId)
     if (!Number.isInteger(id) || id < 1) return
+    if (!pointSystemIds.has(id)) {
+      setError(t('pointsRequired'))
+      return
+    }
     setError(null)
     setIsActivating(true)
     try {
@@ -60,8 +75,15 @@ export function EnableLocationDialog({ open, onOpenChange, locations }: Props) {
         }),
       })
       if (!res.ok) {
-        const body = (await res.json().catch(() => null)) as { message?: string } | null
-        throw new Error(body?.message || t('activateFailed'))
+        const body = (await res.json().catch(() => null)) as {
+          message?: string
+          details?: unknown
+        } | null
+        const detail =
+          Array.isArray(body?.details) && body.details[0]?.message
+            ? String(body.details[0].message)
+            : null
+        throw new Error(detail || body?.message || t('activateFailed'))
       }
       onOpenChange(false)
       router.push(routes.servicesVotingLocation(id))
@@ -88,6 +110,13 @@ export function EnableLocationDialog({ open, onOpenChange, locations }: Props) {
               <Link href={routes.analytics.branches}>{t('createLocationCta')}</Link>
             </Button>
           </div>
+        ) : eligibleLocations.length === 0 ? (
+          <div className="flex flex-col gap-3">
+            <p className="text-muted-foreground text-sm">{t('pointsRequired')}</p>
+            <Button asChild variant="secondary">
+              <Link href={routes.servicesPointSystem}>{t('enablePointSystemCta')}</Link>
+            </Button>
+          </div>
         ) : (
           <Field>
             <FieldLabel htmlFor="enable-voting-location">{t('locationLabel')}</FieldLabel>
@@ -96,7 +125,7 @@ export function EnableLocationDialog({ open, onOpenChange, locations }: Props) {
                 <SelectValue placeholder={t('locationPlaceholder')} />
               </SelectTrigger>
               <SelectContent>
-                {locations.map((location) => (
+                {eligibleLocations.map((location) => (
                   <SelectItem key={location.id} value={String(location.id)}>
                     {location.name}
                   </SelectItem>
@@ -117,7 +146,7 @@ export function EnableLocationDialog({ open, onOpenChange, locations }: Props) {
           >
             {t('cancel')}
           </Button>
-          {locations.length > 0 ? (
+          {eligibleLocations.length > 0 ? (
             <Button
               type="button"
               onClick={() => void handleConfirm()}

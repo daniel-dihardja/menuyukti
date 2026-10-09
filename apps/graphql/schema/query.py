@@ -28,7 +28,6 @@ from graphql.schema.queries import (
     PostsQuery,
     PredictionsQuery,
     PromotionMenuItemsQuery,
-    VotingsQuery,
     PublicHolidaysQuery,
     PublicLocationMenuQuery,
     PublicLocationQuery,
@@ -36,6 +35,7 @@ from graphql.schema.queries import (
     SchedulerCalendarQuery,
     ServiceSubscriptionsQuery,
     StylesQuery,
+    VotingsQuery,
     WorkspaceQuery,
 )
 

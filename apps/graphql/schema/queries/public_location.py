@@ -110,8 +110,8 @@ class PublicLocationQuery:
 
     @strawberry.field(
         description=(
-            "Guest-visible votings for a public location slug when Voting is active: "
-            "open, closed (awaiting result), and recently resolved. "
+            "Guest-visible open votings for a public location slug when Voting is active. "
+            "Closed votings are hidden from guests. "
             "Empty when the slug is unknown or Voting is off. "
             "Includes myVote when the caller is authenticated."
         )

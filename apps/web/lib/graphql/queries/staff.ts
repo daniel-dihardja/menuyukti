@@ -73,6 +73,7 @@ export const CLEAR_WORKSPACE_SERVICE_DATA_MUTATION = `
       earnRulesDeleted
       posOrdersDeleted
       menuCategoriesCleared
+      subscriptionsCanceled
       notes
     }
   }
@@ -89,6 +90,7 @@ export type ClearWorkspaceServiceDataResult = {
   earnRulesDeleted: number
   posOrdersDeleted: number
   menuCategoriesCleared: number
+  subscriptionsCanceled: number
   notes: string[]
 }
 

@@ -51,6 +51,7 @@ class ClearServiceDataResultType:
     earn_rules_deleted: int
     pos_orders_deleted: int
     menu_categories_cleared: int
+    subscriptions_canceled: int
     notes: list[str] = strawberry.field(default_factory=list)
 
 
@@ -66,6 +67,7 @@ def _to_gql(result: ClearServiceDataResult) -> ClearServiceDataResultType:
         earn_rules_deleted=result.earn_rules_deleted,
         pos_orders_deleted=result.pos_orders_deleted,
         menu_categories_cleared=result.menu_categories_cleared,
+        subscriptions_canceled=result.subscriptions_canceled,
         notes=list(result.notes),
     )
 
@@ -75,8 +77,8 @@ class ClearWorkspaceServiceDataMutation:
     @strawberry.mutation(
         description=(
             "Clear location-scoped domain data for one service across a Clerk user's "
-            "workspace. Does not cancel subscriptions. Staff BFF only; blocked in "
-            "production unless ALLOW_DEV_DATA_INGEST=1."
+            "workspace and cancel that service's active subscriptions. Staff BFF only; "
+            "blocked in production unless ALLOW_DEV_DATA_INGEST=1."
         )
     )
     def clear_workspace_service_data(

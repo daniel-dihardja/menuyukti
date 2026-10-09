@@ -1,9 +1,9 @@
-"""Location-scoped voting poll: create, vote, resolve, optional point awards."""
+"""Location-scoped voting poll: create, vote, close, points rewards."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -11,21 +11,21 @@ from sqlalchemy.orm import Session, selectinload
 
 from graphql.data_sources.models.point_ledger_entry import PointLedgerEntry
 from graphql.data_sources.models.pos_order import PosOrder
+from graphql.data_sources.models.service_subscription import ServiceSubscription
 from graphql.data_sources.models.voting import (
     KNOWN_REWARD_MODES,
+    REWARD_MODE_POINTS,
     VOTING_STATUS_CLOSED,
     VOTING_STATUS_OPEN,
     VOTING_STATUS_RESOLVED,
-    REWARD_MODE_POINTS,
     Voting,
-    VotingOutcome,
+    VotingOption,
     VotingVote,
 )
-from graphql.data_sources.models.service_subscription import ServiceSubscription
 from graphql.services.point_ledger import award_fixed_amount
 from graphql.services.service_subscriptions import (
-    SERVICE_KEY_VOTING,
     SERVICE_KEY_POINT_SYSTEM,
+    SERVICE_KEY_VOTING,
     SERVICE_STATUS_ACTIVE,
     is_active_subscription,
 )
@@ -33,18 +33,9 @@ from graphql.services.service_subscriptions import (
 ACTION_KEY_VOTING_VOTE = "voting_vote"
 ACTION_KEY_VOTING_CORRECT = "voting_correct"
 
-# How long resolved votings stay visible on guest surfaces.
-GUEST_RESOLVED_RETENTION_DAYS = 14
-
-_STATUS_SORT_RANK = {
-    VOTING_STATUS_OPEN: 0,
-    VOTING_STATUS_CLOSED: 1,
-    VOTING_STATUS_RESOLVED: 2,
-}
-
 
 @dataclass(frozen=True, slots=True)
-class OutcomeView:
+class OptionView:
     id: int
     label: str
     sort_order: int
@@ -53,7 +44,7 @@ class OutcomeView:
 @dataclass(frozen=True, slots=True)
 class VoteView:
     id: int
-    outcome_id: int
+    option_id: int
     clerk_user_id: str
     created_at: datetime
 
@@ -65,14 +56,14 @@ class VotingView:
     location_name: str
     question: str
     status: str
-    closes_at: datetime
+    closes_at: datetime | None
     reward_mode: str
     points_for_vote: int
     points_for_correct: int
-    winning_outcome_id: int | None
+    winning_option_id: int | None
     created_at: datetime
     resolved_at: datetime | None
-    outcomes: list[OutcomeView]
+    options: list[OptionView]
     my_vote: VoteView | None
     vote_count: int
 
@@ -95,16 +86,6 @@ def _now() -> datetime:
     return datetime.now(UTC)
 
 
-def _maybe_auto_close(session: Session, voting: Voting) -> None:
-    if voting.status != VOTING_STATUS_OPEN:
-        return
-    closes = voting.closes_at
-    if closes.tzinfo is None:
-        closes = closes.replace(tzinfo=UTC)
-    if _now() >= closes:
-        voting.status = VOTING_STATUS_CLOSED
-
-
 def _to_view(
     voting: Voting,
     *,
@@ -117,7 +98,7 @@ def _to_view(
             if vote.clerk_user_id == clerk_user_id:
                 my_vote = VoteView(
                     id=int(vote.id),
-                    outcome_id=int(vote.outcome_id),
+                    option_id=int(vote.option_id),
                     clerk_user_id=vote.clerk_user_id,
                     created_at=vote.created_at,
                 )
@@ -132,20 +113,18 @@ def _to_view(
         reward_mode=voting.reward_mode,
         points_for_vote=int(voting.points_for_vote),
         points_for_correct=int(voting.points_for_correct),
-        winning_outcome_id=(
-            int(voting.winning_outcome_id)
-            if voting.winning_outcome_id is not None
-            else None
+        winning_option_id=(
+            int(voting.winning_option_id) if voting.winning_option_id is not None else None
         ),
         created_at=voting.created_at,
         resolved_at=voting.resolved_at,
-        outcomes=[
-            OutcomeView(
+        options=[
+            OptionView(
                 id=int(o.id),
                 label=o.label,
                 sort_order=int(o.sort_order),
             )
-            for o in voting.outcomes
+            for o in voting.options
         ],
         my_vote=my_vote,
         vote_count=len(voting.votes),
@@ -157,7 +136,7 @@ def _load_voting(session: Session, voting_id: int) -> Voting | None:
         select(Voting)
         .where(Voting.id == voting_id)
         .options(
-            selectinload(Voting.outcomes),
+            selectinload(Voting.options),
             selectinload(Voting.votes),
             selectinload(Voting.location),
         )
@@ -173,15 +152,12 @@ def list_votings_for_location(
         select(Voting)
         .where(Voting.location_id == location_id)
         .options(
-            selectinload(Voting.outcomes),
+            selectinload(Voting.options),
             selectinload(Voting.votes),
             selectinload(Voting.location),
         )
         .order_by(Voting.created_at.desc())
     ).all()
-    for row in rows:
-        _maybe_auto_close(session, row)
-    session.flush()
     return [_to_view(row, location_name=row.location.name if row.location else "") for row in rows]
 
 
@@ -201,72 +177,38 @@ def _guest_touched_location_ids(session: Session, clerk_user_id: str) -> set[int
     return {int(x) for x in (from_ledger | from_orders)}
 
 
-def _resolved_retention_cutoff() -> datetime:
-    return _now() - timedelta(days=GUEST_RESOLVED_RETENTION_DAYS)
-
-
-def _is_recently_resolved(voting: Voting) -> bool:
-    if voting.status != VOTING_STATUS_RESOLVED:
-        return False
-    resolved = voting.resolved_at
-    if resolved is None:
-        return False
-    if resolved.tzinfo is None:
-        resolved = resolved.replace(tzinfo=UTC)
-    return resolved >= _resolved_retention_cutoff()
-
-
-def _guest_has_vote(voting: Voting, clerk_user_id: str) -> bool:
-    return any(vote.clerk_user_id == clerk_user_id for vote in voting.votes)
-
-
 def _sort_guest_voting_views(views: list[VotingView]) -> list[VotingView]:
-    """Open first (by closes_at), then closed, then resolved (newest resolved_at first)."""
+    """Newest open votings first."""
 
-    def key(view: VotingView) -> tuple[int, float]:
-        rank = _STATUS_SORT_RANK.get(view.status, 99)
-        closes = view.closes_at
-        if closes.tzinfo is None:
-            closes = closes.replace(tzinfo=UTC)
-        if view.status == VOTING_STATUS_RESOLVED:
-            resolved = view.resolved_at or closes
-            if resolved.tzinfo is None:
-                resolved = resolved.replace(tzinfo=UTC)
-            return (rank, -resolved.timestamp())
-        return (rank, closes.timestamp())
+    def key(view: VotingView) -> float:
+        created = view.created_at
+        if created.tzinfo is None:
+            created = created.replace(tzinfo=UTC)
+        return -created.timestamp()
 
     return sorted(views, key=key)
 
 
-def _load_guest_votings_for_location(
+def _load_open_votings_for_location(
     session: Session,
     *,
     location_id: int,
 ) -> list[Voting]:
-    rows = list(
+    return list(
         session.scalars(
             select(Voting)
             .where(
                 Voting.location_id == location_id,
-                Voting.status.in_(
-                    [
-                        VOTING_STATUS_OPEN,
-                        VOTING_STATUS_CLOSED,
-                        VOTING_STATUS_RESOLVED,
-                    ]
-                ),
+                Voting.status == VOTING_STATUS_OPEN,
             )
             .options(
-                selectinload(Voting.outcomes),
+                selectinload(Voting.options),
                 selectinload(Voting.votes),
                 selectinload(Voting.location),
             )
+            .order_by(Voting.created_at.desc())
         ).all()
     )
-    for row in rows:
-        _maybe_auto_close(session, row)
-    session.flush()
-    return rows
 
 
 def list_open_votings_for_location(
@@ -275,34 +217,25 @@ def list_open_votings_for_location(
     location_id: int,
     clerk_user_id: str | None = None,
 ) -> list[VotingView]:
-    """Guest-visible votings at one location (public venue surface).
+    """Guest-visible open votings at one location (public venue surface).
 
-    Includes open, closed (awaiting result), and resolved within the retention window.
+    Closed votings are hidden from guests.
     """
     if not is_active_subscription(session, location_id, SERVICE_KEY_VOTING):
         return []
 
     user_id = (clerk_user_id or "").strip() or None
-    rows = _load_guest_votings_for_location(session, location_id=location_id)
-
-    views: list[VotingView] = []
-    for row in rows:
-        if row.status == VOTING_STATUS_RESOLVED and not _is_recently_resolved(row):
-            continue
-        if row.status not in (
-            VOTING_STATUS_OPEN,
-            VOTING_STATUS_CLOSED,
-            VOTING_STATUS_RESOLVED,
-        ):
-            continue
-        views.append(
+    rows = _load_open_votings_for_location(session, location_id=location_id)
+    return _sort_guest_voting_views(
+        [
             _to_view(
                 row,
                 location_name=row.location.name if row.location else "",
                 clerk_user_id=user_id,
             )
-        )
-    return _sort_guest_voting_views(views)
+            for row in rows
+        ]
+    )
 
 
 def list_open_votings_for_guest(
@@ -310,9 +243,9 @@ def list_open_votings_for_guest(
     *,
     clerk_user_id: str,
 ) -> list[VotingView]:
-    """Guest home votings at touched venues with an active Voting subscription.
+    """Guest home: open votings at touched venues with an active Voting subscription.
 
-    Includes all open votings, plus closed/recently-resolved only when the guest voted.
+    Closed votings are hidden from guests.
     """
     user_id = (clerk_user_id or "").strip()
     if not user_id:
@@ -336,40 +269,15 @@ def list_open_votings_for_guest(
 
     views: list[VotingView] = []
     for location_id in sorted(int(x) for x in active_voting_locations):
-        rows = _load_guest_votings_for_location(session, location_id=location_id)
+        rows = _load_open_votings_for_location(session, location_id=location_id)
         for row in rows:
-            if row.status == VOTING_STATUS_OPEN:
-                views.append(
-                    _to_view(
-                        row,
-                        location_name=row.location.name if row.location else "",
-                        clerk_user_id=user_id,
-                    )
+            views.append(
+                _to_view(
+                    row,
+                    location_name=row.location.name if row.location else "",
+                    clerk_user_id=user_id,
                 )
-                continue
-            if row.status == VOTING_STATUS_CLOSED:
-                if not _guest_has_vote(row, user_id):
-                    continue
-                views.append(
-                    _to_view(
-                        row,
-                        location_name=row.location.name if row.location else "",
-                        clerk_user_id=user_id,
-                    )
-                )
-                continue
-            if row.status == VOTING_STATUS_RESOLVED:
-                if not _is_recently_resolved(row):
-                    continue
-                if not _guest_has_vote(row, user_id):
-                    continue
-                views.append(
-                    _to_view(
-                        row,
-                        location_name=row.location.name if row.location else "",
-                        clerk_user_id=user_id,
-                    )
-                )
+            )
     return _sort_guest_voting_views(views)
 
 
@@ -378,11 +286,9 @@ def create_voting(
     *,
     location_id: int,
     question: str,
-    closes_at: datetime,
-    outcome_labels: list[str],
+    option_labels: list[str],
     reward_mode: str,
     points_for_vote: int = 0,
-    points_for_correct: int = 0,
 ) -> VotingView:
     require_active_voting(session, location_id)
 
@@ -392,46 +298,38 @@ def create_voting(
     if len(q) > 512:
         raise ValueError("question must be at most 512 characters")
 
-    labels = [(label or "").strip() for label in outcome_labels]
+    labels = [(label or "").strip() for label in option_labels]
     labels = [label for label in labels if label]
     if len(labels) < 2:
-        raise ValueError("At least two outcomes are required")
+        raise ValueError("At least two options are required")
     if any(len(label) > 256 for label in labels):
-        raise ValueError("outcome labels must be at most 256 characters")
+        raise ValueError("option labels must be at most 256 characters")
 
     mode = normalize_reward_mode(reward_mode)
+    if mode != REWARD_MODE_POINTS:
+        raise ValueError("voting only supports reward_mode=points")
     vote_pts = max(0, int(points_for_vote))
-    correct_pts = max(0, int(points_for_correct))
 
-    if mode == REWARD_MODE_POINTS:
-        if not is_active_subscription(session, location_id, SERVICE_KEY_POINT_SYSTEM):
-            raise ValueError("point_system subscription is required when reward_mode is points")
-        if correct_pts <= 0 and vote_pts <= 0:
-            raise ValueError(
-                "points_for_correct or points_for_vote must be > 0 when reward_mode is points"
-            )
-
-    closes = closes_at
-    if closes.tzinfo is None:
-        closes = closes.replace(tzinfo=UTC)
-    if closes <= _now():
-        raise ValueError("closes_at must be in the future")
+    if not is_active_subscription(session, location_id, SERVICE_KEY_POINT_SYSTEM):
+        raise ValueError("point_system subscription is required for voting")
+    if vote_pts <= 0:
+        raise ValueError("points_for_vote must be > 0")
 
     voting = Voting(
         location_id=location_id,
         question=q,
         status=VOTING_STATUS_OPEN,
-        closes_at=closes,
+        closes_at=None,
         reward_mode=mode,
         points_for_vote=vote_pts,
-        points_for_correct=correct_pts,
+        points_for_correct=0,
     )
     session.add(voting)
     session.flush()
 
     for index, label in enumerate(labels):
         session.add(
-            VotingOutcome(
+            VotingOption(
                 voting_id=voting.id,
                 label=label,
                 sort_order=index,
@@ -467,7 +365,7 @@ def vote_voting(
     *,
     clerk_user_id: str,
     voting_id: int,
-    outcome_id: int,
+    option_id: int,
 ) -> VotingView:
     user_id = (clerk_user_id or "").strip()
     if not user_id:
@@ -478,15 +376,13 @@ def vote_voting(
         raise ValueError("Voting not found")
 
     require_active_voting(session, int(voting.location_id))
-    _maybe_auto_close(session, voting)
-    session.flush()
 
     if voting.status != VOTING_STATUS_OPEN:
         raise ValueError("Voting is closed for this voting")
 
-    outcome_ids = {int(o.id) for o in voting.outcomes}
-    if int(outcome_id) not in outcome_ids:
-        raise ValueError("outcome_id is not valid for this voting")
+    option_ids = {int(o.id) for o in voting.options}
+    if int(option_id) not in option_ids:
+        raise ValueError("option_id is not valid for this voting")
 
     existing = next(
         (v for v in voting.votes if v.clerk_user_id == user_id),
@@ -500,7 +396,7 @@ def vote_voting(
             vote = VotingVote(
                 voting_id=voting.id,
                 clerk_user_id=user_id,
-                outcome_id=int(outcome_id),
+                option_id=int(option_id),
             )
             session.add(vote)
             session.flush()
@@ -524,49 +420,4 @@ def vote_voting(
         loaded,
         location_name=loaded.location.name if loaded.location else "",
         clerk_user_id=user_id,
-    )
-
-
-def resolve_voting(
-    session: Session,
-    *,
-    voting_id: int,
-    location_id: int,
-    winning_outcome_id: int,
-) -> VotingView:
-    require_active_voting(session, location_id)
-    voting = _load_voting(session, voting_id)
-    if voting is None or int(voting.location_id) != location_id:
-        raise ValueError("Voting not found")
-    if voting.status == VOTING_STATUS_RESOLVED:
-        raise ValueError("Voting is already resolved")
-
-    outcome_ids = {int(o.id) for o in voting.outcomes}
-    if int(winning_outcome_id) not in outcome_ids:
-        raise ValueError("winning_outcome_id is not valid for this voting")
-
-    voting.status = VOTING_STATUS_RESOLVED
-    voting.winning_outcome_id = int(winning_outcome_id)
-    voting.resolved_at = _now()
-    session.flush()
-
-    if voting.reward_mode == REWARD_MODE_POINTS and int(voting.points_for_correct) > 0:
-        for vote in voting.votes:
-            if int(vote.outcome_id) != int(winning_outcome_id):
-                continue
-            award_fixed_amount(
-                session,
-                clerk_user_id=vote.clerk_user_id,
-                location_id=location_id,
-                amount=int(voting.points_for_correct),
-                action_key=ACTION_KEY_VOTING_CORRECT,
-                source_ref=f"voting:{voting.id}:correct",
-                label=f"Correct: {voting.question[:80]}",
-            )
-
-    loaded = _load_voting(session, int(voting.id))
-    assert loaded is not None
-    return _to_view(
-        loaded,
-        location_name=loaded.location.name if loaded.location else "",
     )

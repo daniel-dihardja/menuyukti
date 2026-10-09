@@ -7,12 +7,25 @@ import { graphqlQuery } from '@/lib/graphql/client'
 import {
   ACTIVATE_SERVICE_SUBSCRIPTION_MUTATION,
   CANCEL_SERVICE_SUBSCRIPTION_MUTATION,
-  SERVICE_KEYS,
+  SERVICE_KEY_CASHBACK,
+  SERVICE_KEY_DIGITAL_MENU,
+  SERVICE_KEY_PICK_AND_WIN,
+  SERVICE_KEY_POINT_SYSTEM,
+  SERVICE_KEY_STAMP_CARD,
+  SERVICE_KEY_VOTING,
   type ActivateServiceSubscriptionData,
   type CancelServiceSubscriptionData,
 } from '@/lib/graphql/queries/service-subscriptions'
 
-const serviceKeySchema = z.enum(SERVICE_KEYS)
+/** Keep in sync with SERVICE_KEYS — listed explicitly so Turbopack cannot serve a stale enum. */
+const serviceKeySchema = z.enum([
+  SERVICE_KEY_DIGITAL_MENU,
+  SERVICE_KEY_POINT_SYSTEM,
+  SERVICE_KEY_STAMP_CARD,
+  SERVICE_KEY_CASHBACK,
+  SERVICE_KEY_PICK_AND_WIN,
+  SERVICE_KEY_VOTING,
+])
 
 const bodySchema = z.object({
   locationId: z.number().int().positive(),

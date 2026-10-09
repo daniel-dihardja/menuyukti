@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 
 import {
-  VotingOutcomeCard,
-  type VotingOutcomeCardLabels,
-} from '@/components/votings/voting-outcome-card'
+  VotingOptionCard,
+  type VotingOptionCardLabels,
+} from '@/components/votings/voting-option-card'
 import { type Voting } from '@/lib/graphql/queries/votings'
 
 type Props = {
@@ -22,15 +22,15 @@ export function CustomerVotingsSection({ votings: initial, loadError = false }: 
   const [busyKey, setBusyKey] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  async function handleVote(votingId: number, outcomeId: number) {
+  async function handleVote(votingId: number, optionId: number) {
     setError(null)
-    const key = `${votingId}:${outcomeId}`
+    const key = `${votingId}:${optionId}`
     setBusyKey(key)
     try {
       const res = await fetch('/api/customer/votings/vote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ votingId, outcomeId }),
+        body: JSON.stringify({ votingId, optionId }),
       })
       if (!res.ok) {
         const body = (await res.json().catch(() => null)) as { message?: string } | null
@@ -46,22 +46,14 @@ export function CustomerVotingsSection({ votings: initial, loadError = false }: 
     }
   }
 
-  function labelsFor(voting: Voting): VotingOutcomeCardLabels {
+  function labelsFor(voting: Voting): VotingOptionCardLabels {
     return {
       yourPick: t('votingsYourPick'),
       voting: t('votingsVoting'),
-      rewardSocial: t('votingsRewardSocial'),
       rewardPoints: t('votingsRewardPoints', {
-        correct: voting.pointsForCorrect,
         vote: voting.pointsForVote,
       }),
-      statusClosed: t('votingsStatusClosed'),
-      statusResolved: t('votingsStatusResolved'),
-      awaitingResult: t('votingsAwaitingResult'),
-      youWereCorrect: t('votingsYouWereCorrect'),
-      youWereIncorrect: t('votingsYouWereIncorrect'),
-      winnerLabel: t('votingsWinnerLabel'),
-      voteCount: t('votingsVoteCount', { count: voting.voteCount }),
+      thanks: t('votingsThanks'),
     }
   }
 
@@ -84,13 +76,13 @@ export function CustomerVotingsSection({ votings: initial, loadError = false }: 
       ) : (
         <ul className="mt-4 flex flex-col gap-4">
           {votings.map((voting) => (
-            <VotingOutcomeCard
+            <VotingOptionCard
               key={voting.id}
               voting={voting}
               labels={labelsFor(voting)}
               locationLine={voting.locationName}
               busyKey={busyKey}
-              onVote={(outcomeId) => void handleVote(voting.id, outcomeId)}
+              onVote={(optionId) => void handleVote(voting.id, optionId)}
             />
           ))}
         </ul>

@@ -11,6 +11,7 @@ import { getCachedLocationsListData } from '@/lib/graphql/cached-queries'
 import { graphqlQuery } from '@/lib/graphql/client'
 import {
   MY_SERVICE_SUBSCRIPTIONS_QUERY,
+  SERVICE_KEY_POINT_SYSTEM,
   SERVICE_KEY_VOTING,
   SERVICE_STATUS_ACTIVE,
   type MyServiceSubscriptionsData,
@@ -70,7 +71,20 @@ async function VotingPdpData() {
       return [{ id, name }]
     })
 
-  return <VotingPdpClient locations={locations} connectedLocations={connectedLocations} />
+  const pointSystemLocationIds = subscriptionsData.myServiceSubscriptions
+    .filter(
+      (row) => row.serviceKey === SERVICE_KEY_POINT_SYSTEM && row.status === SERVICE_STATUS_ACTIVE,
+    )
+    .map((row) => Number(row.locationId))
+    .filter((id) => Number.isInteger(id) && id >= 1)
+
+  return (
+    <VotingPdpClient
+      locations={locations}
+      connectedLocations={connectedLocations}
+      pointSystemLocationIds={pointSystemLocationIds}
+    />
+  )
 }
 
 export default async function VotingServicePage() {

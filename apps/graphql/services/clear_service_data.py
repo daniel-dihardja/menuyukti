@@ -21,9 +21,10 @@ from graphql.data_sources.models.prediction import (
     PredictionOutcome,
     PredictionVote,
 )
+from graphql.data_sources.models.service_subscription import ServiceSubscription
 from graphql.data_sources.models.voting import (
     Voting,
-    VotingOutcome,
+    VotingOption,
     VotingVote,
 )
 from graphql.data_sources.models.workspace import Workspace, WorkspaceMembership
@@ -40,6 +41,8 @@ from graphql.services.service_subscriptions import (
     SERVICE_KEY_POINT_SYSTEM,
     SERVICE_KEY_STAMP_CARD,
     SERVICE_KEY_VOTING,
+    SERVICE_STATUS_ACTIVE,
+    cancel_subscription,
     normalize_service_key,
 )
 from graphql.services.votings import (
@@ -74,6 +77,7 @@ class ClearServiceDataResult:
     earn_rules_deleted: int = 0
     pos_orders_deleted: int = 0
     menu_categories_cleared: int = 0
+    subscriptions_canceled: int = 0
     notes: list[str] = field(default_factory=list)
 
 
@@ -188,11 +192,11 @@ def _clear_voting(
         synchronize_session=False
     )
     session.query(Voting).filter(Voting.id.in_(voting_ids)).update(
-        {Voting.winning_outcome_id: None},
+        {Voting.winning_option_id: None},
         synchronize_session=False,
     )
     session.flush()
-    session.query(VotingOutcome).filter(VotingOutcome.voting_id.in_(voting_ids)).delete(
+    session.query(VotingOption).filter(VotingOption.voting_id.in_(voting_ids)).delete(
         synchronize_session=False
     )
     deleted = (
@@ -295,6 +299,40 @@ _CLEAR_HANDLERS: dict[str, Callable[[Session, list[int], ClearServiceDataResult]
 }
 
 
+def _cancel_service_subscriptions(
+    session: Session,
+    *,
+    location_ids: list[int],
+    service_key: str,
+    result: ClearServiceDataResult,
+) -> None:
+    """Cancel active entitlements for ``service_key`` on the cleared locations."""
+    if not location_ids:
+        return
+
+    active_location_ids = [
+        int(row[0])
+        for row in session.query(ServiceSubscription.location_id)
+        .filter(
+            ServiceSubscription.location_id.in_(location_ids),
+            ServiceSubscription.service_key == service_key,
+            ServiceSubscription.status == SERVICE_STATUS_ACTIVE,
+        )
+        .all()
+    ]
+    if not active_location_ids:
+        return
+
+    canceled = 0
+    for location_id in active_location_ids:
+        location = session.get(Location, location_id)
+        if location is None:
+            continue
+        cancel_subscription(session, location=location, service_key=service_key)
+        canceled += 1
+    result.subscriptions_canceled += canceled
+
+
 def clear_workspace_service_data(
     session: Session,
     *,
@@ -303,8 +341,8 @@ def clear_workspace_service_data(
 ) -> ClearServiceDataResult:
     """Clear domain data for ``service_key`` across all locations in the user's workspace.
 
-    Does not cancel ``service_subscription`` rows or delete locations/workspace.
-    Caller commits.
+    Also cancels active ``service_subscription`` rows for that key. Does not delete
+    locations or the workspace. Caller commits.
     """
     key = normalize_service_key(service_key)
     if key not in _CLEAR_HANDLERS:
@@ -324,5 +362,12 @@ def clear_workspace_service_data(
 
     handler = _CLEAR_HANDLERS[key]
     handler(session, location_ids, result)
+    # cashback raises before we get here; stamp_card is a domain no-op but still cancel entitlements
+    _cancel_service_subscriptions(
+        session,
+        location_ids=location_ids,
+        service_key=key,
+        result=result,
+    )
     session.flush()
     return result

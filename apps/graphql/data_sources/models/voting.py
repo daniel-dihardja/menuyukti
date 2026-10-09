@@ -1,4 +1,4 @@
-"""Location-scoped voting poll: question, outcomes, and guest votes."""
+"""Location-scoped voting poll: question, options, and guest votes."""
 
 from __future__ import annotations
 
@@ -61,12 +61,15 @@ class Voting(Base):
         default=VOTING_STATUS_OPEN,
         server_default=text(f"'{VOTING_STATUS_OPEN}'"),
     )
-    closes_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    closes_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
     reward_mode: Mapped[str] = mapped_column(
         String(32),
         nullable=False,
-        default=REWARD_MODE_SOCIAL,
-        server_default=text(f"'{REWARD_MODE_SOCIAL}'"),
+        default=REWARD_MODE_POINTS,
+        server_default=text(f"'{REWARD_MODE_POINTS}'"),
     )
     points_for_vote: Mapped[int] = mapped_column(
         Integer,
@@ -80,13 +83,13 @@ class Voting(Base):
         default=0,
         server_default="0",
     )
-    winning_outcome_id: Mapped[int | None] = mapped_column(
+    winning_option_id: Mapped[int | None] = mapped_column(
         Integer,
         ForeignKey(
-            "voting_outcome.id",
+            "voting_option.id",
             ondelete="SET NULL",
             use_alter=True,
-            name="fk_voting_winning_outcome_id",
+            name="fk_voting_winning_option_id",
         ),
         nullable=True,
     )
@@ -110,12 +113,12 @@ class Voting(Base):
         "Location",
         back_populates="votings",
     )
-    outcomes: Mapped[list[VotingOutcome]] = relationship(
-        "VotingOutcome",
+    options: Mapped[list[VotingOption]] = relationship(
+        "VotingOption",
         back_populates="voting",
         cascade="all, delete-orphan",
-        foreign_keys="VotingOutcome.voting_id",
-        order_by="VotingOutcome.sort_order, VotingOutcome.id",
+        foreign_keys="VotingOption.voting_id",
+        order_by="VotingOption.sort_order, VotingOption.id",
     )
     votes: Mapped[list[VotingVote]] = relationship(
         "VotingVote",
@@ -123,17 +126,17 @@ class Voting(Base):
         cascade="all, delete-orphan",
         order_by="VotingVote.created_at",
     )
-    winning_outcome: Mapped[VotingOutcome | None] = relationship(
-        "VotingOutcome",
-        foreign_keys=[winning_outcome_id],
+    winning_option: Mapped[VotingOption | None] = relationship(
+        "VotingOption",
+        foreign_keys=[winning_option_id],
         post_update=True,
     )
 
 
-class VotingOutcome(Base):
-    """One labeled outcome option on a voting."""
+class VotingOption(Base):
+    """One labeled option on a voting."""
 
-    __tablename__ = "voting_outcome"
+    __tablename__ = "voting_option"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     voting_id: Mapped[int] = mapped_column(
@@ -152,12 +155,12 @@ class VotingOutcome(Base):
 
     voting: Mapped[Voting] = relationship(
         "Voting",
-        back_populates="outcomes",
+        back_populates="options",
         foreign_keys=[voting_id],
     )
     votes: Mapped[list[VotingVote]] = relationship(
         "VotingVote",
-        back_populates="outcome",
+        back_populates="option",
     )
 
 
@@ -182,9 +185,9 @@ class VotingVote(Base):
         index=True,
     )
     clerk_user_id: Mapped[str] = mapped_column(String(128), nullable=False)
-    outcome_id: Mapped[int] = mapped_column(
+    option_id: Mapped[int] = mapped_column(
         Integer,
-        ForeignKey("voting_outcome.id", ondelete="CASCADE"),
+        ForeignKey("voting_option.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
@@ -198,7 +201,7 @@ class VotingVote(Base):
         "Voting",
         back_populates="votes",
     )
-    outcome: Mapped[VotingOutcome] = relationship(
-        "VotingOutcome",
+    option: Mapped[VotingOption] = relationship(
+        "VotingOption",
         back_populates="votes",
     )

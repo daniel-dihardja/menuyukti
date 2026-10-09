@@ -9,31 +9,20 @@ import {
   CREATE_VOTING_MUTATION,
   VOTINGS_QUERY,
   REWARD_MODE_POINTS,
-  REWARD_MODE_SOCIAL,
-  RESOLVE_VOTING_MUTATION,
   type CloseVotingData,
   type CreateVotingData,
   type VotingsData,
-  type ResolveVotingData,
 } from '@/lib/graphql/queries/votings'
 
 const createBodySchema = z.object({
   locationId: z.number().int().positive(),
   question: z.string().trim().min(1).max(512),
-  closesAt: z.string().min(1),
-  outcomes: z.array(z.string().trim().min(1).max(256)).min(2),
-  rewardMode: z.enum([REWARD_MODE_SOCIAL, REWARD_MODE_POINTS]),
-  pointsForVote: z.number().int().min(0).default(0),
-  pointsForCorrect: z.number().int().min(0).default(0),
+  options: z.array(z.string().trim().min(1).max(256)).min(2),
+  pointsForVote: z.number().int().positive(),
 })
 
 const closeBodySchema = z.object({
   votingId: z.number().int().positive(),
-})
-
-const resolveBodySchema = z.object({
-  votingId: z.number().int().positive(),
-  winningOutcomeId: z.number().int().positive(),
 })
 
 export async function GET(req: Request) {
@@ -74,11 +63,9 @@ export async function POST(req: Request) {
         input: {
           locationId: body.locationId,
           question: body.question,
-          closesAt: body.closesAt,
-          outcomes: body.outcomes,
-          rewardMode: body.rewardMode,
+          options: body.options,
+          rewardMode: REWARD_MODE_POINTS,
           pointsForVote: body.pointsForVote,
-          pointsForCorrect: body.pointsForCorrect,
         },
       },
       userId,
@@ -112,17 +99,6 @@ export async function PATCH(req: Request) {
         'CloseVoting',
       )
       return NextResponse.json(data.closeVoting, { status: 200 })
-    }
-
-    if (action === 'resolve') {
-      const { votingId, winningOutcomeId } = resolveBodySchema.parse(raw)
-      const data = await graphqlQuery<ResolveVotingData>(
-        RESOLVE_VOTING_MUTATION,
-        { votingId, winningOutcomeId },
-        userId,
-        'ResolveVoting',
-      )
-      return NextResponse.json(data.resolveVoting, { status: 200 })
     }
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 })

@@ -24,7 +24,7 @@ class VoteVotingMutation:
         self,
         info: strawberry.Info,
         voting_id: int,
-        outcome_id: int,
+        option_id: int,
     ) -> VotingType:
         user_id = user_id_from_info(info)
         if not user_id:
@@ -34,7 +34,7 @@ class VoteVotingMutation:
                 session,
                 clerk_user_id=user_id,
                 voting_id=voting_id,
-                outcome_id=outcome_id,
+                option_id=option_id,
             )
             session.commit()
             return voting_to_gql(view)

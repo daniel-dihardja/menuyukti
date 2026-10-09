@@ -83,6 +83,11 @@ def activate_subscription(
     if location.workspace_id is None:
         raise ValueError("Location must belong to a workspace to subscribe to services")
 
+    if key == SERVICE_KEY_VOTING and not is_active_subscription(
+        session, location.id, SERVICE_KEY_POINT_SYSTEM
+    ):
+        raise ValueError("point_system subscription is required before enabling voting")
+
     row = get_subscription(session, location.id, key)
     if row is None:
         row = ServiceSubscription(

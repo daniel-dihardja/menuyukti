@@ -81,6 +81,7 @@ describe('POST /api/staff/clear-service-data', () => {
         earnRulesDeleted: 0,
         posOrdersDeleted: 0,
         menuCategoriesCleared: 0,
+        subscriptionsCanceled: 1,
         notes: [],
       },
     })

@@ -1,11 +1,10 @@
 /** Voting service GraphQL documents. */
 
-export const REWARD_MODE_SOCIAL = 'social' as const
 export const REWARD_MODE_POINTS = 'points' as const
 
-export type VotingRewardMode = typeof REWARD_MODE_SOCIAL | typeof REWARD_MODE_POINTS
+export type VotingRewardMode = typeof REWARD_MODE_POINTS
 
-export type VotingOutcome = {
+export type VotingOption = {
   id: number
   label: string
   sortOrder: number
@@ -13,7 +12,7 @@ export type VotingOutcome = {
 
 export type VotingVote = {
   id: number
-  outcomeId: number
+  optionId: number
   clerkUserId: string
   createdAt: string
 }
@@ -24,14 +23,14 @@ export type Voting = {
   locationName: string
   question: string
   status: string
-  closesAt: string
+  closesAt: string | null
   rewardMode: string
   pointsForVote: number
   pointsForCorrect: number
-  winningOutcomeId: number | null
+  winningOptionId: number | null
   createdAt: string
   resolvedAt: string | null
-  outcomes: VotingOutcome[]
+  options: VotingOption[]
   myVote: VotingVote | null
   voteCount: number
 }
@@ -46,17 +45,17 @@ const VOTING_FIELDS = `
   rewardMode
   pointsForVote
   pointsForCorrect
-  winningOutcomeId
+  winningOptionId
   createdAt
   resolvedAt
-  outcomes {
+  options {
     id
     label
     sortOrder
   }
   myVote {
     id
-    outcomeId
+    optionId
     clerkUserId
     createdAt
   }
@@ -111,21 +110,9 @@ export type CloseVotingData = {
   closeVoting: Voting
 }
 
-export const RESOLVE_VOTING_MUTATION = `
-  mutation ResolveVoting($votingId: Int!, $winningOutcomeId: Int!) {
-    resolveVoting(votingId: $votingId, winningOutcomeId: $winningOutcomeId) {
-      ${VOTING_FIELDS}
-    }
-  }
-`
-
-export type ResolveVotingData = {
-  resolveVoting: Voting
-}
-
 export const VOTE_VOTING_MUTATION = `
-  mutation VoteVoting($votingId: Int!, $outcomeId: Int!) {
-    voteVoting(votingId: $votingId, outcomeId: $outcomeId) {
+  mutation VoteVoting($votingId: Int!, $optionId: Int!) {
+    voteVoting(votingId: $votingId, optionId: $optionId) {
       ${VOTING_FIELDS}
     }
   }

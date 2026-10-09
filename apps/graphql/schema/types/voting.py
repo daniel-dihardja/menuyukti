@@ -7,8 +7,8 @@ from datetime import datetime
 import strawberry
 
 
-@strawberry.type(description="One outcome option on a voting.")
-class VotingOutcomeType:
+@strawberry.type(description="One option on a voting.")
+class VotingOptionType:
     id: int
     label: str
     sort_order: int
@@ -17,7 +17,7 @@ class VotingOutcomeType:
 @strawberry.type(description="A guest's vote on a voting.")
 class VotingVoteType:
     id: int
-    outcome_id: int
+    option_id: int
     clerk_user_id: str
     created_at: datetime
 
@@ -29,14 +29,14 @@ class VotingType:
     location_name: str
     question: str
     status: str
-    closes_at: datetime
+    closes_at: datetime | None
     reward_mode: str
     points_for_vote: int
     points_for_correct: int
-    winning_outcome_id: int | None
+    winning_option_id: int | None
     created_at: datetime
     resolved_at: datetime | None
-    outcomes: list[VotingOutcomeType]
+    options: list[VotingOptionType]
     my_vote: VotingVoteType | None
     vote_count: int
 
@@ -45,8 +45,6 @@ class VotingType:
 class CreateVotingInput:
     location_id: int
     question: str
-    closes_at: datetime
-    outcomes: list[str]
-    reward_mode: str = "social"
+    options: list[str]
+    reward_mode: str = "points"
     points_for_vote: int = 0
-    points_for_correct: int = 0

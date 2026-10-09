@@ -108,25 +108,18 @@
     },
     "voting": {
       "title": "Voting",
-      "lead": "Choose an outcome before voting closes, then check back for the result.",
-      "leadSignedOut": "Choose an outcome before voting closes, then check back for the result. Sign in to cast your vote.",
+      "lead": "Choose an option to share your preference. Voting earns points.",
+      "leadSignedOut": "Choose an option to share your preference. Sign in to cast your vote and earn points.",
       "empty": "No votes right now.",
       "notFoundTitle": "Voting not found",
       "metaTitle": "Voting · {name}",
       "metaDescription": "Vote at {name}.",
-      "rewardSocial": "Social reward — bragging rights",
-      "rewardPoints": "+{vote} for voting · +{correct} if correct",
+      "rewardPoints": "+{vote} for voting",
       "yourPick": "Your vote",
+      "thanks": "Thanks for voting!",
       "voting": "Voting…",
       "voteFailed": "Could not cast your vote.",
-      "signInHint": "Sign in to vote.",
-      "statusClosed": "Closed",
-      "statusResolved": "Resolved",
-      "awaitingResult": "Voting closed — result soon.",
-      "youWereCorrect": "You were right",
-      "youWereIncorrect": "You were incorrect",
-      "winnerLabel": "Winner",
-      "voteCount": "{count, plural, one {# vote} other {# votes}}"
+      "signInHint": "Sign in to vote."
     }
   }
 }

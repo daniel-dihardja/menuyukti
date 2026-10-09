@@ -11,8 +11,8 @@ from .create_playbook import CreatePlaybookMutation
 from .create_post import CreatePostMutation
 from .create_post_page import CreatePostPageMutation
 from .create_prediction import CreatePredictionMutation
-from .create_voting import CreateVotingMutation
 from .create_style import CreateStyleMutation
+from .create_voting import CreateVotingMutation
 from .create_workspace import CreateWorkspaceMutation
 from .delete_analytics_run import DeleteAnalyticsRunMutation
 from .delete_calendar_entry import DeleteCalendarEntryMutation
@@ -47,7 +47,6 @@ from .record_point_earn_event import RecordPointEarnEventMutation
 from .remove_workspace_member import RemoveWorkspaceMemberMutation
 from .replace_location_menu_items import ReplaceLocationMenuItemsMutation
 from .resolve_prediction import ResolvePredictionMutation
-from .resolve_voting import ResolveVotingMutation
 from .revoke_crm_device import RevokeCrmDeviceMutation
 from .service_subscriptions import (
     ActivateServiceSubscriptionMutation,
@@ -80,7 +79,6 @@ __all__ = [
     "CreatePredictionMutation",
     "CreateVotingMutation",
     "ResolvePredictionMutation",
-    "ResolveVotingMutation",
     "VotePredictionMutation",
     "VoteVotingMutation",
     "UpsertPointEarnRulesMutation",

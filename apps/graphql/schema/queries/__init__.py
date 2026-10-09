@@ -25,7 +25,6 @@ from .pos_orders import PosOrdersQuery
 from .posts import PostsQuery
 from .predictions import PredictionsQuery
 from .promotion_menu_items import PromotionMenuItemsQuery
-from .votings import VotingsQuery
 from .public_holidays import PublicHolidaysQuery
 from .public_location import PublicLocationQuery
 from .public_location_menu import PublicLocationMenuQuery
@@ -33,6 +32,7 @@ from .revenue_trends import RevenueTrendsQuery
 from .scheduler_calendar import SchedulerCalendarQuery
 from .service_subscriptions import ServiceSubscriptionsQuery
 from .styles import StylesQuery
+from .votings import VotingsQuery
 from .workspace import WorkspaceQuery
 
 __all__ = [

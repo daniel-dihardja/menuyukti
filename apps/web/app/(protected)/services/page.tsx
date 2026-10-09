@@ -278,22 +278,6 @@ export default async function ServicesPage() {
   const categoryCards: Record<ServiceCategory, ReactNode[]> = {
     [SERVICE_CATEGORY_PLAY_REWARDS]: [
       <CatalogCard
-        key="pick_and_win"
-        title={tCatalog('prediction.title')}
-        benefit={tCatalog('prediction.benefit')}
-        status={
-          <Badge variant="secondary">
-            {predictionSubCount > 0
-              ? tCatalog('prediction.statusOn', { count: predictionSubCount })
-              : tCatalog('prediction.statusAvailable')}
-          </Badge>
-        }
-        pricingComingSoon={pricingComingSoon}
-        preview={<PredictionPreview />}
-        href={routes.servicesPickAndWin}
-        ctaLabel={tCatalog('viewCta')}
-      />,
-      <CatalogCard
         key="voting"
         title={tCatalog('voting.title')}
         benefit={tCatalog('voting.benefit')}
@@ -307,6 +291,22 @@ export default async function ServicesPage() {
         pricingComingSoon={pricingComingSoon}
         preview={<VotingPreview />}
         href={routes.servicesVoting}
+        ctaLabel={tCatalog('viewCta')}
+      />,
+      <CatalogCard
+        key="pick_and_win"
+        title={tCatalog('prediction.title')}
+        benefit={tCatalog('prediction.benefit')}
+        status={
+          <Badge variant="secondary">
+            {predictionSubCount > 0
+              ? tCatalog('prediction.statusOn', { count: predictionSubCount })
+              : tCatalog('prediction.statusAvailable')}
+          </Badge>
+        }
+        pricingComingSoon={pricingComingSoon}
+        preview={<PredictionPreview />}
+        href={routes.servicesPickAndWin}
         ctaLabel={tCatalog('viewCta')}
       />,
       <CatalogCard
@@ -366,7 +366,7 @@ export default async function ServicesPage() {
 
   return (
     <AnalyticsPageShell title={t('title')} breadcrumbs={[{ label: t('title') }]}>
-      <div className="flex flex-col gap-8">
+      <div className="flex flex-col gap-8 pb-16">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-semibold tracking-tight">{t('headline')}</h1>
           <p className="text-muted-foreground max-w-2xl text-sm">{t('subtitle')}</p>

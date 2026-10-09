@@ -104,6 +104,9 @@ async function VotingLocationContent({ params }: { params: Promise<{ locationId:
       </Card>
 
       <VotingConsole
+        key={
+          votingsData.votings.map((v) => `${v.id}:${v.status}:${v.voteCount}`).join('|') || 'empty'
+        }
         locationId={locationId}
         initialPublicSlug={location.publicSlug ?? null}
         initialVotings={votingsData.votings}

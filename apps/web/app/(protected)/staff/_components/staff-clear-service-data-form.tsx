@@ -56,6 +56,7 @@ export function StaffClearServiceDataForm() {
       rules: data.earnRulesDeleted,
       posOrders: data.posOrdersDeleted,
       menuCategories: data.menuCategoriesCleared,
+      subscriptions: data.subscriptionsCanceled,
     })
   }
 

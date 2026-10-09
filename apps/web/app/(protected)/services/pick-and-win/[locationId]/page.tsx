@@ -102,6 +102,10 @@ async function PredictionLocationContent({ params }: { params: Promise<{ locatio
       </Card>
 
       <PredictionConsole
+        key={
+          predictionsData.predictions.map((p) => `${p.id}:${p.status}:${p.voteCount}`).join('|') ||
+          'empty'
+        }
         locationId={locationId}
         initialPublicSlug={location.publicSlug ?? null}
         initialPredictions={predictionsData.predictions}

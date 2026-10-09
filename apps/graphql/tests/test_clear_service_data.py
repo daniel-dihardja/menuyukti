@@ -15,11 +15,13 @@ from graphql.data_sources import (
     Prediction,
     PredictionOutcome,
     PredictionVote,
+    ServiceSubscription,
     SessionLocal,
     Workspace,
     WorkspaceMembership,
 )
 from graphql.data_sources.models.menu import Menu, MenuCategory, MenuItem
+from graphql.data_sources.models.voting import Voting, VotingOption, VotingVote
 from graphql.schema import schema
 from graphql.services.menu import (
     MenuCategoryReplaceInput,
@@ -37,7 +39,11 @@ from graphql.services.service_subscriptions import (
     SERVICE_KEY_PICK_AND_WIN,
     SERVICE_KEY_POINT_SYSTEM,
     SERVICE_KEY_STAMP_CARD,
+    SERVICE_KEY_VOTING,
+    SERVICE_STATUS_ACTIVE,
+    SERVICE_STATUS_CANCELED,
 )
+from graphql.services.votings import ACTION_KEY_VOTING_VOTE
 from graphql.tests.auth_context import graphql_auth_context
 
 CLEAR = """
@@ -48,10 +54,12 @@ mutation ClearWorkspaceServiceData($targetClerkUserId: String!, $serviceKey: Str
     workspaceId
     locationIds
     predictionsDeleted
+    votingsDeleted
     ledgerEntriesDeleted
     earnRulesDeleted
     posOrdersDeleted
     menuCategoriesCleared
+    subscriptionsCanceled
     notes
   }
 }
@@ -132,6 +140,27 @@ def clear_workspace():
                 session.query(Prediction).filter(Prediction.id.in_(pred_ids)).delete(
                     synchronize_session=False
                 )
+            voting_ids = [
+                int(r[0]) for r in session.query(Voting.id).filter(Voting.location_id == lid).all()
+            ]
+            if voting_ids:
+                session.query(VotingVote).filter(VotingVote.voting_id.in_(voting_ids)).delete(
+                    synchronize_session=False
+                )
+                session.query(Voting).filter(Voting.id.in_(voting_ids)).update(
+                    {Voting.winning_option_id: None},
+                    synchronize_session=False,
+                )
+                session.flush()
+                session.query(VotingOption).filter(VotingOption.voting_id.in_(voting_ids)).delete(
+                    synchronize_session=False
+                )
+                session.query(Voting).filter(Voting.id.in_(voting_ids)).delete(
+                    synchronize_session=False
+                )
+            session.query(ServiceSubscription).filter(
+                ServiceSubscription.location_id == lid
+            ).delete(synchronize_session=False)
             session.query(PosOrder).filter(PosOrder.location_id == lid).delete(
                 synchronize_session=False
             )
@@ -226,6 +255,7 @@ def test_clear_stamp_card_noop(clear_workspace):
 
 def test_clear_pick_and_win(clear_workspace):
     lid = clear_workspace["location_id"]
+    ws_id = clear_workspace["workspace_id"]
     session = SessionLocal()
     try:
         pred = Prediction(
@@ -268,6 +298,14 @@ def test_clear_pick_and_win(clear_workspace):
                 source_ref="pos_order:1",
             )
         )
+        session.add(
+            ServiceSubscription(
+                workspace_id=ws_id,
+                location_id=lid,
+                service_key=SERVICE_KEY_PICK_AND_WIN,
+                status=SERVICE_STATUS_ACTIVE,
+            )
+        )
         session.commit()
         pred_id = pred.id
     finally:
@@ -278,6 +316,7 @@ def test_clear_pick_and_win(clear_workspace):
     payload = result.data["clearWorkspaceServiceData"]
     assert payload["predictionsDeleted"] == 1
     assert payload["ledgerEntriesDeleted"] == 1
+    assert payload["subscriptionsCanceled"] == 1
 
     session = SessionLocal()
     try:
@@ -309,6 +348,116 @@ def test_clear_pick_and_win(clear_workspace):
             .count()
             == 0
         )
+        sub = (
+            session.query(ServiceSubscription)
+            .filter(
+                ServiceSubscription.location_id == lid,
+                ServiceSubscription.service_key == SERVICE_KEY_PICK_AND_WIN,
+            )
+            .one()
+        )
+        assert sub.status == SERVICE_STATUS_CANCELED
+    finally:
+        session.close()
+
+
+def test_clear_voting(clear_workspace):
+    lid = clear_workspace["location_id"]
+    ws_id = clear_workspace["workspace_id"]
+    session = SessionLocal()
+    try:
+        voting = Voting(
+            location_id=lid,
+            question="Which dish?",
+            status="open",
+            reward_mode="points",
+            points_for_vote=5,
+            points_for_correct=0,
+        )
+        session.add(voting)
+        session.flush()
+        o1 = VotingOption(voting_id=voting.id, label="A", sort_order=0)
+        o2 = VotingOption(voting_id=voting.id, label="B", sort_order=1)
+        session.add_all([o1, o2])
+        session.flush()
+        session.add(
+            VotingVote(
+                voting_id=voting.id,
+                option_id=o1.id,
+                clerk_user_id="guest_clear_vote",
+            )
+        )
+        session.add(
+            PointLedgerEntry(
+                clerk_user_id="guest_clear_vote",
+                location_id=lid,
+                amount=5,
+                action_key=ACTION_KEY_VOTING_VOTE,
+                source_ref=f"voting:{voting.id}:vote",
+            )
+        )
+        session.add(
+            PointLedgerEntry(
+                clerk_user_id="guest_clear_vote",
+                location_id=lid,
+                amount=10,
+                action_key="complete_order",
+                source_ref="pos_order:9",
+            )
+        )
+        session.add(
+            ServiceSubscription(
+                workspace_id=ws_id,
+                location_id=lid,
+                service_key=SERVICE_KEY_VOTING,
+                status=SERVICE_STATUS_ACTIVE,
+            )
+        )
+        session.commit()
+        voting_id = voting.id
+        option_ids = [o1.id, o2.id]
+    finally:
+        session.close()
+
+    result = _run_clear(clear_workspace["clerk_user_id"], SERVICE_KEY_VOTING)
+    assert not result.errors, result.errors
+    payload = result.data["clearWorkspaceServiceData"]
+    assert payload["votingsDeleted"] == 1
+    assert payload["ledgerEntriesDeleted"] == 1
+    assert payload["subscriptionsCanceled"] == 1
+
+    session = SessionLocal()
+    try:
+        assert session.get(Voting, voting_id) is None
+        assert session.query(VotingOption).filter(VotingOption.id.in_(option_ids)).count() == 0
+        assert session.query(VotingVote).filter(VotingVote.voting_id == voting_id).count() == 0
+        assert (
+            session.query(PointLedgerEntry)
+            .filter(
+                PointLedgerEntry.location_id == lid,
+                PointLedgerEntry.action_key == ACTION_KEY_VOTING_VOTE,
+            )
+            .count()
+            == 0
+        )
+        assert (
+            session.query(PointLedgerEntry)
+            .filter(
+                PointLedgerEntry.location_id == lid,
+                PointLedgerEntry.action_key == "complete_order",
+            )
+            .count()
+            == 1
+        )
+        sub = (
+            session.query(ServiceSubscription)
+            .filter(
+                ServiceSubscription.location_id == lid,
+                ServiceSubscription.service_key == SERVICE_KEY_VOTING,
+            )
+            .one()
+        )
+        assert sub.status == SERVICE_STATUS_CANCELED
     finally:
         session.close()
 

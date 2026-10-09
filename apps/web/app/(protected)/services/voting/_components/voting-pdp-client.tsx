@@ -30,9 +30,10 @@ export type EnableLocationOption = {
 type Props = {
   locations: EnableLocationOption[]
   connectedLocations: ConnectedLocation[]
+  pointSystemLocationIds: number[]
 }
 
-export function VotingPdpClient({ locations, connectedLocations }: Props) {
+export function VotingPdpClient({ locations, connectedLocations, pointSystemLocationIds }: Props) {
   const t = useTranslations('services.voting')
   const [enableOpen, setEnableOpen] = useState(false)
 
@@ -107,7 +108,12 @@ export function VotingPdpClient({ locations, connectedLocations }: Props) {
         )}
       </section>
 
-      <EnableLocationDialog open={enableOpen} onOpenChange={setEnableOpen} locations={locations} />
+      <EnableLocationDialog
+        open={enableOpen}
+        onOpenChange={setEnableOpen}
+        locations={locations}
+        pointSystemLocationIds={pointSystemLocationIds}
+      />
     </div>
   )
 }

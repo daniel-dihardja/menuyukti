@@ -110,17 +110,17 @@ export const PUBLIC_LOCATION_VOTINGS_QUERY = `
       rewardMode
       pointsForVote
       pointsForCorrect
-      winningOutcomeId
+      winningOptionId
       createdAt
       resolvedAt
-      outcomes {
+      options {
         id
         label
         sortOrder
       }
       myVote {
         id
-        outcomeId
+        optionId
         clerkUserId
         createdAt
       }
