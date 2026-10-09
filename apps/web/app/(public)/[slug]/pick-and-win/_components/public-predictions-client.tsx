@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@clerk/nextjs'
 import { useTranslations } from 'next-intl'
-import Link from 'next/link'
 
 import {
   PredictionOutcomeCard,
@@ -16,11 +15,10 @@ import { routes } from '@/lib/routes'
 
 type Props = {
   slug: string
-  locationName: string
   predictions: Prediction[]
 }
 
-export function PublicPredictionsClient({ slug, locationName, predictions: initial }: Props) {
+export function PublicPredictionsClient({ slug, predictions: initial }: Props) {
   const t = useTranslations('public.prediction')
   const { isLoaded, isSignedIn } = useAuth()
   const router = useRouter()
@@ -28,7 +26,7 @@ export function PublicPredictionsClient({ slug, locationName, predictions: initi
   const [busyKey, setBusyKey] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const returnPath = routes.public.locationPrediction(slug)
+  const returnPath = routes.public.locationPickAndWin(slug)
 
   async function handleVote(predictionId: number, outcomeId: number) {
     if (!isSignedIn) {
@@ -78,19 +76,11 @@ export function PublicPredictionsClient({ slug, locationName, predictions: initi
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-lg flex-col gap-6 px-4 py-10 sm:px-6 sm:py-14">
+    <main className="mx-auto flex w-full max-w-lg flex-col gap-6 px-6 py-10 sm:px-10 sm:py-14">
       <div className="space-y-2">
-        <p className="text-sm text-muted-foreground">
-          <Link
-            href={routes.public.locationHome(slug)}
-            className="underline-offset-4 hover:underline"
-          >
-            {locationName}
-          </Link>
-        </p>
-        <h1 className="text-pretty text-2xl font-semibold tracking-tight sm:text-3xl">
+        <h2 className="text-pretty text-2xl font-semibold tracking-tight sm:text-3xl">
           {t('title')}
-        </h1>
+        </h2>
         <p className="text-pretty text-sm leading-relaxed text-muted-foreground">
           {isLoaded && !isSignedIn ? t('leadSignedOut') : t('lead')}
         </p>

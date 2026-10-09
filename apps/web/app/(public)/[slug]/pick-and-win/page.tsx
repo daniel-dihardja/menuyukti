@@ -3,7 +3,9 @@ import { auth } from '@clerk/nextjs/server'
 import { getTranslations } from 'next-intl/server'
 import { notFound } from 'next/navigation'
 
-import { PublicPredictionsClient } from '@/app/(public)/[slug]/prediction/_components/public-predictions-client'
+import { PublicGuestHeader, PublicGuestShell } from '@/app/(public)/_components/public-guest-shell'
+import { PublicVenueHomeLink } from '@/app/(public)/_components/public-venue-home-link'
+import { PublicPredictionsClient } from '@/app/(public)/[slug]/pick-and-win/_components/public-predictions-client'
 import { graphqlQuery } from '@/lib/graphql/client'
 import {
   PUBLIC_LOCATION_PREDICTIONS_QUERY,
@@ -42,7 +44,7 @@ export default async function PublicLocationPredictionPage({ params }: PageProps
   const location = await loadPublicLocation(decoded)
   if (!location) notFound()
 
-  const predictionService = location.services.find((s) => s.key === 'prediction')
+  const predictionService = location.services.find((s) => s.key === 'pick_and_win')
   if (!predictionService?.available) notFound()
 
   const { userId } = await auth()
@@ -53,11 +55,22 @@ export default async function PublicLocationPredictionPage({ params }: PageProps
     'PublicLocationPredictions',
   )
 
+  const hasHeaderImage = Boolean(location.headerImageUrl)
+
   return (
-    <PublicPredictionsClient
-      slug={location.publicSlug}
-      locationName={location.name}
-      predictions={data.publicLocationPredictions}
-    />
+    <PublicGuestShell>
+      <PublicGuestHeader headerImageUrl={location.headerImageUrl}>
+        <PublicVenueHomeLink
+          slug={location.publicSlug}
+          locationName={location.name}
+          hasHeaderImage={hasHeaderImage}
+        />
+      </PublicGuestHeader>
+
+      <PublicPredictionsClient
+        slug={location.publicSlug}
+        predictions={data.publicLocationPredictions}
+      />
+    </PublicGuestShell>
   )
 }

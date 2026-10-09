@@ -46,7 +46,7 @@ describe('routes shell helpers', () => {
     expect(isPublicLocationSurfacePath('/cafe')).toBe(true)
     expect(isPublicLocationSurfacePath('/cafe/menu')).toBe(true)
     expect(isPublicLocationSurfacePath('/cafe/menu/t/12')).toBe(true)
-    expect(isPublicLocationSurfacePath('/cafe/prediction')).toBe(true)
+    expect(isPublicLocationSurfacePath('/cafe/pick-and-win')).toBe(true)
     expect(isPublicLocationSurfacePath('/m/cafe')).toBe(true)
     expect(isPublicLocationSurfacePath('/m/cafe/t/12')).toBe(true)
     expect(isPublicLocationSurfacePath('/l/cafe')).toBe(true)

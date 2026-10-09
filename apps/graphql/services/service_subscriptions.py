@@ -14,7 +14,7 @@ SERVICE_KEY_DIGITAL_MENU = "digital_menu"
 SERVICE_KEY_POINT_SYSTEM = "point_system"
 SERVICE_KEY_STAMP_CARD = "stamp_card"
 SERVICE_KEY_CASHBACK = "cashback"
-SERVICE_KEY_PREDICTION = "prediction"
+SERVICE_KEY_PICK_AND_WIN = "pick_and_win"
 
 KNOWN_SERVICE_KEYS = frozenset(
     {
@@ -22,7 +22,7 @@ KNOWN_SERVICE_KEYS = frozenset(
         SERVICE_KEY_POINT_SYSTEM,
         SERVICE_KEY_STAMP_CARD,
         SERVICE_KEY_CASHBACK,
-        SERVICE_KEY_PREDICTION,
+        SERVICE_KEY_PICK_AND_WIN,
     }
 )
 

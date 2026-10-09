@@ -59,7 +59,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ predictions: data.predictions }, { status: 200 })
   } catch (error) {
-    console.error('[services/prediction] GET', error)
+    console.error('[services/pick-and-win] GET', error)
     return apiErrorFromUnknown(error, 'Failed to load predictions')
   }
 }
@@ -92,7 +92,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(data.createPrediction, { status: 200 })
   } catch (error) {
-    console.error('[services/prediction] POST', error)
+    console.error('[services/pick-and-win] POST', error)
     return apiErrorFromUnknown(error, 'Failed to create prediction')
   }
 }
@@ -132,7 +132,7 @@ export async function PATCH(req: Request) {
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
   } catch (error) {
-    console.error('[services/prediction] PATCH', error)
+    console.error('[services/pick-and-win] PATCH', error)
     return apiErrorFromUnknown(error, 'Failed to update prediction')
   }
 }

@@ -25,7 +25,7 @@ from graphql.data_sources.models.service_subscription import ServiceSubscription
 from graphql.services.point_ledger import award_fixed_amount
 from graphql.services.service_subscriptions import (
     SERVICE_KEY_POINT_SYSTEM,
-    SERVICE_KEY_PREDICTION,
+    SERVICE_KEY_PICK_AND_WIN,
     SERVICE_STATUS_ACTIVE,
     is_active_subscription,
 )
@@ -78,7 +78,7 @@ class PredictionView:
 
 
 def require_active_prediction(session: Session, location_id: int) -> None:
-    if not is_active_subscription(session, location_id, SERVICE_KEY_PREDICTION):
+    if not is_active_subscription(session, location_id, SERVICE_KEY_PICK_AND_WIN):
         raise ValueError("prediction subscription is required for this location")
 
 
@@ -279,7 +279,7 @@ def list_open_predictions_for_location(
 
     Includes open, closed (awaiting result), and resolved within the retention window.
     """
-    if not is_active_subscription(session, location_id, SERVICE_KEY_PREDICTION):
+    if not is_active_subscription(session, location_id, SERVICE_KEY_PICK_AND_WIN):
         return []
 
     user_id = (clerk_user_id or "").strip() or None
@@ -326,7 +326,7 @@ def list_open_predictions_for_guest(
         session.scalars(
             select(ServiceSubscription.location_id).where(
                 ServiceSubscription.location_id.in_(location_ids),
-                ServiceSubscription.service_key == SERVICE_KEY_PREDICTION,
+                ServiceSubscription.service_key == SERVICE_KEY_PICK_AND_WIN,
                 ServiceSubscription.status == SERVICE_STATUS_ACTIVE,
             )
         ).all()

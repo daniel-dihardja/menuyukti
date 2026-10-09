@@ -59,3 +59,37 @@ export type IngestDevDataResult = {
 export type IngestDevDataData = {
   ingestDevData: IngestDevDataResult
 }
+
+export const CLEAR_WORKSPACE_SERVICE_DATA_MUTATION = `
+  mutation ClearWorkspaceServiceData($targetClerkUserId: String!, $serviceKey: String!) {
+    clearWorkspaceServiceData(targetClerkUserId: $targetClerkUserId, serviceKey: $serviceKey) {
+      serviceKey
+      clerkUserId
+      workspaceId
+      locationIds
+      predictionsDeleted
+      ledgerEntriesDeleted
+      earnRulesDeleted
+      posOrdersDeleted
+      menuCategoriesCleared
+      notes
+    }
+  }
+`
+
+export type ClearWorkspaceServiceDataResult = {
+  serviceKey: string
+  clerkUserId: string
+  workspaceId: string
+  locationIds: string[]
+  predictionsDeleted: number
+  ledgerEntriesDeleted: number
+  earnRulesDeleted: number
+  posOrdersDeleted: number
+  menuCategoriesCleared: number
+  notes: string[]
+}
+
+export type ClearWorkspaceServiceDataData = {
+  clearWorkspaceServiceData: ClearWorkspaceServiceDataResult
+}

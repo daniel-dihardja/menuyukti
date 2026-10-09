@@ -12,7 +12,7 @@ describe('getSafeAuthReturnPath', () => {
     expect(getSafeAuthReturnPath('/warung-sunda')).toBe('/warung-sunda')
     expect(getSafeAuthReturnPath('/warung-sunda/menu')).toBe('/warung-sunda/menu')
     expect(getSafeAuthReturnPath('/cafe/menu/t/12')).toBe('/cafe/menu/t/12')
-    expect(getSafeAuthReturnPath('/cafe/prediction')).toBe('/cafe/prediction')
+    expect(getSafeAuthReturnPath('/cafe/pick-and-win')).toBe('/cafe/pick-and-win')
     expect(getSafeAuthReturnPath('/m/warung-sunda')).toBe('/m/warung-sunda')
     expect(getSafeAuthReturnPath('/m/cafe/t/12')).toBe('/m/cafe/t/12')
     expect(getSafeAuthReturnPath('/l/venue')).toBe('/l/venue')
@@ -31,7 +31,7 @@ describe('buildAuthContinueUrl / buildLoginUrl', () => {
   it('returns the guest surface path directly (avoids /continue → /login race)', () => {
     expect(buildAuthContinueUrl('/cafe/menu')).toBe('/cafe/menu')
     expect(buildAuthContinueUrl('/cafe/menu/t/12')).toBe('/cafe/menu/t/12')
-    expect(buildAuthContinueUrl('/cafe/prediction')).toBe('/cafe/prediction')
+    expect(buildAuthContinueUrl('/cafe/pick-and-win')).toBe('/cafe/pick-and-win')
     expect(buildLoginUrl('/cafe/menu')).toBe(`/login?${AUTH_RETURN_TO_QUERY}=%2Fcafe%2Fmenu`)
     expect(buildLoginUrl('/cafe/menu/t/12')).toBe(
       `/login?${AUTH_RETURN_TO_QUERY}=${encodeURIComponent('/cafe/menu/t/12')}`,

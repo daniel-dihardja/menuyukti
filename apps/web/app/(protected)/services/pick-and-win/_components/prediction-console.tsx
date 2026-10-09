@@ -75,7 +75,7 @@ export function PredictionConsole({
 
   const locationSlug = initialPublicSlug?.trim() || ''
   const liveHomePath = locationSlug ? routes.public.locationHome(locationSlug) : null
-  const livePredictionPath = locationSlug ? routes.public.locationPrediction(locationSlug) : null
+  const livePredictionPath = locationSlug ? routes.public.locationPickAndWin(locationSlug) : null
   const locationBasicsHref = routes.analytics.branchesDetail(locationId)
 
   async function handleCopyPath(path: string, key: string) {
@@ -125,7 +125,7 @@ export function PredictionConsole({
 
     setCreating(true)
     try {
-      const res = await fetch('/api/services/prediction', {
+      const res = await fetch('/api/services/pick-and-win', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -159,7 +159,7 @@ export function PredictionConsole({
     setActionError(null)
     setBusyId(predictionId)
     try {
-      const res = await fetch('/api/services/prediction', {
+      const res = await fetch('/api/services/pick-and-win', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'close', predictionId }),
@@ -184,7 +184,7 @@ export function PredictionConsole({
     if (!Number.isInteger(winningOutcomeId) || winningOutcomeId < 1) return
     setBusyId(predictionId)
     try {
-      const res = await fetch('/api/services/prediction', {
+      const res = await fetch('/api/services/pick-and-win', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -269,9 +269,9 @@ export function PredictionConsole({
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => void handleCopyPath(livePredictionPath, 'prediction')}
+                  onClick={() => void handleCopyPath(livePredictionPath, 'pick-and-win')}
                 >
-                  {copiedKey === 'prediction' ? t('copiedLink') : t('copyLink')}
+                  {copiedKey === 'pick-and-win' ? t('copiedLink') : t('copyLink')}
                 </Button>
                 <Button asChild type="button" variant="ghost">
                   <Link href={livePredictionPath} target="_blank" rel="noreferrer">

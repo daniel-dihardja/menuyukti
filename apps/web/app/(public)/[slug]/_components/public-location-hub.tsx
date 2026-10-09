@@ -28,14 +28,14 @@ function truncateTeaser(text: string, max = 88): string {
 
 export function PublicLocationHub({ location, copy }: PublicLocationHubProps) {
   const menuService = location.services.find((s) => s.key === 'digital_menu')
-  const predictionService = location.services.find((s) => s.key === 'prediction')
+  const predictionService = location.services.find((s) => s.key === 'pick_and_win')
   const menuAvailable = Boolean(menuService?.available)
   const predictionAvailable = Boolean(predictionService?.available)
   const hasServices = menuAvailable || predictionAvailable
   const hasHeaderImage = Boolean(location.headerImageUrl)
 
   const menuHref = routes.public.locationMenu(location.publicSlug)
-  const predictionHref = routes.public.locationPrediction(location.publicSlug)
+  const predictionHref = routes.public.locationPickAndWin(location.publicSlug)
 
   const menuSubtitle =
     menuAvailable && location.menuDishCount != null && location.menuDishCount > 0

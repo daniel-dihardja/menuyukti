@@ -1,4 +1,5 @@
 from .award_crm_cashback import AwardCrmCashbackMutation
+from .clear_workspace_service_data import ClearWorkspaceServiceDataMutation
 from .close_prediction import ClosePredictionMutation
 from .create_calendar_entry import CreateCalendarEntryMutation
 from .create_crm_app import CreateCrmAppMutation
@@ -69,6 +70,7 @@ from .vote_prediction import VotePredictionMutation
 
 __all__ = [
     "ActivateServiceSubscriptionMutation",
+    "ClearWorkspaceServiceDataMutation",
     "ClosePredictionMutation",
     "CreatePredictionMutation",
     "ResolvePredictionMutation",

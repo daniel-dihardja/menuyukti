@@ -1,5 +1,9 @@
 {
   "public": {
+    "guest": {
+      "homeCue": "Home",
+      "homeLinkAria": "Back to {name} home"
+    },
     "locationHome": {
       "notFoundTitle": "Location not found",
       "metaDescription": "Visit {name} on Menuyukti.",
@@ -9,17 +13,17 @@
       "greetingEmpty": "Nothing live for guests yet — ask the staff or check back soon.",
       "menuTitle": "See what’s cooking",
       "menuDishCount": "{count, plural, one {# dish on the menu} other {# dishes on the menu}}",
-      "predictionTitle": "Tonight’s prediction",
-      "predictionOpenCount": "{count, plural, one {# open prediction} other {# open predictions}}"
+      "predictionTitle": "Tonight’s Pick & Win",
+      "predictionOpenCount": "{count, plural, one {# open pick} other {# open picks}}"
     },
     "prediction": {
-      "title": "Predictions",
+      "title": "Pick & Win",
       "lead": "Pick an outcome before voting closes, then check back for the result.",
       "leadSignedOut": "Pick an outcome before voting closes, then check back for the result. Sign in to cast your vote.",
-      "empty": "No predictions right now.",
-      "notFoundTitle": "Predictions not found",
-      "metaTitle": "Predictions · {name}",
-      "metaDescription": "Vote on predictions at {name}.",
+      "empty": "No picks right now.",
+      "notFoundTitle": "Pick & Win not found",
+      "metaTitle": "Pick & Win · {name}",
+      "metaDescription": "Play Pick & Win at {name}.",
       "rewardSocial": "Social reward — bragging rights",
       "rewardPoints": "+{vote} for voting · +{correct} if correct",
       "yourPick": "Your pick",

@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@workspace/ui/components/select'
-import { SERVICE_KEY_PREDICTION } from '@/lib/graphql/queries/service-subscriptions'
+import { SERVICE_KEY_PICK_AND_WIN } from '@/lib/graphql/queries/service-subscriptions'
 import { routes } from '@/lib/routes'
 
 export type EnableLocationOption = {
@@ -56,7 +56,7 @@ export function EnableLocationDialog({ open, onOpenChange, locations }: Props) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           locationId: id,
-          serviceKey: SERVICE_KEY_PREDICTION,
+          serviceKey: SERVICE_KEY_PICK_AND_WIN,
         }),
       })
       if (!res.ok) {
@@ -64,7 +64,7 @@ export function EnableLocationDialog({ open, onOpenChange, locations }: Props) {
         throw new Error(body?.message || t('activateFailed'))
       }
       onOpenChange(false)
-      router.push(routes.servicesPredictionLocation(id))
+      router.push(routes.servicesPickAndWinLocation(id))
       router.refresh()
     } catch (err) {
       setError(err instanceof Error ? err.message : t('activateFailed'))

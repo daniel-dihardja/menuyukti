@@ -3,14 +3,14 @@ import { auth } from '@clerk/nextjs/server'
 import { getTranslations } from 'next-intl/server'
 import type { Metadata } from 'next'
 
-import { PredictionPdpClient } from '@/app/(protected)/services/prediction/_components/prediction-pdp-client'
+import { PredictionPdpClient } from '@/app/(protected)/services/pick-and-win/_components/prediction-pdp-client'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { Skeleton } from '@workspace/ui/components/skeleton'
 import { getCachedLocationsListData } from '@/lib/graphql/cached-queries'
 import { graphqlQuery } from '@/lib/graphql/client'
 import {
   MY_SERVICE_SUBSCRIPTIONS_QUERY,
-  SERVICE_KEY_PREDICTION,
+  SERVICE_KEY_PICK_AND_WIN,
   SERVICE_STATUS_ACTIVE,
   type MyServiceSubscriptionsData,
 } from '@/lib/graphql/queries/service-subscriptions'
@@ -60,7 +60,7 @@ async function PredictionPdpData() {
 
   const connectedLocations = subscriptionsData.myServiceSubscriptions
     .filter(
-      (row) => row.serviceKey === SERVICE_KEY_PREDICTION && row.status === SERVICE_STATUS_ACTIVE,
+      (row) => row.serviceKey === SERVICE_KEY_PICK_AND_WIN && row.status === SERVICE_STATUS_ACTIVE,
     )
     .flatMap((row) => {
       const id = Number(row.locationId)

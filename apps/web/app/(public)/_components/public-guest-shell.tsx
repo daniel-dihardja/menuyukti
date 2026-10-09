@@ -19,10 +19,17 @@ type PublicGuestHeaderProps = {
   children: ReactNode
   headerImageUrl?: string | null
   className?: string
+  /** Inner content width; defaults to hub/pick max (`max-w-lg`). Menu uses `max-w-4xl`. */
+  contentClassName?: string
 }
 
 /** Full-bleed venue header band with optional cover image + gradient wash. */
-export function PublicGuestHeader({ children, headerImageUrl, className }: PublicGuestHeaderProps) {
+export function PublicGuestHeader({
+  children,
+  headerImageUrl,
+  className,
+  contentClassName,
+}: PublicGuestHeaderProps) {
   const hasHeaderImage = Boolean(headerImageUrl)
 
   return (
@@ -51,6 +58,7 @@ export function PublicGuestHeader({ children, headerImageUrl, className }: Publi
         className={cn(
           'relative z-10 mx-auto w-full max-w-lg',
           hasHeaderImage ? 'text-white' : 'text-foreground',
+          contentClassName,
         )}
       >
         {children}

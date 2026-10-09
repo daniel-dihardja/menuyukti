@@ -5,7 +5,7 @@ import { getTranslations } from 'next-intl/server'
 import type { Metadata } from 'next'
 import { notFound, redirect } from 'next/navigation'
 
-import { PredictionConsole } from '@/app/(protected)/services/prediction/_components/prediction-console'
+import { PredictionConsole } from '@/app/(protected)/services/pick-and-win/_components/prediction-console'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { Button } from '@workspace/ui/components/button'
 import {
@@ -24,7 +24,7 @@ import { PREDICTIONS_QUERY, type PredictionsData } from '@/lib/graphql/queries/p
 import {
   MY_SERVICE_SUBSCRIPTIONS_QUERY,
   SERVICE_KEY_POINT_SYSTEM,
-  SERVICE_KEY_PREDICTION,
+  SERVICE_KEY_PICK_AND_WIN,
   SERVICE_STATUS_ACTIVE,
   type MyServiceSubscriptionsData,
 } from '@/lib/graphql/queries/service-subscriptions'
@@ -70,12 +70,12 @@ async function PredictionLocationContent({ params }: { params: Promise<{ locatio
 
   const isActive = subscriptionsData.myServiceSubscriptions.some(
     (row) =>
-      row.serviceKey === SERVICE_KEY_PREDICTION &&
+      row.serviceKey === SERVICE_KEY_PICK_AND_WIN &&
       row.status === SERVICE_STATUS_ACTIVE &&
       Number(row.locationId) === locationId,
   )
   if (!isActive) {
-    redirect(routes.servicesPrediction)
+    redirect(routes.servicesPickAndWin)
   }
 
   const pointSystemActive = subscriptionsData.myServiceSubscriptions.some(
@@ -96,7 +96,7 @@ async function PredictionLocationContent({ params }: { params: Promise<{ locatio
         </CardHeader>
         <CardContent>
           <Button asChild variant="secondary" className="w-fit">
-            <Link href={routes.servicesPrediction}>{tConsole('backCta')}</Link>
+            <Link href={routes.servicesPickAndWin}>{tConsole('backCta')}</Link>
           </Button>
         </CardContent>
       </Card>
@@ -136,7 +136,7 @@ export default async function PredictionLocationPage({ params }: PageProps) {
       title={tConsole('heading')}
       breadcrumbs={[
         { label: tServices('title'), href: routes.services },
-        { label: tPred('title'), href: routes.servicesPrediction },
+        { label: tPred('title'), href: routes.servicesPickAndWin },
       ]}
       mainClassName={ANALYTICS_REPORT_SHELL_MAIN_CLASS}
     >

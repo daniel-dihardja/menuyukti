@@ -18,7 +18,7 @@ from graphql.data_sources.models.pos_order import PosOrder
 from graphql.schema import schema
 from graphql.services.service_subscriptions import (
     SERVICE_KEY_POINT_SYSTEM,
-    SERVICE_KEY_PREDICTION,
+    SERVICE_KEY_PICK_AND_WIN,
 )
 from graphql.services.workspace_plan import WORKSPACE_PLAN_PRO
 from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID, graphql_auth_context
@@ -247,7 +247,7 @@ def test_create_requires_subscription(pred_venue):
 
 def test_create_vote_resolve_social(pred_venue):
     lid = pred_venue["location_id"]
-    _activate(lid, SERVICE_KEY_PREDICTION)
+    _activate(lid, SERVICE_KEY_PICK_AND_WIN)
 
     created = asyncio.run(
         schema.execute(
@@ -328,7 +328,7 @@ def test_create_vote_resolve_social(pred_venue):
 
 def test_points_mode_requires_point_system(pred_venue):
     lid = pred_venue["location_id"]
-    _activate(lid, SERVICE_KEY_PREDICTION)
+    _activate(lid, SERVICE_KEY_PICK_AND_WIN)
     result = asyncio.run(
         schema.execute(
             CREATE,
@@ -351,7 +351,7 @@ def test_points_mode_requires_point_system(pred_venue):
 
 def test_points_mode_awards_on_resolve(pred_venue):
     lid = pred_venue["location_id"]
-    _activate(lid, SERVICE_KEY_PREDICTION)
+    _activate(lid, SERVICE_KEY_PICK_AND_WIN)
     _activate(lid, SERVICE_KEY_POINT_SYSTEM)
 
     created = asyncio.run(
@@ -414,7 +414,7 @@ def test_points_mode_awards_on_resolve(pred_venue):
 def test_points_award_soft_skip_without_point_system_at_resolve(pred_venue):
     """If Points was on at create but canceled before resolve, awards soft no-op."""
     lid = pred_venue["location_id"]
-    _activate(lid, SERVICE_KEY_PREDICTION)
+    _activate(lid, SERVICE_KEY_PICK_AND_WIN)
     _activate(lid, SERVICE_KEY_POINT_SYSTEM)
 
     created = asyncio.run(
@@ -482,7 +482,7 @@ def test_points_award_soft_skip_without_point_system_at_resolve(pred_venue):
 
 def test_my_open_predictions_scoped_to_touched_locations(pred_venue):
     lid = pred_venue["location_id"]
-    _activate(lid, SERVICE_KEY_PREDICTION)
+    _activate(lid, SERVICE_KEY_PICK_AND_WIN)
 
     created = asyncio.run(
         schema.execute(
@@ -514,7 +514,7 @@ def test_my_open_predictions_scoped_to_touched_locations(pred_venue):
 
 def test_close_then_cannot_vote(pred_venue):
     lid = pred_venue["location_id"]
-    _activate(lid, SERVICE_KEY_PREDICTION)
+    _activate(lid, SERVICE_KEY_PICK_AND_WIN)
     created = asyncio.run(
         schema.execute(
             CREATE,
@@ -555,7 +555,7 @@ def test_close_then_cannot_vote(pred_venue):
 
 def test_owner_list(pred_venue):
     lid = pred_venue["location_id"]
-    _activate(lid, SERVICE_KEY_PREDICTION)
+    _activate(lid, SERVICE_KEY_PICK_AND_WIN)
     asyncio.run(
         schema.execute(
             CREATE,
@@ -585,7 +585,7 @@ def test_owner_list(pred_venue):
 def test_guest_home_closed_and_resolved_only_when_voted(pred_venue):
     """Home keeps closed/resolved cards only for guests who voted."""
     lid = pred_venue["location_id"]
-    _activate(lid, SERVICE_KEY_PREDICTION)
+    _activate(lid, SERVICE_KEY_PICK_AND_WIN)
     _touch_guest(lid, GUEST_A)
     _touch_guest(lid, GUEST_B)
 
@@ -657,7 +657,7 @@ def test_guest_home_closed_and_resolved_only_when_voted(pred_venue):
 
 def test_guest_home_drops_resolved_outside_retention(pred_venue):
     lid = pred_venue["location_id"]
-    _activate(lid, SERVICE_KEY_PREDICTION)
+    _activate(lid, SERVICE_KEY_PICK_AND_WIN)
     _touch_guest(lid, GUEST_A)
 
     created = asyncio.run(

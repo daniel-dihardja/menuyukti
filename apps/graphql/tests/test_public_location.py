@@ -18,7 +18,7 @@ from graphql.data_sources.models.prediction import Prediction, PredictionOutcome
 from graphql.schema import schema
 from graphql.services.service_subscriptions import (
     SERVICE_KEY_DIGITAL_MENU,
-    SERVICE_KEY_PREDICTION,
+    SERVICE_KEY_PICK_AND_WIN,
     SERVICE_STATUS_ACTIVE,
 )
 from graphql.services.workspace_plan import WORKSPACE_PLAN_PRO
@@ -165,9 +165,9 @@ def test_public_location_greeting_only_no_services(hub_venue):
     assert hub["publicSlug"] == "hub-cafe"
     by_key = {s["key"]: s for s in hub["services"]}
     assert by_key["digital_menu"]["available"] is False
-    assert by_key["prediction"]["available"] is False
+    assert by_key["pick_and_win"]["available"] is False
     assert by_key["digital_menu"]["hrefSegment"] == "menu"
-    assert by_key["prediction"]["hrefSegment"] == "prediction"
+    assert by_key["pick_and_win"]["hrefSegment"] == "pick-and-win"
     assert hub["headerImageFilename"] is None
     assert hub["workspaceId"] is None
     assert hub["mediaOwnerClerkUserId"] is None
@@ -192,7 +192,7 @@ def test_public_location_menu_and_prediction_flags(hub_venue):
             ServiceSubscription(
                 workspace_id=wid,
                 location_id=lid,
-                service_key=SERVICE_KEY_PREDICTION,
+                service_key=SERVICE_KEY_PICK_AND_WIN,
                 status=SERVICE_STATUS_ACTIVE,
             )
         )
@@ -206,7 +206,7 @@ def test_public_location_menu_and_prediction_flags(hub_venue):
     hub = result.data["publicLocation"]
     by_key = {s["key"]: s for s in hub["services"]}
     assert by_key["digital_menu"]["available"] is True
-    assert by_key["prediction"]["available"] is True
+    assert by_key["pick_and_win"]["available"] is True
     assert hub["menuDishCount"] == 0
     assert hub["workspaceId"] == str(wid)
     assert hub["mediaOwnerClerkUserId"] == GRAPHQL_TEST_USER_ID
@@ -231,7 +231,7 @@ def test_public_location_hub_presentation_fields(hub_venue):
             ServiceSubscription(
                 workspace_id=wid,
                 location_id=lid,
-                service_key=SERVICE_KEY_PREDICTION,
+                service_key=SERVICE_KEY_PICK_AND_WIN,
                 status=SERVICE_STATUS_ACTIVE,
             )
         )
@@ -310,7 +310,7 @@ def test_public_location_predictions(hub_venue):
             ServiceSubscription(
                 workspace_id=wid,
                 location_id=lid,
-                service_key=SERVICE_KEY_PREDICTION,
+                service_key=SERVICE_KEY_PICK_AND_WIN,
                 status=SERVICE_STATUS_ACTIVE,
             )
         )
@@ -348,7 +348,7 @@ def test_public_predictions_include_closed_and_recent_resolved(hub_venue):
             ServiceSubscription(
                 workspace_id=wid,
                 location_id=lid,
-                service_key=SERVICE_KEY_PREDICTION,
+                service_key=SERVICE_KEY_PICK_AND_WIN,
                 status=SERVICE_STATUS_ACTIVE,
             )
         )

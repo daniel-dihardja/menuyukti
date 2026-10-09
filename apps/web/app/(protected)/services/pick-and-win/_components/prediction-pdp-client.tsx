@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { MapPinIcon } from 'lucide-react'
 
-import { EnableLocationDialog } from '@/app/(protected)/services/prediction/_components/enable-location-dialog'
+import { EnableLocationDialog } from '@/app/(protected)/services/pick-and-win/_components/enable-location-dialog'
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
 import {
@@ -99,7 +99,7 @@ export function PredictionPdpClient({ locations, connectedLocations }: Props) {
                   <Badge variant="secondary">{t('connectedStatusOn')}</Badge>
                 </div>
                 <Button asChild variant="outline" size="sm">
-                  <Link href={routes.servicesPredictionLocation(location.id)}>
+                  <Link href={routes.servicesPickAndWinLocation(location.id)}>
                     {t('manageCta')}
                   </Link>
                 </Button>

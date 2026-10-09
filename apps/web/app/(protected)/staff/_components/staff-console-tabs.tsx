@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl'
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
 
+import { StaffClearServiceDataForm } from './staff-clear-service-data-form'
 import { StaffDevDataForm } from './staff-dev-data-form'
 import { StaffProvisionWorkspaceForm } from './staff-provision-workspace-form'
 import { StaffWorkspacePlanForm } from './staff-workspace-plan-form'
@@ -16,6 +17,7 @@ export function StaffConsoleTabs() {
       <TabsList variant="line" className="w-full justify-start" aria-label={t('tabsAria')}>
         <TabsTrigger value="workspaces">{t('tabs.workspaces')}</TabsTrigger>
         <TabsTrigger value="mockData">{t('tabs.mockData')}</TabsTrigger>
+        <TabsTrigger value="clearServiceData">{t('tabs.clearServiceData')}</TabsTrigger>
       </TabsList>
 
       <TabsContent value="workspaces" className="mt-4 space-y-6">
@@ -25,6 +27,10 @@ export function StaffConsoleTabs() {
 
       <TabsContent value="mockData" className="mt-4">
         <StaffDevDataForm />
+      </TabsContent>
+
+      <TabsContent value="clearServiceData" className="mt-4">
+        <StaffClearServiceDataForm />
       </TabsContent>
     </Tabs>
   )

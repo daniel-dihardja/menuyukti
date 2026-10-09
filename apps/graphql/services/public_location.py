@@ -13,12 +13,12 @@ from graphql.data_sources.models.menu import Menu, MenuItem
 from graphql.data_sources.models.prediction import PREDICTION_STATUS_OPEN, Prediction
 from graphql.services.service_subscriptions import (
     SERVICE_KEY_DIGITAL_MENU,
-    SERVICE_KEY_PREDICTION,
+    SERVICE_KEY_PICK_AND_WIN,
     is_active_subscription,
 )
 
 HREF_SEGMENT_MENU = "menu"
-HREF_SEGMENT_PREDICTION = "prediction"
+HREF_SEGMENT_PICK_AND_WIN = "pick-and-win"
 
 
 @dataclass(frozen=True, slots=True)
@@ -94,7 +94,7 @@ def get_public_location(session: Session, slug: str) -> PublicLocationView | Non
         and menu.public_enabled
         and is_active_subscription(session, int(location.id), SERVICE_KEY_DIGITAL_MENU)
     )
-    prediction_available = is_active_subscription(session, int(location.id), SERVICE_KEY_PREDICTION)
+    prediction_available = is_active_subscription(session, int(location.id), SERVICE_KEY_PICK_AND_WIN)
 
     header_image_filename: str | None = None
     workspace_id: str | None = None
@@ -126,8 +126,8 @@ def get_public_location(session: Session, slug: str) -> PublicLocationView | Non
                 available=menu_available,
             ),
             PublicLocationServiceView(
-                key=SERVICE_KEY_PREDICTION,
-                href_segment=HREF_SEGMENT_PREDICTION,
+                key=SERVICE_KEY_PICK_AND_WIN,
+                href_segment=HREF_SEGMENT_PICK_AND_WIN,
                 available=prediction_available,
             ),
         ],

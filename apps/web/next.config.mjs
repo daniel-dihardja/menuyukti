@@ -40,6 +40,14 @@ const nextConfig = {
       { source: '/canvas', destination: '/ig-studio', permanent: true },
       { source: '/canvas/:path*', destination: '/ig-studio', permanent: true },
       { source: '/analytics/sales', destination: '/analytics/locations/reports', permanent: true },
+      { source: '/services/prediction', destination: '/services/pick-and-win', permanent: true },
+      {
+        source: '/services/prediction/:locationId',
+        destination: '/services/pick-and-win/:locationId',
+        permanent: true,
+      },
+      { source: '/api/services/prediction', destination: '/api/services/pick-and-win', permanent: true },
+      { source: '/:slug/prediction', destination: '/:slug/pick-and-win', permanent: true },
     ]
   },
   async rewrites() {

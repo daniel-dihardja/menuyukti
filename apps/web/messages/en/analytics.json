@@ -50,7 +50,7 @@
         "namePlaceholder": "Berlin Mitte",
         "publicSlugLabel": "Public URL slug",
         "publicSlugPlaceholder": "berlin-mitte",
-        "publicSlugHint": "Guest home, menu, and predictions use this as the first URL path segment. Lowercase letters, numbers, and hyphens.",
+        "publicSlugHint": "Guest home, menu, and Pick & Win use this as the first URL path segment. Lowercase letters, numbers, and hyphens.",
         "streetLabel": "Street address",
         "streetPlaceholder": "Rosenthaler Str. 1",
         "cityLabel": "City",

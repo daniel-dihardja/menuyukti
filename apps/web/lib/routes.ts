@@ -66,7 +66,7 @@ export function isOperatorAppShellPath(pathname: string | null): boolean {
 
 /**
  * Guest location surfaces — MainHeader uses guest sign-in instead of product chrome.
- * Includes `/{slug}`, `/{slug}/menu…`, `/{slug}/prediction`, plus legacy `/m` and `/l`.
+ * Includes `/{slug}`, `/{slug}/menu…`, `/{slug}/pick-and-win`, plus legacy `/m` and `/l`.
  */
 export function isPublicLocationSurfacePath(pathname: string | null): boolean {
   if (pathname == null) return false
@@ -84,7 +84,10 @@ export function isPublicLocationSurfacePath(pathname: string | null): boolean {
   if (isReservedPublicSlug(first)) return false
 
   if (segments.length === 1) return true
-  if (segments.length === 2 && (segments[1] === 'menu' || segments[1] === 'prediction')) {
+  if (
+    segments.length === 2 &&
+    (segments[1] === 'menu' || segments[1] === 'pick-and-win' || segments[1] === 'prediction')
+  ) {
     return true
   }
   if (segments.length === 4 && segments[1] === 'menu' && segments[2] === 't') {
@@ -224,9 +227,9 @@ export const routes = {
   servicesPointSystem: '/services/point-system',
   servicesPointSystemLocation: (locationId: string | number) =>
     `/services/point-system/${encodeURIComponent(String(locationId))}`,
-  servicesPrediction: '/services/prediction',
-  servicesPredictionLocation: (locationId: string | number) =>
-    `/services/prediction/${encodeURIComponent(String(locationId))}`,
+  servicesPickAndWin: '/services/pick-and-win',
+  servicesPickAndWinLocation: (locationId: string | number) =>
+    `/services/pick-and-win/${encodeURIComponent(String(locationId))}`,
   /** Custom profile overview (name, email, avatar). */
   profile: '/profile',
   /** Workspace team management (invite existing users) — operator shell. */
@@ -238,14 +241,14 @@ export const routes = {
   shopProduct: (slug: string) => `/shop/${slug}`,
   shopDownload: (slug: string) => `/api/shop/download?slug=${encodeURIComponent(slug)}`,
 
-  /** Public location surfaces (`/{slug}`, menu, prediction; legacy `/m` `/l` redirect). */
+  /** Public location surfaces (`/{slug}`, menu, pick-and-win; legacy `/m` `/l` redirect). */
   public: {
     locationHome: (slug: string) => `/${encodeURIComponent(slug)}`,
     locationMenu: (slug: string) => `/${encodeURIComponent(slug)}/menu`,
     /** Per-table dine-in menu URL used by table QR stickers. */
     locationMenuTable: (slug: string, tableLabel: string) =>
       `/${encodeURIComponent(slug)}/menu/t/${encodeURIComponent(tableLabel)}`,
-    locationPrediction: (slug: string) => `/${encodeURIComponent(slug)}/prediction`,
+    locationPickAndWin: (slug: string) => `/${encodeURIComponent(slug)}/pick-and-win`,
     /** @deprecated Use `locationMenu`; `/l/` redirects to `/{slug}/menu`. */
     locationWall: (slug: string) => `/l/${encodeURIComponent(slug)}`,
   },
