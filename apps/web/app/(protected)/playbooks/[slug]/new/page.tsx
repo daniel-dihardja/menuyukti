@@ -3,6 +3,7 @@ import { getTranslations } from 'next-intl/server'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
+import { NearbyLocationsForm } from '@/app/(protected)/playbooks/_components/nearby-locations-form'
 import { PlaybookForm } from '@/app/(protected)/playbooks/_components/playbook-form'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { PageHeading } from '@/components/page-heading'
@@ -48,6 +49,9 @@ export default async function PlaybookInstanceNewPage({ params }: PlaybookInstan
   const branches = data.locations.map((loc) => ({
     id: Number(loc.id),
     name: loc.name,
+    street: loc.street,
+    city: loc.city,
+    country: loc.country,
   }))
 
   return (
@@ -61,7 +65,15 @@ export default async function PlaybookInstanceNewPage({ params }: PlaybookInstan
     >
       <div className="flex flex-col gap-6">
         <PageHeading title={title} description={description} />
-        <PlaybookForm mode="create" branches={branches} catalog={playbook} />
+        {playbook.id === 'nearbyLocations' ? (
+          <NearbyLocationsForm mode="create" branches={branches} catalog={playbook} />
+        ) : (
+          <PlaybookForm
+            mode="create"
+            branches={branches.map((b) => ({ id: b.id, name: b.name }))}
+            catalog={playbook}
+          />
+        )}
       </div>
     </AnalyticsPageShell>
   )

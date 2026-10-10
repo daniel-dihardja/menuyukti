@@ -35,6 +35,7 @@ from graphql.schema.queries import (
     SchedulerCalendarQuery,
     ServiceSubscriptionsQuery,
     StylesQuery,
+    VotingsQuery,
     WorkspaceQuery,
 )
 
@@ -75,6 +76,7 @@ class Query(
     MyPointsQuery,
     PointEarnRulesQuery,
     PredictionsQuery,
+    VotingsQuery,
     ServiceSubscriptionsQuery,
     InventoryCatalogQuery,
     InventoryStockQuery,

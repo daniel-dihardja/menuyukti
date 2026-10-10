@@ -1,29 +1,65 @@
 {
   "public": {
+    "guest": {
+      "homeCue": "Home",
+      "homeLinkAria": "Back to {name} home"
+    },
     "locationHome": {
       "notFoundTitle": "Location not found",
       "metaDescription": "Visit {name} on Menuyukti.",
-      "lead": "Choose where to go.",
-      "greetingLead": "Welcome to {name}.",
-      "greetingEmpty": "More coming soon.",
-      "services": {
-        "digital_menu": "Menu",
-        "prediction": "Predictions"
-      }
+      "greetingMorning": "Good morning! Ready for something delicious?",
+      "greetingAfternoon": "Good afternoon! Ready for something delicious?",
+      "greetingEvening": "Good evening! Ready for something delicious?",
+      "greetingEmpty": "Nothing live for guests yet — ask the staff or check back soon.",
+      "pointsBalance": "{balance} pts",
+      "pointsBalanceAria": "Your balance: {balance} points",
+      "menuTitle": "Explore our menu",
+      "menuDishCount": "{count, plural, one {# dish waiting for you} other {# dishes waiting for you}}",
+      "menuEarnPoints": "Earn points as you explore",
+      "menuCtaAria": "Open the menu",
+      "rewardingTitle": "Make your visit rewarding",
+      "predictionTitle": "Tonight’s Pick & Win",
+      "predictionDescription": "Make your pick — play along and earn rewards.",
+      "predictionOpenCount": "{count, plural, one {# open pick ready for you} other {# open picks ready for you}}",
+      "predictionPoints": "Earn +{points} points when you play",
+      "predictionPointsWithCorrect": "Earn +{vote} for playing · +{correct} if you’re right",
+      "predictionRewardInvite": "Join in and earn rewards",
+      "predictionCta": "Make your prediction",
+      "predictionCtaDone": "See your pick",
+      "votingTitle": "Your opinion matters",
+      "votingDescription": "Help us choose what’s next — and earn rewards for voting.",
+      "votingOpenCount": "{count, plural, one {# open vote waiting for you} other {# open votes waiting for you}}",
+      "votingPoints": "+{points} pts",
+      "votingRewardInvite": "Earn rewards",
+      "votingCta": "Vote",
+      "votingCtaDone": "Voted",
+      "votingSeeAll": "See all votes",
+      "rewardsTitle": "Your rewards",
+      "rewardsLead": "Collect points through interactions and discover what you can redeem.",
+      "rewardsCta": "Explore rewards",
+      "rewardsCtaSignIn": "Sign in to track rewards"
     },
     "prediction": {
-      "title": "Predictions",
-      "lead": "Pick an outcome before voting closes. Sign in to cast your vote.",
-      "empty": "No open predictions right now.",
-      "notFoundTitle": "Predictions not found",
-      "metaTitle": "Predictions · {name}",
-      "metaDescription": "Vote on predictions at {name}.",
+      "title": "Pick & Win",
+      "lead": "Pick an outcome before voting closes, then check back for the result.",
+      "leadSignedOut": "Pick an outcome before voting closes, then check back for the result. Sign in to cast your vote.",
+      "empty": "No picks right now.",
+      "notFoundTitle": "Pick & Win not found",
+      "metaTitle": "Pick & Win · {name}",
+      "metaDescription": "Play Pick & Win at {name}.",
       "rewardSocial": "Social reward — bragging rights",
       "rewardPoints": "+{vote} for voting · +{correct} if correct",
       "yourPick": "Your pick",
       "voting": "Voting…",
       "voteFailed": "Could not cast your vote.",
-      "signInHint": "Sign in to vote."
+      "signInHint": "Sign in to vote.",
+      "statusClosed": "Closed",
+      "statusResolved": "Resolved",
+      "awaitingResult": "Voting closed — result soon.",
+      "youWereCorrect": "You were right",
+      "youWereIncorrect": "You were incorrect",
+      "winnerLabel": "Winner",
+      "voteCount": "{count, plural, one {# vote} other {# votes}}"
     },
     "wall": {
       "eyebrow": "Tonight’s wall",
@@ -90,6 +126,21 @@
         "soy": "Soy",
         "sesame": "Sesame"
       }
+    },
+    "voting": {
+      "title": "Voting",
+      "lead": "Choose an option to share your preference. Voting earns points.",
+      "leadSignedOut": "Choose an option to share your preference. Sign in to cast your vote and earn points.",
+      "empty": "No votes right now.",
+      "notFoundTitle": "Voting not found",
+      "metaTitle": "Voting · {name}",
+      "metaDescription": "Vote at {name}.",
+      "rewardPoints": "+{vote} for voting",
+      "yourPick": "Your vote",
+      "thanks": "Thanks for voting!",
+      "voting": "Voting…",
+      "voteFailed": "Could not cast your vote.",
+      "signInHint": "Sign in to vote."
     }
   }
 }

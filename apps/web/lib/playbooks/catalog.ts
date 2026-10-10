@@ -9,7 +9,7 @@ export const PLAYBOOK_CATALOG = [
     id: 'nearbyLocations',
     slug: 'nearby-locations',
     playbookType: 'nearby_locations',
-    supportsCreate: false,
+    supportsCreate: true,
   },
 ] as const
 

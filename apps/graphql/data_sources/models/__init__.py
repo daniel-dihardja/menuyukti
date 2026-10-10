@@ -47,6 +47,11 @@ from graphql.data_sources.models.prediction import (
 )
 from graphql.data_sources.models.service_subscription import ServiceSubscription
 from graphql.data_sources.models.visual_style import VisualStyle
+from graphql.data_sources.models.voting import (
+    Voting,
+    VotingOption,
+    VotingVote,
+)
 from graphql.data_sources.models.workspace import Workspace, WorkspaceMembership
 
 __all__ = [
@@ -92,6 +97,9 @@ __all__ = [
     "PredictionOutcome",
     "PredictionVote",
     "ServiceSubscription",
+    "Voting",
+    "VotingOption",
+    "VotingVote",
     "VisualStyle",
     "Workspace",
     "WorkspaceMembership",

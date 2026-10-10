@@ -38,6 +38,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/componen
 import { Textarea } from '@workspace/ui/components/textarea'
 
 import {
+  MAX_ARTWORK_VERSIONS,
   PublicHolidaysArtwork,
   type ArtworkItemStatus,
   type ArtworkProgress,
@@ -174,7 +175,12 @@ export function PublicHolidaysWorkspace({
   const [briefProgress, setBriefProgress] = useState<BriefProgress | null>(null)
 
   const [artworkStatuses, setArtworkStatuses] = useState<Record<string, ArtworkItemStatus>>({})
-  const [artworkResults, setArtworkResults] = useState<Record<string, ArtworkGenerateResult>>({})
+  const [artworkVersionsById, setArtworkVersionsById] = useState<
+    Record<string, ArtworkGenerateResult[]>
+  >({})
+  const [artworkSelectedIndexById, setArtworkSelectedIndexById] = useState<Record<string, number>>(
+    {},
+  )
   const [confirmedArtworks, setConfirmedArtworks] = useState<ConfirmedArtwork[]>([])
   const [skippedArtworkIds, setSkippedArtworkIds] = useState<Set<string>>(() => new Set())
   const [artworkRunning, setArtworkRunning] = useState(false)
@@ -192,7 +198,7 @@ export function PublicHolidaysWorkspace({
     Object.keys(draftStatuses).length > 0 ||
     Object.keys(briefResults).length > 0 ||
     Object.keys(briefStatuses).length > 0 ||
-    Object.keys(artworkResults).length > 0 ||
+    Object.keys(artworkVersionsById).length > 0 ||
     styleAnalysis !== null
 
   useUnsavedChangesGuard(hasSessionWork)
@@ -328,10 +334,17 @@ export function PublicHolidaysWorkspace({
       }
       return next
     })
-    setArtworkResults((prev) => {
-      const next: Record<string, ArtworkGenerateResult> = {}
-      for (const [id, result] of Object.entries(prev)) {
-        if (briefIds.has(id)) next[id] = result
+    setArtworkVersionsById((prev) => {
+      const next: Record<string, ArtworkGenerateResult[]> = {}
+      for (const [id, versions] of Object.entries(prev)) {
+        if (briefIds.has(id)) next[id] = versions
+      }
+      return next
+    })
+    setArtworkSelectedIndexById((prev) => {
+      const next: Record<string, number> = {}
+      for (const [id, index] of Object.entries(prev)) {
+        if (briefIds.has(id)) next[id] = index
       }
       return next
     })
@@ -345,7 +358,8 @@ export function PublicHolidaysWorkspace({
     setConfirmedBriefs([])
     setSkippedBriefIds(new Set())
     setArtworkStatuses({})
-    setArtworkResults({})
+    setArtworkVersionsById({})
+    setArtworkSelectedIndexById({})
     setConfirmedArtworks([])
     setSkippedArtworkIds(new Set())
   }
@@ -731,7 +745,8 @@ export function PublicHolidaysWorkspace({
       setConfirmedBriefs([])
       setSkippedBriefIds(new Set())
       setArtworkStatuses({})
-      setArtworkResults({})
+      setArtworkVersionsById({})
+      setArtworkSelectedIndexById({})
       setConfirmedArtworks([])
       setSkippedArtworkIds(new Set())
     } catch (err) {
@@ -936,6 +951,21 @@ export function PublicHolidaysWorkspace({
     })
   }
 
+  function clearArtworkVersions(id: string) {
+    setArtworkVersionsById((prev) => {
+      if (!(id in prev)) return prev
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
+    setArtworkSelectedIndexById((prev) => {
+      if (!(id in prev)) return prev
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
+  }
+
   async function artworkOne(item: {
     id: string
     date: string
@@ -955,7 +985,8 @@ export function PublicHolidaysWorkspace({
         prompt,
         styleImageName: styleReference.name,
       })
-      setArtworkResults((prev) => ({ ...prev, [item.id]: image }))
+      setArtworkVersionsById((prev) => ({ ...prev, [item.id]: [image] }))
+      setArtworkSelectedIndexById((prev) => ({ ...prev, [item.id]: 0 }))
       setArtworkStatuses((prev) => ({ ...prev, [item.id]: 'ready' }))
       return true
     } catch (err) {
@@ -1000,9 +1031,59 @@ export function PublicHolidaysWorkspace({
     }
   }
 
+  async function handleRegenerateArtwork(id: string, feedback: string) {
+    if (artworkRunning || !styleReference) return
+    const item = artworkQueue.find((h) => h.id === id)
+    const versions = artworkVersionsById[id] ?? []
+    const selectedIndex = artworkSelectedIndexById[id] ?? 0
+    const previousImage = versions[selectedIndex]
+    const feedbackTrimmed = feedback.trim()
+    if (!item || !previousImage || !feedbackTrimmed) return
+    if (versions.length >= MAX_ARTWORK_VERSIONS) return
+
+    setArtworkRunningState(true)
+    setArtworkStatuses((prev) => ({ ...prev, [id]: 'loading' }))
+    setArtworkProgress({ current: 1, total: 1, name: item.name })
+    try {
+      const prompt =
+        item.brief.leonardoPrompt.length > LEONARDO_PROMPT_MAX_CHARS
+          ? item.brief.leonardoPrompt.slice(0, LEONARDO_PROMPT_MAX_CHARS).trimEnd()
+          : item.brief.leonardoPrompt
+      const image = await generateHolidayArtwork({
+        prompt,
+        styleImageName: styleReference.name,
+        previousImageName: previousImage.name,
+        feedback: feedbackTrimmed,
+      })
+      setArtworkVersionsById((prev) => {
+        const existing = prev[id] ?? []
+        return { ...prev, [id]: [...existing, image] }
+      })
+      setArtworkSelectedIndexById((prev) => ({
+        ...prev,
+        [id]: versions.length,
+      }))
+      setArtworkStatuses((prev) => ({ ...prev, [id]: 'ready' }))
+    } catch (err) {
+      setArtworkStatuses((prev) => ({ ...prev, [id]: 'error' }))
+      toast.error(err instanceof Error ? err.message : t('artwork.generateBatchError'))
+    } finally {
+      setArtworkProgress(null)
+      setArtworkRunningState(false)
+    }
+  }
+
+  function selectArtworkVersion(id: string, index: number) {
+    const versions = artworkVersionsById[id] ?? []
+    if (index < 0 || index >= versions.length) return
+    setArtworkSelectedIndexById((prev) => ({ ...prev, [id]: index }))
+  }
+
   function confirmArtwork(id: string) {
     const item = artworkQueue.find((d) => d.id === id)
-    const image = artworkResults[id]
+    const versions = artworkVersionsById[id] ?? []
+    const selectedIndex = artworkSelectedIndexById[id] ?? 0
+    const image = versions[selectedIndex]
     if (!item || !image) return
     if ((artworkStatuses[id] ?? 'pending') !== 'ready') return
     setConfirmedArtworks((prev) =>
@@ -1013,11 +1094,7 @@ export function PublicHolidaysWorkspace({
       delete next[id]
       return next
     })
-    setArtworkResults((prev) => {
-      const next = { ...prev }
-      delete next[id]
-      return next
-    })
+    clearArtworkVersions(id)
   }
 
   function skipArtwork(id: string) {
@@ -1029,11 +1106,7 @@ export function PublicHolidaysWorkspace({
       delete next[id]
       return next
     })
-    setArtworkResults((prev) => {
-      const next = { ...prev }
-      delete next[id]
-      return next
-    })
+    clearArtworkVersions(id)
     toast(t('artwork.skipUndoToast', { name: item.name }), {
       action: {
         label: t('artwork.undo'),
@@ -1413,7 +1486,8 @@ export function PublicHolidaysWorkspace({
             holidays={artworkQueue}
             confirmedArtworks={confirmedArtworks}
             statuses={artworkStatuses}
-            results={artworkResults}
+            versionsById={artworkVersionsById}
+            selectedIndexById={artworkSelectedIndexById}
             running={artworkRunning}
             progress={artworkProgress}
             formatDate={(iso) => formatHolidayDate(iso, locale)}
@@ -1421,6 +1495,8 @@ export function PublicHolidaysWorkspace({
             onConfirm={confirmArtwork}
             onSkip={skipArtwork}
             onRetry={(id) => void handleRetryArtwork(id)}
+            onRegenerate={(id, feedback) => void handleRegenerateArtwork(id, feedback)}
+            onSelectVersion={selectArtworkVersion}
             onRemoveConfirmed={removeConfirmedArtwork}
           />
         </TabsContent>

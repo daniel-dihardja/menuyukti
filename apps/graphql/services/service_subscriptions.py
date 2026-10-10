@@ -14,7 +14,8 @@ SERVICE_KEY_DIGITAL_MENU = "digital_menu"
 SERVICE_KEY_POINT_SYSTEM = "point_system"
 SERVICE_KEY_STAMP_CARD = "stamp_card"
 SERVICE_KEY_CASHBACK = "cashback"
-SERVICE_KEY_PREDICTION = "prediction"
+SERVICE_KEY_PICK_AND_WIN = "pick_and_win"
+SERVICE_KEY_VOTING = "voting"
 
 KNOWN_SERVICE_KEYS = frozenset(
     {
@@ -22,7 +23,8 @@ KNOWN_SERVICE_KEYS = frozenset(
         SERVICE_KEY_POINT_SYSTEM,
         SERVICE_KEY_STAMP_CARD,
         SERVICE_KEY_CASHBACK,
-        SERVICE_KEY_PREDICTION,
+        SERVICE_KEY_PICK_AND_WIN,
+        SERVICE_KEY_VOTING,
     }
 )
 
@@ -80,6 +82,11 @@ def activate_subscription(
     key = normalize_service_key(service_key)
     if location.workspace_id is None:
         raise ValueError("Location must belong to a workspace to subscribe to services")
+
+    if key == SERVICE_KEY_VOTING and not is_active_subscription(
+        session, location.id, SERVICE_KEY_POINT_SYSTEM
+    ):
+        raise ValueError("point_system subscription is required before enabling voting")
 
     row = get_subscription(session, location.id, key)
     if row is None:

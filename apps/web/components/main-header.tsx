@@ -1,7 +1,7 @@
 'use client'
 
 import { Show, useAuth } from '@clerk/nextjs'
-import { Leaf } from 'lucide-react'
+import { Coins, Leaf } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
@@ -9,6 +9,7 @@ import * as React from 'react'
 
 import { AccountMenu } from '@/components/account/account-menu'
 import { GuestSignInMenu } from '@/components/guest-sign-in-menu'
+import { usePublicGuestPoints } from '@/components/public-guest-points-context'
 import { useOptionalWorkspacePlan } from '@/components/workspace-plan-provider'
 import { isPublicLocationSurfacePath, routes } from '@/lib/routes'
 import { getDefaultPathForPlan } from '@/lib/workspace-plan'
@@ -19,11 +20,17 @@ export function MainHeader() {
   const t = useTranslations('mainHeader')
   const { isSignedIn } = useAuth()
   const planCtx = useOptionalWorkspacePlan()
+  const { balance: guestPointBalance } = usePublicGuestPoints()
+  const tPublic = useTranslations('public.locationHome')
   const isLogin = pathname === routes.login || (pathname?.startsWith(`${routes.login}/`) ?? false)
   const isSignUp =
     pathname === routes.signUp || (pathname?.startsWith(`${routes.signUp}/`) ?? false)
   const isAbout = pathname === routes.about || (pathname?.startsWith(`${routes.about}/`) ?? false)
   const isGuestLocation = isPublicLocationSurfacePath(pathname)
+  const guestPointsToShow =
+    isGuestLocation && isSignedIn && guestPointBalance != null && Number.isFinite(guestPointBalance)
+      ? guestPointBalance
+      : null
   /** Hide sign-in chrome on auth pages (user is already signing in / up). */
   const showSignIn = !isLogin && !isSignUp
   const [isScrolled, setIsScrolled] = React.useState(false)
@@ -80,6 +87,15 @@ export function MainHeader() {
         </div>
 
         <div className="flex shrink-0 items-center gap-2 pe-3 sm:pe-4">
+          {guestPointsToShow != null ? (
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1 text-xs font-medium tabular-nums text-foreground"
+              aria-label={tPublic('pointsBalanceAria', { balance: guestPointsToShow })}
+            >
+              <Coins className="size-3.5 shrink-0 text-warning" aria-hidden />
+              {tPublic('pointsBalance', { balance: guestPointsToShow })}
+            </span>
+          ) : null}
           <Show when="signed-out">{showSignIn ? <GuestSignInMenu /> : null}</Show>
           <Show when="signed-in">
             <AccountMenu />

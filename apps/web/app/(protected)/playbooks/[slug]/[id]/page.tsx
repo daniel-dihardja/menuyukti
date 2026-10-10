@@ -3,6 +3,7 @@ import { getTranslations } from 'next-intl/server'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
+import { NearbyLocationsInstanceClient } from '@/app/(protected)/playbooks/_components/nearby-locations-instance-client'
 import { PlaybookForm } from '@/app/(protected)/playbooks/_components/playbook-form'
 import { PublicHolidaysInstanceClient } from '@/app/(protected)/playbooks/_components/public-holidays-instance-client'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
@@ -11,6 +12,7 @@ import { getCachedLocationsListData } from '@/lib/graphql/cached-queries'
 import { graphqlQuery } from '@/lib/graphql/client'
 import { PLAYBOOK_QUERY, type PlaybookData } from '@/lib/graphql/queries/playbooks'
 import { getPlaybookBySlug, slugFromPlaybookType } from '@/lib/playbooks/catalog'
+import { formatLocationAddress } from '@/lib/playbooks/nearby-locations'
 import { routes } from '@/lib/routes'
 
 type PlaybookInstancePageProps = {
@@ -74,7 +76,12 @@ export default async function PlaybookInstancePage({ params }: PlaybookInstanceP
   const branches = locationsData.locations.map((loc) => ({
     id: Number(loc.id),
     name: loc.name,
+    street: loc.street,
+    city: loc.city,
+    country: loc.country,
   }))
+  const nearbyBranch = branches.find((b) => b.id === playbook.locationId)
+  const nearbyAddress = nearbyBranch ? formatLocationAddress(nearbyBranch) : ''
 
   return (
     <AnalyticsPageShell
@@ -91,7 +98,7 @@ export default async function PlaybookInstancePage({ params }: PlaybookInstanceP
           <PublicHolidaysInstanceClient
             playbookId={playbook.id}
             catalog={catalog}
-            branches={branches}
+            branches={branches.map((b) => ({ id: b.id, name: b.name }))}
             initialValues={{
               name: playbook.name,
               locationId: playbook.locationId,
@@ -99,12 +106,25 @@ export default async function PlaybookInstancePage({ params }: PlaybookInstanceP
               endDate: playbook.endDate,
             }}
           />
+        ) : catalog.id === 'nearbyLocations' ? (
+          <NearbyLocationsInstanceClient
+            playbookId={playbook.id}
+            catalog={catalog}
+            branches={branches}
+            initialValues={{
+              name: playbook.name,
+              locationId: playbook.locationId,
+              address: nearbyAddress,
+              instructions: '',
+              focus: ['lunch_demand', 'competitors'],
+            }}
+          />
         ) : (
           <PlaybookForm
             mode="edit"
             playbookId={playbook.id}
             catalog={catalog}
-            branches={branches}
+            branches={branches.map((b) => ({ id: b.id, name: b.name }))}
             initialValues={{
               name: playbook.name,
               locationId: playbook.locationId,

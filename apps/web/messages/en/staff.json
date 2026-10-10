@@ -5,7 +5,8 @@
     "tabsAria": "Staff console sections",
     "tabs": {
       "workspaces": "Workspaces",
-      "mockData": "Mock data"
+      "mockData": "Mock data",
+      "clearServiceData": "Clear service data"
     },
     "provisionWorkspace": {
       "title": "Provision workspace",
@@ -60,6 +61,28 @@
       "successAll": "Inventar + analytics seeded for workspace {workspaceId} ({catalog} catalog, {orders} orders).",
       "successClear": "Cleared inventar for workspace {workspaceId}. Locations left intact.",
       "error": "Could not ingest mock seed data."
+    },
+    "clearServiceData": {
+      "title": "Clear service data",
+      "description": "Wipe location-scoped domain data for one service across a Clerk user’s workspace and cancel that service’s active subscriptions. Locations and the workspace are not deleted. Cashback is CRM-scoped and will be rejected. Disabled in production unless ALLOW_DEV_DATA_INGEST=1.",
+      "targetClerkUserIdLabel": "Target Clerk user ID",
+      "targetClerkUserIdPlaceholder": "user_…",
+      "yourUserId": "Your user ID: {id}",
+      "useYourUserId": "Use this ID",
+      "serviceKeyLabel": "Service",
+      "services": {
+        "digital_menu": "Digital Menu",
+        "point_system": "Point System",
+        "stamp_card": "Stamp Card",
+        "cashback": "Cashback",
+        "pick_and_win": "Pick & Win",
+        "voting": "Voting"
+      },
+      "confirm": "Clear all “{service}” data for this user’s workspace? This cannot be undone.",
+      "save": "Clear service data",
+      "saving": "Clearing…",
+      "success": "Cleared {service} for workspace {workspaceId} ({locations} locations): predictions {predictions}, votings {votings}, ledger {ledger}, earn rules {rules}, POS {posOrders}, menu categories {menuCategories}, subscriptions {subscriptions}.",
+      "error": "Could not clear service data."
     }
   }
 }

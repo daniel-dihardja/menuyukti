@@ -13,12 +13,14 @@ from graphql.data_sources import (
     Workspace,
     WorkspaceMembership,
 )
-from graphql.data_sources.models.menu import Menu
+from graphql.data_sources.models.menu import Menu, MenuCategory, MenuItem
+from graphql.data_sources.models.point_earn_rule import PointEarnRule
 from graphql.data_sources.models.prediction import Prediction, PredictionOutcome
 from graphql.schema import schema
 from graphql.services.service_subscriptions import (
     SERVICE_KEY_DIGITAL_MENU,
-    SERVICE_KEY_PREDICTION,
+    SERVICE_KEY_PICK_AND_WIN,
+    SERVICE_KEY_POINT_SYSTEM,
     SERVICE_STATUS_ACTIVE,
 )
 from graphql.services.workspace_plan import WORKSPACE_PLAN_PRO
@@ -31,6 +33,24 @@ query Hub($slug: String!) {
     name
     publicSlug
     services { key hrefSegment available }
+    headerImageFilename
+    workspaceId
+    mediaOwnerClerkUserId
+    menuDishCount
+    menuOpenPoints
+    predictionTeaser {
+      question
+      openCount
+      rewardMode
+      pointsForVote
+      pointsForCorrect
+    }
+    votingTeaser {
+      question
+      openCount
+      rewardMode
+      pointsForVote
+    }
   }
 }
 """
@@ -41,7 +61,29 @@ query Preds($slug: String!) {
     id
     question
     status
+    winningOutcomeId
+    resolvedAt
+    voteCount
     outcomes { id label }
+  }
+}
+"""
+
+CLOSE = """
+mutation Close($predictionId: Int!) {
+  closePrediction(predictionId: $predictionId) {
+    id
+    status
+  }
+}
+"""
+
+RESOLVE = """
+mutation Resolve($predictionId: Int!, $winningOutcomeId: Int!) {
+  resolvePrediction(predictionId: $predictionId, winningOutcomeId: $winningOutcomeId) {
+    id
+    status
+    winningOutcomeId
   }
 }
 """
@@ -138,9 +180,20 @@ def test_public_location_greeting_only_no_services(hub_venue):
     assert hub["publicSlug"] == "hub-cafe"
     by_key = {s["key"]: s for s in hub["services"]}
     assert by_key["digital_menu"]["available"] is False
-    assert by_key["prediction"]["available"] is False
+    assert by_key["pick_and_win"]["available"] is False
+    assert by_key["voting"]["available"] is False
+    assert by_key["point_system"]["available"] is False
     assert by_key["digital_menu"]["hrefSegment"] == "menu"
-    assert by_key["prediction"]["hrefSegment"] == "prediction"
+    assert by_key["pick_and_win"]["hrefSegment"] == "pick-and-win"
+    assert by_key["voting"]["hrefSegment"] == "voting"
+    assert by_key["point_system"]["hrefSegment"] == ""
+    assert hub["headerImageFilename"] is None
+    assert hub["workspaceId"] is None
+    assert hub["mediaOwnerClerkUserId"] is None
+    assert hub["menuDishCount"] is None
+    assert hub["menuOpenPoints"] is None
+    assert hub["predictionTeaser"] is None
+    assert hub["votingTeaser"] is None
 
 
 def test_public_location_menu_and_prediction_flags(hub_venue):
@@ -160,7 +213,7 @@ def test_public_location_menu_and_prediction_flags(hub_venue):
             ServiceSubscription(
                 workspace_id=wid,
                 location_id=lid,
-                service_key=SERVICE_KEY_PREDICTION,
+                service_key=SERVICE_KEY_PICK_AND_WIN,
                 status=SERVICE_STATUS_ACTIVE,
             )
         )
@@ -171,9 +224,142 @@ def test_public_location_menu_and_prediction_flags(hub_venue):
 
     result = asyncio.run(schema.execute(HUB, variable_values={"slug": hub_venue["slug"]}))
     assert result.errors is None, result.errors
-    by_key = {s["key"]: s for s in result.data["publicLocation"]["services"]}
+    hub = result.data["publicLocation"]
+    by_key = {s["key"]: s for s in hub["services"]}
     assert by_key["digital_menu"]["available"] is True
-    assert by_key["prediction"]["available"] is True
+    assert by_key["pick_and_win"]["available"] is True
+    assert hub["menuDishCount"] == 0
+    assert hub["workspaceId"] == str(wid)
+    assert hub["mediaOwnerClerkUserId"] == GRAPHQL_TEST_USER_ID
+    assert hub["headerImageFilename"] is None
+    assert hub["predictionTeaser"] is None
+
+
+def test_public_location_hub_presentation_fields(hub_venue):
+    lid = hub_venue["location_id"]
+    wid = hub_venue["workspace_id"]
+    session = SessionLocal()
+    try:
+        session.add(
+            ServiceSubscription(
+                workspace_id=wid,
+                location_id=lid,
+                service_key=SERVICE_KEY_DIGITAL_MENU,
+                status=SERVICE_STATUS_ACTIVE,
+            )
+        )
+        session.add(
+            ServiceSubscription(
+                workspace_id=wid,
+                location_id=lid,
+                service_key=SERVICE_KEY_PICK_AND_WIN,
+                status=SERVICE_STATUS_ACTIVE,
+            )
+        )
+        menu = Menu(
+            location_id=lid,
+            title="",
+            public_enabled=True,
+            header_image_filename="hero.webp",
+        )
+        session.add(menu)
+        session.flush()
+        cat = MenuCategory(menu_id=menu.id, name="Mains", sort_order=0)
+        session.add(cat)
+        session.flush()
+        session.add_all(
+            [
+                MenuItem(
+                    menu_id=menu.id,
+                    category_id=cat.id,
+                    name="Burger",
+                    description="",
+                    price=12.0,
+                    sort_order=0,
+                    is_available=True,
+                ),
+                MenuItem(
+                    menu_id=menu.id,
+                    category_id=cat.id,
+                    name="Hidden",
+                    description="",
+                    price=9.0,
+                    sort_order=1,
+                    is_available=False,
+                ),
+            ]
+        )
+        pred_early = Prediction(
+            location_id=lid,
+            question="First open?",
+            status="open",
+            closes_at=datetime.now(UTC) + timedelta(hours=2),
+            reward_mode="social",
+        )
+        pred_later = Prediction(
+            location_id=lid,
+            question="Second open?",
+            status="open",
+            closes_at=datetime.now(UTC) + timedelta(hours=8),
+            reward_mode="social",
+        )
+        session.add_all([pred_early, pred_later])
+        session.flush()
+        for pred in (pred_early, pred_later):
+            session.add(PredictionOutcome(prediction_id=pred.id, label="A", sort_order=0))
+            session.add(PredictionOutcome(prediction_id=pred.id, label="B", sort_order=1))
+        session.commit()
+    finally:
+        session.close()
+
+    result = asyncio.run(schema.execute(HUB, variable_values={"slug": hub_venue["slug"]}))
+    assert result.errors is None, result.errors
+    hub = result.data["publicLocation"]
+    assert hub["headerImageFilename"] == "hero.webp"
+    assert hub["menuDishCount"] == 1
+    assert hub["workspaceId"] == str(wid)
+    assert hub["mediaOwnerClerkUserId"] == GRAPHQL_TEST_USER_ID
+    assert hub["predictionTeaser"] == {
+        "question": "First open?",
+        "openCount": 2,
+        "rewardMode": "social",
+        "pointsForVote": 0,
+        "pointsForCorrect": 0,
+    }
+    assert hub["menuOpenPoints"] is None
+
+
+def test_public_location_point_system_and_menu_open_points(hub_venue):
+    lid = hub_venue["location_id"]
+    wid = hub_venue["workspace_id"]
+    session = SessionLocal()
+    try:
+        session.add(
+            ServiceSubscription(
+                workspace_id=wid,
+                location_id=lid,
+                service_key=SERVICE_KEY_POINT_SYSTEM,
+                status=SERVICE_STATUS_ACTIVE,
+            )
+        )
+        session.add(
+            PointEarnRule(
+                location_id=lid,
+                action_key="open_menu_qr",
+                points=15,
+                enabled=True,
+            )
+        )
+        session.commit()
+    finally:
+        session.close()
+
+    result = asyncio.run(schema.execute(HUB, variable_values={"slug": hub_venue["slug"]}))
+    assert result.errors is None, result.errors
+    hub = result.data["publicLocation"]
+    by_key = {s["key"]: s for s in hub["services"]}
+    assert by_key["point_system"]["available"] is True
+    assert hub["menuOpenPoints"] == 15
 
 
 def test_public_location_predictions(hub_venue):
@@ -185,7 +371,7 @@ def test_public_location_predictions(hub_venue):
             ServiceSubscription(
                 workspace_id=wid,
                 location_id=lid,
-                service_key=SERVICE_KEY_PREDICTION,
+                service_key=SERVICE_KEY_PICK_AND_WIN,
                 status=SERVICE_STATUS_ACTIVE,
             )
         )
@@ -211,6 +397,84 @@ def test_public_location_predictions(hub_venue):
     assert listed.errors is None, listed.errors
     assert len(listed.data["publicLocationPredictions"]) == 1
     assert listed.data["publicLocationPredictions"][0]["question"] == "Who wins?"
+
+
+def test_public_predictions_include_closed_and_recent_resolved(hub_venue):
+    lid = hub_venue["location_id"]
+    wid = hub_venue["workspace_id"]
+    slug = hub_venue["slug"]
+    session = SessionLocal()
+    try:
+        session.add(
+            ServiceSubscription(
+                workspace_id=wid,
+                location_id=lid,
+                service_key=SERVICE_KEY_PICK_AND_WIN,
+                status=SERVICE_STATUS_ACTIVE,
+            )
+        )
+        pred = Prediction(
+            location_id=lid,
+            question="Public result?",
+            status="open",
+            closes_at=datetime.now(UTC) + timedelta(hours=6),
+            reward_mode="social",
+        )
+        session.add(pred)
+        session.flush()
+        outcome_a = PredictionOutcome(prediction_id=pred.id, label="A", sort_order=0)
+        outcome_b = PredictionOutcome(prediction_id=pred.id, label="B", sort_order=1)
+        session.add(outcome_a)
+        session.add(outcome_b)
+        session.commit()
+        pred_id = int(pred.id)
+        winning_id = int(outcome_a.id)
+    finally:
+        session.close()
+
+    closed = asyncio.run(
+        schema.execute(
+            CLOSE,
+            variable_values={"predictionId": pred_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert closed.errors is None, closed.errors
+
+    listed_closed = asyncio.run(schema.execute(PREDS, variable_values={"slug": slug}))
+    assert listed_closed.errors is None, listed_closed.errors
+    assert len(listed_closed.data["publicLocationPredictions"]) == 1
+    assert listed_closed.data["publicLocationPredictions"][0]["status"] == "closed"
+
+    resolved = asyncio.run(
+        schema.execute(
+            RESOLVE,
+            variable_values={"predictionId": pred_id, "winningOutcomeId": winning_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert resolved.errors is None, resolved.errors
+
+    listed_resolved = asyncio.run(schema.execute(PREDS, variable_values={"slug": slug}))
+    assert listed_resolved.errors is None, listed_resolved.errors
+    card = listed_resolved.data["publicLocationPredictions"][0]
+    assert card["status"] == "resolved"
+    assert card["winningOutcomeId"] == winning_id
+
+    from graphql.services.predictions import GUEST_RESOLVED_RETENTION_DAYS
+
+    session = SessionLocal()
+    try:
+        row = session.get(Prediction, pred_id)
+        assert row is not None
+        row.resolved_at = datetime.now(UTC) - timedelta(days=GUEST_RESOLVED_RETENTION_DAYS + 1)
+        session.commit()
+    finally:
+        session.close()
+
+    listed_old = asyncio.run(schema.execute(PREDS, variable_values={"slug": slug}))
+    assert listed_old.errors is None, listed_old.errors
+    assert listed_old.data["publicLocationPredictions"] == []
 
 
 def test_update_public_slug_without_digital_menu(hub_venue):

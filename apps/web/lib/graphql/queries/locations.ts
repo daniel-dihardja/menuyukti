@@ -4,6 +4,7 @@ export const LOCATIONS_LIST_QUERY = `
       id
       name
       nodeId
+      street
       city
       country
       currency
@@ -50,6 +51,7 @@ export type LocationsListData = {
     id: string
     name: string
     nodeId: string | null
+    street: string | null
     city: string | null
     country: string | null
     currency: string | null

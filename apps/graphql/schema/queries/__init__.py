@@ -32,6 +32,7 @@ from .revenue_trends import RevenueTrendsQuery
 from .scheduler_calendar import SchedulerCalendarQuery
 from .service_subscriptions import ServiceSubscriptionsQuery
 from .styles import StylesQuery
+from .votings import VotingsQuery
 from .workspace import WorkspaceQuery
 
 __all__ = [
@@ -62,6 +63,7 @@ __all__ = [
     "MyPointsQuery",
     "PointEarnRulesQuery",
     "PredictionsQuery",
+    "VotingsQuery",
     "ServiceSubscriptionsQuery",
     "PublicHolidaysQuery",
     "PublicLocationQuery",

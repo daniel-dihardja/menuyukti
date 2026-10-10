@@ -76,8 +76,9 @@ class PredictionsQuery:
 
     @strawberry.field(
         description=(
-            "Open predictions at locations the authenticated guest has visited "
+            "Guest predictions at locations the authenticated guest has visited "
             "(point ledger or digital-menu orders), with an active prediction subscription. "
+            "Includes open predictions, plus closed and recently resolved ones the guest voted on. "
             "Empty when unauthenticated."
         )
     )

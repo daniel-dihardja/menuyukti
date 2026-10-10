@@ -25,15 +25,16 @@ import {
   MY_SERVICE_SUBSCRIPTIONS_QUERY,
   SERVICE_KEY_DIGITAL_MENU,
   SERVICE_KEY_POINT_SYSTEM,
-  SERVICE_KEY_PREDICTION,
+  SERVICE_KEY_PICK_AND_WIN,
+  SERVICE_KEY_VOTING,
   SERVICE_STATUS_ACTIVE,
   type MyServiceSubscriptionsData,
 } from '@/lib/graphql/queries/service-subscriptions'
 import {
   SERVICE_CATEGORIES,
-  SERVICE_CATEGORY_GAMIFICATION,
+  SERVICE_CATEGORY_CLASSIC_LOYALTY,
   SERVICE_CATEGORY_GUEST_EXPERIENCE,
-  SERVICE_CATEGORY_LOYALTY,
+  SERVICE_CATEGORY_PLAY_REWARDS,
   type ServiceCategory,
 } from '@/lib/services/catalog'
 import { routes } from '@/lib/routes'
@@ -46,9 +47,14 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title, description, openGraph: { title, description } }
 }
 
-function ServicePreviewFrame({ children }: { children: ReactNode }) {
+function ServicePreviewFrame({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div className="bg-muted flex aspect-[16/9] items-center justify-center rounded-md">
+    <div
+      className={cn(
+        'bg-muted flex aspect-[16/9] items-center justify-center rounded-md',
+        className,
+      )}
+    >
       {children}
     </div>
   )
@@ -132,6 +138,24 @@ function PredictionPreview() {
   )
 }
 
+function VotingPreview() {
+  return (
+    <div className="border-border bg-background flex w-48 flex-col gap-3 rounded-xl border p-4 shadow-sm">
+      <div className="bg-muted h-2 w-2/3 rounded" />
+      <div className="flex flex-col gap-2">
+        <div className="border-border flex items-center gap-2 rounded-md border px-2 py-1.5">
+          <div className="bg-muted size-3 rounded-sm" />
+          <div className="bg-muted h-2 flex-1 rounded" />
+        </div>
+        <div className="border-border flex items-center gap-2 rounded-md border px-2 py-1.5">
+          <div className="border-border size-3 rounded-sm border" />
+          <div className="bg-muted h-2 w-3/4 rounded" />
+        </div>
+      </div>
+    </div>
+  )
+}
+
 type CatalogCardProps = {
   title: string
   benefit: string
@@ -162,22 +186,24 @@ function CatalogCard({
       <CardContent className="pt-5">
         <ServicePreviewFrame>{preview}</ServicePreviewFrame>
       </CardContent>
-      <CardHeader className="pt-0">
-        <CardTitle className="text-lg">{title}</CardTitle>
-        <CardAction>{status}</CardAction>
-        <CardDescription className="text-pretty">{benefit}</CardDescription>
-        <p className="text-muted-foreground text-sm">{pricingComingSoon}</p>
-      </CardHeader>
-      {href && ctaLabel ? (
-        <CardFooter className="pb-5">
-          <Button asChild variant="secondary" className="w-fit" tabIndex={-1}>
-            <span>
-              {ctaLabel}
-              <ChevronRight data-icon="inline-end" />
-            </span>
-          </Button>
-        </CardFooter>
-      ) : null}
+      <div className="flex flex-col gap-5">
+        <CardHeader className="pt-0">
+          <CardTitle className="text-lg">{title}</CardTitle>
+          <CardAction>{status}</CardAction>
+          <CardDescription className="text-pretty">{benefit}</CardDescription>
+          <p className="text-muted-foreground text-sm">{pricingComingSoon}</p>
+        </CardHeader>
+        {href && ctaLabel ? (
+          <CardFooter className="pb-5">
+            <Button asChild variant="secondary" className="w-fit" tabIndex={-1}>
+              <span>
+                {ctaLabel}
+                <ChevronRight data-icon="inline-end" />
+              </span>
+            </Button>
+          </CardFooter>
+        ) : null}
+      </div>
     </Card>
   )
 
@@ -227,7 +253,11 @@ export default async function ServicesPage() {
   ).length
 
   const predictionSubCount = activeSubscriptions.filter(
-    (row) => row.serviceKey === SERVICE_KEY_PREDICTION,
+    (row) => row.serviceKey === SERVICE_KEY_PICK_AND_WIN,
+  ).length
+
+  const votingSubCount = activeSubscriptions.filter(
+    (row) => row.serviceKey === SERVICE_KEY_VOTING,
   ).length
 
   const overviewRows = activeSubscriptions.flatMap((row) => {
@@ -246,6 +276,56 @@ export default async function ServicesPage() {
   const pricingComingSoon = tCatalog('pricingComingSoon')
 
   const categoryCards: Record<ServiceCategory, ReactNode[]> = {
+    [SERVICE_CATEGORY_PLAY_REWARDS]: [
+      <CatalogCard
+        key="voting"
+        title={tCatalog('voting.title')}
+        benefit={tCatalog('voting.benefit')}
+        status={
+          <Badge variant="secondary">
+            {votingSubCount > 0
+              ? tCatalog('voting.statusOn', { count: votingSubCount })
+              : tCatalog('voting.statusAvailable')}
+          </Badge>
+        }
+        pricingComingSoon={pricingComingSoon}
+        preview={<VotingPreview />}
+        href={routes.servicesVoting}
+        ctaLabel={tCatalog('viewCta')}
+      />,
+      <CatalogCard
+        key="pick_and_win"
+        title={tCatalog('prediction.title')}
+        benefit={tCatalog('prediction.benefit')}
+        status={
+          <Badge variant="secondary">
+            {predictionSubCount > 0
+              ? tCatalog('prediction.statusOn', { count: predictionSubCount })
+              : tCatalog('prediction.statusAvailable')}
+          </Badge>
+        }
+        pricingComingSoon={pricingComingSoon}
+        preview={<PredictionPreview />}
+        href={routes.servicesPickAndWin}
+        ctaLabel={tCatalog('viewCta')}
+      />,
+      <CatalogCard
+        key="point_system"
+        title={tCatalog('pointSystem.title')}
+        benefit={tCatalog('pointSystem.benefit')}
+        status={
+          <Badge variant="secondary">
+            {pointSystemSubCount > 0
+              ? tCatalog('pointSystem.statusOn', { count: pointSystemSubCount })
+              : tCatalog('pointSystem.statusAvailable')}
+          </Badge>
+        }
+        pricingComingSoon={pricingComingSoon}
+        preview={<PointSystemPreview />}
+        href={routes.servicesPointSystem}
+        ctaLabel={tCatalog('viewCta')}
+      />,
+    ],
     [SERVICE_CATEGORY_GUEST_EXPERIENCE]: [
       <CatalogCard
         key="digital_menu"
@@ -264,23 +344,7 @@ export default async function ServicesPage() {
         ctaLabel={tCatalog('viewCta')}
       />,
     ],
-    [SERVICE_CATEGORY_LOYALTY]: [
-      <CatalogCard
-        key="point_system"
-        title={tCatalog('pointSystem.title')}
-        benefit={tCatalog('pointSystem.benefit')}
-        status={
-          <Badge variant="secondary">
-            {pointSystemSubCount > 0
-              ? tCatalog('pointSystem.statusOn', { count: pointSystemSubCount })
-              : tCatalog('pointSystem.statusAvailable')}
-          </Badge>
-        }
-        pricingComingSoon={pricingComingSoon}
-        preview={<PointSystemPreview />}
-        href={routes.servicesPointSystem}
-        ctaLabel={tCatalog('viewCta')}
-      />,
+    [SERVICE_CATEGORY_CLASSIC_LOYALTY]: [
       <CatalogCard
         key="stamp_card"
         title={tCatalog('stampCard.title')}
@@ -298,37 +362,15 @@ export default async function ServicesPage() {
         preview={<CashbackPreview />}
       />,
     ],
-    [SERVICE_CATEGORY_GAMIFICATION]: [
-      <CatalogCard
-        key="prediction"
-        title={tCatalog('prediction.title')}
-        benefit={tCatalog('prediction.benefit')}
-        status={
-          <Badge variant="secondary">
-            {predictionSubCount > 0
-              ? tCatalog('prediction.statusOn', { count: predictionSubCount })
-              : tCatalog('prediction.statusAvailable')}
-          </Badge>
-        }
-        pricingComingSoon={pricingComingSoon}
-        preview={<PredictionPreview />}
-        href={routes.servicesPrediction}
-        ctaLabel={tCatalog('viewCta')}
-      />,
-    ],
   }
 
   return (
     <AnalyticsPageShell title={t('title')} breadcrumbs={[{ label: t('title') }]}>
-      <div className="flex flex-col gap-8">
+      <div className="flex flex-col gap-8 pb-16">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-semibold tracking-tight">{t('headline')}</h1>
           <p className="text-muted-foreground max-w-2xl text-sm">{t('subtitle')}</p>
         </div>
-
-        <ServicesSubscriptionsOverview subscriptions={overviewRows} />
-
-        <Separator />
 
         <div className="flex flex-col gap-10">
           {SERVICE_CATEGORIES.map((category) => (
@@ -342,6 +384,10 @@ export default async function ServicesPage() {
             </section>
           ))}
         </div>
+
+        <Separator />
+
+        <ServicesSubscriptionsOverview subscriptions={overviewRows} />
       </div>
     </AnalyticsPageShell>
   )

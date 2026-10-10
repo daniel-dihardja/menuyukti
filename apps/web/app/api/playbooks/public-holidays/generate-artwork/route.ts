@@ -17,17 +17,22 @@ export async function POST(req: Request) {
     const json = await req.json()
     const body = generateArtworkBodySchema.parse(json)
 
+    const isRefine = body.previousImageName !== undefined && body.feedback !== undefined
+
     // Defensive clip — Leonardo rejects prompts over 1500 characters.
+    const rawPrompt = isRefine ? body.feedback! : body.prompt
     const prompt =
-      body.prompt.length > LEONARDO_PROMPT_MAX_CHARS
-        ? body.prompt.slice(0, LEONARDO_PROMPT_MAX_CHARS).trimEnd()
-        : body.prompt
+      rawPrompt.length > LEONARDO_PROMPT_MAX_CHARS
+        ? rawPrompt.slice(0, LEONARDO_PROMPT_MAX_CHARS).trimEnd()
+        : rawPrompt
 
     const result = await runInstagramImageGeneration({
       userId,
       prompt,
       format: 'story',
-      references: [{ type: 'photo', name: body.styleImageName }],
+      references: isRefine
+        ? [{ type: 'previous-result', filename: body.previousImageName! }]
+        : [{ type: 'photo', name: body.styleImageName }],
       logPrefix: '[playbooks/public-holidays/generate-artwork]',
     })
 

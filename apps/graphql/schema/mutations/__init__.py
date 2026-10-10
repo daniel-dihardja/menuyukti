@@ -1,5 +1,7 @@
 from .award_crm_cashback import AwardCrmCashbackMutation
+from .clear_workspace_service_data import ClearWorkspaceServiceDataMutation
 from .close_prediction import ClosePredictionMutation
+from .close_voting import CloseVotingMutation
 from .create_calendar_entry import CreateCalendarEntryMutation
 from .create_crm_app import CreateCrmAppMutation
 from .create_crm_enrollment_token import CreateCrmEnrollmentTokenMutation
@@ -10,6 +12,7 @@ from .create_post import CreatePostMutation
 from .create_post_page import CreatePostPageMutation
 from .create_prediction import CreatePredictionMutation
 from .create_style import CreateStyleMutation
+from .create_voting import CreateVotingMutation
 from .create_workspace import CreateWorkspaceMutation
 from .delete_analytics_run import DeleteAnalyticsRunMutation
 from .delete_calendar_entry import DeleteCalendarEntryMutation
@@ -66,13 +69,18 @@ from .upload_sales_report import UploadSalesReportMutation
 from .upsert_menu_item_cogs_bulk import UpsertMenuItemCogsBulkMutation
 from .upsert_point_earn_rules import UpsertPointEarnRulesMutation
 from .vote_prediction import VotePredictionMutation
+from .vote_voting import VoteVotingMutation
 
 __all__ = [
     "ActivateServiceSubscriptionMutation",
+    "ClearWorkspaceServiceDataMutation",
     "ClosePredictionMutation",
+    "CloseVotingMutation",
     "CreatePredictionMutation",
+    "CreateVotingMutation",
     "ResolvePredictionMutation",
     "VotePredictionMutation",
+    "VoteVotingMutation",
     "UpsertPointEarnRulesMutation",
     "AwardCrmCashbackMutation",
     "AddMediaToCollectionMutation",

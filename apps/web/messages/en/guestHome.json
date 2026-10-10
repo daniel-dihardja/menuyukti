@@ -16,18 +16,34 @@
     "actions": {
       "open_menu_qr": "Opened menu",
       "complete_order": "Completed order",
-      "prediction_vote": "Voted on prediction",
-      "prediction_correct": "Correct prediction"
+      "prediction_vote": "Voted on Pick & Win",
+      "prediction_correct": "Correct pick"
     },
-    "predictionsTitle": "Open predictions",
-    "predictionsLead": "Vote on outcomes at venues you’ve visited. Rewards may be social or points, depending on the venue.",
-    "predictionsEmpty": "No open predictions yet. Visit a venue with Prediction on, then check back here.",
-    "predictionsLoadError": "Could not load predictions right now. Try again later.",
+    "predictionsTitle": "Pick & Win",
+    "predictionsLead": "Vote on outcomes at venues you’ve visited, then check back for results. Rewards may be social or points, depending on the venue.",
+    "predictionsEmpty": "No picks yet. Visit a venue with Pick & Win on, cast a vote, then check back here for results.",
+    "predictionsLoadError": "Could not load Pick & Win right now. Try again later.",
     "predictionsRewardSocial": "Social reward — bragging rights",
     "predictionsRewardPoints": "+{vote} for voting · +{correct} if correct",
     "predictionsYourPick": "Your pick",
     "predictionsVoting": "Voting…",
     "predictionsVoteFailed": "Could not cast your vote.",
-    "profileCta": "Open profile"
+    "predictionsStatusClosed": "Closed",
+    "predictionsStatusResolved": "Resolved",
+    "predictionsAwaitingResult": "Voting closed — result soon.",
+    "predictionsYouWereCorrect": "You were right",
+    "predictionsYouWereIncorrect": "You were incorrect",
+    "predictionsWinnerLabel": "Winner",
+    "predictionsVoteCount": "{count, plural, one {# vote} other {# votes}}",
+    "profileCta": "Open profile",
+    "votingsTitle": "Voting",
+    "votingsLead": "Share your preferences at venues you’ve visited. Earn points for casting a vote.",
+    "votingsEmpty": "No votes yet. Visit a venue with Voting on to cast a vote.",
+    "votingsLoadError": "Could not load Voting right now. Try again later.",
+    "votingsRewardPoints": "+{vote} for voting",
+    "votingsYourPick": "Your vote",
+    "votingsThanks": "Thanks for voting!",
+    "votingsVoting": "Voting…",
+    "votingsVoteFailed": "Could not cast your vote."
   }
 }
