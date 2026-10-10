@@ -19,10 +19,15 @@ from graphql.data_sources import (
     MenuItemCogs,
     Node,
     OrderFact,
+    PosOrder,
     SessionLocal,
     Workspace,
     WorkspaceMembership,
 )
+from graphql.data_sources.models.pos_audit_event import PosAuditEvent
+from graphql.data_sources.models.pos_bill_sequence import PosBillSequence
+from graphql.data_sources.models.pos_order import PosOrderLine, PosOrderLineModifier
+from graphql.data_sources.models.pos_register import PosRegister
 from graphql.schema import schema
 from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID, graphql_auth_context
 
@@ -31,6 +36,32 @@ OTHER_USER_ID = "clerk_other_delete_location"
 DELETE_LOCATION = """
 mutation DeleteLocation($id: ID!) {
   deleteLocation(id: $id)
+}
+"""
+
+REPLACE_MENU = """
+mutation ReplaceLocationMenuItems($locationId: Int!, $categories: [MenuCategoryInput!]!) {
+  replaceLocationMenuItems(locationId: $locationId, categories: $categories) {
+    categories { items { id name } }
+  }
+}
+"""
+
+OPEN_POS = """
+mutation OpenPosOrder($locationId: Int!) {
+  openPosOrder(locationId: $locationId) { id }
+}
+"""
+
+ADD_POS_LINE = """
+mutation AddPosOrderLine($orderId: Int!, $menuItemId: Int!, $qty: Int!) {
+  addPosOrderLine(orderId: $orderId, menuItemId: $menuItemId, qty: $qty) { id }
+}
+"""
+
+CLOSE_POS = """
+mutation ClosePosOrder($orderId: Int!, $paymentMethod: PosPaymentMethod!) {
+  closePosOrder(orderId: $orderId, paymentMethod: $paymentMethod) { id status }
 }
 """
 
@@ -174,38 +205,78 @@ def delete_location_workspace():
 
     session = SessionLocal()
     try:
-        session.query(MenuItemCogs).filter(
-            MenuItemCogs.analytics_run_id == payload["run_id"]
-        ).delete()
-        session.query(OrderFact).filter(OrderFact.analytics_run_id == payload["run_id"]).delete()
-        session.query(AnalyticsRun).filter(AnalyticsRun.id == payload["run_id"]).delete()
+        location_id = payload["location_id"]
+        session.query(PosAuditEvent).filter(PosAuditEvent.location_id == location_id).delete(
+            synchronize_session=False
+        )
+        order_ids = [
+            int(row[0])
+            for row in session.query(PosOrder.id).filter(PosOrder.location_id == location_id).all()
+        ]
+        if order_ids:
+            line_ids = [
+                int(row[0])
+                for row in session.query(PosOrderLine.id)
+                .filter(PosOrderLine.pos_order_id.in_(order_ids))
+                .all()
+            ]
+            if line_ids:
+                session.query(PosOrderLineModifier).filter(
+                    PosOrderLineModifier.pos_order_line_id.in_(line_ids)
+                ).delete(synchronize_session=False)
+                session.query(PosOrderLine).filter(PosOrderLine.id.in_(line_ids)).delete(
+                    synchronize_session=False
+                )
+            session.query(PosOrder).filter(PosOrder.id.in_(order_ids)).delete(
+                synchronize_session=False
+            )
+        session.query(PosBillSequence).filter(PosBillSequence.location_id == location_id).delete(
+            synchronize_session=False
+        )
+        session.query(PosRegister).filter(PosRegister.location_id == location_id).delete(
+            synchronize_session=False
+        )
+
+        run_ids = [
+            int(rid)
+            for (rid,) in session.query(AnalyticsRun.id)
+            .filter(AnalyticsRun.location_id == location_id)
+            .all()
+        ]
+        if run_ids:
+            session.query(MenuItemCogs).filter(MenuItemCogs.analytics_run_id.in_(run_ids)).delete(
+                synchronize_session=False
+            )
+            session.query(OrderFact).filter(OrderFact.analytics_run_id.in_(run_ids)).delete(
+                synchronize_session=False
+            )
+            session.query(AnalyticsRun).filter(AnalyticsRun.id.in_(run_ids)).delete(
+                synchronize_session=False
+            )
+
         session.query(InventoryStockMovement).filter(
-            InventoryStockMovement.location_id == payload["location_id"]
+            InventoryStockMovement.location_id == location_id
         ).delete()
-        session.query(InventoryStock).filter(
-            InventoryStock.location_id == payload["location_id"]
-        ).delete()
+        session.query(InventoryStock).filter(InventoryStock.location_id == location_id).delete()
         session.query(InventoryCatalogItem).filter(
             InventoryCatalogItem.id == payload["catalog_id"]
         ).delete()
-        session.query(CalendarEntry).filter(
-            CalendarEntry.location_id == payload["location_id"]
-        ).delete()
+        session.query(CalendarEntry).filter(CalendarEntry.location_id == location_id).delete()
         session.query(LocationMenuItemCogs).filter(
-            LocationMenuItemCogs.location_id == payload["location_id"]
+            LocationMenuItemCogs.location_id == location_id
         ).delete()
         session.query(LocationOpeningHour).filter(
-            LocationOpeningHour.location_id == payload["location_id"]
+            LocationOpeningHour.location_id == location_id
         ).delete()
         session.query(LocationManualBriefInput).filter(
-            LocationManualBriefInput.location_id == payload["location_id"]
+            LocationManualBriefInput.location_id == location_id
         ).delete()
-        loc = session.get(Location, payload["location_id"])
+        loc = session.get(Location, location_id)
         if loc is not None:
             loc.node_id = None
             session.flush()
         session.query(Node).filter(Node.id == payload["node_id"]).delete()
-        session.query(Location).filter(Location.id == payload["location_id"]).delete()
+        session.query(Location).filter(Location.id == location_id).delete()
         session.query(WorkspaceMembership).filter(
             WorkspaceMembership.workspace_id == payload["workspace_id"]
         ).delete()
@@ -296,5 +367,75 @@ def test_delete_location_denied_for_outsider(delete_location_workspace):
     session = SessionLocal()
     try:
         assert session.get(Location, location_id) is not None
+    finally:
+        session.close()
+
+
+def test_delete_location_blocked_when_paid_pos_tickets_exist(delete_location_workspace):
+    location_id = delete_location_workspace["location_id"]
+
+    replace = asyncio.run(
+        schema.execute(
+            REPLACE_MENU,
+            variable_values={
+                "locationId": location_id,
+                "categories": [
+                    {
+                        "name": "Drinks",
+                        "items": [{"name": "Espresso", "price": 4.0, "isAvailable": True}],
+                    }
+                ],
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not replace.errors, replace.errors
+    item_id = replace.data["replaceLocationMenuItems"]["categories"][0]["items"][0]["id"]
+
+    opened = asyncio.run(
+        schema.execute(
+            OPEN_POS,
+            variable_values={"locationId": location_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not opened.errors, opened.errors
+    order_id = opened.data["openPosOrder"]["id"]
+
+    added = asyncio.run(
+        schema.execute(
+            ADD_POS_LINE,
+            variable_values={"orderId": order_id, "menuItemId": item_id, "qty": 1},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not added.errors, added.errors
+
+    closed = asyncio.run(
+        schema.execute(
+            CLOSE_POS,
+            variable_values={"orderId": order_id, "paymentMethod": "CASH"},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not closed.errors, closed.errors
+    assert closed.data["closePosOrder"]["status"] == "PAID"
+
+    result = asyncio.run(
+        schema.execute(
+            DELETE_LOCATION,
+            variable_values={"id": str(location_id)},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert result.errors
+    assert "paid or refunded" in str(result.errors[0])
+
+    session = SessionLocal()
+    try:
+        assert session.get(Location, location_id) is not None
+        order = session.get(PosOrder, order_id)
+        assert order is not None
+        assert order.status == "paid"
     finally:
         session.close()

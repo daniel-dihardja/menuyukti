@@ -21,6 +21,7 @@ from graphql.data_sources import (
     MenuItemCogs,
     Node,
     OrderFact,
+    PosOrder,
 )
 
 VALID_WEEKDAYS = ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
@@ -117,10 +118,26 @@ def delete_location_row(session: Session, location_id: int) -> bool:
     Idempotent: returns True when the location is already gone.
     Instagram posts keep their rows but lose the location link.
     Workspace-scoped inventar catalog items are left intact.
+
+    Refuses when paid or refunded POS tickets exist (fiscal retention).
     """
     loc = session.get(Location, location_id)
     if loc is None:
         return True
+
+    retained = (
+        session.query(PosOrder.id)
+        .filter(
+            PosOrder.location_id == location_id,
+            PosOrder.status.in_(("paid", "refunded")),
+        )
+        .count()
+    )
+    if retained:
+        raise ValueError(
+            "Cannot delete location while paid or refunded POS tickets exist. "
+            "Fiscal history must be retained; remove or archive via a dedicated process later."
+        )
 
     # Break circular Location.node_id ↔ Node.id before other cleanup.
     if loc.node_id is not None:

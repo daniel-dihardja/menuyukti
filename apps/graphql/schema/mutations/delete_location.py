@@ -13,7 +13,10 @@ from graphql.services.location import delete_location_row
 @strawberry.type
 class DeleteLocationMutation:
     @strawberry.mutation(
-        description="Delete a location and its analytics, stock, and calendar data."
+        description=(
+            "Delete a location and its analytics, stock, and calendar data. "
+            "Refused when paid or refunded POS tickets exist (fiscal retention)."
+        )
     )
     def delete_location(self, info: strawberry.Info, id: strawberry.ID) -> bool:
         user_id = user_id_from_info(info)
