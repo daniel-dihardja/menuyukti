@@ -107,6 +107,9 @@ export const LOCATION_QUERY = `
       city
       country
       currency
+      legalName
+      taxNumber
+      vatId
       nodeId
       openingHours {
         dayOfWeek
@@ -135,6 +138,9 @@ export type LocationData = {
     city: string | null
     country: string | null
     currency: string | null
+    legalName: string | null
+    taxNumber: string | null
+    vatId: string | null
     nodeId: string | null
     openingHours: Array<{
       dayOfWeek: string

@@ -24,6 +24,9 @@ class LocationType:
     city: str | None
     country: str | None
     currency: str | None
+    legal_name: str | None
+    tax_number: str | None
+    vat_id: str | None
     node_id: strawberry.ID | None
     workspace_id: strawberry.ID | None
     opening_hours: list[OpeningHourType]

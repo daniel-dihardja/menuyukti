@@ -5,10 +5,20 @@ import { useTranslations } from 'next-intl'
 import type { PosOrder } from '@/lib/graphql/queries/pos-orders'
 import { formatCurrency } from '@/lib/currency'
 
+export type PosReceiptSeller = {
+  legalName: string | null
+  street: string | null
+  city: string | null
+  country: string | null
+  taxNumber: string | null
+  vatId: string | null
+}
+
 type PosReceiptProps = {
   order: PosOrder
   locationName: string
   currencyCode: string
+  seller?: PosReceiptSeller
 }
 
 function formatWhen(iso: string | null | undefined): string {
@@ -23,17 +33,38 @@ function formatWhen(iso: string | null | undefined): string {
   }
 }
 
-export function PosReceipt({ order, locationName, currencyCode }: PosReceiptProps) {
+function formatTaxRate(bps: number): string {
+  return `${(bps / 100).toFixed(bps % 100 === 0 ? 0 : 1)}%`
+}
+
+export function PosReceipt({ order, locationName, currencyCode, seller }: PosReceiptProps) {
   const t = useTranslations('pos')
   const subtotal = order.lines.reduce((sum, line) => sum + line.lineTotal, 0)
   const discount = order.discountAmount ?? 0
-  const total = Math.max(0, subtotal - discount)
+  const total = order.gross ?? Math.max(0, subtotal - discount)
   const isRefunded = order.status === 'REFUNDED'
+  const displayName = seller?.legalName?.trim() || locationName
+  const addressLine = [seller?.street, seller?.city, seller?.country]
+    .map((part) => part?.trim())
+    .filter(Boolean)
+    .join(', ')
+  const breakdown = order.taxBreakdown ?? []
 
   return (
     <div className="pos-receipt-print mx-auto w-full max-w-sm space-y-4 bg-white p-4 text-black">
       <header className="space-y-1 text-center">
-        <h2 className="text-lg font-semibold">{locationName}</h2>
+        <h2 className="text-lg font-semibold">{displayName}</h2>
+        {addressLine ? <p className="text-xs text-neutral-700">{addressLine}</p> : null}
+        {seller?.taxNumber ? (
+          <p className="text-xs text-neutral-700">
+            {t('receiptTaxNumber')}: {seller.taxNumber}
+          </p>
+        ) : null}
+        {seller?.vatId ? (
+          <p className="text-xs text-neutral-700">
+            {t('receiptVatId')}: {seller.vatId}
+          </p>
+        ) : null}
         <p className="text-sm font-medium">{t('receiptTitle')}</p>
         <p className="text-sm tabular-nums">{order.billNumber}</p>
         {order.tableLabel ? (
@@ -101,6 +132,27 @@ export function PosReceipt({ order, locationName, currencyCode }: PosReceiptProp
           <div className="flex justify-between gap-3">
             <span>{t('discount')}</span>
             <span className="tabular-nums">−{formatCurrency(discount, currencyCode)}</span>
+          </div>
+        ) : null}
+        {breakdown.length > 0 ? (
+          <div className="space-y-1 border-t border-neutral-200 pt-2 text-xs">
+            <p className="font-medium text-neutral-700">{t('receiptVatBreakdown')}</p>
+            {breakdown.map((row) => (
+              <div key={row.taxRateBps} className="space-y-0.5">
+                <div className="flex justify-between gap-3">
+                  <span>
+                    {t('receiptNet')} ({formatTaxRate(row.taxRateBps)})
+                  </span>
+                  <span className="tabular-nums">{formatCurrency(row.net, currencyCode)}</span>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <span>
+                    {t('receiptVat')} ({formatTaxRate(row.taxRateBps)})
+                  </span>
+                  <span className="tabular-nums">{formatCurrency(row.tax, currencyCode)}</span>
+                </div>
+              </div>
+            ))}
           </div>
         ) : null}
         <div className="flex justify-between gap-3 text-base font-semibold">

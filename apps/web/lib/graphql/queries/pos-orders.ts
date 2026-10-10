@@ -10,6 +10,13 @@ export type PosOrderLineModifier = {
   sortOrder: number
 }
 
+export type PosTaxBreakdown = {
+  taxRateBps: number
+  net: number
+  tax: number
+  gross: number
+}
+
 export type PosOrderLine = {
   id: number
   posOrderId: number
@@ -20,6 +27,10 @@ export type PosOrderLine = {
   qty: number
   unitPrice: number
   lineTotal: number
+  taxClass: string
+  taxRateBps: number
+  net: number
+  tax: number
   note: string | null
   sortOrder: number
   modifiers: PosOrderLineModifier[]
@@ -28,6 +39,7 @@ export type PosOrderLine = {
 export type PosOrder = {
   id: number
   locationId: number
+  registerId: number | null
   billNumber: string
   status: PosOrderStatus
   openedAt: string
@@ -35,6 +47,10 @@ export type PosOrder = {
   openedByClerkUserId: string
   paymentMethod: PosPaymentMethod | null
   discountAmount: number
+  net: number
+  tax: number
+  gross: number
+  taxBreakdown: PosTaxBreakdown[]
   tableLabel: string | null
   note: string | null
   refundedAt: string | null
@@ -63,6 +79,7 @@ export type PosDaySummary = {
 const POS_ORDER_FIELDS = `
   id
   locationId
+  registerId
   billNumber
   status
   openedAt
@@ -70,6 +87,15 @@ const POS_ORDER_FIELDS = `
   openedByClerkUserId
   paymentMethod
   discountAmount
+  net
+  tax
+  gross
+  taxBreakdown {
+    taxRateBps
+    net
+    tax
+    gross
+  }
   tableLabel
   note
   refundedAt
@@ -83,6 +109,10 @@ const POS_ORDER_FIELDS = `
     qty
     unitPrice
     lineTotal
+    taxClass
+    taxRateBps
+    net
+    tax
     note
     sortOrder
     modifiers {

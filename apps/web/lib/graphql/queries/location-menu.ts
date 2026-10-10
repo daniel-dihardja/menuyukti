@@ -24,6 +24,7 @@ export type LocationMenuItem = {
   name: string
   description: string
   price: number
+  taxClass: string
   sortOrder: number
   isAvailable: boolean
   imageFilename: string | null
@@ -73,6 +74,7 @@ const MENU_ITEM_FIELDS = `
   name
   description
   price
+  taxClass
   sortOrder
   isAvailable
   imageFilename

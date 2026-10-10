@@ -2,14 +2,21 @@
 
 from __future__ import annotations
 
+import json
+
+from graphql.data_sources.models.pos_audit_event import PosAuditEvent
 from graphql.data_sources.models.pos_order import PosOrder, PosOrderLine, PosOrderLineModifier
 from graphql.schema.types.pos_order import (
+    PosAuditEventType,
     PosOrderLineModifierType,
     PosOrderLineType,
     PosOrderStatus,
     PosOrderType,
     PosPaymentMethod,
+    PosTaxBreakdownType,
 )
+from graphql.services.pos_money import cents_to_euros
+from graphql.services.pos_orders import order_tax_breakdown
 
 
 def pos_order_line_modifier_to_gql(row: PosOrderLineModifier) -> PosOrderLineModifierType:
@@ -18,7 +25,7 @@ def pos_order_line_modifier_to_gql(row: PosOrderLineModifier) -> PosOrderLineMod
         pos_order_line_id=row.pos_order_line_id,
         group_name_snapshot=row.group_name_snapshot,
         name_snapshot=row.name_snapshot,
-        price_delta_snapshot=float(row.price_delta_snapshot or 0),
+        price_delta_snapshot=cents_to_euros(int(row.price_delta_cents or 0)),
         sort_order=row.sort_order,
     )
 
@@ -33,8 +40,12 @@ def pos_order_line_to_gql(row: PosOrderLine) -> PosOrderLineType:
         menu_category_snapshot=row.menu_category_snapshot,
         menu_category_detail_snapshot=row.menu_category_detail_snapshot,
         qty=row.qty,
-        unit_price=row.unit_price,
-        line_total=row.line_total,
+        unit_price=cents_to_euros(int(row.unit_price_cents)),
+        line_total=cents_to_euros(int(row.gross_cents)),
+        tax_class=row.tax_class_snapshot,
+        tax_rate_bps=int(row.tax_rate_bps_snapshot),
+        net=cents_to_euros(int(row.net_cents)),
+        tax=cents_to_euros(int(row.tax_cents)),
         note=row.note,
         sort_order=row.sort_order,
         modifiers=[pos_order_line_modifier_to_gql(m) for m in modifiers],
@@ -46,18 +57,44 @@ def pos_order_to_gql(row: PosOrder) -> PosOrderType:
     payment: PosPaymentMethod | None = None
     if row.payment_method:
         payment = PosPaymentMethod(row.payment_method)
+    breakdown = [
+        PosTaxBreakdownType(
+            tax_rate_bps=int(b["tax_rate_bps"]),
+            net=float(b["net"]),
+            tax=float(b["tax"]),
+            gross=float(b["gross"]),
+        )
+        for b in order_tax_breakdown(row)
+    ]
     return PosOrderType(
         id=row.id,
         location_id=row.location_id,
+        register_id=row.register_id,
         bill_number=row.bill_number,
         status=PosOrderStatus(row.status),
         opened_at=row.opened_at,
         closed_at=row.closed_at,
         opened_by_clerk_user_id=row.opened_by_clerk_user_id,
         payment_method=payment,
-        discount_amount=float(row.discount_amount or 0),
+        discount_amount=cents_to_euros(int(row.discount_cents or 0)),
+        net=cents_to_euros(int(row.net_cents or 0)),
+        tax=cents_to_euros(int(row.tax_cents or 0)),
+        gross=cents_to_euros(int(row.gross_cents or 0)),
+        tax_breakdown=breakdown,
         table_label=row.table_label,
         note=row.note,
         refunded_at=row.refunded_at,
         lines=[pos_order_line_to_gql(line) for line in lines],
+    )
+
+
+def pos_audit_event_to_gql(row: PosAuditEvent) -> PosAuditEventType:
+    return PosAuditEventType(
+        id=row.id,
+        location_id=row.location_id,
+        pos_order_id=row.pos_order_id,
+        actor_clerk_user_id=row.actor_clerk_user_id,
+        action=row.action,
+        payload_json=json.dumps(row.payload or {}),
+        created_at=row.created_at,
     )

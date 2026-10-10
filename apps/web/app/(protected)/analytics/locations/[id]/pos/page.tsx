@@ -90,6 +90,14 @@ export default async function Page({ params }: PageProps) {
           locationId={locationId}
           locationName={location.name}
           currencyCode={currencyCode}
+          seller={{
+            legalName: location.legalName ?? null,
+            street: location.street ?? null,
+            city: location.city ?? null,
+            country: location.country ?? null,
+            taxNumber: location.taxNumber ?? null,
+            vatId: location.vatId ?? null,
+          }}
           initialMenu={menu}
           initialOrders={ordersData.posOrders}
           itemImageUrls={itemImageUrls}

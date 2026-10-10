@@ -44,7 +44,7 @@ import { PosCustomizeDialog } from './pos-customize-dialog'
 import { PosKitchenTicket } from './pos-kitchen-ticket'
 import { PosMenuGrid } from './pos-menu-grid'
 import { PosOpsSheet } from './pos-ops-sheet'
-import { PosReceipt } from './pos-receipt'
+import { PosReceipt, type PosReceiptSeller } from './pos-receipt'
 import {
   availableModifierGroups,
   type DiscountMode,
@@ -57,6 +57,7 @@ type PosCashierProps = {
   locationId: number
   locationName: string
   currencyCode: string
+  seller: PosReceiptSeller
   initialMenu: LocationMenu | null
   initialOrders: PosOrder[]
   /** Presigned photo URLs keyed by `imageFilename` (same source as media / public menu). */
@@ -90,6 +91,7 @@ export function PosCashier({
   locationId,
   locationName,
   currencyCode,
+  seller,
   initialMenu,
   initialOrders,
   itemImageUrls,
@@ -708,6 +710,7 @@ export function PosCashier({
               order={currentOrder}
               locationName={locationName}
               currencyCode={currencyCode}
+              seller={seller}
             />
           ) : null}
           <DialogFooter className="print:hidden sm:justify-between">

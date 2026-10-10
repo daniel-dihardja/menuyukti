@@ -232,6 +232,20 @@ def _clear_digital_menu(
     if not location_ids:
         return
 
+    retained = (
+        session.query(PosOrder.id)
+        .filter(
+            PosOrder.location_id.in_(location_ids),
+            PosOrder.status.in_(("paid", "refunded")),
+        )
+        .count()
+    )
+    if retained:
+        raise ValueError(
+            "Cannot clear digital menu while paid or refunded POS tickets exist. "
+            "Archive or keep fiscal history; only open/void tickets may be cleared."
+        )
+
     order_ids = [
         int(row[0])
         for row in session.query(PosOrder.id).filter(PosOrder.location_id.in_(location_ids)).all()

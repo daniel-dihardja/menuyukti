@@ -74,6 +74,7 @@ def menu_item_to_gql(row: MenuItem) -> MenuItemType:
         name=row.name,
         description=row.description,
         price=row.price,
+        tax_class=row.tax_class or "standard",
         sort_order=row.sort_order,
         is_available=row.is_available,
         image_filename=row.image_filename,

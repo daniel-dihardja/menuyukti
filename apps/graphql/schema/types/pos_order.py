@@ -33,7 +33,15 @@ class PosOrderLineModifierType:
     sort_order: int
 
 
-@strawberry.type(description="One line on a POS ticket with price/name snapshots.")
+@strawberry.type(description="VAT breakdown bucket for a POS ticket (euros).")
+class PosTaxBreakdownType:
+    tax_rate_bps: int
+    net: float
+    tax: float
+    gross: float
+
+
+@strawberry.type(description="One line on a POS ticket with price/name/tax snapshots.")
 class PosOrderLineType:
     id: int
     pos_order_id: int
@@ -44,6 +52,10 @@ class PosOrderLineType:
     qty: int
     unit_price: float
     line_total: float
+    tax_class: str
+    tax_rate_bps: int
+    net: float
+    tax: float
     note: str | None
     sort_order: int
     modifiers: list[PosOrderLineModifierType]
@@ -53,6 +65,7 @@ class PosOrderLineType:
 class PosOrderType:
     id: int
     location_id: int
+    register_id: int | None
     bill_number: str
     status: PosOrderStatus
     opened_at: datetime
@@ -60,10 +73,25 @@ class PosOrderType:
     opened_by_clerk_user_id: str
     payment_method: PosPaymentMethod | None
     discount_amount: float
+    net: float
+    tax: float
+    gross: float
+    tax_breakdown: list[PosTaxBreakdownType]
     table_label: str | None
     note: str | None
     refunded_at: datetime | None
     lines: list[PosOrderLineType]
+
+
+@strawberry.type(description="Append-only POS audit event.")
+class PosAuditEventType:
+    id: int
+    location_id: int
+    pos_order_id: int | None
+    actor_clerk_user_id: str
+    action: str
+    payload_json: str
+    created_at: datetime
 
 
 @strawberry.type(description="Day close / Z-lite summary for native POS.")

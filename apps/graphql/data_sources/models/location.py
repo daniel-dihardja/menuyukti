@@ -23,6 +23,7 @@ if TYPE_CHECKING:
     from graphql.data_sources.models.point_earn_rule import PointEarnRule
     from graphql.data_sources.models.point_ledger_entry import PointLedgerEntry
     from graphql.data_sources.models.pos_order import PosOrder
+    from graphql.data_sources.models.pos_register import PosRegister
     from graphql.data_sources.models.prediction import Prediction
     from graphql.data_sources.models.service_subscription import ServiceSubscription
     from graphql.data_sources.models.voting import Voting
@@ -48,6 +49,9 @@ class Location(Base):
     city: Mapped[str | None] = mapped_column(String(128), nullable=True)
     country: Mapped[str | None] = mapped_column(String(128), nullable=True)
     currency: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    legal_name: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    tax_number: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    vat_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     workspace_id: Mapped[int | None] = mapped_column(
         Integer,
         ForeignKey("workspace.id"),
@@ -123,6 +127,12 @@ class Location(Base):
         back_populates="location",
         cascade="all, delete-orphan",
         order_by="PosOrder.opened_at.desc()",
+    )
+    pos_registers: Mapped[list[PosRegister]] = relationship(
+        "PosRegister",
+        back_populates="location",
+        cascade="all, delete-orphan",
+        order_by="PosRegister.id",
     )
     inventory_stock: Mapped[list[InventoryStock]] = relationship(
         "InventoryStock",

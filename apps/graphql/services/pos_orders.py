@@ -5,13 +5,24 @@ from __future__ import annotations
 import calendar
 from collections.abc import Sequence
 from datetime import UTC, date, datetime
+from typing import Any
 
-from sqlalchemy import delete, insert, select
+from sqlalchemy import insert, select
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from graphql.data_sources import AnalyticsRun, OrderFact
 from graphql.data_sources.models.menu import Menu, MenuItem, MenuModifierGroup, MenuModifierOption
+from graphql.data_sources.models.pos_bill_sequence import PosBillSequence
 from graphql.data_sources.models.pos_order import PosOrder, PosOrderLine, PosOrderLineModifier
+from graphql.data_sources.models.pos_register import PosRegister
+from graphql.services.pos_audit import record_pos_audit
+from graphql.services.pos_money import cents_to_euros, euros_to_cents
+from graphql.services.pos_tax import (
+    normalize_tax_class,
+    recompute_order_tax,
+    resolve_tax_rate_bps,
+    tax_breakdown_by_rate,
+)
 
 POS_SYSTEM = "menuyukti"
 POS_STATUS_OPEN = "open"
@@ -21,6 +32,8 @@ POS_STATUS_REFUNDED = "refunded"
 PAYMENT_METHODS = frozenset({"cash", "card", "other"})
 TABLE_LABEL_MAX_LEN = 64
 LINE_NOTE_MAX_LEN = 256
+DEFAULT_REGISTER_CODE = "DEFAULT"
+DEFAULT_REGISTER_LABEL = "Register 1"
 
 
 def _utcnow() -> datetime:
@@ -87,26 +100,55 @@ def list_orders(
     return list(session.execute(stmt).unique().scalars().all())
 
 
+def ensure_default_register(session: Session, location_id: int) -> PosRegister:
+    existing = session.scalar(
+        select(PosRegister).where(
+            PosRegister.location_id == location_id,
+            PosRegister.code == DEFAULT_REGISTER_CODE,
+        )
+    )
+    if existing is not None:
+        return existing
+    register = PosRegister(
+        location_id=location_id,
+        code=DEFAULT_REGISTER_CODE,
+        label=DEFAULT_REGISTER_LABEL,
+    )
+    session.add(register)
+    session.flush()
+    return register
+
+
 def next_bill_number(session: Session, location_id: int, when: datetime) -> str:
     """Return ``MY-YYYYMMDD-#####`` unique for the location on that calendar day."""
     day = when.astimezone(UTC).date() if when.tzinfo else when.date()
-    prefix = f"MY-{day.strftime('%Y%m%d')}-"
-    existing = (
-        session.execute(
-            select(PosOrder.bill_number).where(
-                PosOrder.location_id == location_id,
-                PosOrder.bill_number.like(f"{prefix}%"),
-            )
+    day_key = day.strftime("%Y%m%d")
+    prefix = f"MY-{day_key}-"
+
+    seq = session.scalar(
+        select(PosBillSequence)
+        .where(
+            PosBillSequence.location_id == location_id,
+            PosBillSequence.day_key == day_key,
         )
-        .scalars()
-        .all()
+        .with_for_update()
     )
-    max_seq = 0
-    for bill in existing:
-        suffix = bill.removeprefix(prefix)
-        if suffix.isdigit():
-            max_seq = max(max_seq, int(suffix))
-    return f"{prefix}{max_seq + 1:05d}"
+    if seq is None:
+        seq = PosBillSequence(location_id=location_id, day_key=day_key, next_seq=1)
+        session.add(seq)
+        session.flush()
+        # Re-lock after insert for engines that need it
+        seq = session.scalar(
+            select(PosBillSequence)
+            .where(PosBillSequence.id == seq.id)
+            .with_for_update()
+        )
+        assert seq is not None
+
+    number = seq.next_seq
+    seq.next_seq = number + 1
+    session.flush()
+    return f"{prefix}{number:05d}"
 
 
 PUBLIC_MENU_ORDER_NOTE = "digital_menu"
@@ -120,17 +162,30 @@ def open_order(
     table_label: str | None = None,
 ) -> PosOrder:
     now = _utcnow()
+    register = ensure_default_register(session, location_id)
     order = PosOrder(
         location_id=location_id,
+        register_id=register.id,
         bill_number=next_bill_number(session, location_id, now),
         status=POS_STATUS_OPEN,
         opened_at=now,
         opened_by_clerk_user_id=clerk_user_id,
-        discount_amount=0.0,
+        discount_cents=0,
+        net_cents=0,
+        tax_cents=0,
+        gross_cents=0,
         table_label=normalize_table_label(table_label),
     )
     session.add(order)
     session.flush()
+    record_pos_audit(
+        session,
+        location_id=location_id,
+        pos_order_id=order.id,
+        actor_clerk_user_id=clerk_user_id,
+        action="open",
+        payload={"bill_number": order.bill_number, "register_id": register.id},
+    )
     return get_order(session, order.id) or order
 
 
@@ -142,12 +197,7 @@ def submit_public_menu_order(
     lines: Sequence[tuple[int, int]],
     table_label: str | None = None,
 ) -> PosOrder:
-    """Open a guest digital-menu ticket and add lines (no modifiers / no payment).
-
-    ``lines`` is a sequence of ``(menu_item_id, qty)``. The location menu must be
-    published (``public_enabled``). The ticket is tagged with
-    ``note == PUBLIC_MENU_ORDER_NOTE`` for staff visibility.
-    """
+    """Open a guest digital-menu ticket and add lines (no modifiers / no payment)."""
     if not lines:
         raise ValueError("At least one line is required")
 
@@ -172,6 +222,7 @@ def submit_public_menu_order(
             qty=qty,
             modifier_option_ids=None,
             note=None,
+            actor_clerk_user_id=clerk_user_id,
         )
 
     return get_order(session, order.id) or order
@@ -218,10 +269,10 @@ def _resolve_selected_modifiers(
     for opt_id in selected_ids:
         pair = options_by_id.get(opt_id)
         if pair is None:
-            raise ValueError(f"Modifier option {opt_id} does not belong to this menu item")
+            raise ValueError(f"modifier option {opt_id} does not belong to this menu item")
         group, opt = pair
         if not opt.is_available:
-            raise ValueError(f"Modifier option {opt.name} is not available")
+            raise ValueError(f"modifier option {opt.name} is not available")
         selected.append((group, opt))
 
     counts: dict[int, int] = {}
@@ -232,11 +283,11 @@ def _resolve_selected_modifiers(
         count = counts.get(group.id, 0)
         if count < group.min_select:
             raise ValueError(
-                f"Modifier group '{group.name}' requires at least {group.min_select} selection(s)"
+                f"modifier group '{group.name}' requires at least {group.min_select} selection(s)"
             )
         if count > group.max_select:
             raise ValueError(
-                f"Modifier group '{group.name}' allows at most {group.max_select} selection(s)"
+                f"modifier group '{group.name}' allows at most {group.max_select} selection(s)"
             )
 
     return selected
@@ -250,6 +301,7 @@ def add_line(
     qty: int,
     modifier_option_ids: Sequence[int] | None = None,
     note: str | None = None,
+    actor_clerk_user_id: str | None = None,
 ) -> PosOrder:
     if qty < 1:
         raise ValueError("qty must be at least 1")
@@ -262,10 +314,15 @@ def add_line(
         session, location_id=order.location_id, menu_item_id=menu_item_id
     )
     selected = _resolve_selected_modifiers(item, modifier_option_ids)
-    delta = sum(float(opt.price_delta) for _group, opt in selected)
-    unit_price = float(item.price) + delta
+    delta_cents = sum(euros_to_cents(float(opt.price_delta)) for _group, opt in selected)
+    unit_price_cents = euros_to_cents(float(item.price)) + delta_cents
+    tax_class = normalize_tax_class(getattr(item, "tax_class", None))
+    rate_bps = resolve_tax_rate_bps(
+        session, tax_class=tax_class, on_date=_utcnow().astimezone(UTC).date()
+    )
     category_name = item.category.name if item.category is not None else ""
     next_sort = max((line.sort_order for line in order.lines), default=-1) + 1
+    pre_gross = unit_price_cents * qty
     line = PosOrderLine(
         pos_order_id=order.id,
         menu_item_id=item.id,
@@ -273,8 +330,12 @@ def add_line(
         menu_category_snapshot=category_name,
         menu_category_detail_snapshot=category_name,
         qty=qty,
-        unit_price=unit_price,
-        line_total=unit_price * qty,
+        unit_price_cents=unit_price_cents,
+        tax_class_snapshot=tax_class,
+        tax_rate_bps_snapshot=rate_bps,
+        gross_cents=pre_gross,
+        net_cents=0,
+        tax_cents=0,
         note=normalize_line_note(note),
         sort_order=next_sort,
     )
@@ -286,15 +347,33 @@ def add_line(
                 pos_order_line_id=line.id,
                 group_name_snapshot=group.name,
                 name_snapshot=opt.name,
-                price_delta_snapshot=float(opt.price_delta),
+                price_delta_cents=euros_to_cents(float(opt.price_delta)),
                 sort_order=index,
             )
         )
     session.flush()
+    order = get_order(session, order.id) or order
+    recompute_order_tax(order)
+    session.flush()
+    if actor_clerk_user_id:
+        record_pos_audit(
+            session,
+            location_id=order.location_id,
+            pos_order_id=order.id,
+            actor_clerk_user_id=actor_clerk_user_id,
+            action="add_line",
+            payload={"line_id": line.id, "menu_item_id": menu_item_id, "qty": qty},
+        )
     return get_order(session, order.id) or order
 
 
-def set_line_note(session: Session, *, line_id: int, note: str | None) -> PosOrder:
+def set_line_note(
+    session: Session,
+    *,
+    line_id: int,
+    note: str | None,
+    actor_clerk_user_id: str | None = None,
+) -> PosOrder:
     line = session.get(PosOrderLine, line_id)
     if line is None:
         raise ValueError("Order line not found")
@@ -304,10 +383,25 @@ def set_line_note(session: Session, *, line_id: int, note: str | None) -> PosOrd
     _require_open(order)
     line.note = normalize_line_note(note)
     session.flush()
+    if actor_clerk_user_id:
+        record_pos_audit(
+            session,
+            location_id=order.location_id,
+            pos_order_id=order.id,
+            actor_clerk_user_id=actor_clerk_user_id,
+            action="set_line_note",
+            payload={"line_id": line_id},
+        )
     return get_order(session, order.id) or order
 
 
-def update_line_qty(session: Session, *, line_id: int, qty: int) -> PosOrder:
+def update_line_qty(
+    session: Session,
+    *,
+    line_id: int,
+    qty: int,
+    actor_clerk_user_id: str | None = None,
+) -> PosOrder:
     if qty < 1:
         raise ValueError("qty must be at least 1")
     line = session.get(PosOrderLine, line_id)
@@ -318,12 +412,28 @@ def update_line_qty(session: Session, *, line_id: int, qty: int) -> PosOrder:
         raise ValueError("Order not found")
     _require_open(order)
     line.qty = qty
-    line.line_total = float(line.unit_price) * qty
     session.flush()
+    order = get_order(session, order.id) or order
+    recompute_order_tax(order)
+    session.flush()
+    if actor_clerk_user_id:
+        record_pos_audit(
+            session,
+            location_id=order.location_id,
+            pos_order_id=order.id,
+            actor_clerk_user_id=actor_clerk_user_id,
+            action="update_line_qty",
+            payload={"line_id": line_id, "qty": qty},
+        )
     return get_order(session, order.id) or order
 
 
-def remove_line(session: Session, *, line_id: int) -> PosOrder:
+def remove_line(
+    session: Session,
+    *,
+    line_id: int,
+    actor_clerk_user_id: str | None = None,
+) -> PosOrder:
     line = session.get(PosOrderLine, line_id)
     if line is None:
         raise ValueError("Order line not found")
@@ -334,32 +444,87 @@ def remove_line(session: Session, *, line_id: int) -> PosOrder:
     _require_open(order)
     session.delete(line)
     session.flush()
+    order = get_order(session, order_id) or order
+    recompute_order_tax(order)
+    session.flush()
+    if actor_clerk_user_id:
+        record_pos_audit(
+            session,
+            location_id=order.location_id,
+            pos_order_id=order.id,
+            actor_clerk_user_id=actor_clerk_user_id,
+            action="remove_line",
+            payload={"line_id": line_id},
+        )
     return get_order(session, order_id) or order
 
 
-def set_discount(session: Session, *, order_id: int, amount: float) -> PosOrder:
+def set_discount(
+    session: Session,
+    *,
+    order_id: int,
+    amount: float,
+    actor_clerk_user_id: str | None = None,
+) -> PosOrder:
     if amount < 0:
         raise ValueError("discount_amount must be >= 0")
     order = get_order(session, order_id)
     if order is None:
         raise ValueError("Order not found")
     _require_open(order)
-    order.discount_amount = float(amount)
+    order.discount_cents = euros_to_cents(float(amount))
     session.flush()
+    order = get_order(session, order.id) or order
+    if order.lines:
+        recompute_order_tax(order)
+    else:
+        order.net_cents = 0
+        order.tax_cents = 0
+        order.gross_cents = 0
+    session.flush()
+    if actor_clerk_user_id:
+        record_pos_audit(
+            session,
+            location_id=order.location_id,
+            pos_order_id=order.id,
+            actor_clerk_user_id=actor_clerk_user_id,
+            action="set_discount",
+            payload={"discount_cents": order.discount_cents},
+        )
     return get_order(session, order.id) or order
 
 
-def set_table_label(session: Session, *, order_id: int, label: str | None) -> PosOrder:
+def set_table_label(
+    session: Session,
+    *,
+    order_id: int,
+    label: str | None,
+    actor_clerk_user_id: str | None = None,
+) -> PosOrder:
     order = get_order(session, order_id)
     if order is None:
         raise ValueError("Order not found")
     _require_open(order)
     order.table_label = normalize_table_label(label)
     session.flush()
+    if actor_clerk_user_id:
+        record_pos_audit(
+            session,
+            location_id=order.location_id,
+            pos_order_id=order.id,
+            actor_clerk_user_id=actor_clerk_user_id,
+            action="set_table_label",
+            payload={"table_label": order.table_label},
+        )
     return get_order(session, order.id) or order
 
 
-def void_order(session: Session, *, order_id: int) -> PosOrder:
+def void_order(
+    session: Session,
+    *,
+    order_id: int,
+    actor_clerk_user_id: str | None = None,
+) -> PosOrder:
     order = get_order(session, order_id)
     if order is None:
         raise ValueError("Order not found")
@@ -367,11 +532,25 @@ def void_order(session: Session, *, order_id: int) -> PosOrder:
     order.status = POS_STATUS_VOID
     order.closed_at = _utcnow()
     session.flush()
+    if actor_clerk_user_id:
+        record_pos_audit(
+            session,
+            location_id=order.location_id,
+            pos_order_id=order.id,
+            actor_clerk_user_id=actor_clerk_user_id,
+            action="void",
+            payload={"bill_number": order.bill_number},
+        )
     return get_order(session, order.id) or order
 
 
-def refund_order(session: Session, *, order_id: int) -> PosOrder:
-    """Full post-pay refund: delete projected OrderFacts and mark ticket refunded."""
+def refund_order(
+    session: Session,
+    *,
+    order_id: int,
+    actor_clerk_user_id: str | None = None,
+) -> PosOrder:
+    """Full post-pay refund: insert compensating OrderFacts and mark ticket refunded."""
     order = get_order(session, order_id)
     if order is None:
         raise ValueError("Order not found")
@@ -380,93 +559,63 @@ def refund_order(session: Session, *, order_id: int) -> PosOrder:
     if order.status != POS_STATUS_PAID:
         raise ValueError(f"Order {order.id} is not paid (status={order.status})")
 
-    run_ids: list[int] = []
-    if order.closed_at is not None:
-        closed_on = order.closed_at.astimezone(UTC).date()
-        year, month = closed_on.year, closed_on.month
-        period_start = date(year, month, 1)
-        period_end = date(year, month, calendar.monthrange(year, month)[1])
-        run = (
-            session.execute(
-                select(AnalyticsRun).where(
-                    AnalyticsRun.location_id == order.location_id,
-                    AnalyticsRun.pos_system == POS_SYSTEM,
-                    AnalyticsRun.period_start == period_start,
-                    AnalyticsRun.period_end == period_end,
-                )
-            )
-            .scalars()
-            .first()
-        )
-        if run is not None:
-            run_ids.append(run.id)
-
-    if not run_ids:
-        run_ids = list(
-            session.execute(
-                select(AnalyticsRun.id).where(
-                    AnalyticsRun.location_id == order.location_id,
-                    AnalyticsRun.pos_system == POS_SYSTEM,
-                )
-            )
-            .scalars()
-            .all()
-        )
-
-    if run_ids:
+    originals = list(
         session.execute(
-            delete(OrderFact).where(
-                OrderFact.bill_number == order.bill_number,
-                OrderFact.pos_system == POS_SYSTEM,
-                OrderFact.analytics_run_id.in_(run_ids),
-            )
-        )
-    else:
-        session.execute(
-            delete(OrderFact).where(
+            select(OrderFact).where(
                 OrderFact.bill_number == order.bill_number,
                 OrderFact.pos_system == POS_SYSTEM,
             )
         )
+        .scalars()
+        .all()
+    )
+    # Only compensate positive originals (skip any prior negatives)
+    positive = [f for f in originals if float(f.total_after_bill_discount) > 0]
+    refunded_at = _utcnow()
+    mappings: list[dict[str, object]] = []
+    for fact in positive:
+        mappings.append(
+            {
+                "analytics_run_id": fact.analytics_run_id,
+                "bill_number": fact.bill_number,
+                "menu": fact.menu,
+                "qty": -int(fact.qty),
+                "price": float(fact.price),
+                "total_after_bill_discount": -float(fact.total_after_bill_discount),
+                "order_time": refunded_at,
+                "menu_category": fact.menu_category,
+                "menu_category_detail": fact.menu_category_detail,
+                "pos_system": POS_SYSTEM,
+            }
+        )
+    if mappings:
+        session.execute(insert(OrderFact), mappings)
 
     order.status = POS_STATUS_REFUNDED
-    order.refunded_at = _utcnow()
+    order.refunded_at = refunded_at
     session.flush()
+    if actor_clerk_user_id:
+        record_pos_audit(
+            session,
+            location_id=order.location_id,
+            pos_order_id=order.id,
+            actor_clerk_user_id=actor_clerk_user_id,
+            action="refund",
+            payload={
+                "bill_number": order.bill_number,
+                "compensating_facts": len(mappings),
+            },
+        )
     return get_order(session, order.id) or order
 
 
 def allocate_line_revenues(lines: Sequence[PosOrderLine], discount_amount: float) -> list[float]:
-    """Pro-rate bill discount across lines; raise if any result would be <= 0."""
-    if not lines:
-        raise ValueError("Order has no lines")
-    subtotal = sum(float(line.line_total) for line in lines)
-    if subtotal <= 0:
-        raise ValueError("Order subtotal must be positive")
-    discount = float(discount_amount or 0)
-    if discount < 0:
-        raise ValueError("discount_amount must be >= 0")
-    if discount >= subtotal:
-        raise ValueError("discount_amount must leave every line with positive revenue")
+    """Legacy helper: pro-rate bill discount; returns euros after discount per line."""
+    from graphql.services.pos_tax import allocate_discount_and_tax
 
-    if discount == 0:
-        revenues = [float(line.line_total) for line in lines]
-    else:
-        # Largest-remainder style allocation so cents sum exactly
-        raw = [
-            float(line.line_total) - (discount * (float(line.line_total) / subtotal))
-            for line in lines
-        ]
-        # Round to 2 decimals then fix drift on the last line
-        rounded = [round(v, 2) for v in raw]
-        target = round(subtotal - discount, 2)
-        drift = round(target - sum(rounded), 2)
-        if rounded:
-            rounded[-1] = round(rounded[-1] + drift, 2)
-        revenues = rounded
-
-    if any(r <= 0 for r in revenues):
-        raise ValueError("discount_amount must leave every line with positive revenue")
-    return revenues
+    discount_cents = euros_to_cents(float(discount_amount or 0))
+    allocations = allocate_discount_and_tax(lines, discount_cents)
+    return [cents_to_euros(a.gross_cents) for a in allocations]
 
 
 def get_or_create_monthly_pos_run(
@@ -510,6 +659,7 @@ def close_order(
     *,
     order_id: int,
     payment_method: str,
+    actor_clerk_user_id: str | None = None,
 ) -> PosOrder:
     if payment_method not in PAYMENT_METHODS:
         raise ValueError(f"Invalid payment_method: {payment_method}")
@@ -525,7 +675,7 @@ def close_order(
     if not order.lines:
         raise ValueError("Cannot close an empty order")
 
-    revenues = allocate_line_revenues(order.lines, order.discount_amount)
+    recompute_order_tax(order)
     closed_at = _utcnow()
     run = get_or_create_monthly_pos_run(
         session,
@@ -534,15 +684,15 @@ def close_order(
     )
 
     mappings: list[dict[str, object]] = []
-    for line, revenue in zip(order.lines, revenues, strict=True):
+    for line in order.lines:
         mappings.append(
             {
                 "analytics_run_id": run.id,
                 "bill_number": order.bill_number,
                 "menu": line.name_snapshot,
                 "qty": line.qty,
-                "price": float(line.unit_price),
-                "total_after_bill_discount": revenue,
+                "price": cents_to_euros(int(line.unit_price_cents)),
+                "total_after_bill_discount": cents_to_euros(int(line.gross_cents)),
                 "order_time": closed_at,
                 "menu_category": line.menu_category_snapshot,
                 "menu_category_detail": line.menu_category_detail_snapshot,
@@ -556,7 +706,20 @@ def close_order(
     order.payment_method = payment_method
     session.flush()
 
-    # Guest Point System: credit complete_order for digital-menu tickets only.
+    if actor_clerk_user_id:
+        record_pos_audit(
+            session,
+            location_id=order.location_id,
+            pos_order_id=order.id,
+            actor_clerk_user_id=actor_clerk_user_id,
+            action="close",
+            payload={
+                "payment_method": payment_method,
+                "gross_cents": order.gross_cents,
+                "tax_cents": order.tax_cents,
+            },
+        )
+
     from graphql.services.point_ledger import award_for_digital_menu_order_paid
 
     award_for_digital_menu_order_paid(session, order)
@@ -565,8 +728,20 @@ def close_order(
 
 
 def order_gross_total(order: PosOrder) -> float:
-    subtotal = sum(float(line.line_total) for line in order.lines)
-    return max(0.0, subtotal - float(order.discount_amount or 0))
+    return cents_to_euros(int(order.gross_cents or 0))
+
+
+def order_tax_breakdown(order: PosOrder) -> list[dict[str, Any]]:
+    rows = tax_breakdown_by_rate(order)
+    return [
+        {
+            "tax_rate_bps": row["tax_rate_bps"],
+            "net": cents_to_euros(row["net_cents"]),
+            "tax": cents_to_euros(row["tax_cents"]),
+            "gross": cents_to_euros(row["gross_cents"]),
+        }
+        for row in rows
+    ]
 
 
 def day_summary(
@@ -610,7 +785,7 @@ def day_summary(
             if closed.astimezone(UTC).date() != on_date:
                 continue
             paid_count += 1
-            paid_discount_total += float(order.discount_amount or 0)
+            paid_discount_total += cents_to_euros(int(order.discount_cents or 0))
             method = order.payment_method or "other"
             if method not in by_method:
                 by_method[method] = {"ticket_count": 0, "gross_total": 0.0}

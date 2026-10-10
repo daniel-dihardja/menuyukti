@@ -38,6 +38,7 @@ type MenuItemBody = {
   name?: unknown
   price?: unknown
   description?: unknown
+  taxClass?: unknown
   isAvailable?: unknown
   imageFilename?: unknown
   dietaryTags?: unknown
@@ -69,6 +70,7 @@ type ParsedItem = {
   name: string
   price: number
   description?: string
+  taxClass?: string
   isAvailable?: boolean
   imageFilename?: string | null
   dietaryTags?: string[]
@@ -169,6 +171,9 @@ function parseItems(raw: unknown): ParsedItem[] | null {
     if (itemId === null) return null
     if (typeof itemId === 'number') item.id = itemId
     if (typeof row.description === 'string') item.description = row.description
+    if (typeof row.taxClass === 'string' && row.taxClass.trim()) {
+      item.taxClass = row.taxClass.trim().toLowerCase()
+    }
     if (typeof row.isAvailable === 'boolean') item.isAvailable = row.isAvailable
     if (row.imageFilename === null) {
       item.imageFilename = null

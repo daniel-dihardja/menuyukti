@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     DateTime,
-    Float,
     ForeignKey,
     Index,
     Integer,
@@ -23,10 +22,11 @@ from graphql.data_sources.database import Base
 if TYPE_CHECKING:
     from graphql.data_sources.models.location import Location
     from graphql.data_sources.models.menu import MenuItem
+    from graphql.data_sources.models.pos_register import PosRegister
 
 
 class PosOrder(Base):
-    """Operational POS ticket (open / paid / void)."""
+    """Operational POS ticket (open / paid / void / refunded)."""
 
     __tablename__ = "pos_order"
     __table_args__ = (
@@ -42,6 +42,12 @@ class PosOrder(Base):
         nullable=False,
         index=True,
     )
+    register_id: Mapped[int | None] = mapped_column(
+        Integer,
+        ForeignKey("pos_register.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     bill_number: Mapped[str] = mapped_column(String(64), nullable=False)
     status: Mapped[str] = mapped_column(String(16), nullable=False, default="open")
     opened_at: Mapped[datetime] = mapped_column(
@@ -52,12 +58,15 @@ class PosOrder(Base):
     closed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     opened_by_clerk_user_id: Mapped[str] = mapped_column(String(128), nullable=False)
     payment_method: Mapped[str | None] = mapped_column(String(16), nullable=True)
-    discount_amount: Mapped[float] = mapped_column(
-        Float,
+    discount_cents: Mapped[int] = mapped_column(
+        Integer,
         nullable=False,
-        default=0.0,
+        default=0,
         server_default="0",
     )
+    net_cents: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
+    tax_cents: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
+    gross_cents: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
     table_label: Mapped[str | None] = mapped_column(String(64), nullable=True)
     note: Mapped[str | None] = mapped_column(Text, nullable=True)
     refunded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
@@ -74,6 +83,7 @@ class PosOrder(Base):
     )
 
     location: Mapped[Location] = relationship("Location", back_populates="pos_orders")
+    register: Mapped[PosRegister | None] = relationship("PosRegister", back_populates="orders")
     lines: Mapped[list[PosOrderLine]] = relationship(
         "PosOrderLine",
         back_populates="order",
@@ -83,7 +93,7 @@ class PosOrder(Base):
 
 
 class PosOrderLine(Base):
-    """One sellable line on a POS ticket with price/name snapshots."""
+    """One sellable line on a POS ticket with price/name/tax snapshots."""
 
     __tablename__ = "pos_order_line"
 
@@ -109,8 +119,22 @@ class PosOrderLine(Base):
         server_default="",
     )
     qty: Mapped[int] = mapped_column(Integer, nullable=False)
-    unit_price: Mapped[float] = mapped_column(Float, nullable=False)
-    line_total: Mapped[float] = mapped_column(Float, nullable=False)
+    unit_price_cents: Mapped[int] = mapped_column(Integer, nullable=False)
+    tax_class_snapshot: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False,
+        default="standard",
+        server_default="standard",
+    )
+    tax_rate_bps_snapshot: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=1900,
+        server_default="1900",
+    )
+    net_cents: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
+    tax_cents: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
+    gross_cents: Mapped[int] = mapped_column(Integer, nullable=False)
     note: Mapped[str | None] = mapped_column(String(256), nullable=True)
     sort_order: Mapped[int] = mapped_column(
         Integer,
@@ -154,10 +178,10 @@ class PosOrderLineModifier(Base):
     )
     group_name_snapshot: Mapped[str] = mapped_column(String(128), nullable=False)
     name_snapshot: Mapped[str] = mapped_column(String(128), nullable=False)
-    price_delta_snapshot: Mapped[float] = mapped_column(
-        Float,
+    price_delta_cents: Mapped[int] = mapped_column(
+        Integer,
         nullable=False,
-        default=0.0,
+        default=0,
         server_default="0",
     )
     sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")

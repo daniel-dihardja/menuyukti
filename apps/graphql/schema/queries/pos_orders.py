@@ -10,14 +10,16 @@ import graphql.services.pos_orders as pos_svc
 from graphql.context import request_session_scope
 from graphql.data_sources import Location
 from graphql.schema.auth import is_location_owner, user_id_from_info
-from graphql.schema.mappers.pos_order import pos_order_to_gql
+from graphql.schema.mappers.pos_order import pos_audit_event_to_gql, pos_order_to_gql
 from graphql.schema.types.pos_order import (
+    PosAuditEventType,
     PosDayPaymentTotalType,
     PosDaySummaryType,
     PosOrderStatus,
     PosOrderType,
     PosPaymentMethod,
 )
+from graphql.services.pos_audit import list_audit_events_for_order
 
 
 def _start_of_utc_day(when: datetime | None = None) -> datetime:
@@ -113,3 +115,19 @@ class PosOrdersQuery:
                 refunded_gross_total=float(summary["refunded_gross_total"]),  # type: ignore[arg-type]
                 open_tickets_remaining=int(summary["open_tickets_remaining"]),  # type: ignore[arg-type]
             )
+
+    @strawberry.field(description="Append-only audit events for a POS ticket (owner-only).")
+    def pos_audit_events(
+        self, info: strawberry.Info, order_id: int
+    ) -> list[PosAuditEventType]:
+        user_id = user_id_from_info(info)
+        if not user_id:
+            return []
+        with request_session_scope(info) as session:
+            order = pos_svc.get_order(session, order_id)
+            if order is None:
+                return []
+            if not is_location_owner(session, order.location_id, user_id, info=info):
+                return []
+            events = list_audit_events_for_order(session, order_id)
+            return [pos_audit_event_to_gql(event) for event in events]
