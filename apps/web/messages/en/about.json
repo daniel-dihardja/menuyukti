@@ -1,119 +1,101 @@
 {
   "about": {
-    "metaTitle": "About Menuyukti — Build your restaurant stack",
-    "metaDescription": "One platform for restaurant owners: free POS and inventory, then modular digital menu, landing page, loyalty, and hands-on services—without a fragmented stack of providers.",
-    "title": "Build your restaurant stack",
-    "intro": "Running a restaurant shouldn’t mean managing a different provider for every part of the business.",
-    "introFollow": "Menuyukti gives restaurant owners one platform for the services they need to run, grow, and market their restaurant—from POS and inventory to digital menus, loyalty, online presence, marketing, and more.",
-    "introClose": "Start with the core. Add what you need. Turn services on or off as your restaurant changes.",
-    "heroTagline": "One platform. Your restaurant stack.",
-    "fragmentedTitle": "Restaurant software has become fragmented",
-    "fragmentedBody": "A typical restaurant might have one company for POS, spreadsheets for inventory, another app for loyalty, a separate website provider, and someone else handling social media.",
-    "fragmentedBodyFollow": "That means more subscriptions, more logins, more invoices—and important parts of the restaurant operating with different information.",
-    "fragmentedBodyClose": "Menuyukti takes a different approach.",
-    "fragmentedBodyApproach": "Instead of adding another disconnected tool, we are building a platform where restaurant services work from the same foundation.",
-    "foundationTitle": "It starts with the restaurant itself",
-    "foundationBody": "The menu, sales, products, locations, staff, and stock are at the center of restaurant operations.",
-    "foundationBodyWhy": "That is why Menuyukti starts with <strong>POS and inventory</strong>.",
-    "foundationBodyOps": "A sale can update stock. Locations can transfer inventory without separate spreadsheets. Owners and staff can have their own access. And services added later can work with the same restaurant data instead of creating another isolated system.",
-    "foundationBodyMenu": "Update a menu item once, and that information can be used across the POS, digital menu, restaurant website, and other services.",
-    "foundationBodyClose": "The result is one foundation that becomes more useful as you build on it.",
-    "modularTitle": "Build the stack your restaurant needs",
-    "modularBody": "Every restaurant is different.",
-    "modularBodyFollow": "A small café does not need the same technology as a busy restaurant group with multiple locations. And what a restaurant needs today may be different six months from now.",
-    "modularBodyWhy": "That is why Menuyukti is modular.",
-    "modularBodyHow": "Start with the foundation. Add services when they make sense. Pause what you no longer need. Add something new when your restaurant grows.",
-    "modularBodyClose": "Think of it like cloud services for a restaurant: <strong>one foundation with services you can turn on as you need them.</strong>",
-    "coreTitle": "Your foundation",
-    "coreItems": [
+    "metaTitle": "About Menuyukti — Build Your Restaurant Stack",
+    "metaDescription": "Menuyukti is a modular restaurant platform that connects operations, interactive loyalty, and business intelligence—so you can run your restaurant, engage guests, and grow smarter.",
+    "title": "Build Your Restaurant Stack.",
+    "intro": "Every restaurant operates differently. Menuyukti brings essential restaurant operations, customer engagement, and business intelligence together in one modular platform — giving you the flexibility to choose the tools your business needs.",
+    "positioning": "Menuyukti — Smarter Restaurant Experiences.",
+    "tagline": "Engage Customers. Build Loyalty. Grow Smarter.",
+    "pillarsLabel": "Three ways Menuyukti helps",
+    "pillars": [
       {
-        "name": "POS + Inventory",
-        "price": "Free",
-        "paragraphs": [
-          "The free core of Menuyukti for everyday restaurant operations.",
-          "Run the register, manage stock, transfer inventory between locations, and give owners and staff access to the same operational workspace.",
-          "Because POS and inventory share the same foundation, stock can stay connected to what is actually being sold instead of relying on disconnected spreadsheets and manual catch-up."
-        ]
+        "title": "Run your restaurant.",
+        "description": "Manage orders, payments, inventory, and staff from one connected foundation."
+      },
+      {
+        "title": "Engage your guests.",
+        "description": "Turn visits into interactive experiences with digital menus and participation-based loyalty."
+      },
+      {
+        "title": "Understand your business.",
+        "description": "Use sales reporting, heatmaps, participation analytics, and conversational AI to decide with clearer context."
       }
     ],
-    "addonsTitle": "Add what your restaurant needs",
-    "addonItems": [
+    "platformTitle": "One Platform. Connected Experiences.",
+    "platformBody": "From managing orders and inventory to understanding sales performance, Menuyukti helps restaurant owners manage everyday operations through connected tools.",
+    "platformBodyFollow": "Shared information reduces unnecessary duplication and creates a foundation for additional services, including interactive digital menus and customer loyalty.",
+    "platformCapabilitiesLabel": "Core capabilities",
+    "platformCapabilities": [
+      "POS and order management",
+      "Payments and checkout",
+      "Inventory management",
+      "Staff management",
+      "Sales reporting"
+    ],
+    "loyaltyTitle": "Loyalty Starts With Participation.",
+    "loyaltyIntro": "Traditional loyalty programs usually reward purchases. Menuyukti takes engagement further by allowing guests to earn loyalty points through participation.",
+    "loyaltyIntroFollow": "After scanning a QR code, guests can explore the restaurant's digital experience, participate in interactive activities, and earn rewards along the way.",
+    "loyaltyModulesLabel": "Interaction modules",
+    "loyaltyPickAndWinTitle": "Pick & Win",
+    "loyaltyPickAndWinBody": "Guests participate in prediction-based activities.",
+    "loyaltyPickAndWinExample": "Predict tonight's football match winner and earn points for participating, with bonus points for a correct prediction.",
+    "loyaltyVotingTitle": "Voting",
+    "loyaltyVotingBody": "Guests participate in decisions and share preferences.",
+    "loyaltyVotingExamples": [
+      "Vote for the next matcha special.",
+      "Choose the next café playlist.",
+      "Help decide which seasonal product should be introduced."
+    ],
+    "loyaltyModulesEmphasis": "Two reusable interaction modules. Countless possible experiences.",
+    "loyaltyValueTitle": "What restaurants get",
+    "loyaltyValueItems": [
+      "Encourage guest participation.",
+      "Create engaging experiences during restaurant visits.",
+      "Collect customer preference signals.",
+      "View participation statistics and voting results.",
+      "Build customer relationships beyond individual transactions."
+    ],
+    "insightsTitle": "Understand What Your Guests Really Like.",
+    "insightsBody": "Every interaction can tell a story.",
+    "insightsBodyFollow": "When guests vote on upcoming menu items or participate in interactive activities, restaurants gain valuable information about customer preferences.",
+    "insightsBodyClose": "Menuyukti connects these interactions with participation analytics, helping restaurant owners make more informed decisions about their offerings and customer experiences.",
+    "insightsStepsLabel": "From participation to insight",
+    "insightsSteps": [
+      "Guests discover an interaction.",
+      "Guests participate and earn points.",
+      "Restaurants view participation and voting results.",
+      "Restaurants use these insights to inform decisions."
+    ],
+    "intelligenceTitle": "Smarter Decisions Start With Better Insights.",
+    "intelligenceBody": "Running a restaurant means making decisions every day.",
+    "intelligenceBodyFollow": "Menuyukti combines advanced sales reporting, time-based sales heatmaps, and conversational AI assistance to make restaurant technology more accessible and useful.",
+    "intelligenceItems": [
       {
-        "name": "Digital Menu",
-        "paragraphs": [
-          "Guests scan a QR code and open your menu directly in their browser.",
-          "No App Store download. No account required just to see the menu."
-        ]
+        "name": "Advanced Sales Reporting",
+        "description": "Explore sales performance through detailed reports."
       },
       {
-        "name": "Restaurant Landing Page",
-        "paragraphs": [
-          "Turn the menu you already manage in Menuyukti into an SEO-optimized restaurant landing page designed to help people find your restaurant on Google.",
-          "Menu items, categories, descriptions, prices, opening information, and other restaurant details can be used to create a search-friendly online presence—so guests can discover you when they search—without maintaining the same information in another system.",
-          "Update your menu in Menuyukti, and your online presence can stay connected to the same source."
-        ],
-        "emphasis": "Manage the menu once. Use it everywhere."
+        "name": "Sales Heatmaps",
+        "description": "Visualize sales activity across different times and days to identify operational patterns."
       },
       {
-        "name": "Stamp Card",
-        "paragraphs": [
-          "Give returning guests a simple digital stamp card without introducing another standalone loyalty platform."
-        ]
-      },
-      {
-        "name": "Cashback",
-        "paragraphs": [
-          "Reward returning guests with cashback connected to the same customer experience."
-        ]
+        "name": "Conversational AI Assistant",
+        "description": "Access intelligent assistance through a conversational interface."
       }
     ],
-    "addonsMore": "More services can be added over time without changing the foundation underneath them.",
-    "guestTitle": "Simple for guests, too",
-    "guestBody": "Restaurant technology should remove friction—not move it from the owner to the customer.",
-    "guestBodyMenu": "Guests can scan a QR code and open a Menuyukti digital menu immediately in their browser. There is nothing to install and no account required to browse.",
-    "guestBodySignIn": "If they later want rewards, ordering, or a saved profile, they can sign in with Google or email and continue where they left off.",
-    "guestBodyInstall": "Regular guests can also add Menuyukti to their home screen for an app-like experience without downloading another restaurant app.",
-    "servicesIntroTitle": "More than software",
-    "servicesIntroBody": "Not everything a restaurant needs can be solved with another piece of software.",
-    "servicesIntroFollow": "Sometimes you need people.",
-    "serviceItems": [
-      {
-        "name": "Creative Services",
-        "paragraphs": [
-          "Photography and creative work for menus, campaigns, and your restaurant brand."
-        ]
-      },
-      {
-        "name": "Social Media Services",
-        "paragraphs": [
-          "Content and posting support without needing to build an in-house marketing team."
-        ]
-      },
-      {
-        "name": "Custom Development",
-        "paragraphs": [
-          "Custom technology for restaurants that need something beyond the standard Menuyukti services."
-        ]
-      }
-    ],
-    "servicesClose": "Software and hands-on services can live under the same relationship instead of requiring another collection of providers.",
-    "costTitle": "Built to keep restaurant technology affordable",
-    "costBody": "Restaurant owners should not have to assemble an expensive collection of software subscriptions just to run a modern restaurant.",
-    "costBodyFollow": "Menuyukti is built with a lean technology stack, low overhead, and automation and AI where they genuinely help reduce the cost of providing a service.",
-    "costBodyNot": "The goal is not to sell restaurants as much software as possible.",
-    "costBodyGoal": "The goal is to give each restaurant the stack it actually needs—at a cost that makes sense.",
-    "costBodyCore": "POS + Inventory is the free core. Additional services can be added as needed on a monthly basis.",
-    "growTitle": "Start small. Build as you grow.",
-    "growItems": [
-      "Start with POS and inventory.",
-      "Add a digital menu.",
-      "Turn your existing menu into an SEO-optimized restaurant landing page.",
-      "Turn on loyalty when it makes sense.",
-      "Bring in creative or social media support when you need help growing.",
-      "Add custom technology when your operation demands it."
-    ],
-    "growBody": "One restaurant might need three Menuyukti services. Another might need ten.",
-    "growEmphasis": "Menuyukti adapts to the restaurant—not the other way around.",
-    "tagline": "Small services. One platform. Your restaurant stack."
+    "modularTitle": "Your Restaurant. Your Tools.",
+    "modularBody": "Restaurants have different needs, and those needs change over time.",
+    "modularBodyFollow": "Menuyukti is designed around modular services, allowing businesses to extend their platform with additional functionality when it makes sense for them.",
+    "modularBodyClose": "From digital menus to interactive loyalty, restaurants can choose the capabilities that support their operations and customer relationships.",
+    "modularPricingNote": "POS + Inventory is the free core. Additional services can be added as needed on a monthly basis.",
+    "whyTitle": "Built to Make Restaurant Technology More Accessible.",
+    "whyBody": "Restaurant technology should help businesses operate more efficiently and build stronger relationships with their customers — without unnecessary complexity.",
+    "whyBodyFollow": "Menuyukti brings together practical restaurant management, thoughtful user experience, intelligent assistance, and interactive customer engagement.",
+    "whyBodyClose": "The vision is simple: make advanced restaurant technology more accessible, flexible, and useful for businesses of different sizes.",
+    "ctaTitle": "Discover What Menuyukti Can Do for Your Restaurant.",
+    "ctaBody": "Explore the platform, discover interactive customer experiences, and help shape the future of Menuyukti.",
+    "ctaPrimary": "Explore the Demo",
+    "ctaSecondary": "Join the Pilot Program",
+    "distinction": "Menuyukti is not merely a digital menu, a traditional loyalty program, or a POS system. It connects restaurant operations with customer engagement and business intelligence through one modular platform."
   }
 }
