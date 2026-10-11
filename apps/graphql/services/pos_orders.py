@@ -15,6 +15,7 @@ from graphql.data_sources.models.menu import Menu, MenuItem, MenuModifierGroup, 
 from graphql.data_sources.models.pos_bill_sequence import PosBillSequence
 from graphql.data_sources.models.pos_order import PosOrder, PosOrderLine, PosOrderLineModifier
 from graphql.data_sources.models.pos_register import PosRegister
+from graphql.services import pos_fiscalization as fiscal
 from graphql.services.pos_audit import record_pos_audit
 from graphql.services.pos_money import cents_to_euros, euros_to_cents
 from graphql.services.pos_tax import (
@@ -64,19 +65,29 @@ def normalize_line_note(note: str | None) -> str | None:
 
 
 def _order_load_options():
-    return selectinload(PosOrder.lines).selectinload(PosOrderLine.modifiers)
+    return (
+        selectinload(PosOrder.lines).selectinload(PosOrderLine.modifiers),
+        selectinload(PosOrder.fiscal_processes),
+    )
 
 
 def get_order(session: Session, order_id: int) -> PosOrder | None:
     return (
         session.execute(
             select(PosOrder)
-            .options(_order_load_options())
+            .options(*_order_load_options())
             .where(PosOrder.id == order_id)
             .execution_options(populate_existing=True)
         )
         .unique()
         .scalar_one_or_none()
+    )
+
+
+def _lock_order(session: Session, order_id: int) -> PosOrder | None:
+    """Load and row-lock a POS order (FOR UPDATE)."""
+    return session.scalar(
+        select(PosOrder).where(PosOrder.id == order_id).with_for_update()
     )
 
 
@@ -89,7 +100,7 @@ def list_orders(
 ) -> list[PosOrder]:
     stmt = (
         select(PosOrder)
-        .options(_order_load_options())
+        .options(*_order_load_options())
         .where(PosOrder.location_id == location_id)
         .order_by(PosOrder.opened_at.desc())
     )
@@ -186,6 +197,7 @@ def open_order(
         action="open",
         payload={"bill_number": order.bill_number, "register_id": register.id},
     )
+    fiscal.start_sale_process(session, order, actor_clerk_user_id=clerk_user_id)
     return get_order(session, order.id) or order
 
 
@@ -355,6 +367,7 @@ def add_line(
     order = get_order(session, order.id) or order
     recompute_order_tax(order)
     session.flush()
+    fiscal.update_sale_process(session, order, actor_clerk_user_id=actor_clerk_user_id)
     if actor_clerk_user_id:
         record_pos_audit(
             session,
@@ -416,6 +429,7 @@ def update_line_qty(
     order = get_order(session, order.id) or order
     recompute_order_tax(order)
     session.flush()
+    fiscal.update_sale_process(session, order, actor_clerk_user_id=actor_clerk_user_id)
     if actor_clerk_user_id:
         record_pos_audit(
             session,
@@ -447,6 +461,7 @@ def remove_line(
     order = get_order(session, order_id) or order
     recompute_order_tax(order)
     session.flush()
+    fiscal.update_sale_process(session, order, actor_clerk_user_id=actor_clerk_user_id)
     if actor_clerk_user_id:
         record_pos_audit(
             session,
@@ -482,6 +497,7 @@ def set_discount(
         order.tax_cents = 0
         order.gross_cents = 0
     session.flush()
+    fiscal.update_sale_process(session, order, actor_clerk_user_id=actor_clerk_user_id)
     if actor_clerk_user_id:
         record_pos_audit(
             session,
@@ -529,6 +545,7 @@ def void_order(
     if order is None:
         raise ValueError("Order not found")
     _require_open(order)
+    fiscal.cancel_sale_process(session, order, actor_clerk_user_id=actor_clerk_user_id)
     order.status = POS_STATUS_VOID
     order.closed_at = _utcnow()
     session.flush()
@@ -558,6 +575,10 @@ def refund_order(
         raise ValueError(f"Order {order.id} is already refunded")
     if order.status != POS_STATUS_PAID:
         raise ValueError(f"Order {order.id} is not paid (status={order.status})")
+
+    fiscal.start_and_finish_refund_process(
+        session, order, actor_clerk_user_id=actor_clerk_user_id
+    )
 
     originals = list(
         session.execute(
@@ -664,18 +685,33 @@ def close_order(
     if payment_method not in PAYMENT_METHODS:
         raise ValueError(f"Invalid payment_method: {payment_method}")
 
-    order = get_order(session, order_id)
-    if order is None:
+    locked = _lock_order(session, order_id)
+    if locked is None:
         raise ValueError("Order not found")
 
     # Idempotent: already paid → return without re-projecting facts
-    if order.status == POS_STATUS_PAID:
-        return order
-    _require_open(order)
+    if locked.status == POS_STATUS_PAID:
+        return get_order(session, order_id) or locked
+    if locked.status != POS_STATUS_OPEN:
+        raise ValueError(f"Order {locked.id} is not open (status={locked.status})")
+
+    order = get_order(session, order_id)
+    if order is None:
+        raise ValueError("Order not found")
     if not order.lines:
         raise ValueError("Cannot close an empty order")
 
     recompute_order_tax(order)
+    session.flush()
+
+    # Finish fiscalization before projecting analytics facts
+    fiscal.finish_sale_process(
+        session,
+        order,
+        payment_method=payment_method,
+        actor_clerk_user_id=actor_clerk_user_id,
+    )
+
     closed_at = _utcnow()
     run = get_or_create_monthly_pos_run(
         session,

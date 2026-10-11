@@ -49,6 +49,14 @@ export function PosReceipt({ order, locationName, currencyCode, seller }: PosRec
     .filter(Boolean)
     .join(', ')
   const breakdown = order.taxBreakdown ?? []
+  const saleFiscal =
+    (order.fiscalProcesses ?? []).find((p) => p.kind === 'sale' && p.state === 'finished') ??
+    (order.fiscalProcesses ?? []).find((p) => p.kind === 'sale') ??
+    null
+  const refundFiscal =
+    (order.fiscalProcesses ?? []).find((p) => p.kind === 'refund' && p.state === 'finished') ?? null
+  const showFiscal = saleFiscal?.state === 'finished' || refundFiscal?.state === 'finished'
+  const isMockProvider = saleFiscal?.provider === 'mock' || refundFiscal?.provider === 'mock'
 
   return (
     <div className="pos-receipt-print mx-auto w-full max-w-sm space-y-4 bg-white p-4 text-black">
@@ -160,6 +168,60 @@ export function PosReceipt({ order, locationName, currencyCode, seller }: PosRec
           <span className="tabular-nums">{formatCurrency(total, currencyCode)}</span>
         </div>
       </div>
+
+      {showFiscal ? (
+        <div className="space-y-2 border-t border-neutral-300 pt-3 text-xs">
+          <p className="font-medium text-neutral-800">{t('receiptTseTitle')}</p>
+          {isMockProvider ? (
+            <p className="font-medium text-neutral-700">{t('receiptTseMockBanner')}</p>
+          ) : null}
+          {saleFiscal?.state === 'finished' ? (
+            <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+              {saleFiscal.tseTransactionId ? (
+                <>
+                  <dt className="text-neutral-600">{t('receiptTseTxId')}</dt>
+                  <dd className="break-all text-right font-mono text-[10px]">
+                    {saleFiscal.tseTransactionId}
+                  </dd>
+                </>
+              ) : null}
+              {saleFiscal.signatureCounter != null ? (
+                <>
+                  <dt className="text-neutral-600">{t('receiptTseCounter')}</dt>
+                  <dd className="text-right tabular-nums">{saleFiscal.signatureCounter}</dd>
+                </>
+              ) : null}
+              {saleFiscal.certificateSerial ? (
+                <>
+                  <dt className="text-neutral-600">{t('receiptTseSerial')}</dt>
+                  <dd className="break-all text-right font-mono text-[10px]">
+                    {saleFiscal.certificateSerial}
+                  </dd>
+                </>
+              ) : null}
+              {saleFiscal.tseSignature ? (
+                <>
+                  <dt className="text-neutral-600">{t('receiptTseSignature')}</dt>
+                  <dd className="break-all text-right font-mono text-[10px]">
+                    {saleFiscal.tseSignature.slice(0, 48)}
+                    {saleFiscal.tseSignature.length > 48 ? '…' : ''}
+                  </dd>
+                </>
+              ) : null}
+            </dl>
+          ) : null}
+          {saleFiscal?.qrPayload ? (
+            <p className="break-all font-mono text-[9px] leading-snug text-neutral-700">
+              {saleFiscal.qrPayload}
+            </p>
+          ) : null}
+          {refundFiscal?.state === 'finished' ? (
+            <p className="text-neutral-700">
+              {t('receiptTseRefund')}: {refundFiscal.tseTransactionId ?? '—'}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   )
 }

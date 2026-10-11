@@ -22,6 +22,7 @@ from graphql.data_sources.database import Base
 if TYPE_CHECKING:
     from graphql.data_sources.models.location import Location
     from graphql.data_sources.models.menu import MenuItem
+    from graphql.data_sources.models.pos_fiscal_process import PosFiscalProcess
     from graphql.data_sources.models.pos_register import PosRegister
 
 
@@ -89,6 +90,12 @@ class PosOrder(Base):
         back_populates="order",
         cascade="all, delete-orphan",
         order_by="PosOrderLine.sort_order, PosOrderLine.id",
+    )
+    fiscal_processes: Mapped[list[PosFiscalProcess]] = relationship(
+        "PosFiscalProcess",
+        back_populates="order",
+        cascade="all, delete-orphan",
+        order_by="PosFiscalProcess.id",
     )
 
 

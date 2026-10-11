@@ -36,6 +36,23 @@ export type PosOrderLine = {
   modifiers: PosOrderLineModifier[]
 }
 
+export type PosFiscalProcess = {
+  id: number
+  kind: string
+  state: string
+  provider: string
+  tseTransactionId: string | null
+  tseSignature: string | null
+  signatureCounter: number | null
+  certificateSerial: string | null
+  clientId: string | null
+  qrPayload: string | null
+  processType: string
+  startedAt: string | null
+  finishedAt: string | null
+  lastError: string | null
+}
+
 export type PosOrder = {
   id: number
   locationId: number
@@ -54,6 +71,7 @@ export type PosOrder = {
   tableLabel: string | null
   note: string | null
   refundedAt: string | null
+  fiscalProcesses: PosFiscalProcess[]
   lines: PosOrderLine[]
 }
 
@@ -99,6 +117,22 @@ const POS_ORDER_FIELDS = `
   tableLabel
   note
   refundedAt
+  fiscalProcesses {
+    id
+    kind
+    state
+    provider
+    tseTransactionId
+    tseSignature
+    signatureCounter
+    certificateSerial
+    clientId
+    qrPayload
+    processType
+    startedAt
+    finishedAt
+    lastError
+  }
   lines {
     id
     posOrderId

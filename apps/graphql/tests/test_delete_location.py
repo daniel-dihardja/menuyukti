@@ -26,6 +26,7 @@ from graphql.data_sources import (
 )
 from graphql.data_sources.models.pos_audit_event import PosAuditEvent
 from graphql.data_sources.models.pos_bill_sequence import PosBillSequence
+from graphql.data_sources.models.pos_fiscal_process import PosFiscalProcess
 from graphql.data_sources.models.pos_order import PosOrderLine, PosOrderLineModifier
 from graphql.data_sources.models.pos_register import PosRegister
 from graphql.schema import schema
@@ -214,6 +215,9 @@ def delete_location_workspace():
             for row in session.query(PosOrder.id).filter(PosOrder.location_id == location_id).all()
         ]
         if order_ids:
+            session.query(PosFiscalProcess).filter(
+                PosFiscalProcess.pos_order_id.in_(order_ids)
+            ).delete(synchronize_session=False)
             line_ids = [
                 int(row[0])
                 for row in session.query(PosOrderLine.id)

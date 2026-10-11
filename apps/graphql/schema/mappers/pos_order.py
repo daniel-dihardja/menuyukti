@@ -5,9 +5,11 @@ from __future__ import annotations
 import json
 
 from graphql.data_sources.models.pos_audit_event import PosAuditEvent
+from graphql.data_sources.models.pos_fiscal_process import PosFiscalProcess
 from graphql.data_sources.models.pos_order import PosOrder, PosOrderLine, PosOrderLineModifier
 from graphql.schema.types.pos_order import (
     PosAuditEventType,
+    PosFiscalProcessType,
     PosOrderLineModifierType,
     PosOrderLineType,
     PosOrderStatus,
@@ -17,6 +19,25 @@ from graphql.schema.types.pos_order import (
 )
 from graphql.services.pos_money import cents_to_euros
 from graphql.services.pos_orders import order_tax_breakdown
+
+
+def pos_fiscal_process_to_gql(row: PosFiscalProcess) -> PosFiscalProcessType:
+    return PosFiscalProcessType(
+        id=row.id,
+        kind=row.kind,
+        state=row.state,
+        provider=row.provider,
+        tse_transaction_id=row.tse_transaction_id,
+        tse_signature=row.tse_signature,
+        signature_counter=row.signature_counter,
+        certificate_serial=row.certificate_serial,
+        client_id=row.client_id,
+        qr_payload=row.qr_payload,
+        process_type=row.process_type,
+        started_at=row.started_at,
+        finished_at=row.finished_at,
+        last_error=row.last_error,
+    )
 
 
 def pos_order_line_modifier_to_gql(row: PosOrderLineModifier) -> PosOrderLineModifierType:
@@ -66,6 +87,10 @@ def pos_order_to_gql(row: PosOrder) -> PosOrderType:
         )
         for b in order_tax_breakdown(row)
     ]
+    fiscal_rows = sorted(
+        getattr(row, "fiscal_processes", None) or [],
+        key=lambda p: p.id,
+    )
     return PosOrderType(
         id=row.id,
         location_id=row.location_id,
@@ -84,6 +109,7 @@ def pos_order_to_gql(row: PosOrder) -> PosOrderType:
         table_label=row.table_label,
         note=row.note,
         refunded_at=row.refunded_at,
+        fiscal_processes=[pos_fiscal_process_to_gql(p) for p in fiscal_rows],
         lines=[pos_order_line_to_gql(line) for line in lines],
     )
 

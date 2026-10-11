@@ -182,6 +182,7 @@ query PosDaySummary($locationId: Int!, $onDate: String) {
 def _cleanup() -> None:
     from graphql.data_sources.models.pos_audit_event import PosAuditEvent
     from graphql.data_sources.models.pos_bill_sequence import PosBillSequence
+    from graphql.data_sources.models.pos_fiscal_process import PosFiscalProcess
     from graphql.data_sources.models.pos_register import PosRegister
     from graphql.data_sources.models.tax_rate import TaxRate
 
@@ -190,6 +191,7 @@ def _cleanup() -> None:
         session.query(OrderFact).delete()
         session.query(AnalyticsRun).delete()
         session.query(PosAuditEvent).delete()
+        session.query(PosFiscalProcess).delete()
         session.query(PosOrderLineModifier).delete()
         session.query(PosOrderLine).delete()
         session.query(PosOrder).delete()
@@ -1156,5 +1158,277 @@ def test_clear_digital_menu_blocked_when_paid_tickets_exist():
         )
         with pytest.raises(ValueError, match="paid or refunded"):
             _clear_digital_menu(session, [location_id], result)
+    finally:
+        session.close()
+
+
+CLOSE_WITH_FISCAL = """
+mutation ClosePosOrder($orderId: Int!, $paymentMethod: PosPaymentMethod!) {
+  closePosOrder(orderId: $orderId, paymentMethod: $paymentMethod) {
+    id
+    status
+    fiscalProcesses {
+      kind
+      state
+      provider
+      tseTransactionId
+      tseSignature
+      signatureCounter
+      qrPayload
+    }
+  }
+}
+"""
+
+
+def test_open_starts_mock_fiscal_sale_process():
+    from graphql.data_sources.models.pos_fiscal_process import PosFiscalProcess
+
+    location_id, _, _ = _create_location_with_menu()
+    opened = asyncio.run(
+        schema.execute(
+            OPEN,
+            variable_values={"locationId": location_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not opened.errors, opened.errors
+    order_id = opened.data["openPosOrder"]["id"]
+
+    session = SessionLocal()
+    try:
+        proc = (
+            session.query(PosFiscalProcess)
+            .filter(PosFiscalProcess.pos_order_id == order_id, PosFiscalProcess.kind == "sale")
+            .one()
+        )
+        assert proc.state == "started"
+        assert proc.provider == "mock"
+        assert proc.tse_transaction_id and proc.tse_transaction_id.startswith("MOCK-TX-")
+    finally:
+        session.close()
+
+
+def test_close_finishes_fiscal_then_projects_facts():
+    location_id, item_id, _ = _create_location_with_menu()
+    opened = asyncio.run(
+        schema.execute(
+            OPEN,
+            variable_values={"locationId": location_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    order_id = opened.data["openPosOrder"]["id"]
+    asyncio.run(
+        schema.execute(
+            ADD_LINE,
+            variable_values={"orderId": order_id, "menuItemId": item_id, "qty": 1},
+            context_value=graphql_auth_context(),
+        )
+    )
+    closed = asyncio.run(
+        schema.execute(
+            CLOSE_WITH_FISCAL,
+            variable_values={"orderId": order_id, "paymentMethod": "CASH"},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not closed.errors, closed.errors
+    order = closed.data["closePosOrder"]
+    assert order["status"] == "PAID"
+    sale = next(p for p in order["fiscalProcesses"] if p["kind"] == "sale")
+    assert sale["state"] == "finished"
+    assert sale["provider"] == "mock"
+    assert sale["tseSignature"]
+    assert sale["qrPayload"]
+    assert sale["signatureCounter"] is not None
+
+    session = SessionLocal()
+    try:
+        facts = session.query(OrderFact).filter(OrderFact.pos_system == "menuyukti").all()
+        assert len(facts) >= 1
+    finally:
+        session.close()
+
+
+def test_void_cancels_fiscal_process():
+    from graphql.data_sources.models.pos_fiscal_process import PosFiscalProcess
+
+    location_id, item_id, _ = _create_location_with_menu()
+    opened = asyncio.run(
+        schema.execute(
+            OPEN,
+            variable_values={"locationId": location_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    order_id = opened.data["openPosOrder"]["id"]
+    asyncio.run(
+        schema.execute(
+            ADD_LINE,
+            variable_values={"orderId": order_id, "menuItemId": item_id, "qty": 1},
+            context_value=graphql_auth_context(),
+        )
+    )
+    voided = asyncio.run(
+        schema.execute(
+            VOID,
+            variable_values={"orderId": order_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not voided.errors, voided.errors
+
+    session = SessionLocal()
+    try:
+        proc = (
+            session.query(PosFiscalProcess)
+            .filter(PosFiscalProcess.pos_order_id == order_id, PosFiscalProcess.kind == "sale")
+            .one()
+        )
+        assert proc.state == "cancelled"
+    finally:
+        session.close()
+
+
+def test_refund_creates_finished_refund_fiscal_process():
+    from graphql.data_sources.models.pos_fiscal_process import PosFiscalProcess
+
+    location_id, item_id, _ = _create_location_with_menu()
+    opened = asyncio.run(
+        schema.execute(
+            OPEN,
+            variable_values={"locationId": location_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    order_id = opened.data["openPosOrder"]["id"]
+    asyncio.run(
+        schema.execute(
+            ADD_LINE,
+            variable_values={"orderId": order_id, "menuItemId": item_id, "qty": 1},
+            context_value=graphql_auth_context(),
+        )
+    )
+    asyncio.run(
+        schema.execute(
+            CLOSE,
+            variable_values={"orderId": order_id, "paymentMethod": "CASH"},
+            context_value=graphql_auth_context(),
+        )
+    )
+    refunded = asyncio.run(
+        schema.execute(
+            REFUND,
+            variable_values={"orderId": order_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not refunded.errors, refunded.errors
+
+    session = SessionLocal()
+    try:
+        refund_proc = (
+            session.query(PosFiscalProcess)
+            .filter(PosFiscalProcess.pos_order_id == order_id, PosFiscalProcess.kind == "refund")
+            .one()
+        )
+        assert refund_proc.state == "finished"
+        assert refund_proc.tse_signature
+        negatives = [
+            f
+            for f in session.query(OrderFact).filter(OrderFact.pos_system == "menuyukti").all()
+            if float(f.total_after_bill_discount) < 0
+        ]
+        assert negatives
+    finally:
+        session.close()
+
+
+def test_fiscal_force_fail_blocks_close_and_facts():
+    import os
+
+    from graphql.data_sources.models.pos_fiscal_process import PosFiscalProcess
+
+    location_id, item_id, _ = _create_location_with_menu()
+    opened = asyncio.run(
+        schema.execute(
+            OPEN,
+            variable_values={"locationId": location_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    order_id = opened.data["openPosOrder"]["id"]
+    asyncio.run(
+        schema.execute(
+            ADD_LINE,
+            variable_values={"orderId": order_id, "menuItemId": item_id, "qty": 1},
+            context_value=graphql_auth_context(),
+        )
+    )
+
+    os.environ["POS_FISCAL_FORCE_FAIL"] = "1"
+    try:
+        closed = asyncio.run(
+            schema.execute(
+                CLOSE,
+                variable_values={"orderId": order_id, "paymentMethod": "CASH"},
+                context_value=graphql_auth_context(),
+            )
+        )
+        assert closed.errors
+        assert "Fiscalization" in str(closed.errors[0]) or "forced failure" in str(closed.errors[0])
+    finally:
+        os.environ.pop("POS_FISCAL_FORCE_FAIL", None)
+
+    session = SessionLocal()
+    try:
+        order = session.get(PosOrder, order_id)
+        assert order is not None
+        assert order.status == "open"
+        facts = session.query(OrderFact).filter(OrderFact.pos_system == "menuyukti").count()
+        assert facts == 0
+        # Uncommitted fail state rolls back with the mutation; process stays started
+        proc = (
+            session.query(PosFiscalProcess)
+            .filter(PosFiscalProcess.pos_order_id == order_id, PosFiscalProcess.kind == "sale")
+            .one()
+        )
+        assert proc.state == "started"
+    finally:
+        session.close()
+
+
+def test_idempotent_close_no_duplicate_facts():
+    location_id, item_id, _ = _create_location_with_menu()
+    opened = asyncio.run(
+        schema.execute(
+            OPEN,
+            variable_values={"locationId": location_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    order_id = opened.data["openPosOrder"]["id"]
+    asyncio.run(
+        schema.execute(
+            ADD_LINE,
+            variable_values={"orderId": order_id, "menuItemId": item_id, "qty": 1},
+            context_value=graphql_auth_context(),
+        )
+    )
+    for _ in range(2):
+        closed = asyncio.run(
+            schema.execute(
+                CLOSE,
+                variable_values={"orderId": order_id, "paymentMethod": "CASH"},
+                context_value=graphql_auth_context(),
+            )
+        )
+        assert not closed.errors, closed.errors
+
+    session = SessionLocal()
+    try:
+        facts = session.query(OrderFact).filter(OrderFact.pos_system == "menuyukti").all()
+        assert len(facts) == 1
     finally:
         session.close()

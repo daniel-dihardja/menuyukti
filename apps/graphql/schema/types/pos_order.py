@@ -41,6 +41,24 @@ class PosTaxBreakdownType:
     gross: float
 
 
+@strawberry.type(description="Fiscalization / TSE process snapshot for a POS ticket.")
+class PosFiscalProcessType:
+    id: int
+    kind: str
+    state: str
+    provider: str
+    tse_transaction_id: str | None
+    tse_signature: str | None
+    signature_counter: int | None
+    certificate_serial: str | None
+    client_id: str | None
+    qr_payload: str | None
+    process_type: str
+    started_at: datetime | None
+    finished_at: datetime | None
+    last_error: str | None
+
+
 @strawberry.type(description="One line on a POS ticket with price/name/tax snapshots.")
 class PosOrderLineType:
     id: int
@@ -80,6 +98,7 @@ class PosOrderType:
     table_label: str | None
     note: str | None
     refunded_at: datetime | None
+    fiscal_processes: list[PosFiscalProcessType]
     lines: list[PosOrderLineType]
 
 
