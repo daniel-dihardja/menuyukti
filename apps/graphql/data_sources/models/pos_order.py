@@ -70,6 +70,7 @@ class PosOrder(Base):
     gross_cents: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
     table_label: Mapped[str | None] = mapped_column(String(64), nullable=True)
     fulfillment_mode: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    prep_status: Mapped[str | None] = mapped_column(String(16), nullable=True)
     note: Mapped[str | None] = mapped_column(Text, nullable=True)
     refunded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(

@@ -16,6 +16,15 @@ PUBLIC_MENU_ORDER_NOTE = "digital_menu"
 FULFILLMENT_DINE_IN = "dine_in"
 FULFILLMENT_PICKUP = "pickup"
 FULFILLMENT_MODES = frozenset({FULFILLMENT_DINE_IN, FULFILLMENT_PICKUP})
+PREP_RECEIVED = "received"
+PREP_PREPARING = "preparing"
+PREP_READY = "ready"
+PREP_SERVED = "served"
+PREP_PICKED_UP = "picked_up"
+PREP_STATUSES = frozenset(
+    {PREP_RECEIVED, PREP_PREPARING, PREP_READY, PREP_SERVED, PREP_PICKED_UP}
+)
+PREP_TERMINAL = frozenset({PREP_SERVED, PREP_PICKED_UP})
 
 
 def validate_menu_fulfillment_allows(*, allow_dine_in: bool, allow_pickup: bool) -> None:
@@ -32,6 +41,31 @@ def normalize_fulfillment_mode(mode: str) -> str:
             f"fulfillment_mode must be one of: {', '.join(sorted(FULFILLMENT_MODES))}"
         )
     return cleaned
+
+
+def normalize_prep_status(status: str) -> str:
+    """Require a known prep_status value; raise ValueError otherwise."""
+    cleaned = (status or "").strip().lower()
+    if cleaned not in PREP_STATUSES:
+        raise ValueError(f"prep_status must be one of: {', '.join(sorted(PREP_STATUSES))}")
+    return cleaned
+
+
+def next_prep_status(current: str | None, fulfillment_mode: str | None) -> str:
+    """Return the next forward prep status for a digital-menu ticket."""
+    mode = normalize_fulfillment_mode(fulfillment_mode or "")
+    if current is None:
+        raise ValueError("prep_status is not set on this order")
+    current_norm = normalize_prep_status(current)
+    if current_norm in PREP_TERMINAL:
+        raise ValueError(f"prep_status is already terminal ({current_norm})")
+    if current_norm == PREP_RECEIVED:
+        return PREP_PREPARING
+    if current_norm == PREP_PREPARING:
+        return PREP_READY
+    if current_norm == PREP_READY:
+        return PREP_SERVED if mode == FULFILLMENT_DINE_IN else PREP_PICKED_UP
+    raise ValueError(f"Cannot advance prep_status from {current_norm}")
 
 
 def normalize_table_label(label: str | None) -> str | None:

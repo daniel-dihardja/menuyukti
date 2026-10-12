@@ -253,6 +253,7 @@ export const SUBMIT_PUBLIC_MENU_ORDER_MUTATION = `
       note
       tableLabel
       fulfillmentMode
+      prepStatus
       openedByClerkUserId
       lines {
         menuItemId
@@ -272,6 +273,7 @@ export type SubmitPublicMenuOrderResult = {
   note: string | null
   tableLabel: string | null
   fulfillmentMode: 'DINE_IN' | 'PICKUP' | null
+  prepStatus: 'RECEIVED' | 'PREPARING' | 'READY' | 'SERVED' | 'PICKED_UP' | null
   openedByClerkUserId: string
   lines: Array<{
     menuItemId: number
@@ -284,4 +286,30 @@ export type SubmitPublicMenuOrderResult = {
 
 export type SubmitPublicMenuOrderData = {
   submitPublicMenuOrder: SubmitPublicMenuOrderResult
+}
+
+export const PUBLIC_MENU_ORDER_QUERY = `
+  query PublicMenuOrder($orderId: Int!) {
+    publicMenuOrder(orderId: $orderId) {
+      id
+      billNumber
+      status
+      prepStatus
+      fulfillmentMode
+      tableLabel
+    }
+  }
+`
+
+export type PublicMenuOrderResult = {
+  id: number
+  billNumber: string
+  status: string
+  prepStatus: 'RECEIVED' | 'PREPARING' | 'READY' | 'SERVED' | 'PICKED_UP' | null
+  fulfillmentMode: 'DINE_IN' | 'PICKUP' | null
+  tableLabel: string | null
+}
+
+export type PublicMenuOrderData = {
+  publicMenuOrder: PublicMenuOrderResult | null
 }

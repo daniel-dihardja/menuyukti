@@ -69,10 +69,30 @@ type CartLine = {
   qty: number
 }
 
+type PrepStatus = 'RECEIVED' | 'PREPARING' | 'READY' | 'SERVED' | 'PICKED_UP'
+
 type OrderSuccess = {
+  orderId: number
   billNumber: string
   fulfillmentMode: PublicMenuFulfillmentMode
   tableLabel: string | null
+  prepStatus: PrepStatus | null
+}
+
+const PREP_TERMINAL: ReadonlySet<PrepStatus> = new Set(['SERVED', 'PICKED_UP'])
+const PREP_POLL_MS = 5000
+
+function guestPrepCopyKey(
+  prepStatus: PrepStatus | null,
+  fulfillmentMode: PublicMenuFulfillmentMode,
+): string | null {
+  if (!prepStatus) return null
+  if (prepStatus === 'READY') {
+    return fulfillmentMode === 'pickup'
+      ? 'order.prepStatus.ready_pickup'
+      : 'order.prepStatus.ready_dine_in'
+  }
+  return `order.prepStatus.${prepStatus.toLowerCase()}`
 }
 
 function categorySectionId(category: PublicMenuCategoryView): string {
@@ -246,6 +266,37 @@ export function PublicMenuCatalog({
     })
   }, [isLoaded, isSignedIn, locationId])
 
+  // Poll live prep status until terminal (or success panel dismissed).
+  useEffect(() => {
+    if (!orderSuccess?.orderId) return
+    if (orderSuccess.prepStatus && PREP_TERMINAL.has(orderSuccess.prepStatus)) return
+
+    let cancelled = false
+    const poll = async () => {
+      try {
+        const res = await fetch(`/api/public-menu/orders/${orderSuccess.orderId}`)
+        if (!res.ok || cancelled) return
+        const body = (await res.json()) as { prepStatus?: PrepStatus | null }
+        if (cancelled || !body.prepStatus) return
+        setOrderSuccess((prev) =>
+          prev && prev.orderId === orderSuccess.orderId
+            ? { ...prev, prepStatus: body.prepStatus ?? prev.prepStatus }
+            : prev,
+        )
+      } catch {
+        // Keep last known status on transient network errors.
+      }
+    }
+
+    const timer = window.setInterval(() => {
+      void poll()
+    }, PREP_POLL_MS)
+    return () => {
+      cancelled = true
+      window.clearInterval(timer)
+    }
+  }, [orderSuccess?.orderId, orderSuccess?.prepStatus])
+
   const addItem = (item: PublicMenuItemView) => {
     setOrderSuccess(null)
     setSubmitError(null)
@@ -335,8 +386,10 @@ export function PublicMenuCatalog({
         }),
       })
       const body = (await res.json().catch(() => ({}))) as {
+        orderId?: number
         billNumber?: string
         fulfillmentMode?: 'DINE_IN' | 'PICKUP' | null
+        prepStatus?: PrepStatus | null
         tableLabel?: string | null
         message?: string
         error?: string
@@ -349,7 +402,7 @@ export function PublicMenuCatalog({
         setSubmitError(body.message || body.error || t('order.submitFailed'))
         return
       }
-      if (!body.billNumber) {
+      if (!body.billNumber || !body.orderId) {
         setSubmitError(t('order.submitFailed'))
         return
       }
@@ -364,9 +417,11 @@ export function PublicMenuCatalog({
       setBasketOpen(false)
       setGuestTableInput('')
       setOrderSuccess({
+        orderId: body.orderId,
         billNumber: body.billNumber,
         fulfillmentMode: successMode,
         tableLabel: body.tableLabel ?? resolved.tableLabel,
+        prepStatus: body.prepStatus ?? 'RECEIVED',
       })
     } catch {
       setSubmitError(t('order.submitFailed'))
@@ -396,12 +451,21 @@ export function PublicMenuCatalog({
               : t('order.successTitlePickup')}
           </AlertTitle>
           <AlertDescription>
-            {orderSuccess.fulfillmentMode === 'dine_in' && orderSuccess.tableLabel
-              ? t('order.successBodyDineIn', {
-                  billNumber: orderSuccess.billNumber,
-                  tableLabel: orderSuccess.tableLabel,
-                })
-              : t('order.successBodyPickup', { billNumber: orderSuccess.billNumber })}
+            <span className="block">
+              {orderSuccess.fulfillmentMode === 'dine_in' && orderSuccess.tableLabel
+                ? t('order.successBodyDineIn', {
+                    billNumber: orderSuccess.billNumber,
+                    tableLabel: orderSuccess.tableLabel,
+                  })
+                : t('order.successBodyPickup', { billNumber: orderSuccess.billNumber })}
+            </span>
+            {(() => {
+              const prepKey = guestPrepCopyKey(
+                orderSuccess.prepStatus,
+                orderSuccess.fulfillmentMode,
+              )
+              return prepKey ? <span className="mt-2 block font-medium">{t(prepKey)}</span> : null
+            })()}
           </AlertDescription>
         </Alert>
       ) : null}

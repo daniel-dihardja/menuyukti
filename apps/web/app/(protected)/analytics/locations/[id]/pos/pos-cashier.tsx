@@ -437,6 +437,18 @@ export function PosCashier({
     })
   }
 
+  const handleAdvancePrep = () => {
+    if (!currentOrder) return
+    run(async () => {
+      const updated = await posAction(locationId, {
+        action: 'advancePrep',
+        orderId: currentOrder.id,
+      })
+      showOrder(updated)
+      await refreshToday(updated.id)
+    })
+  }
+
   const handleRefund = () => {
     if (!currentOrder || !canRefund) return
     run(async () => {
@@ -511,6 +523,7 @@ export function PosCashier({
       setCartSheetOpen(false)
       setKitchenOpen(true)
     },
+    onAdvancePrep: handleAdvancePrep,
     onVoid: () => {
       setCartSheetOpen(false)
       setVoidConfirmOpen(true)

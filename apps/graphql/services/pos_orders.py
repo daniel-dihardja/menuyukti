@@ -28,6 +28,7 @@ from graphql.services.pos_order_constants import (
 )
 from graphql.services.pos_order_lifecycle import (
     add_line,
+    advance_pos_order_prep_status,
     open_order,
     remove_line,
     set_discount,
@@ -59,6 +60,7 @@ __all__ = [
     "PUBLIC_MENU_ORDER_NOTE",
     "TABLE_LABEL_MAX_LEN",
     "add_line",
+    "advance_pos_order_prep_status",
     "allocate_line_revenues",
     "close_order",
     "day_summary",

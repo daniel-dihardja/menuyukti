@@ -1,5 +1,6 @@
 export type PosOrderStatus = 'OPEN' | 'PAID' | 'VOID' | 'REFUNDED'
 export type PosPaymentMethod = 'CASH' | 'CARD' | 'OTHER'
+export type PosPrepStatus = 'RECEIVED' | 'PREPARING' | 'READY' | 'SERVED' | 'PICKED_UP'
 
 export type PosOrderLineModifier = {
   id: number
@@ -70,6 +71,7 @@ export type PosOrder = {
   taxBreakdown: PosTaxBreakdown[]
   tableLabel: string | null
   fulfillmentMode: 'DINE_IN' | 'PICKUP' | null
+  prepStatus: PosPrepStatus | null
   note: string | null
   refundedAt: string | null
   fiscalProcesses: PosFiscalProcess[]
@@ -117,6 +119,7 @@ const POS_ORDER_FIELDS = `
   }
   tableLabel
   fulfillmentMode
+  prepStatus
   note
   refundedAt
   fiscalProcesses {
@@ -317,6 +320,18 @@ export const VOID_POS_ORDER_MUTATION = `
 
 export type VoidPosOrderData = {
   voidPosOrder: PosOrder
+}
+
+export const ADVANCE_POS_ORDER_PREP_STATUS_MUTATION = `
+  mutation AdvancePosOrderPrepStatus($orderId: Int!) {
+    advancePosOrderPrepStatus(orderId: $orderId) {
+      ${POS_ORDER_FIELDS}
+    }
+  }
+`
+
+export type AdvancePosOrderPrepStatusData = {
+  advancePosOrderPrepStatus: PosOrder
 }
 
 export const REFUND_POS_ORDER_MUTATION = `

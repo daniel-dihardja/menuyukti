@@ -37,6 +37,11 @@ export function PosKitchenTicket({ order, locationName }: PosKitchenTicketProps)
             {t('tableLabel')}: {order.tableLabel}
           </p>
         ) : null}
+        {order.prepStatus ? (
+          <p className="text-base font-semibold">
+            {t(`prep.status.${order.prepStatus.toLowerCase()}`)}
+          </p>
+        ) : null}
         <p className="text-sm tabular-nums">{formatWhen(order.openedAt)}</p>
       </header>
 

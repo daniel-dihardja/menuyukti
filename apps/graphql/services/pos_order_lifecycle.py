@@ -18,7 +18,9 @@ from graphql.services.pos_order_constants import (
     FULFILLMENT_PICKUP,
     POS_STATUS_OPEN,
     POS_STATUS_VOID,
+    PREP_RECEIVED,
     PUBLIC_MENU_ORDER_NOTE,
+    next_prep_status,
     normalize_fulfillment_mode,
     normalize_line_note,
     normalize_table_label,
@@ -105,6 +107,7 @@ def submit_public_menu_order(
     )
     order.note = PUBLIC_MENU_ORDER_NOTE
     order.fulfillment_mode = mode
+    order.prep_status = PREP_RECEIVED
     session.flush()
 
     for menu_item_id, qty in lines:
@@ -118,6 +121,36 @@ def submit_public_menu_order(
             actor_clerk_user_id=clerk_user_id,
         )
 
+    return get_order(session, order.id) or order
+
+
+def advance_pos_order_prep_status(
+    session: Session,
+    *,
+    order_id: int,
+    actor_clerk_user_id: str,
+) -> PosOrder:
+    """Advance digital-menu prep_status one step forward (no skip / rewind)."""
+    order = get_order(session, order_id)
+    if order is None:
+        raise ValueError("Order not found")
+    if order.note != PUBLIC_MENU_ORDER_NOTE and not order.fulfillment_mode:
+        raise ValueError("prep_status only applies to digital-menu orders")
+    if not order.fulfillment_mode:
+        raise ValueError("fulfillment_mode is required to advance prep_status")
+
+    previous = order.prep_status
+    nxt = next_prep_status(previous, order.fulfillment_mode)
+    order.prep_status = nxt
+    session.flush()
+    record_pos_audit(
+        session,
+        location_id=order.location_id,
+        pos_order_id=order.id,
+        actor_clerk_user_id=actor_clerk_user_id,
+        action="prep_status",
+        payload={"from": previous, "to": nxt},
+    )
     return get_order(session, order.id) or order
 
 

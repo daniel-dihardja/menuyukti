@@ -45,6 +45,7 @@ mutation SubmitPublicMenuOrder(
     note
     tableLabel
     fulfillmentMode
+    prepStatus
     openedByClerkUserId
     lines {
       menuItemId
@@ -177,6 +178,7 @@ def test_guest_can_submit_dine_in_public_menu_order(published_menu_location):
     assert order["note"] == PUBLIC_MENU_ORDER_NOTE
     assert order["tableLabel"] == "T12"
     assert order["fulfillmentMode"] == "DINE_IN"
+    assert order["prepStatus"] == "RECEIVED"
     assert order["openedByClerkUserId"] == GUEST_USER_ID
     assert order["billNumber"]
     assert len(order["lines"]) == 1
@@ -203,6 +205,7 @@ def test_guest_can_submit_pickup_public_menu_order(published_menu_location):
     assert result.errors is None, result.errors
     order = result.data["submitPublicMenuOrder"]
     assert order["fulfillmentMode"] == "PICKUP"
+    assert order["prepStatus"] == "RECEIVED"
     assert order["tableLabel"] is None
     assert order["note"] == PUBLIC_MENU_ORDER_NOTE
 

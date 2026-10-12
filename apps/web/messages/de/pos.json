@@ -40,6 +40,22 @@
     "applyTableLabel": "Anwenden",
     "clearTableLabel": "Löschen",
     "tableLabelReadOnly": "Tisch · {label}",
+    "fulfillmentPickup": "Abholung",
+    "prep": {
+      "status": {
+        "received": "Eingegangen",
+        "preparing": "In Zubereitung",
+        "ready": "Fertig",
+        "served": "Serviert",
+        "picked_up": "Abgeholt"
+      },
+      "advanceTo": {
+        "preparing": "Zubereitung starten",
+        "ready": "Als fertig markieren",
+        "served": "Als serviert markieren",
+        "picked_up": "Als abgeholt markieren"
+      }
+    },
     "total": "Summe",
     "pay": "Zahlen",
     "payCancel": "Abbrechen",

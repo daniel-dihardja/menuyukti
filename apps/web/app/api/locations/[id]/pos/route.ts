@@ -4,6 +4,7 @@ import { auth } from '@clerk/nextjs/server'
 import { graphqlQuery } from '@/lib/graphql/client'
 import {
   ADD_POS_ORDER_LINE_MUTATION,
+  ADVANCE_POS_ORDER_PREP_STATUS_MUTATION,
   CLOSE_POS_ORDER_MUTATION,
   OPEN_POS_ORDER_MUTATION,
   POS_DAY_SUMMARY_QUERY,
@@ -16,6 +17,7 @@ import {
   UPDATE_POS_ORDER_LINE_MUTATION,
   VOID_POS_ORDER_MUTATION,
   type AddPosOrderLineData,
+  type AdvancePosOrderPrepStatusData,
   type ClosePosOrderData,
   type OpenPosOrderData,
   type PosDaySummaryData,
@@ -293,6 +295,20 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         'VoidPosOrder',
       )
       return NextResponse.json({ order: data.voidPosOrder })
+    }
+
+    if (action === 'advancePrep') {
+      const orderId = Number(body.orderId)
+      if (!Number.isInteger(orderId) || orderId < 1) {
+        return NextResponse.json({ error: 'Invalid orderId' }, { status: 400 })
+      }
+      const data = await graphqlQuery<AdvancePosOrderPrepStatusData>(
+        ADVANCE_POS_ORDER_PREP_STATUS_MUTATION,
+        { orderId },
+        userId,
+        'AdvancePosOrderPrepStatus',
+      )
+      return NextResponse.json({ order: data.advancePosOrderPrepStatus })
     }
 
     if (action === 'refund') {

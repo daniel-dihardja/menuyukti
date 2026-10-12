@@ -216,6 +216,27 @@ class PosOrderMutations:
             refreshed = pos_svc.get_order(session, order.id)
             return pos_order_to_gql(refreshed or order)
 
+    @strawberry.mutation(
+        description=(
+            "Advance digital-menu prep_status one step forward "
+            "(received → preparing → ready → served|picked_up)."
+        )
+    )
+    def advance_pos_order_prep_status(
+        self, info: strawberry.Info, order_id: int
+    ) -> PosOrderType:
+        user_id = user_id_from_info(info)
+        if not user_id:
+            raise ValueError("Missing authenticated user for advancePosOrderPrepStatus")
+        with request_session_scope(info) as session:
+            _load_owned_order(session, order_id, user_id, info)
+            order = pos_svc.advance_pos_order_prep_status(
+                session, order_id=order_id, actor_clerk_user_id=user_id
+            )
+            session.commit()
+            refreshed = pos_svc.get_order(session, order.id)
+            return pos_order_to_gql(refreshed or order)
+
     @strawberry.mutation(description="Void an open POS ticket (no OrderFact projection).")
     def void_pos_order(self, info: strawberry.Info, order_id: int) -> PosOrderType:
         user_id = user_id_from_info(info)

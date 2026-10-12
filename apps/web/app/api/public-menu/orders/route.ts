@@ -57,6 +57,7 @@ export async function POST(req: Request) {
         orderId: order.id,
         billNumber: order.billNumber,
         fulfillmentMode: order.fulfillmentMode,
+        prepStatus: order.prepStatus,
         tableLabel: order.tableLabel,
       },
       { status: 201 },

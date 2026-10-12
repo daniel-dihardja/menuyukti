@@ -20,6 +20,7 @@ from graphql.schema.types.pos_order import (
     PosPaymentMethod,
 )
 from graphql.services.pos_audit import list_audit_events_for_order
+from graphql.services.pos_order_constants import PUBLIC_MENU_ORDER_NOTE
 from graphql.services.pos_time import berlin_calendar_date, start_of_berlin_day
 
 
@@ -124,3 +125,23 @@ class PosOrdersQuery:
                 return []
             events = list_audit_events_for_order(session, order_id)
             return [pos_audit_event_to_gql(event) for event in events]
+
+    @strawberry.field(
+        description=(
+            "Guest status poll for a digital-menu order the caller opened. "
+            "Returns null if unauthenticated, not the opener, or not a digital-menu ticket."
+        )
+    )
+    def public_menu_order(self, info: strawberry.Info, order_id: int) -> PosOrderType | None:
+        user_id = user_id_from_info(info)
+        if not user_id:
+            return None
+        with request_session_scope(info) as session:
+            order = pos_svc.get_order(session, order_id)
+            if order is None:
+                return None
+            if order.note != PUBLIC_MENU_ORDER_NOTE:
+                return None
+            if order.opened_by_clerk_user_id != user_id:
+                return None
+            return pos_order_to_gql(order)

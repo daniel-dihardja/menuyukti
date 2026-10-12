@@ -114,7 +114,15 @@
         "successTitleDineIn": "Order in progress",
         "successBodyDineIn": "Ticket {billNumber} — we are preparing your order and will bring it to table {tableLabel}.",
         "successTitlePickup": "Order received",
-        "successBodyPickup": "Ticket {billNumber} — we are preparing your order. Pick it up when it is ready."
+        "successBodyPickup": "Ticket {billNumber} — we are preparing your order. Pick it up when it is ready.",
+        "prepStatus": {
+          "received": "Order received — the kitchen has your ticket.",
+          "preparing": "Being prepared now.",
+          "ready_dine_in": "Ready — we'll bring it to your table.",
+          "ready_pickup": "Ready for pickup.",
+          "served": "Served. Enjoy!",
+          "picked_up": "Picked up. Enjoy!"
+        }
       },
       "dietary": {
         "vegan": "Vegan",

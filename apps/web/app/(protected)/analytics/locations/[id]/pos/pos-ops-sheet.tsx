@@ -136,6 +136,12 @@ export function PosOpsSheet({
                                   : order.tableLabel}
                               </span>
                             ) : null}
+                            {order.prepStatus ? (
+                              <span className="font-normal text-muted-foreground">
+                                {' '}
+                                · {t(`prep.status.${order.prepStatus.toLowerCase()}`)}
+                              </span>
+                            ) : null}
                             {order.openedByClerkUserId ? (
                               <span className="font-normal text-muted-foreground">
                                 {' '}

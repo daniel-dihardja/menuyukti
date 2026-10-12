@@ -18,7 +18,7 @@ import type { PosOrder, PosPaymentMethod } from '@/lib/graphql/queries/pos-order
 import { formatCurrency } from '@/lib/currency'
 
 import type { DiscountMode } from './pos-utils'
-import { statusBadgeVariant } from './pos-utils'
+import { isDigitalMenuOrder, nextPrepStatus, statusBadgeVariant } from './pos-utils'
 
 type PosCartPanelProps = {
   currentOrder: PosOrder | null
@@ -60,6 +60,7 @@ type PosCartPanelProps = {
   onVoid: () => void
   onReceipt: () => void
   onRefund: () => void
+  onAdvancePrep?: () => void
   onOps?: () => void
 }
 
@@ -103,13 +104,31 @@ export function PosCartPanel({
   onVoid,
   onReceipt,
   onRefund,
+  onAdvancePrep,
   onOps,
 }: PosCartPanelProps) {
   const t = useTranslations('pos')
   const lines = currentOrder?.lines ?? []
+  const digitalMenu = currentOrder ? isDigitalMenuOrder(currentOrder) : false
+  const prepNext =
+    currentOrder && digitalMenu
+      ? nextPrepStatus(currentOrder.prepStatus, currentOrder.fulfillmentMode)
+      : null
 
   const actions = (
     <div className="flex flex-col gap-2">
+      {prepNext && onAdvancePrep ? (
+        <Button
+          type="button"
+          size="lg"
+          variant="secondary"
+          disabled={pending}
+          onClick={onAdvancePrep}
+        >
+          {pending ? <Spinner data-icon="inline-start" /> : null}
+          {t(`prep.advanceTo.${prepNext.toLowerCase()}`)}
+        </Button>
+      ) : null}
       {isEditable ? (
         <>
           {!payOpen ? (
@@ -215,9 +234,17 @@ export function PosCartPanel({
                 {t(`status.${currentOrder.status.toLowerCase()}`)}
               </Badge>
             ) : null}
+            {digitalMenu && currentOrder?.prepStatus ? (
+              <Badge variant="outline">
+                {t(`prep.status.${currentOrder.prepStatus.toLowerCase()}`)}
+              </Badge>
+            ) : null}
           </div>
           {currentOrder ? (
-            <p className="truncate text-xs text-muted-foreground">{currentOrder.billNumber}</p>
+            <p className="truncate text-xs text-muted-foreground">
+              {currentOrder.billNumber}
+              {currentOrder.fulfillmentMode === 'PICKUP' ? ` · ${t('fulfillmentPickup')}` : null}
+            </p>
           ) : (
             <p className="text-xs text-muted-foreground">{t('noOpenTicket')}</p>
           )}
