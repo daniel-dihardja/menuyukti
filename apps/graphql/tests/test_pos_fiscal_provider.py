@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import pytest
+
 from graphql.server import validate_startup_security
+from graphql.services import pos_fiscalization as fiscal
 from graphql.services.pos_fiscal_fiskaly import FiskalyNotConfiguredError, FiskalyTseAdapter
 from graphql.services.pos_fiscal_mock import MockTseAdapter
 from graphql.services.pos_fiscal_port import FiscalProcessContext
-
-from graphql.services import pos_fiscalization as fiscal
 
 
 def _clear_prod_env(monkeypatch: pytest.MonkeyPatch) -> None:

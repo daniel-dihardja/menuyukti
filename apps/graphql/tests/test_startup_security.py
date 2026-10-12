@@ -1,6 +1,7 @@
 """Startup security guards for GraphQL internal API key."""
 
 import pytest
+
 from graphql.server import is_production_runtime, validate_startup_security
 
 

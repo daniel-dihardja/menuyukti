@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import strawberry
+
 from graphql.schema.types.category_mix import CategoryMixPayloadType, CategoryMixRowGqlType
 
 

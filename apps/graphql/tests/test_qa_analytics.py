@@ -9,17 +9,18 @@ from collections import defaultdict
 from datetime import date, datetime
 
 import pytest
-from graphql.schema import schema
-from graphql.tests.auth_context import graphql_auth_context
-from graphql.tests.fixtures.qa_data import (
-    qa_order_rows_for_heatmap,
-    qa_order_rows_for_matrix,
-)
 from menuyukti.core.analytics import (
     compute_menu_heatmaps_from_orders,
 )
 from menuyukti.core.analytics.calculate_menu_engineering_matrix import (
     compute_menu_engineering_from_orders,
+)
+
+from graphql.schema import schema
+from graphql.tests.auth_context import graphql_auth_context
+from graphql.tests.fixtures.qa_data import (
+    qa_order_rows_for_heatmap,
+    qa_order_rows_for_matrix,
 )
 
 METRICS_QUERY = """

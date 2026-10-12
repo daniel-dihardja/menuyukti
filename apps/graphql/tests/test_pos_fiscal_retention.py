@@ -5,6 +5,9 @@ from __future__ import annotations
 import asyncio
 
 import pytest
+from sqlalchemy import text
+from sqlalchemy.exc import IntegrityError
+
 from graphql.data_sources import SessionLocal
 from graphql.data_sources.models.pos_fiscal_process import PosFiscalProcess
 from graphql.data_sources.models.pos_order import PosOrder
@@ -19,8 +22,6 @@ from graphql.tests.test_pos_orders import (
     VOID,
     _create_location_with_menu,
 )
-from sqlalchemy import text
-from sqlalchemy.exc import IntegrityError
 
 
 def test_clear_open_tickets_deletes_fiscal_then_orders() -> None:

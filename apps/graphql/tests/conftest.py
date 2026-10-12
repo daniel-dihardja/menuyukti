@@ -17,6 +17,7 @@ os.environ.setdefault("GRAPHQL_ENV", "")
 os.environ.setdefault("NODE_ENV", "test")
 
 import pytest
+
 from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID
 
 pytest_plugins = ("graphql.tests.inventar_fixtures",)

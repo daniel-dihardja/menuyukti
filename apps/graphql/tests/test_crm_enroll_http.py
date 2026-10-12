@@ -8,6 +8,8 @@ from uuid import UUID
 
 import pytest
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+from starlette.testclient import TestClient
+
 from graphql.crm_auth.tokens import hash_enrollment_token, hash_opaque_token
 from graphql.data_sources import (
     CrmApp,
@@ -23,7 +25,6 @@ from graphql.data_sources import (
 from graphql.schema import schema
 from graphql.server import app
 from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID, graphql_auth_context
-from starlette.testclient import TestClient
 
 _CREATE_APP = """
 mutation CreateCrmApp($title: String!) {

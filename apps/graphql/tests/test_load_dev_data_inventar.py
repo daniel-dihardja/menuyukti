@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 import pytest
+
 from graphql.data_sources import (
     InventoryCatalogItem,
     InventoryStock,

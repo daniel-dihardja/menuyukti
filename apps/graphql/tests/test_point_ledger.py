@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 
 import pytest
+
 from graphql.data_sources import (
     Location,
     PointEarnRule,

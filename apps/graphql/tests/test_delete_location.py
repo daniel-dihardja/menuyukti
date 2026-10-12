@@ -6,6 +6,7 @@ import asyncio
 from datetime import UTC, date, datetime, time
 
 import pytest
+
 from graphql.data_sources import (
     AnalyticsRun,
     CalendarEntry,

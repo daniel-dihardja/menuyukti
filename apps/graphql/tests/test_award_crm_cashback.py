@@ -7,6 +7,7 @@ from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 import pytest
+
 from graphql.data_sources import (
     CrmApp,
     CrmAuditEvent,

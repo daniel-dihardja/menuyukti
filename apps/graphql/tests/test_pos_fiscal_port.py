@@ -7,6 +7,7 @@ and the HTTP client exist; keep mock as the default contract runner.
 from __future__ import annotations
 
 import pytest
+
 from graphql.data_sources.models.pos_fiscal_process import PosFiscalProcess
 from graphql.services.pos_fiscal_mock import MockTseAdapter
 from graphql.services.pos_fiscal_port import FiscalProcessContext

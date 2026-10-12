@@ -7,6 +7,7 @@ from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 import pytest
+
 from graphql.crm_auth.tokens import hash_enrollment_token
 from graphql.data_sources import (
     CrmApp,

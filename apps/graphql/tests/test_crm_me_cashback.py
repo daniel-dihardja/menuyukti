@@ -9,6 +9,8 @@ from datetime import UTC, datetime
 
 import pytest
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+from starlette.testclient import TestClient
+
 from graphql.data_sources import (
     CrmApp,
     CrmAuditEvent,
@@ -24,7 +26,6 @@ from graphql.data_sources import (
 from graphql.schema import schema
 from graphql.server import app
 from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID, graphql_auth_context
-from starlette.testclient import TestClient
 
 os.environ.setdefault("CRM_JWT_SECRET", "test-crm-jwt-secret-at-least-32-chars!!")
 

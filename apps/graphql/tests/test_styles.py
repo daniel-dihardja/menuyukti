@@ -6,6 +6,7 @@ import asyncio
 from datetime import UTC, datetime
 
 import pytest
+
 from graphql.data_sources import (
     SessionLocal,
     VisualStyle,
