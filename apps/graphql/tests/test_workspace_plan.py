@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 
 import pytest
 
-from graphql.data_sources import Location, SessionLocal, Workspace, WorkspaceMembership
+from graphql.data_sources import SessionLocal, Workspace, WorkspaceMembership
 from graphql.schema import schema
 from graphql.services.workspace_plan import WORKSPACE_PLAN_FREE, WORKSPACE_PLAN_PRO
 from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID, graphql_auth_context

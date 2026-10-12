@@ -16,7 +16,6 @@ from graphql.data_sources import (
 from graphql.data_sources.models.menu import Menu, MenuCategory, MenuItem
 from graphql.data_sources.models.pos_order import PosOrder
 from graphql.schema import schema
-from graphql.tests.pos_cleanup import clear_location_dependents
 from graphql.services.pos_order_constants import (
     PREP_PICKED_UP,
     PREP_PREPARING,
@@ -31,6 +30,7 @@ from graphql.services.service_subscriptions import (
 )
 from graphql.services.workspace_plan import WORKSPACE_PLAN_PRO
 from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID, graphql_auth_context
+from graphql.tests.pos_cleanup import clear_location_dependents
 
 GUEST_USER_ID = "clerk_guest_prep"
 OTHER_GUEST_ID = "clerk_other_guest"

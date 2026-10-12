@@ -24,8 +24,6 @@ from graphql.data_sources.models.menu import (
 )
 from graphql.data_sources.models.pos_order import (
     PosOrder,
-    PosOrderLine,
-    PosOrderLineModifier,
 )
 from graphql.schema import schema
 from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID, graphql_auth_context
@@ -857,7 +855,6 @@ def test_workspace_member_can_sell_but_not_refund():
         session.commit()
         session.refresh(location)
         location_id = location.id
-        workspace_id = ws.id
     finally:
         session.close()
 

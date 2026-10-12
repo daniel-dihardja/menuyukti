@@ -9,7 +9,6 @@ import pytest
 from graphql.data_sources import (
     Location,
     PointLedgerEntry,
-    ServiceSubscription,
     SessionLocal,
     Workspace,
     WorkspaceMembership,

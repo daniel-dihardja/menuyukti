@@ -8,12 +8,11 @@ import pytest
 
 from graphql.data_sources import (
     Location,
-    ServiceSubscription,
     SessionLocal,
     Workspace,
     WorkspaceMembership,
 )
-from graphql.data_sources.models.menu import Menu, MenuCategory, MenuItem
+from graphql.data_sources.models.menu import Menu
 from graphql.schema import schema
 from graphql.services.service_subscriptions import (
     SERVICE_KEY_DIGITAL_MENU,

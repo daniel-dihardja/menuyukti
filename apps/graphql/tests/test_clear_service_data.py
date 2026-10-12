@@ -24,7 +24,6 @@ from graphql.data_sources import (
 from graphql.data_sources.models.menu import Menu, MenuCategory, MenuItem
 from graphql.data_sources.models.voting import Voting, VotingOption, VotingVote
 from graphql.schema import schema
-from graphql.tests.pos_cleanup import delete_pos_orders
 from graphql.services.menu import (
     MenuCategoryReplaceInput,
     MenuItemReplaceInput,
@@ -47,6 +46,7 @@ from graphql.services.service_subscriptions import (
 )
 from graphql.services.votings import ACTION_KEY_VOTING_VOTE
 from graphql.tests.auth_context import graphql_auth_context
+from graphql.tests.pos_cleanup import delete_pos_orders
 
 CLEAR = """
 mutation ClearWorkspaceServiceData($targetClerkUserId: String!, $serviceKey: String!) {

@@ -8,14 +8,12 @@ import pytest
 
 from graphql.data_sources import (
     Location,
-    PointEarnRule,
     PointLedgerEntry,
     ServiceSubscription,
     SessionLocal,
     Workspace,
     WorkspaceMembership,
 )
-from graphql.data_sources.models.analytics import AnalyticsRun, OrderFact
 from graphql.data_sources.models.menu import Menu, MenuCategory, MenuItem
 from graphql.schema import schema
 from graphql.services.point_earn_rules import (
