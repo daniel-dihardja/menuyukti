@@ -14,8 +14,9 @@ from graphql.data_sources import (
     WorkspaceMembership,
 )
 from graphql.data_sources.models.menu import Menu, MenuCategory, MenuItem
-from graphql.data_sources.models.pos_order import PosOrder, PosOrderLine
+from graphql.data_sources.models.pos_order import PosOrder
 from graphql.schema import schema
+from graphql.tests.pos_cleanup import clear_location_dependents
 from graphql.services.pos_order_constants import (
     PREP_PICKED_UP,
     PREP_PREPARING,
@@ -160,12 +161,7 @@ def published_menu_location():
 
     session = SessionLocal()
     try:
-        session.query(PosOrderLine).filter(
-            PosOrderLine.pos_order_id.in_(
-                session.query(PosOrder.id).filter(PosOrder.location_id == lid)
-            )
-        ).delete(synchronize_session=False)
-        session.query(PosOrder).filter(PosOrder.location_id == lid).delete()
+        clear_location_dependents(session, [lid])
         session.query(MenuItem).filter(
             MenuItem.menu_id.in_(session.query(Menu.id).filter(Menu.location_id == lid))
         ).delete(synchronize_session=False)

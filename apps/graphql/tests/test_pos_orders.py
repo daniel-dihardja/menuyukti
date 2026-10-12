@@ -29,6 +29,12 @@ from graphql.data_sources.models.pos_order import (
 )
 from graphql.schema import schema
 from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID, graphql_auth_context
+from graphql.tests.pos_cleanup import (
+    clear_location_dependents,
+    clear_pos_for_locations,
+    clear_workspaces_for_owners,
+    delete_all_pos_orders,
+)
 
 OTHER_USER_ID = "clerk_other_user"
 MEMBER_USER_ID = "clerk_pos_member"
@@ -181,21 +187,17 @@ query PosDaySummary($locationId: Int!, $onDate: String) {
 
 
 def _cleanup() -> None:
-    from graphql.data_sources.models.pos_audit_event import PosAuditEvent
+    from graphql.data_sources import MenuItemCogs
     from graphql.data_sources.models.pos_bill_sequence import PosBillSequence
-    from graphql.data_sources.models.pos_fiscal_process import PosFiscalProcess
     from graphql.data_sources.models.pos_register import PosRegister
     from graphql.data_sources.models.tax_rate import TaxRate
 
     session = SessionLocal()
     try:
+        session.query(MenuItemCogs).delete()
         session.query(OrderFact).delete()
         session.query(AnalyticsRun).delete()
-        session.query(PosAuditEvent).delete()
-        session.query(PosFiscalProcess).delete()
-        session.query(PosOrderLineModifier).delete()
-        session.query(PosOrderLine).delete()
-        session.query(PosOrder).delete()
+        delete_all_pos_orders(session)
         session.query(PosBillSequence).delete()
         session.query(PosRegister).delete()
         session.query(MenuModifierOption).delete()
@@ -204,6 +206,8 @@ def _cleanup() -> None:
         session.query(MenuCategory).delete()
         session.query(Menu).delete()
         session.query(Node).delete()
+        location_ids = [int(row[0]) for row in session.query(Location.id).all()]
+        clear_pos_for_locations(session, location_ids)
         session.query(Location).delete()
         session.query(TaxRate).delete()
         session.commit()
@@ -926,26 +930,11 @@ def test_workspace_member_can_sell_but_not_refund():
 
     session = SessionLocal()
     try:
-        from graphql.data_sources.models.pos_audit_event import PosAuditEvent
-        from graphql.data_sources.models.pos_bill_sequence import PosBillSequence
-        from graphql.data_sources.models.pos_register import PosRegister
-
-        session.query(PosAuditEvent).delete()
-        session.query(PosOrderLineModifier).delete()
-        session.query(PosOrderLine).delete()
-        session.query(PosOrder).delete()
-        session.query(PosBillSequence).delete()
-        session.query(PosRegister).delete()
+        delete_all_pos_orders(session)
+        clear_location_dependents(session, [location_id])
         session.query(MenuModifierOption).delete()
         session.query(MenuModifierGroup).delete()
-        session.query(MenuItem).delete()
-        session.query(MenuCategory).delete()
-        session.query(Menu).delete()
-        session.query(Location).filter(Location.id == location_id).delete()
-        session.query(WorkspaceMembership).filter(
-            WorkspaceMembership.workspace_id == workspace_id
-        ).delete()
-        session.query(Workspace).filter(Workspace.id == workspace_id).delete()
+        clear_workspaces_for_owners(session, [GRAPHQL_TEST_USER_ID])
         session.commit()
     finally:
         session.close()

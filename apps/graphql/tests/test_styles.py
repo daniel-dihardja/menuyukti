@@ -140,11 +140,12 @@ OTHER_USER_ID = "clerk_other_style_user"
 
 @pytest.fixture
 def style_workspace_id():
+    from graphql.tests.pos_cleanup import clear_workspaces_for_owners
+
     session = SessionLocal()
     try:
         session.query(VisualStyle).delete()
-        session.query(WorkspaceMembership).delete()
-        session.query(Workspace).delete()
+        clear_workspaces_for_owners(session, [GRAPHQL_TEST_USER_ID, OTHER_USER_ID])
         session.commit()
 
         now = datetime.now(tz=UTC)
@@ -169,8 +170,7 @@ def style_workspace_id():
     session = SessionLocal()
     try:
         session.query(VisualStyle).filter(VisualStyle.workspace_id == wid).delete()
-        session.query(WorkspaceMembership).filter(WorkspaceMembership.workspace_id == wid).delete()
-        session.query(Workspace).filter(Workspace.id == wid).delete()
+        clear_workspaces_for_owners(session, [GRAPHQL_TEST_USER_ID, OTHER_USER_ID])
         session.commit()
     finally:
         session.close()

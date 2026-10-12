@@ -36,15 +36,9 @@ def inventar_seed_workspace():
         # SQLite tests often run without PRAGMA foreign_keys, so deleting a location
         # can leave orphan PosOrder rows. Clear them before creating a new location
         # so autoincrement id reuse cannot reattach stale tickets.
-        from graphql.data_sources.models.pos_order import (
-            PosOrder,
-            PosOrderLine,
-            PosOrderLineModifier,
-        )
+        from graphql.tests.pos_cleanup import delete_all_pos_orders
 
-        session.query(PosOrderLineModifier).delete()
-        session.query(PosOrderLine).delete()
-        session.query(PosOrder).delete()
+        delete_all_pos_orders(session)
 
         now = datetime.now(tz=UTC)
         ws = Workspace(name="Dev Seed Inventar WS", owner_clerk_user_id=SEED_USER)
@@ -80,11 +74,7 @@ def inventar_seed_workspace():
 
     session = SessionLocal()
     try:
-        from graphql.data_sources.models.pos_order import (
-            PosOrder,
-            PosOrderLine,
-            PosOrderLineModifier,
-        )
+        from graphql.tests.pos_cleanup import delete_pos_orders
 
         location_ids = [
             row[0]
@@ -92,29 +82,7 @@ def inventar_seed_workspace():
             .filter(Location.workspace_id == payload["workspace_id"])
             .all()
         ]
-        order_ids = [
-            row[0]
-            for row in session.query(PosOrder.id)
-            .filter(PosOrder.location_id.in_(location_ids))
-            .all()
-        ]
-        if order_ids:
-            line_ids = [
-                row[0]
-                for row in session.query(PosOrderLine.id)
-                .filter(PosOrderLine.pos_order_id.in_(order_ids))
-                .all()
-            ]
-            if line_ids:
-                session.query(PosOrderLineModifier).filter(
-                    PosOrderLineModifier.pos_order_line_id.in_(line_ids)
-                ).delete(synchronize_session=False)
-            session.query(PosOrderLine).filter(PosOrderLine.pos_order_id.in_(order_ids)).delete(
-                synchronize_session=False
-            )
-            session.query(PosOrder).filter(PosOrder.id.in_(order_ids)).delete(
-                synchronize_session=False
-            )
+        delete_pos_orders(session, location_ids=location_ids)
         menu_ids = [
             row[0]
             for row in session.query(Menu.id).filter(Menu.location_id.in_(location_ids)).all()

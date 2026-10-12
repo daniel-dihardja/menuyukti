@@ -17,7 +17,6 @@ from graphql.data_sources import (
 )
 from graphql.data_sources.models.analytics import AnalyticsRun, OrderFact
 from graphql.data_sources.models.menu import Menu, MenuCategory, MenuItem
-from graphql.data_sources.models.pos_order import PosOrder, PosOrderLine
 from graphql.schema import schema
 from graphql.services.point_earn_rules import (
     ACTION_KEY_COMPLETE_ORDER,
@@ -31,6 +30,7 @@ from graphql.services.service_subscriptions import (
 )
 from graphql.services.workspace_plan import WORKSPACE_PLAN_PRO
 from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID, graphql_auth_context
+from graphql.tests.pos_cleanup import clear_workspaces_for_owners
 
 GUEST_USER_ID = "clerk_guest_points"
 OTHER_GUEST_ID = "clerk_other_guest_points"
@@ -136,78 +136,7 @@ def _clear(session) -> None:
     session.query(PointLedgerEntry).filter(
         PointLedgerEntry.clerk_user_id.in_([GUEST_USER_ID, OTHER_GUEST_ID, GRAPHQL_TEST_USER_ID])
     ).delete(synchronize_session=False)
-    session.query(PosOrderLine).filter(
-        PosOrderLine.pos_order_id.in_(
-            session.query(PosOrder.id).filter(
-                PosOrder.opened_by_clerk_user_id.in_(
-                    [GUEST_USER_ID, OTHER_GUEST_ID, GRAPHQL_TEST_USER_ID]
-                )
-            )
-        )
-    ).delete(synchronize_session=False)
-    session.query(PosOrder).filter(
-        PosOrder.opened_by_clerk_user_id.in_([GUEST_USER_ID, OTHER_GUEST_ID, GRAPHQL_TEST_USER_ID])
-    ).delete(synchronize_session=False)
-    session.query(PointEarnRule).filter(
-        PointEarnRule.location_id.in_(
-            session.query(Location.id).filter(Location.clerk_user_id.in_([GRAPHQL_TEST_USER_ID]))
-        )
-    ).delete(synchronize_session=False)
-    session.query(OrderFact).filter(
-        OrderFact.analytics_run_id.in_(
-            session.query(AnalyticsRun.id).filter(
-                AnalyticsRun.location_id.in_(
-                    session.query(Location.id).filter(
-                        Location.clerk_user_id == GRAPHQL_TEST_USER_ID
-                    )
-                )
-            )
-        )
-    ).delete(synchronize_session=False)
-    session.query(AnalyticsRun).filter(
-        AnalyticsRun.location_id.in_(
-            session.query(Location.id).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID)
-        )
-    ).delete(synchronize_session=False)
-    session.query(MenuItem).filter(
-        MenuItem.menu_id.in_(
-            session.query(Menu.id).filter(
-                Menu.location_id.in_(
-                    session.query(Location.id).filter(
-                        Location.clerk_user_id == GRAPHQL_TEST_USER_ID
-                    )
-                )
-            )
-        )
-    ).delete(synchronize_session=False)
-    session.query(MenuCategory).filter(
-        MenuCategory.menu_id.in_(
-            session.query(Menu.id).filter(
-                Menu.location_id.in_(
-                    session.query(Location.id).filter(
-                        Location.clerk_user_id == GRAPHQL_TEST_USER_ID
-                    )
-                )
-            )
-        )
-    ).delete(synchronize_session=False)
-    session.query(Menu).filter(
-        Menu.location_id.in_(
-            session.query(Location.id).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID)
-        )
-    ).delete(synchronize_session=False)
-    session.query(ServiceSubscription).filter(
-        ServiceSubscription.workspace_id.in_(
-            session.query(Workspace.id).filter(
-                Workspace.owner_clerk_user_id == GRAPHQL_TEST_USER_ID
-            )
-        )
-    ).delete(synchronize_session=False)
-    session.query(Location).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
-    session.query(WorkspaceMembership).filter(
-        WorkspaceMembership.clerk_user_id == GRAPHQL_TEST_USER_ID
-    ).delete()
-    session.query(Workspace).filter(Workspace.owner_clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
+    clear_workspaces_for_owners(session, [GRAPHQL_TEST_USER_ID])
     session.commit()
 
 

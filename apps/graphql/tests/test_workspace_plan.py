@@ -61,24 +61,22 @@ query MyWorkspace {
 """
 
 
-def _clear(session) -> None:
-    session.query(Location).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
-    session.query(WorkspaceMembership).filter(
-        WorkspaceMembership.clerk_user_id == GRAPHQL_TEST_USER_ID
-    ).delete()
-    session.query(Workspace).filter(Workspace.owner_clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
-    session.commit()
+def _clear() -> None:
+    from graphql.tests.pos_cleanup import clear_workspaces_for_owners
+
+    session = SessionLocal()
+    try:
+        clear_workspaces_for_owners(session, [GRAPHQL_TEST_USER_ID])
+        session.commit()
+    finally:
+        session.close()
 
 
 @pytest.fixture
 def clean_user_workspaces():
-    session = SessionLocal()
-    try:
-        _clear(session)
-        yield
-    finally:
-        _clear(session)
-        session.close()
+    _clear()
+    yield
+    _clear()
 
 
 def test_create_workspace_self_serve_blocked(clean_user_workspaces):

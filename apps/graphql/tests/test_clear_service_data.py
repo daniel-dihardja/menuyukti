@@ -24,6 +24,7 @@ from graphql.data_sources import (
 from graphql.data_sources.models.menu import Menu, MenuCategory, MenuItem
 from graphql.data_sources.models.voting import Voting, VotingOption, VotingVote
 from graphql.schema import schema
+from graphql.tests.pos_cleanup import delete_pos_orders
 from graphql.services.menu import (
     MenuCategoryReplaceInput,
     MenuItemReplaceInput,
@@ -162,9 +163,7 @@ def clear_workspace():
             session.query(ServiceSubscription).filter(
                 ServiceSubscription.location_id == lid
             ).delete(synchronize_session=False)
-            session.query(PosOrder).filter(PosOrder.location_id == lid).delete(
-                synchronize_session=False
-            )
+            delete_pos_orders(session, location_ids=[lid])
             menu = session.query(Menu).filter(Menu.location_id == lid).first()
             if menu is not None:
                 session.query(MenuItem).filter(MenuItem.menu_id == menu.id).delete(
