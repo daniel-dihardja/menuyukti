@@ -1,9 +1,15 @@
 import { connection } from 'next/server'
+import { auth } from '@clerk/nextjs/server'
 import { getTranslations } from 'next-intl/server'
 import { notFound } from 'next/navigation'
 import { UtensilsCrossed } from 'lucide-react'
 
+import { PublicGuestHeader, PublicGuestShell } from '@/app/(public)/_components/public-guest-shell'
+import { PublicVenueHomeLink } from '@/app/(public)/_components/public-venue-home-link'
+import { PublicGuestPointsSync } from '@/components/public-guest-points-context'
 import { getAppCurrencyCode } from '@/lib/app-currency'
+import { loadGuestPointBalance } from '@/lib/public-location/load-guest-point-balance'
+import { loadPublicLocation } from '@/lib/public-location/load-public-location'
 import { loadPublicLocationMenu } from '@/lib/public-menu/load-public-menu'
 import {
   Empty,
@@ -14,9 +20,6 @@ import {
 } from '@workspace/ui/components/empty'
 import { Skeleton } from '@workspace/ui/components/skeleton'
 import { cn } from '@workspace/ui/lib/utils'
-
-import { PublicGuestHeader, PublicGuestShell } from '@/app/(public)/_components/public-guest-shell'
-import { PublicVenueHomeLink } from '@/app/(public)/_components/public-venue-home-link'
 
 import { PublicMenuCatalog } from './public-menu-catalog'
 
@@ -49,8 +52,16 @@ type PublicLocationMenuBodyProps = {
 export async function PublicLocationMenuBody({ slug, tableLabel }: PublicLocationMenuBodyProps) {
   await connection()
   const t = await getTranslations('public.menu')
-  const menu = await loadPublicLocationMenu(decodeURIComponent(slug))
+  const decoded = decodeURIComponent(slug)
+  const { userId } = await auth()
+
+  const [menu, location] = await Promise.all([
+    loadPublicLocationMenu(decoded),
+    loadPublicLocation(decoded),
+  ])
   if (!menu) notFound()
+
+  const pointBalance = location ? await loadGuestPointBalance(location, userId) : null
 
   const currencyCode = (menu.currency?.trim() || getAppCurrencyCode()).toUpperCase()
   const hasItems = menu.categories.some((category) => category.items.length > 0)
@@ -59,6 +70,7 @@ export async function PublicLocationMenuBody({ slug, tableLabel }: PublicLocatio
 
   return (
     <PublicGuestShell>
+      <PublicGuestPointsSync balance={pointBalance} />
       <PublicGuestHeader headerImageUrl={headerImageUrl} contentClassName="max-w-4xl">
         <p
           className={cn(

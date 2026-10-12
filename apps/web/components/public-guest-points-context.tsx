@@ -29,13 +29,17 @@ export function usePublicGuestPoints(): PublicGuestPointsContextValue {
   return ctx
 }
 
-/** Syncs server-resolved venue balance into the header chrome; clears on unmount. */
+/**
+ * Syncs server-resolved venue balance into the header chrome.
+ * Does not clear on unmount — clearing caused the points pill to disappear while
+ * Suspense fallbacks / soft navigations between guest pages (menu vs voting, etc.).
+ * MainHeader already hides the pill off guest location surfaces.
+ */
 export function PublicGuestPointsSync({ balance }: { balance: number | null }) {
   const { setBalance } = usePublicGuestPoints()
 
   React.useEffect(() => {
     setBalance(balance)
-    return () => setBalance(null)
   }, [balance, setBalance])
 
   return null

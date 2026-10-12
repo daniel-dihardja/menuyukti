@@ -14,6 +14,7 @@ import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useEffect, useMemo, useState } from 'react'
 
+import { usePublicGuestPoints } from '@/components/public-guest-points-context'
 import { buildLoginUrl, rememberAuthReturnPath } from '@/lib/auth-return-path'
 import { formatCurrency, getCurrencyLocale } from '@/lib/currency'
 import { POINT_EARN_ACTION_OPEN_MENU_QR } from '@/lib/graphql/queries/point-ledger'
@@ -205,6 +206,7 @@ export function PublicMenuCatalog({
   const t = useTranslations('public.menu')
   const pathname = usePathname()
   const { isSignedIn, isLoaded } = useAuth()
+  const { setBalance: setGuestPointBalance } = usePublicGuestPoints()
   const locale = getCurrencyLocale(currencyCode)
   const [dietaryInclude, setDietaryInclude] = useState<Set<string>>(() => new Set())
   const [allergenExclude, setAllergenExclude] = useState<Set<string>>(() => new Set())
@@ -289,10 +291,18 @@ export function PublicMenuCatalog({
         locationId,
         actionKey: POINT_EARN_ACTION_OPEN_MENU_QR,
       }),
-    }).catch(() => {
-      // Menu UX must not depend on Point System availability.
     })
-  }, [isLoaded, isSignedIn, locationId])
+      .then(async (res) => {
+        if (!res.ok) return
+        const body = (await res.json().catch(() => null)) as { balance?: number } | null
+        if (typeof body?.balance === 'number' && Number.isFinite(body.balance)) {
+          setGuestPointBalance(body.balance)
+        }
+      })
+      .catch(() => {
+        // Menu UX must not depend on Point System availability.
+      })
+  }, [isLoaded, isSignedIn, locationId, setGuestPointBalance])
 
   // Restore active order: localStorage first, then server open ticket for this guest.
   useEffect(() => {
