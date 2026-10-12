@@ -10,6 +10,8 @@ export const INGEST_DEV_DATA_MUTATION = `
       inventarLocationName
       analyticsLocationId
       analyticsLocationName
+      midoLocationId
+      midoLocationName
       inventarCatalogItems
       inventarStockRows
       inventarMovements
@@ -24,6 +26,9 @@ export const INGEST_DEV_DATA_MUTATION = `
       analyticsMenuCategories
       analyticsMenuItems
       analyticsClearedPosOrders
+      midoMenuCategories
+      midoMenuItems
+      midoClearedPosOrders
       notes
     }
   }
@@ -39,6 +44,8 @@ export type IngestDevDataResult = {
   inventarLocationName: string | null
   analyticsLocationId: string | null
   analyticsLocationName: string | null
+  midoLocationId: string | null
+  midoLocationName: string | null
   inventarCatalogItems: number | null
   inventarStockRows: number | null
   inventarMovements: number | null
@@ -53,6 +60,9 @@ export type IngestDevDataResult = {
   analyticsMenuCategories: number | null
   analyticsMenuItems: number | null
   analyticsClearedPosOrders: number | null
+  midoMenuCategories: number | null
+  midoMenuItems: number | null
+  midoClearedPosOrders: number | null
   notes: string[]
 }
 

@@ -21,12 +21,16 @@ from graphql.data_sources import (
     Workspace,
     WorkspaceMembership,
 )
-from graphql.data_sources.models.pos_order import PosOrder
 from graphql.reports import normalize_sales_report, persist_sales_report
 from graphql.scripts.dev_seed_inventar import reset_inventar, seed_inventar
 from graphql.scripts.dev_seed_kaffeestube_menu import (
     KAFFEESTUBE_CATEGORY_LABELS,
     KAFFEESTUBE_MENU_CATALOG,
+)
+from graphql.scripts.dev_seed_mido_menu import (
+    MIDO_CATEGORY_ORDER,
+    MIDO_MENU_CATALOG,
+    modifier_groups_for,
 )
 from graphql.scripts.dev_seed_warung_menu import WARUNG_CATEGORY_LABELS, WARUNG_MENU_CATALOG
 from graphql.services.location_cogs import (
@@ -55,6 +59,7 @@ DEV_SEED_PREFIX = "dev-seed-"
 PRIMARY_LOCATION_NAME = "SNABB"
 DEV_INVENTAR_LOCATION_NAME = "Warung Sunda Lembur"
 DEV_ANALYTICS_LOCATION_NAME = "Kaffeestube Mitte"
+DEV_MIDO_LOCATION_NAME = "MIDO Matcha Corner"
 DEV_WORKSPACE_NAME = "Dev Workspace"
 
 SCOPES = ("inventar", "analytics", "all", "clear-inventar")
@@ -66,6 +71,7 @@ class WorkspaceContext:
     primary_location: Location
     inventar_location: Location
     analytics_location: Location
+    mido_location: Location
     created_primary: bool
 
 
@@ -79,6 +85,8 @@ class DevDataSeedResult:
     inventar_location_name: str | None = None
     analytics_location_id: int | None = None
     analytics_location_name: str | None = None
+    mido_location_id: int | None = None
+    mido_location_name: str | None = None
     inventar_catalog_items: int | None = None
     inventar_stock_rows: int | None = None
     inventar_movements: int | None = None
@@ -93,6 +101,9 @@ class DevDataSeedResult:
     analytics_menu_categories: int | None = None
     analytics_menu_items: int | None = None
     analytics_cleared_pos_orders: int | None = None
+    mido_menu_categories: int | None = None
+    mido_menu_items: int | None = None
+    mido_cleared_pos_orders: int | None = None
     inventar_cleared: bool = False
     notes: list[str] = field(default_factory=list)
 
@@ -165,15 +176,9 @@ def _add_sample_manual_brief(session: Session, location_id: int) -> None:
 def seed_warung_sunda_menu(session: Session, location: Location) -> dict[str, int]:
     """Replace the curated location menu with the Warung Sunda mock catalog (POS + guest menu).
 
-    Clears POS tickets for this location first so a full catalog reset stays
-    free of stale ``pos_order_line`` references.
+    Does not delete POS tickets (fiscal rows stay immutable). ``replace_menu_categories``
+    keeps items still referenced by ``pos_order_line`` and marks omitted ones unavailable.
     """
-    deleted_orders = (
-        session.query(PosOrder)
-        .filter(PosOrder.location_id == location.id)
-        .delete(synchronize_session=False)
-    )
-
     by_category: dict[str, list[MenuItemReplaceInput]] = {}
     for item in WARUNG_MENU_CATALOG:
         label = WARUNG_CATEGORY_LABELS.get(item.menu_category, item.menu_category.title())
@@ -204,22 +209,17 @@ def seed_warung_sunda_menu(session: Session, location: Location) -> dict[str, in
     return {
         "categories": len(categories),
         "items": item_count,
-        "cleared_pos_orders": int(deleted_orders or 0),
+        # Kept for API compatibility; menu seed never deletes fiscal/POS history.
+        "cleared_pos_orders": 0,
     }
 
 
 def seed_kaffeestube_menu(session: Session, location: Location) -> dict[str, int]:
     """Replace the curated location menu with the Berlin cafe mock catalog (POS + guest menu).
 
-    Clears POS tickets for this location first so a full catalog reset stays
-    free of stale ``pos_order_line`` references.
+    Does not delete POS tickets (fiscal rows stay immutable). ``replace_menu_categories``
+    keeps items still referenced by ``pos_order_line`` and marks omitted ones unavailable.
     """
-    deleted_orders = (
-        session.query(PosOrder)
-        .filter(PosOrder.location_id == location.id)
-        .delete(synchronize_session=False)
-    )
-
     by_category: dict[str, list[MenuItemReplaceInput]] = {}
     for item in KAFFEESTUBE_MENU_CATALOG:
         label = KAFFEESTUBE_CATEGORY_LABELS.get(item.menu_category, item.menu_category.title())
@@ -250,7 +250,47 @@ def seed_kaffeestube_menu(session: Session, location: Location) -> dict[str, int
     return {
         "categories": len(categories),
         "items": item_count,
-        "cleared_pos_orders": int(deleted_orders or 0),
+        "cleared_pos_orders": 0,
+    }
+
+
+def seed_mido_matcha_menu(session: Session, location: Location) -> dict[str, int]:
+    """Replace the curated location menu with the MIDO Matcha Corner catalog.
+
+    Does not delete POS tickets (fiscal rows stay immutable). Combo SKUs are
+    fixed-price items without modifiers. ``replace_menu_categories`` keeps items
+    still referenced by ``pos_order_line``.
+    """
+    by_category: dict[str, list[MenuItemReplaceInput]] = {}
+    for item in MIDO_MENU_CATALOG:
+        by_category.setdefault(item.category, []).append(
+            MenuItemReplaceInput(
+                name=item.name,
+                price=float(item.price),
+                description=item.description,
+                is_available=True,
+                dietary_tags=list(item.dietary_tags),
+                allergens=list(item.allergens),
+                modifier_groups=modifier_groups_for(item),
+            )
+        )
+
+    ordered_names = [name for name in MIDO_CATEGORY_ORDER if name in by_category] + sorted(
+        name for name in by_category if name not in MIDO_CATEGORY_ORDER
+    )
+    categories = [
+        MenuCategoryReplaceInput(name=name, items=by_category[name]) for name in ordered_names
+    ]
+
+    menu = get_or_create_menu(session, location.id, title=DEV_MIDO_LOCATION_NAME)
+    menu.title = DEV_MIDO_LOCATION_NAME
+    replace_menu_categories(session, menu, categories)
+    session.flush()
+    item_count = sum(len(cat.items) for cat in categories)
+    return {
+        "categories": len(categories),
+        "items": item_count,
+        "cleared_pos_orders": 0,
     }
 
 
@@ -407,6 +447,24 @@ def ensure_workspace_context(session: Session, clerk_user_id: str) -> WorkspaceC
             "sunday",
         ),
     )
+    mido = _ensure_location(
+        session,
+        workspace=workspace,
+        clerk_user_id=clerk_user_id,
+        name=DEV_MIDO_LOCATION_NAME,
+        city="Berlin",
+        country="Germany",
+        currency="EUR",
+        opening_days=(
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday",
+        ),
+    )
 
     session.flush()
     return WorkspaceContext(
@@ -414,6 +472,7 @@ def ensure_workspace_context(session: Session, clerk_user_id: str) -> WorkspaceC
         primary_location=primary,
         inventar_location=inventar,
         analytics_location=analytics,
+        mido_location=mido,
         created_primary=created_primary,
     )
 
@@ -579,6 +638,8 @@ def run_dev_data_seed(
         inventar_location_name=ctx.inventar_location.name,
         analytics_location_id=ctx.analytics_location.id,
         analytics_location_name=ctx.analytics_location.name,
+        mido_location_id=ctx.mido_location.id,
+        mido_location_name=ctx.mido_location.name,
     )
 
     if scope == "clear-inventar":
@@ -633,5 +694,15 @@ def run_dev_data_seed(
         notes = analytics_result.get("notes")
         if isinstance(notes, list):
             result.notes.extend(str(n) for n in notes)
+
+    # Modifier-rich matcha demo menu — reseed on inventar, analytics, and all.
+    if scope in ("inventar", "analytics", "all"):
+        mido_location = session.get(Location, ctx.mido_location.id)
+        assert mido_location is not None
+        mido_counts = seed_mido_matcha_menu(session, mido_location)
+        session.flush()
+        result.mido_menu_categories = mido_counts["categories"]
+        result.mido_menu_items = mido_counts["items"]
+        result.mido_cleared_pos_orders = mido_counts["cleared_pos_orders"]
 
     return result
