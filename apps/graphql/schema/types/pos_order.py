@@ -119,9 +119,16 @@ class PosOrderType:
     lines: list[PosOrderLineType]
 
 
+@strawberry.type(description="Guest-facing line on a digital-menu ticket.")
+class PublicMenuOrderLineGuestType:
+    menu_item_id: int
+    name: str
+
+
 @strawberry.type(
     description=(
-        "Minimal guest-facing digital-menu order status (no lines, fiscal, or money fields)."
+        "Guest-facing digital-menu order status. Lines are included when loading "
+        "the caller's open ticket; status polls may return an empty line list."
     )
 )
 class PublicMenuOrderStatusType:
@@ -131,6 +138,7 @@ class PublicMenuOrderStatusType:
     prep_status: PosPrepStatus | None
     fulfillment_mode: PosFulfillmentMode | None
     table_label: str | None
+    lines: list[PublicMenuOrderLineGuestType]
 
 
 @strawberry.type(description="Append-only POS audit event.")

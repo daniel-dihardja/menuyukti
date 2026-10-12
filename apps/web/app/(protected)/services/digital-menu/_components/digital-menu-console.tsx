@@ -10,6 +10,9 @@ import { mediaDownloadHref, type MediaCatalogItem } from '@/lib/media/client-api
 import { parsePublicMenuTableLabel } from '@/lib/public-menu/table-label'
 import { routes } from '@/lib/routes'
 
+import type { MenuItemFeedbackRow } from '@/lib/graphql/queries/menu-item-feedback'
+
+import { DigitalMenuFeedbackInbox } from './digital-menu-feedback-inbox'
 import { DigitalMenuQr, useClientAbsoluteUrl } from './digital-menu-qr'
 import {
   AlertDialog,
@@ -34,6 +37,8 @@ type Props = {
   initialHeaderImageFilename: string | null
   initialAllowDineIn: boolean
   initialAllowPickup: boolean
+  initialFeedbacks: MenuItemFeedbackRow[]
+  initialFeedbackPendingCount: number
 }
 
 export function DigitalMenuConsole({
@@ -44,6 +49,8 @@ export function DigitalMenuConsole({
   initialHeaderImageFilename,
   initialAllowDineIn,
   initialAllowPickup,
+  initialFeedbacks,
+  initialFeedbackPendingCount,
 }: Props) {
   const t = useTranslations('services.digitalMenu.console')
   const router = useRouter()
@@ -188,6 +195,12 @@ export function DigitalMenuConsole({
           <h1 className="text-2xl font-semibold tracking-tight">{t('heading')}</h1>
           <p className="text-muted-foreground text-sm">{t('description')}</p>
         </section>
+
+        <DigitalMenuFeedbackInbox
+          locationId={locationId}
+          initialFeedbacks={initialFeedbacks}
+          initialPendingCount={initialFeedbackPendingCount}
+        />
 
         <section className="border-border flex max-w-xl flex-col gap-4 rounded-lg border p-4">
           <h2 className="text-base font-semibold">{t('statusTitle')}</h2>

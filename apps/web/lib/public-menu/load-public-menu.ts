@@ -81,6 +81,8 @@ export async function loadPublicLocationMenu(
           imageFilename: filename,
           dietaryTags: item.dietaryTags ?? [],
           allergens: item.allergens ?? [],
+          publishedFeedbackCount: item.publishedFeedbackCount ?? 0,
+          publishedFeedbacks: item.publishedFeedbacks ?? [],
           imageUrl,
         }
       }),

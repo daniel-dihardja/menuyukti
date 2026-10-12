@@ -19,14 +19,19 @@ from graphql.services.pos_order_constants import (
     POS_STATUS_OPEN,
     POS_STATUS_REFUNDED,
     POS_STATUS_VOID,
+    PREP_PICKED_UP,
+    PREP_READY,
     PREP_RECEIVED,
+    PREP_SERVED,
     PUBLIC_MENU_ORDER_NOTE,
     next_prep_status,
     normalize_fulfillment_mode,
     normalize_line_note,
     normalize_table_label,
 )
-from graphql.services.pos_order_reads import get_order
+from graphql.services.pos_order_reads import get_open_public_menu_order_for_guest, get_order
+
+_PREP_RESET_ON_APPEND = frozenset({PREP_READY, PREP_SERVED, PREP_PICKED_UP})
 from graphql.services.pos_register_bill import ensure_default_register, next_bill_number
 from graphql.services.pos_tax import normalize_tax_class, recompute_order_tax, resolve_tax_rate_bps
 
@@ -80,9 +85,53 @@ def submit_public_menu_order(
     fulfillment_mode: str,
     table_label: str | None = None,
 ) -> PosOrder:
-    """Open a guest digital-menu ticket and add lines (no modifiers / no payment)."""
+    """Open or append to a guest digital-menu ticket (no modifiers / no payment).
+
+    If the guest already has an open digital-menu ticket at this location, lines
+    are appended to that ticket (fulfillment/table unchanged). Otherwise a new
+    ticket is opened.
+    """
     if not lines:
         raise ValueError("At least one line is required")
+
+    menu = session.scalar(select(Menu).where(Menu.location_id == location_id))
+    if menu is None or not bool(menu.public_enabled):
+        raise ValueError("Public digital menu is not published for this location")
+
+    existing = get_open_public_menu_order_for_guest(
+        session,
+        location_id=location_id,
+        clerk_user_id=clerk_user_id,
+    )
+    if existing is not None:
+        for menu_item_id, qty in lines:
+            add_line(
+                session,
+                order_id=existing.id,
+                menu_item_id=menu_item_id,
+                qty=qty,
+                modifier_option_ids=None,
+                note=None,
+                actor_clerk_user_id=clerk_user_id,
+            )
+        order = get_order(session, existing.id) or existing
+        current_prep = (order.prep_status or "").strip().lower()
+        if current_prep in _PREP_RESET_ON_APPEND:
+            order.prep_status = PREP_RECEIVED
+            session.flush()
+            record_pos_audit(
+                session,
+                location_id=order.location_id,
+                pos_order_id=order.id,
+                actor_clerk_user_id=clerk_user_id,
+                action="prep_status",
+                payload={
+                    "from": current_prep,
+                    "to": PREP_RECEIVED,
+                    "reason": "append_public_menu_lines",
+                },
+            )
+        return get_order(session, order.id) or order
 
     mode = normalize_fulfillment_mode(fulfillment_mode)
     if mode == FULFILLMENT_PICKUP:
@@ -92,9 +141,6 @@ def submit_public_menu_order(
         if resolved_table is None:
             raise ValueError("table_label is required for dine_in fulfillment")
 
-    menu = session.scalar(select(Menu).where(Menu.location_id == location_id))
-    if menu is None or not bool(menu.public_enabled):
-        raise ValueError("Public digital menu is not published for this location")
     if mode == FULFILLMENT_DINE_IN and not bool(menu.allow_dine_in):
         raise ValueError("dine_in fulfillment is not enabled for this menu")
     if mode == FULFILLMENT_PICKUP and not bool(menu.allow_pickup):

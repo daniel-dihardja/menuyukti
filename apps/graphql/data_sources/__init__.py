@@ -30,6 +30,7 @@ __all__ = [
     "Menu",
     "MenuCategory",
     "MenuItem",
+    "MenuItemFeedback",
     "PosOrder",
     "PosOrderLine",
     "ServiceSubscription",

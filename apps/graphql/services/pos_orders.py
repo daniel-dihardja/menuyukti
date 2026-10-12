@@ -40,6 +40,7 @@ from graphql.services.pos_order_lifecycle import (
 )
 from graphql.services.pos_order_reads import (
     day_summary,
+    get_open_public_menu_order_for_guest,
     get_order,
     list_orders,
     order_gross_total,
@@ -66,6 +67,7 @@ __all__ = [
     "day_summary",
     "ensure_default_register",
     "get_or_create_monthly_pos_run",
+    "get_open_public_menu_order_for_guest",
     "get_order",
     "list_orders",
     "next_bill_number",

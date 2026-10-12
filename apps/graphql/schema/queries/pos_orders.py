@@ -150,3 +150,25 @@ class PosOrdersQuery:
             if order.opened_by_clerk_user_id != user_id:
                 return None
             return public_menu_order_status_to_gql(order)
+
+    @strawberry.field(
+        description=(
+            "Signed-in guest: latest open digital-menu ticket at this location "
+            "(for restoring My order after reload when local storage is empty)."
+        )
+    )
+    def my_open_public_menu_order(
+        self, info: strawberry.Info, location_id: int
+    ) -> PublicMenuOrderStatusType | None:
+        user_id = user_id_from_info(info)
+        if not user_id:
+            return None
+        with request_session_scope(info) as session:
+            order = pos_svc.get_open_public_menu_order_for_guest(
+                session,
+                location_id=location_id,
+                clerk_user_id=user_id,
+            )
+            if order is None:
+                return None
+            return public_menu_order_status_to_gql(order, include_lines=True)

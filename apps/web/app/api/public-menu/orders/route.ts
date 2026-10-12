@@ -56,9 +56,15 @@ export async function POST(req: Request) {
       {
         orderId: order.id,
         billNumber: order.billNumber,
+        status: order.status,
         fulfillmentMode: order.fulfillmentMode,
         prepStatus: order.prepStatus,
         tableLabel: order.tableLabel,
+        lines: order.lines.map((line) => ({
+          menuItemId: line.menuItemId,
+          name: line.nameSnapshot,
+          qty: line.qty,
+        })),
       },
       { status: 201 },
     )

@@ -20,6 +20,7 @@ from graphql.data_sources.models.instagram import (
 )
 from graphql.data_sources.models.location import Location
 from graphql.data_sources.models.menu import Menu, MenuCategory, MenuItem
+from graphql.data_sources.models.menu_item_feedback import MenuItemFeedback
 from graphql.data_sources.models.node import Node
 from graphql.data_sources.models.pos_audit_event import PosAuditEvent
 from graphql.data_sources.models.pos_bill_sequence import PosBillSequence
@@ -68,6 +69,9 @@ def delete_pos_orders(
     if not resolved_ids:
         return 0
 
+    session.query(MenuItemFeedback).filter(
+        MenuItemFeedback.pos_order_id.in_(resolved_ids)
+    ).delete(synchronize_session=False)
     session.query(PosAuditEvent).filter(PosAuditEvent.pos_order_id.in_(resolved_ids)).delete(
         synchronize_session=False
     )
@@ -98,6 +102,7 @@ def delete_all_pos_orders(session: Session) -> int:
     Also wipes orphan line/fiscal/audit rows that may remain if foreign keys were
     off for earlier deletes (SQLite test pollution).
     """
+    session.query(MenuItemFeedback).delete(synchronize_session=False)
     session.query(PosAuditEvent).delete(synchronize_session=False)
     session.query(PosFiscalProcess).delete(synchronize_session=False)
     session.query(PosOrderLineModifier).delete(synchronize_session=False)
@@ -133,6 +138,9 @@ def clear_location_dependents(session: Session, location_ids: Iterable[int]) -> 
     if not lids:
         return
 
+    session.query(MenuItemFeedback).filter(MenuItemFeedback.location_id.in_(lids)).delete(
+        synchronize_session=False
+    )
     clear_pos_for_locations(session, lids)
 
     run_ids = _as_int_ids(

@@ -17,6 +17,7 @@ from .menu_catalog import MenuCatalogQuery
 from .menu_combos import MenuCombosQuery
 from .menu_engineering_matrix import MenuEngineeringMatrixQuery
 from .menu_heatmaps import MenuHeatmapsQuery
+from .menu_item_feedback import MenuItemFeedbackQuery
 from .my_points import MyPointsQuery
 from .operating_profile import OperatingProfileQuery
 from .playbooks import PlaybooksQuery
@@ -56,6 +57,7 @@ __all__ = [
     "MenuCombosQuery",
     "MenuEngineeringMatrixQuery",
     "MenuHeatmapsQuery",
+    "MenuItemFeedbackQuery",
     "PromotionMenuItemsQuery",
     "PlaybooksQuery",
     "PosOrdersQuery",

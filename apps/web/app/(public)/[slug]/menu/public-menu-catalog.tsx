@@ -1,7 +1,15 @@
 'use client'
 
 import { useAuth } from '@clerk/nextjs'
-import { CheckCircle2, Minus, Plus, UtensilsCrossed } from 'lucide-react'
+import {
+  ChevronRight,
+  Minus,
+  Plus,
+  Receipt,
+  ThumbsDown,
+  ThumbsUp,
+  UtensilsCrossed,
+} from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useEffect, useMemo, useState } from 'react'
@@ -15,6 +23,17 @@ import {
   type MenuAllergen,
   type MenuDietaryTag,
 } from '@/lib/menu/menu-attributes'
+import {
+  clearPublicMenuActiveOrder,
+  isTerminalTicketStatus,
+  loadPublicMenuActiveOrder,
+  normalizeFulfillmentMode,
+  normalizePrepStatus,
+  normalizeTicketStatus,
+  savePublicMenuActiveOrder,
+  type PublicMenuActiveOrder,
+  type PublicMenuPrepStatus,
+} from '@/lib/public-menu/active-order-storage'
 import {
   clearPublicMenuCart,
   loadPublicMenuCart,
@@ -30,6 +49,8 @@ import { Alert, AlertDescription, AlertTitle } from '@workspace/ui/components/al
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
 import { Input } from '@workspace/ui/components/input'
+import { Label } from '@workspace/ui/components/label'
+import { Textarea } from '@workspace/ui/components/textarea'
 import {
   Drawer,
   DrawerContent,
@@ -69,30 +90,23 @@ type CartLine = {
   qty: number
 }
 
-type PrepStatus = 'RECEIVED' | 'PREPARING' | 'READY' | 'SERVED' | 'PICKED_UP'
+type ActiveOrder = PublicMenuActiveOrder
 
-type OrderSuccess = {
-  orderId: number
-  billNumber: string
-  fulfillmentMode: PublicMenuFulfillmentMode
-  tableLabel: string | null
-  prepStatus: PrepStatus | null
-}
+type FeedbackSentiment = 'positive' | 'negative'
 
-const PREP_TERMINAL: ReadonlySet<PrepStatus> = new Set(['SERVED', 'PICKED_UP'])
 const PREP_POLL_MS = 5000
 
 function guestPrepCopyKey(
-  prepStatus: PrepStatus | null,
+  prepStatus: PublicMenuPrepStatus | null,
   fulfillmentMode: PublicMenuFulfillmentMode,
+  variant: 'full' | 'short' = 'full',
 ): string | null {
   if (!prepStatus) return null
+  const prefix = variant === 'short' ? 'order.prepStatusShort' : 'order.prepStatus'
   if (prepStatus === 'READY') {
-    return fulfillmentMode === 'pickup'
-      ? 'order.prepStatus.ready_pickup'
-      : 'order.prepStatus.ready_dine_in'
+    return fulfillmentMode === 'pickup' ? `${prefix}.ready_pickup` : `${prefix}.ready_dine_in`
   }
-  return `order.prepStatus.${prepStatus.toLowerCase()}`
+  return `${prefix}.${prepStatus.toLowerCase()}`
 }
 
 function categorySectionId(category: PublicMenuCategoryView): string {
@@ -199,7 +213,14 @@ export function PublicMenuCatalog({
   const [basketOpen, setBasketOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
-  const [orderSuccess, setOrderSuccess] = useState<OrderSuccess | null>(null)
+  const [activeOrder, setActiveOrder] = useState<ActiveOrder | null>(null)
+  const [orderSheetOpen, setOrderSheetOpen] = useState(false)
+  const [detailItemId, setDetailItemId] = useState<number | null>(null)
+  const [feedbackSentiment, setFeedbackSentiment] = useState<FeedbackSentiment | null>(null)
+  const [feedbackBody, setFeedbackBody] = useState('')
+  const [feedbackError, setFeedbackError] = useState<string | null>(null)
+  const [feedbackSubmitting, setFeedbackSubmitting] = useState(false)
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false)
   const bothModes = allowDineIn && allowPickup
   const defaultGuestChoice: PublicMenuFulfillmentMode =
     allowPickup && !allowDineIn ? 'pickup' : allowDineIn && !allowPickup ? 'dine_in' : 'pickup'
@@ -228,7 +249,14 @@ export function PublicMenuCatalog({
   const filtersActive = dietaryInclude.size > 0 || allergenExclude.size > 0
   const showFilters = present.dietaryTags.length > 0 || present.allergens.length > 0
   const showCategoryJump = filteredCategories.length > 2
-  const showStickyChrome = showFilters || showCategoryJump
+  const showStickyChrome = showFilters || showCategoryJump || Boolean(activeOrder)
+  const activeOrderPrepKey = activeOrder
+    ? guestPrepCopyKey(activeOrder.prepStatus, activeOrder.fulfillmentMode)
+    : null
+  const activeOrderPrepShortKey = activeOrder
+    ? guestPrepCopyKey(activeOrder.prepStatus, activeOrder.fulfillmentMode, 'short')
+    : null
+  const activeOrderItemCount = activeOrder?.lines.length ?? 0
 
   const cartLines = useMemo(() => Object.values(cart), [cart])
   const cartItemCount = cartLines.reduce((sum, line) => sum + line.qty, 0)
@@ -266,28 +294,115 @@ export function PublicMenuCatalog({
     })
   }, [isLoaded, isSignedIn, locationId])
 
-  // Poll live prep status until terminal (or success panel dismissed).
+  // Restore active order: localStorage first, then server open ticket for this guest.
   useEffect(() => {
-    if (!orderSuccess?.orderId) return
-    if (orderSuccess.prepStatus && PREP_TERMINAL.has(orderSuccess.prepStatus)) return
+    if (!isLoaded || !isSignedIn) return
+    let cancelled = false
+
+    const restore = async () => {
+      const stored = loadPublicMenuActiveOrder(locationId)
+      if (stored) {
+        if (!cancelled) setActiveOrder(stored)
+        return
+      }
+
+      try {
+        const res = await fetch(`/api/public-menu/orders/active?locationId=${locationId}`)
+        if (!res.ok || cancelled) return
+        const body = (await res.json()) as {
+          order?: {
+            orderId?: number
+            billNumber?: string
+            status?: string | null
+            prepStatus?: string | null
+            fulfillmentMode?: string | null
+            tableLabel?: string | null
+            lines?: Array<{ menuItemId: number; name: string }>
+          } | null
+        }
+        const remote = body.order
+        if (!remote?.orderId || !remote.billNumber || cancelled) return
+
+        const status = normalizeTicketStatus(remote.status) ?? 'open'
+        if (isTerminalTicketStatus(status)) return
+
+        const fulfillmentMode =
+          normalizeFulfillmentMode(remote.fulfillmentMode) ??
+          (remote.tableLabel ? 'dine_in' : 'pickup')
+
+        const nextOrder: ActiveOrder = {
+          orderId: remote.orderId,
+          billNumber: remote.billNumber,
+          fulfillmentMode,
+          tableLabel: remote.tableLabel?.trim() || null,
+          prepStatus: normalizePrepStatus(remote.prepStatus),
+          status,
+          lines: Array.isArray(remote.lines)
+            ? remote.lines.filter(
+                (line) => typeof line?.menuItemId === 'number' && typeof line?.name === 'string',
+              )
+            : [],
+          savedAt: Date.now(),
+        }
+        savePublicMenuActiveOrder(locationId, nextOrder)
+        if (!cancelled) {
+          setActiveOrder(nextOrder)
+        }
+      } catch {
+        // Keep browsing without My order if restore fails.
+      }
+    }
+
+    void restore()
+    return () => {
+      cancelled = true
+    }
+  }, [isLoaded, isSignedIn, locationId])
+
+  // Poll ticket + prep status until paid/void/refunded (or panel dismissed).
+  useEffect(() => {
+    if (!activeOrder?.orderId) return
+    if (isTerminalTicketStatus(activeOrder.status)) return
 
     let cancelled = false
     const poll = async () => {
       try {
-        const res = await fetch(`/api/public-menu/orders/${orderSuccess.orderId}`)
+        const res = await fetch(`/api/public-menu/orders/${activeOrder.orderId}`)
         if (!res.ok || cancelled) return
-        const body = (await res.json()) as { prepStatus?: PrepStatus | null }
-        if (cancelled || !body.prepStatus) return
-        setOrderSuccess((prev) =>
-          prev && prev.orderId === orderSuccess.orderId
-            ? { ...prev, prepStatus: body.prepStatus ?? prev.prepStatus }
-            : prev,
-        )
+        const body = (await res.json()) as {
+          status?: string | null
+          prepStatus?: string | null
+        }
+        if (cancelled) return
+
+        const nextStatus =
+          normalizeTicketStatus(body.status) ?? normalizeTicketStatus(activeOrder.status) ?? 'open'
+        if (isTerminalTicketStatus(nextStatus)) {
+          clearPublicMenuActiveOrder(locationId)
+          setActiveOrder(null)
+          setOrderSheetOpen(false)
+          return
+        }
+
+        const nextPrep = normalizePrepStatus(body.prepStatus) ?? activeOrder.prepStatus
+
+        setActiveOrder((prev) => {
+          if (!prev || prev.orderId !== activeOrder.orderId) return prev
+          const updated: ActiveOrder = {
+            ...prev,
+            status: nextStatus,
+            prepStatus: nextPrep,
+            savedAt: Date.now(),
+          }
+          savePublicMenuActiveOrder(locationId, updated)
+          return updated
+        })
       } catch {
         // Keep last known status on transient network errors.
       }
     }
 
+    void poll()
     const timer = window.setInterval(() => {
       void poll()
     }, PREP_POLL_MS)
@@ -295,10 +410,21 @@ export function PublicMenuCatalog({
       cancelled = true
       window.clearInterval(timer)
     }
-  }, [orderSuccess?.orderId, orderSuccess?.prepStatus])
+  }, [activeOrder?.orderId, activeOrder?.status, locationId])
+
+  const openOrderSheet = () => {
+    setOrderSheetOpen(true)
+  }
+
+  const openItemDrawer = (itemId: number) => {
+    setDetailItemId(itemId)
+    setFeedbackSentiment(null)
+    setFeedbackBody('')
+    setFeedbackError(null)
+    setFeedbackSubmitted(false)
+  }
 
   const addItem = (item: PublicMenuItemView) => {
-    setOrderSuccess(null)
     setSubmitError(null)
     setCart((prev) => {
       const existing = prev[item.id]
@@ -354,20 +480,31 @@ export function PublicMenuCatalog({
       return
     }
 
-    const resolved = resolveGuestFulfillment({
-      allowDineIn,
-      allowPickup,
-      lockedTableLabel: tableLabel,
-      guestChoice,
-      guestTableLabel: guestTableInput,
-    })
-    if (!resolved.ok) {
-      setSubmitError(
-        resolved.reason === 'table_required'
-          ? t('order.tableRequired')
-          : t('order.noFulfillmentModes'),
-      )
-      return
+    const appendingTo = activeOrder
+    let submitMode: PublicMenuFulfillmentMode
+    let submitTableLabel: string | null
+
+    if (appendingTo) {
+      submitMode = appendingTo.fulfillmentMode
+      submitTableLabel = appendingTo.tableLabel
+    } else {
+      const resolved = resolveGuestFulfillment({
+        allowDineIn,
+        allowPickup,
+        lockedTableLabel: tableLabel,
+        guestChoice,
+        guestTableLabel: guestTableInput,
+      })
+      if (!resolved.ok) {
+        setSubmitError(
+          resolved.reason === 'table_required'
+            ? t('order.tableRequired')
+            : t('order.noFulfillmentModes'),
+        )
+        return
+      }
+      submitMode = resolved.mode
+      submitTableLabel = resolved.tableLabel
     }
 
     setSubmitting(true)
@@ -381,16 +518,18 @@ export function PublicMenuCatalog({
             menuItemId: line.menuItemId,
             qty: line.qty,
           })),
-          fulfillmentMode: resolved.mode,
-          tableLabel: resolved.tableLabel,
+          fulfillmentMode: submitMode,
+          tableLabel: submitTableLabel,
         }),
       })
       const body = (await res.json().catch(() => ({}))) as {
         orderId?: number
         billNumber?: string
         fulfillmentMode?: 'DINE_IN' | 'PICKUP' | null
-        prepStatus?: PrepStatus | null
+        prepStatus?: PublicMenuPrepStatus | null
+        status?: string | null
         tableLabel?: string | null
+        lines?: Array<{ menuItemId?: number; name?: string; qty?: number }>
         message?: string
         error?: string
       }
@@ -411,22 +550,104 @@ export function PublicMenuCatalog({
           ? 'dine_in'
           : body.fulfillmentMode === 'PICKUP'
             ? 'pickup'
-            : resolved.mode
+            : submitMode
+      const responseLines = Array.isArray(body.lines)
+        ? body.lines.flatMap((line) =>
+            typeof line?.menuItemId === 'number' && typeof line?.name === 'string'
+              ? [{ menuItemId: line.menuItemId, name: line.name }]
+              : [],
+          )
+        : null
+      const wasAppend = Boolean(appendingTo && body.orderId === appendingTo.orderId)
+      const orderedLines =
+        responseLines && responseLines.length > 0
+          ? responseLines
+          : wasAppend && appendingTo
+            ? [
+                ...appendingTo.lines,
+                ...cartLines.map((line) => ({
+                  menuItemId: line.menuItemId,
+                  name: line.name,
+                })),
+              ]
+            : cartLines.map((line) => ({
+                menuItemId: line.menuItemId,
+                name: line.name,
+              }))
       setCart({})
       clearPublicMenuCart(locationId)
       setBasketOpen(false)
       setGuestTableInput('')
-      setOrderSuccess({
+      const nextOrder: ActiveOrder = {
         orderId: body.orderId,
         billNumber: body.billNumber,
         fulfillmentMode: successMode,
-        tableLabel: body.tableLabel ?? resolved.tableLabel,
-        prepStatus: body.prepStatus ?? 'RECEIVED',
-      })
+        tableLabel: body.tableLabel ?? submitTableLabel,
+        prepStatus: normalizePrepStatus(body.prepStatus) ?? body.prepStatus ?? 'RECEIVED',
+        status: normalizeTicketStatus(body.status) ?? 'open',
+        lines: orderedLines,
+        savedAt: Date.now(),
+      }
+      savePublicMenuActiveOrder(locationId, nextOrder)
+      setActiveOrder(nextOrder)
+      setOrderSheetOpen(true)
     } catch {
       setSubmitError(t('order.submitFailed'))
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  const detailItem = detailItemId != null ? (itemsById.get(detailItemId) ?? null) : null
+
+  async function submitItemFeedback() {
+    if (!detailItem) return
+    const body = feedbackBody.trim()
+    if (feedbackSentiment === 'negative' && !body) {
+      setFeedbackError(t('feedback.bodyRequiredNegative'))
+      return
+    }
+    if (!feedbackSentiment && !body) {
+      setFeedbackError(t('feedback.ratingOrBodyRequired'))
+      return
+    }
+    if (!isSignedIn) {
+      redirectToSignIn()
+      return
+    }
+
+    setFeedbackSubmitting(true)
+    setFeedbackError(null)
+    try {
+      const res = await fetch('/api/public-menu/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          locationId,
+          menuItemId: detailItem.id,
+          sentiment: feedbackSentiment,
+          body: body || '',
+        }),
+      })
+      const payload = (await res.json().catch(() => ({}))) as {
+        message?: string
+        error?: string
+      }
+      if (res.status === 401) {
+        redirectToSignIn()
+        return
+      }
+      if (!res.ok) {
+        setFeedbackError(payload.message || payload.error || t('feedback.submitFailed'))
+        return
+      }
+      setFeedbackSubmitted(true)
+      setFeedbackSentiment(null)
+      setFeedbackBody('')
+    } catch {
+      setFeedbackError(t('feedback.submitFailed'))
+    } finally {
+      setFeedbackSubmitting(false)
     }
   }
 
@@ -442,36 +663,44 @@ export function PublicMenuCatalog({
         hasCart ? 'pb-[calc(7rem+env(safe-area-inset-bottom))]' : undefined,
       )}
     >
-      {orderSuccess ? (
-        <Alert role="status">
-          <CheckCircle2 />
-          <AlertTitle>
-            {orderSuccess.fulfillmentMode === 'dine_in'
-              ? t('order.successTitleDineIn')
-              : t('order.successTitlePickup')}
-          </AlertTitle>
-          <AlertDescription>
-            <span className="block">
-              {orderSuccess.fulfillmentMode === 'dine_in' && orderSuccess.tableLabel
-                ? t('order.successBodyDineIn', {
-                    billNumber: orderSuccess.billNumber,
-                    tableLabel: orderSuccess.tableLabel,
-                  })
-                : t('order.successBodyPickup', { billNumber: orderSuccess.billNumber })}
-            </span>
-            {(() => {
-              const prepKey = guestPrepCopyKey(
-                orderSuccess.prepStatus,
-                orderSuccess.fulfillmentMode,
-              )
-              return prepKey ? <span className="mt-2 block font-medium">{t(prepKey)}</span> : null
-            })()}
-          </AlertDescription>
-        </Alert>
-      ) : null}
-
       {showStickyChrome ? (
-        <div className="bg-card/90 sticky top-14 z-20 -mx-6 flex flex-col gap-4 border-b px-6 py-4 backdrop-blur-sm sm:-mx-10 sm:px-10">
+        <div className="bg-card/90 sticky top-14 z-20 -mx-6 flex flex-col gap-3 border-b px-6 py-3 backdrop-blur-sm sm:-mx-10 sm:px-10">
+          {activeOrder ? (
+            <button
+              type="button"
+              onClick={openOrderSheet}
+              className="border-border/80 bg-background/70 hover:bg-background focus-visible:ring-ring flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left shadow-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
+              aria-label={t('order.myOrderStickyAria', {
+                count: activeOrderItemCount,
+                billNumber: activeOrder.billNumber,
+              })}
+            >
+              <span
+                aria-hidden
+                className="bg-foreground/5 text-foreground flex size-9 shrink-0 items-center justify-center rounded-lg"
+              >
+                <Receipt className="size-4" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="flex items-center gap-2">
+                  <span className="text-sm font-semibold tracking-tight">
+                    {t('order.myOrderStickyLabel')}
+                  </span>
+                  {activeOrderItemCount > 0 ? (
+                    <span className="bg-foreground text-background rounded-md px-1.5 py-0.5 text-[11px] font-semibold tabular-nums">
+                      {activeOrderItemCount}
+                    </span>
+                  ) : null}
+                </span>
+                <span className="text-muted-foreground mt-0.5 block truncate text-xs">
+                  {activeOrderPrepShortKey
+                    ? t(activeOrderPrepShortKey)
+                    : t('order.myOrderStickyMeta', { billNumber: activeOrder.billNumber })}
+                </span>
+              </span>
+              <ChevronRight aria-hidden className="text-muted-foreground size-4 shrink-0" />
+            </button>
+          ) : null}
           {showFilters ? (
             <>
               <FilterChipRow
@@ -626,6 +855,18 @@ export function PublicMenuCatalog({
                             ))}
                           </div>
                         ) : null}
+                        <button
+                          type="button"
+                          className="text-muted-foreground mt-1 w-fit text-left text-xs underline-offset-2 hover:underline"
+                          onClick={() => openItemDrawer(item.id)}
+                          aria-label={t('feedback.openItemDetails')}
+                        >
+                          {item.publishedFeedbackCount > 0
+                            ? t('feedback.publishedCount', {
+                                count: item.publishedFeedbackCount,
+                              })
+                            : t('feedback.openFeedback')}
+                        </button>
                         <div className="mt-3 flex items-center justify-end gap-2">
                           {inCart > 0 ? (
                             <QtyStepper
@@ -679,6 +920,91 @@ export function PublicMenuCatalog({
           </div>
         </div>
       ) : null}
+
+      <Drawer
+        open={orderSheetOpen && activeOrder != null}
+        onOpenChange={(open) => {
+          if (!open) setOrderSheetOpen(false)
+        }}
+      >
+        <DrawerContent className="flex max-h-[min(90dvh,40rem)] flex-col gap-0 overflow-hidden">
+          <DrawerHeader className="shrink-0 border-b text-left">
+            <DrawerTitle>{t('order.myOrderSheetTitle')}</DrawerTitle>
+            {activeOrder ? (
+              <DrawerDescription>
+                {activeOrder.fulfillmentMode === 'dine_in' && activeOrder.tableLabel
+                  ? t('order.myOrderSheetDescriptionTable', {
+                      billNumber: activeOrder.billNumber,
+                      tableLabel: activeOrder.tableLabel,
+                    })
+                  : t('order.myOrderSheetDescription', {
+                      billNumber: activeOrder.billNumber,
+                    })}
+              </DrawerDescription>
+            ) : null}
+          </DrawerHeader>
+          <ScrollArea className="min-h-0 flex-1 overflow-hidden">
+            <div className="flex flex-col gap-4 px-4 py-4">
+              {activeOrderPrepKey ? (
+                <p className="text-sm font-medium">{t(activeOrderPrepKey)}</p>
+              ) : null}
+              <div className="flex flex-col gap-2">
+                <h3 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+                  {t('order.myOrderItemsHeading')}
+                </h3>
+                {activeOrder && activeOrder.lines.length > 0 ? (
+                  <ul className="divide-border flex flex-col divide-y">
+                    {activeOrder.lines.map((line, index) => (
+                      <li
+                        key={`${activeOrder.orderId}-${line.menuItemId}-${line.name}-${index}`}
+                        className="py-2 text-sm first:pt-0 last:pb-0"
+                      >
+                        {line.name}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-muted-foreground text-sm">{t('order.myOrderEmptyLines')}</p>
+                )}
+              </div>
+            </div>
+          </ScrollArea>
+          <DrawerFooter className="shrink-0 border-t pb-[max(1rem,env(safe-area-inset-bottom))]">
+            <div className="flex w-full flex-col gap-2">
+              {hasCart ? (
+                <>
+                  <Button
+                    type="button"
+                    className="min-h-11 w-full touch-manipulation"
+                    onClick={() => {
+                      setOrderSheetOpen(false)
+                      setBasketOpen(true)
+                    }}
+                  >
+                    {t('order.viewBasket')}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="min-h-11 w-full touch-manipulation"
+                    onClick={() => setOrderSheetOpen(false)}
+                  >
+                    {t('order.continueBrowsing')}
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  type="button"
+                  className="min-h-11 w-full touch-manipulation"
+                  onClick={() => setOrderSheetOpen(false)}
+                >
+                  {t('order.orderAnotherRound')}
+                </Button>
+              )}
+            </div>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
 
       <Drawer open={basketOpen} onOpenChange={setBasketOpen}>
         <DrawerContent className="flex max-h-[min(90dvh,40rem)] flex-col gap-0 overflow-hidden">
@@ -747,7 +1073,13 @@ export function PublicMenuCatalog({
                     {formatCurrency(cartTotal, currencyCode, locale)}
                   </p>
                 </div>
-                {tableLabel && allowDineIn ? (
+                {activeOrder ? (
+                  <p className="text-muted-foreground text-sm font-medium">
+                    {activeOrder.fulfillmentMode === 'dine_in' && activeOrder.tableLabel
+                      ? t('order.tableLabelReadOnly', { label: activeOrder.tableLabel })
+                      : t('order.fulfillmentPickup')}
+                  </p>
+                ) : tableLabel && allowDineIn ? (
                   <p className="text-muted-foreground text-sm font-medium">
                     {t('order.tableLabelReadOnly', { label: tableLabel })}
                   </p>
@@ -757,7 +1089,7 @@ export function PublicMenuCatalog({
                   </p>
                 ) : null}
               </div>
-              {showModeToggle ? (
+              {!activeOrder && showModeToggle ? (
                 <div className="flex flex-col gap-2">
                   <p className="text-muted-foreground text-xs font-medium">
                     {t('order.fulfillmentLabel')}
@@ -789,7 +1121,7 @@ export function PublicMenuCatalog({
                   </ToggleGroup>
                 </div>
               ) : null}
-              {needsGuestTable ? (
+              {!activeOrder && needsGuestTable ? (
                 <div className="flex flex-col gap-1.5">
                   <label htmlFor="public-menu-guest-table" className="text-sm font-medium">
                     {t('order.tableInputLabel')}
@@ -824,14 +1156,191 @@ export function PublicMenuCatalog({
               >
                 {!isLoaded || submitting ? <Spinner /> : null}
                 {!isLoaded
-                  ? t('order.sending')
+                  ? activeOrder
+                    ? t('order.addingToOrder')
+                    : t('order.sending')
                   : !isSignedIn
                     ? t('order.signInToOrder')
                     : submitting
-                      ? t('order.sending')
-                      : t('order.send')}
+                      ? activeOrder
+                        ? t('order.addingToOrder')
+                        : t('order.sending')
+                      : activeOrder
+                        ? t('order.addToOrder')
+                        : t('order.send')}
               </Button>
             </div>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
+
+      <Drawer
+        open={detailItem != null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDetailItemId(null)
+            setFeedbackSentiment(null)
+            setFeedbackBody('')
+            setFeedbackError(null)
+            setFeedbackSubmitted(false)
+          }
+        }}
+      >
+        <DrawerContent className="flex max-h-[min(90dvh,40rem)] flex-col gap-0 overflow-hidden">
+          <DrawerHeader className="shrink-0 border-b text-left">
+            <DrawerTitle>
+              {detailItem ? t('feedback.itemDrawerTitle', { name: detailItem.name }) : ''}
+            </DrawerTitle>
+            {detailItem?.description.trim() ? (
+              <DrawerDescription>{detailItem.description.trim()}</DrawerDescription>
+            ) : (
+              <DrawerDescription>{t('feedback.writeDescription')}</DrawerDescription>
+            )}
+          </DrawerHeader>
+          <ScrollArea className="min-h-0 flex-1 px-4 py-4">
+            <div className="flex flex-col gap-6 pb-4">
+              <section className="flex flex-col gap-3">
+                <h3 className="text-sm font-semibold tracking-wide uppercase">
+                  {t('feedback.writeHeading')}
+                </h3>
+                {feedbackSubmitted ? (
+                  <p className="text-muted-foreground text-sm">{t('feedback.thanksBody')}</p>
+                ) : !isLoaded ? (
+                  <div className="flex justify-center py-4">
+                    <Spinner />
+                  </div>
+                ) : !isSignedIn ? (
+                  <div className="flex flex-col gap-3">
+                    <p className="text-muted-foreground text-sm">{t('feedback.signInPrompt')}</p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="min-h-11 w-full touch-manipulation"
+                      onClick={redirectToSignIn}
+                    >
+                      {t('feedback.signInCta')}
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-4">
+                    <div className="flex flex-col gap-2">
+                      <Label>{t('feedback.sentimentLabel')}</Label>
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant={feedbackSentiment === 'positive' ? 'default' : 'outline'}
+                          className="min-h-11 flex-1 touch-manipulation"
+                          onClick={() =>
+                            setFeedbackSentiment((prev) =>
+                              prev === 'positive' ? null : 'positive',
+                            )
+                          }
+                          aria-pressed={feedbackSentiment === 'positive'}
+                        >
+                          <ThumbsUp className="size-4" />
+                          {t('feedback.positive')}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={feedbackSentiment === 'negative' ? 'default' : 'outline'}
+                          className="min-h-11 flex-1 touch-manipulation"
+                          onClick={() =>
+                            setFeedbackSentiment((prev) =>
+                              prev === 'negative' ? null : 'negative',
+                            )
+                          }
+                          aria-pressed={feedbackSentiment === 'negative'}
+                        >
+                          <ThumbsDown className="size-4" />
+                          {t('feedback.negative')}
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="menu-item-feedback-body">
+                        {feedbackSentiment === 'negative'
+                          ? t('feedback.bodyLabelRequired')
+                          : t('feedback.bodyLabel')}
+                      </Label>
+                      <Textarea
+                        id="menu-item-feedback-body"
+                        value={feedbackBody}
+                        onChange={(e) => setFeedbackBody(e.target.value)}
+                        placeholder={t('feedback.bodyPlaceholder')}
+                        maxLength={280}
+                        rows={3}
+                        required={feedbackSentiment === 'negative'}
+                        aria-required={feedbackSentiment === 'negative'}
+                      />
+                    </div>
+                    {feedbackError ? (
+                      <Alert variant="destructive">
+                        <AlertDescription>{feedbackError}</AlertDescription>
+                      </Alert>
+                    ) : null}
+                    <Button
+                      type="button"
+                      className="min-h-11 w-full touch-manipulation"
+                      disabled={feedbackSubmitting}
+                      onClick={() => void submitItemFeedback()}
+                    >
+                      {feedbackSubmitting ? <Spinner /> : null}
+                      {feedbackSubmitting ? t('feedback.submitting') : t('feedback.submit')}
+                    </Button>
+                  </div>
+                )}
+              </section>
+
+              <section className="flex flex-col gap-3">
+                <h3 className="text-sm font-semibold tracking-wide uppercase">
+                  {t('feedback.itemDrawerFeedbackHeading')}
+                </h3>
+                {detailItem && detailItem.publishedFeedbacks.length > 0 ? (
+                  <ul className="flex flex-col gap-3">
+                    {detailItem.publishedFeedbacks.map((note, index) => (
+                      <li
+                        key={`${detailItem.id}-fb-${index}`}
+                        className="rounded-lg border p-3 text-sm"
+                      >
+                        <div className="mb-1 flex items-center gap-2">
+                          {note.sentiment === 'POSITIVE' ? (
+                            <ThumbsUp className="size-3.5 shrink-0" aria-hidden />
+                          ) : note.sentiment === 'NEGATIVE' ? (
+                            <ThumbsDown className="size-3.5 shrink-0" aria-hidden />
+                          ) : null}
+                          <span className="font-medium">
+                            {note.guestDisplayName?.trim() || t('feedback.guestAnonymous')}
+                          </span>
+                        </div>
+                        <p className="text-pretty">{note.body}</p>
+                        {note.ownerReply?.trim() ? (
+                          <div className="border-muted mt-2 border-l-2 pl-3">
+                            <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                              {t('feedback.ownerReplyLabel')}
+                            </p>
+                            <p className="mt-1 text-pretty">{note.ownerReply}</p>
+                          </div>
+                        ) : null}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-muted-foreground text-sm">
+                    {t('feedback.itemDrawerEmptyFeedback')}
+                  </p>
+                )}
+              </section>
+            </div>
+          </ScrollArea>
+          <DrawerFooter className="shrink-0 border-t pb-[max(1rem,env(safe-area-inset-bottom))]">
+            <Button
+              type="button"
+              variant="outline"
+              className="min-h-11 w-full touch-manipulation"
+              onClick={() => setDetailItemId(null)}
+            >
+              {t('feedback.close')}
+            </Button>
           </DrawerFooter>
         </DrawerContent>
       </Drawer>

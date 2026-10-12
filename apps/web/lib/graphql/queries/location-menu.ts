@@ -192,11 +192,27 @@ export const PUBLIC_LOCATION_MENU_QUERY = `
           imageFilename
           dietaryTags
           allergens
+          publishedFeedbackCount
+          publishedFeedbacks {
+            sentiment
+            body
+            guestDisplayName
+            ownerReply
+            createdAt
+          }
         }
       }
     }
   }
 `
+
+export type PublicMenuItemFeedbackSnippet = {
+  sentiment: 'POSITIVE' | 'NEGATIVE' | null
+  body: string
+  guestDisplayName: string | null
+  ownerReply: string | null
+  createdAt: string
+}
 
 export type PublicMenuItem = {
   id: number
@@ -207,6 +223,8 @@ export type PublicMenuItem = {
   imageFilename: string | null
   dietaryTags: string[]
   allergens: string[]
+  publishedFeedbackCount: number
+  publishedFeedbacks: PublicMenuItemFeedbackSnippet[]
 }
 
 export type PublicMenuCategory = {
@@ -297,6 +315,10 @@ export const PUBLIC_MENU_ORDER_QUERY = `
       prepStatus
       fulfillmentMode
       tableLabel
+      lines {
+        menuItemId
+        name
+      }
     }
   }
 `
@@ -308,8 +330,30 @@ export type PublicMenuOrderResult = {
   prepStatus: 'RECEIVED' | 'PREPARING' | 'READY' | 'SERVED' | 'PICKED_UP' | null
   fulfillmentMode: 'DINE_IN' | 'PICKUP' | null
   tableLabel: string | null
+  lines?: Array<{ menuItemId: number; name: string }>
 }
 
 export type PublicMenuOrderData = {
   publicMenuOrder: PublicMenuOrderResult | null
+}
+
+export const MY_OPEN_PUBLIC_MENU_ORDER_QUERY = `
+  query MyOpenPublicMenuOrder($locationId: Int!) {
+    myOpenPublicMenuOrder(locationId: $locationId) {
+      id
+      billNumber
+      status
+      prepStatus
+      fulfillmentMode
+      tableLabel
+      lines {
+        menuItemId
+        name
+      }
+    }
+  }
+`
+
+export type MyOpenPublicMenuOrderData = {
+  myOpenPublicMenuOrder: PublicMenuOrderResult | null
 }

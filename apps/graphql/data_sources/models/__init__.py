@@ -35,6 +35,7 @@ from graphql.data_sources.models.menu import (
     MenuModifierGroup,
     MenuModifierOption,
 )
+from graphql.data_sources.models.menu_item_feedback import MenuItemFeedback
 from graphql.data_sources.models.node import Node
 from graphql.data_sources.models.playbook import Playbook
 from graphql.data_sources.models.point_earn_rule import PointEarnRule
@@ -88,6 +89,7 @@ __all__ = [
     "MenuCategory",
     "MenuItem",
     "MenuItemCogs",
+    "MenuItemFeedback",
     "MenuModifierGroup",
     "MenuModifierOption",
     "Node",

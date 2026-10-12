@@ -368,3 +368,143 @@ def test_submit_rejected_when_dine_in_disabled(published_menu_location):
     )
     assert result.errors
     assert "dine_in fulfillment is not enabled" in result.errors[0].message
+
+
+_CLOSE = """
+mutation ClosePosOrder($orderId: Int!, $paymentMethod: PosPaymentMethod!) {
+  closePosOrder(orderId: $orderId, paymentMethod: $paymentMethod) {
+    id
+    status
+  }
+}
+"""
+
+
+def test_second_submit_appends_to_open_ticket(published_menu_location):
+    location_id, item_id, _ = published_menu_location
+    first = asyncio.run(
+        schema.execute(
+            _SUBMIT,
+            variable_values={
+                "locationId": location_id,
+                "lines": [{"menuItemId": item_id, "qty": 1}],
+                "fulfillmentMode": "DINE_IN",
+                "tableLabel": "A1",
+            },
+            context_value={"user_id": GUEST_USER_ID},
+        )
+    )
+    assert first.errors is None, first.errors
+    first_order = first.data["submitPublicMenuOrder"]
+    first_id = int(first_order["id"])
+    first_bill = first_order["billNumber"]
+
+    second = asyncio.run(
+        schema.execute(
+            _SUBMIT,
+            variable_values={
+                "locationId": location_id,
+                "lines": [{"menuItemId": item_id, "qty": 2}],
+                "fulfillmentMode": "PICKUP",
+                "tableLabel": "ignored",
+            },
+            context_value={"user_id": GUEST_USER_ID},
+        )
+    )
+    assert second.errors is None, second.errors
+    order = second.data["submitPublicMenuOrder"]
+    assert int(order["id"]) == first_id
+    assert order["billNumber"] == first_bill
+    assert order["fulfillmentMode"] == "DINE_IN"
+    assert order["tableLabel"] == "A1"
+    assert len(order["lines"]) == 2
+    assert sum(int(line["qty"]) for line in order["lines"]) == 3
+
+
+def test_submit_after_paid_creates_new_ticket(published_menu_location):
+    location_id, item_id, _ = published_menu_location
+    first = asyncio.run(
+        schema.execute(
+            _SUBMIT,
+            variable_values={
+                "locationId": location_id,
+                "lines": [{"menuItemId": item_id, "qty": 1}],
+                "fulfillmentMode": "PICKUP",
+            },
+            context_value={"user_id": GUEST_USER_ID},
+        )
+    )
+    assert first.errors is None, first.errors
+    first_id = int(first.data["submitPublicMenuOrder"]["id"])
+
+    closed = asyncio.run(
+        schema.execute(
+            _CLOSE,
+            variable_values={"orderId": first_id, "paymentMethod": "CASH"},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert closed.errors is None, closed.errors
+    assert closed.data["closePosOrder"]["status"] == "PAID"
+
+    second = asyncio.run(
+        schema.execute(
+            _SUBMIT,
+            variable_values={
+                "locationId": location_id,
+                "lines": [{"menuItemId": item_id, "qty": 1}],
+                "fulfillmentMode": "PICKUP",
+            },
+            context_value={"user_id": GUEST_USER_ID},
+        )
+    )
+    assert second.errors is None, second.errors
+    second_id = int(second.data["submitPublicMenuOrder"]["id"])
+    assert second_id != first_id
+
+
+def test_append_resets_prep_when_ready_or_served(published_menu_location):
+    location_id, item_id, _ = published_menu_location
+    first = asyncio.run(
+        schema.execute(
+            _SUBMIT,
+            variable_values={
+                "locationId": location_id,
+                "lines": [{"menuItemId": item_id, "qty": 1}],
+                "fulfillmentMode": "DINE_IN",
+                "tableLabel": "B2",
+            },
+            context_value={"user_id": GUEST_USER_ID},
+        )
+    )
+    assert first.errors is None, first.errors
+    order_id = int(first.data["submitPublicMenuOrder"]["id"])
+
+    session = SessionLocal()
+    try:
+        from graphql.data_sources.models.pos_order import PosOrder
+
+        row = session.get(PosOrder, order_id)
+        assert row is not None
+        row.prep_status = "ready"
+        session.commit()
+    finally:
+        session.close()
+
+    second = asyncio.run(
+        schema.execute(
+            _SUBMIT,
+            variable_values={
+                "locationId": location_id,
+                "lines": [{"menuItemId": item_id, "qty": 1}],
+                "fulfillmentMode": "DINE_IN",
+                "tableLabel": "B2",
+            },
+            context_value={"user_id": GUEST_USER_ID},
+        )
+    )
+    assert second.errors is None, second.errors
+    order = second.data["submitPublicMenuOrder"]
+    assert int(order["id"]) == order_id
+    assert order["prepStatus"] == "RECEIVED"
+    assert len(order["lines"]) == 2

@@ -13,7 +13,54 @@
           "ready_pickup": "Fertig zur Abholung.",
           "served": "Serviert. Guten Appetit!",
           "picked_up": "Abgeholt. Guten Appetit!"
-        }
+        },
+        "prepStatusShort": {
+          "received": "Eingegangen",
+          "preparing": "In Zubereitung",
+          "ready_dine_in": "Fertig",
+          "ready_pickup": "Fertig zur Abholung",
+          "served": "Serviert",
+          "picked_up": "Abgeholt"
+        },
+        "myOrderStickyLabel": "Meine Bestellung",
+        "myOrderStickyMeta": "Bon {billNumber}",
+        "myOrderStickyAria": "Meine Bestellung, {count, plural, one {# Artikel} other {# Artikel}}, Bon {billNumber}",
+        "myOrderSheetTitle": "Meine Bestellung",
+        "myOrderSheetDescription": "Bon {billNumber}",
+        "myOrderSheetDescriptionTable": "Bon {billNumber} · Tisch {tableLabel}",
+        "myOrderItemsHeading": "Artikel",
+        "myOrderEmptyLines": "Keine Artikel für diesen Bon gespeichert.",
+        "orderAnotherRound": "Noch etwas bestellen",
+        "continueBrowsing": "Weiter stöbern",
+        "addToOrder": "Zur Bestellung hinzufügen",
+        "addingToOrder": "Wird hinzugefügt…"
+      },
+      "feedback": {
+        "openFeedback": "Feedback",
+        "writeHeading": "Notiz hinterlassen",
+        "writeDescription": "Teile deine Meinung. Das Restaurant kann antworten und sie auf der Speisekarte zeigen.",
+        "signInPrompt": "Melde dich an, um Feedback zu diesem Gericht zu hinterlassen.",
+        "signInCta": "Anmelden für Feedback",
+        "thanksBody": "Danke — das Restaurant kann antworten und entscheiden, ob es auf der Speisekarte erscheint.",
+        "positive": "Daumen hoch",
+        "negative": "Daumen runter",
+        "sentimentLabel": "Deine Bewertung (optional)",
+        "bodyLabel": "Deine Notiz (optional)",
+        "bodyLabelRequired": "Deine Notiz",
+        "bodyPlaceholder": "Was ist dir aufgefallen?",
+        "submit": "Feedback senden",
+        "submitting": "Wird gesendet…",
+        "close": "Schließen",
+        "submitFailed": "Feedback konnte nicht gesendet werden. Bitte versuche es erneut.",
+        "bodyRequiredNegative": "Bei Daumen runter bitte eine kurze Notiz schreiben.",
+        "ratingOrBodyRequired": "Wähle eine Bewertung oder schreib eine kurze Notiz.",
+        "publishedCount": "{count, plural, one {# Gästenotiz} other {# Gästenotizen}}",
+        "itemDrawerTitle": "{name}",
+        "itemDrawerFeedbackHeading": "Gästenotizen",
+        "itemDrawerEmptyFeedback": "Noch keine veröffentlichten Notizen.",
+        "ownerReplyLabel": "Antwort des Restaurants",
+        "openItemDetails": "Gericht und Feedback ansehen",
+        "guestAnonymous": "Gast"
       }
     }
   }

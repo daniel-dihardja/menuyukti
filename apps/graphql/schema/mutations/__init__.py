@@ -40,6 +40,7 @@ from .media_collection_members import (
     AddMediaToCollectionMutation,
     RemoveMediaFromCollectionMutation,
 )
+from .menu_item_feedback import MenuItemFeedbackMutations
 from .pos_orders import PosOrderMutations
 from .provision_workspace import ProvisionWorkspaceMutation
 from .record_ai_usage_event import RecordAiUsageEventMutation
@@ -121,6 +122,7 @@ __all__ = [
     "RecordPointEarnEventMutation",
     "RemoveWorkspaceMemberMutation",
     "ReplaceLocationMenuItemsMutation",
+    "MenuItemFeedbackMutations",
     "PosOrderMutations",
     "SubmitPublicMenuOrderMutation",
     "UpdateCalendarEntryMutation",

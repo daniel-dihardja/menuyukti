@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { getTranslations } from 'next-intl/server'
 import type { Metadata } from 'next'
+import { connection } from 'next/server'
 import { notFound } from 'next/navigation'
 
 import { DigitalMenuConsole } from '@/app/(protected)/services/digital-menu/_components/digital-menu-console'
@@ -9,6 +10,10 @@ import { ANALYTICS_REPORT_SHELL_MAIN_CLASS, LOCATION_DETAIL_SECTION_CLASS } from
 import { getCachedLocation } from '@/lib/graphql/cached-queries'
 import { graphqlQuery } from '@/lib/graphql/client'
 import { LOCATION_MENU_QUERY, type LocationMenuData } from '@/lib/graphql/queries/location-menu'
+import {
+  LOCATION_MENU_ITEM_FEEDBACKS_QUERY,
+  type LocationMenuItemFeedbacksData,
+} from '@/lib/graphql/queries/menu-item-feedback'
 import { routes } from '@/lib/routes'
 
 type PageProps = {
@@ -29,6 +34,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function DigitalMenuConsolePage({ params }: PageProps) {
+  // Bind this route to the request before auth/GraphQL. Clerk session checks can
+  // read the current time; without this, Cache Components treats Date.now() as
+  // a blocking prerender value on this dynamic segment.
+  await connection()
   const { locationId: locationIdParam } = await params
   const { isAuthenticated, userId } = await auth()
   if (!isAuthenticated || !userId) {
@@ -38,9 +47,15 @@ export default async function DigitalMenuConsolePage({ params }: PageProps) {
   const locationId = Number(locationIdParam)
   if (!Number.isInteger(locationId) || locationId < 1) notFound()
 
-  const [locationData, menuData, tServices, tDigital, tConsole] = await Promise.all([
+  const [locationData, menuData, feedbackData, tServices, tDigital, tConsole] = await Promise.all([
     getCachedLocation(userId, locationIdParam),
     graphqlQuery<LocationMenuData>(LOCATION_MENU_QUERY, { locationId }, userId, 'LocationMenu'),
+    graphqlQuery<LocationMenuItemFeedbacksData>(
+      LOCATION_MENU_ITEM_FEEDBACKS_QUERY,
+      { locationId, status: null },
+      userId,
+      'LocationMenuItemFeedbacks',
+    ),
     getTranslations('services'),
     getTranslations('services.digitalMenu'),
     getTranslations('services.digitalMenu.console'),
@@ -68,6 +83,8 @@ export default async function DigitalMenuConsolePage({ params }: PageProps) {
           initialHeaderImageFilename={menuData.locationMenu?.headerImageFilename ?? null}
           initialAllowDineIn={menuData.locationMenu?.allowDineIn ?? true}
           initialAllowPickup={menuData.locationMenu?.allowPickup ?? true}
+          initialFeedbacks={feedbackData.locationMenuItemFeedbacks}
+          initialFeedbackPendingCount={feedbackData.locationMenuItemFeedbackPendingCount}
         />
       </section>
     </AnalyticsPageShell>

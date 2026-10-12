@@ -16,6 +16,7 @@ from graphql.services.pos_order_constants import (
     POS_STATUS_PAID,
     POS_STATUS_REFUNDED,
     POS_STATUS_VOID,
+    PUBLIC_MENU_ORDER_NOTE,
 )
 from graphql.services.pos_tax import tax_breakdown_by_rate
 from graphql.services.pos_time import is_on_berlin_day, start_of_berlin_day
@@ -35,6 +36,34 @@ def get_order(session: Session, order_id: int) -> PosOrder | None:
             .options(*_order_load_options())
             .where(PosOrder.id == order_id)
             .execution_options(populate_existing=True)
+        )
+        .unique()
+        .scalar_one_or_none()
+    )
+
+
+def get_open_public_menu_order_for_guest(
+    session: Session,
+    *,
+    location_id: int,
+    clerk_user_id: str,
+) -> PosOrder | None:
+    """Latest open digital-menu ticket opened by this guest at the location."""
+    user_id = (clerk_user_id or "").strip()
+    if not user_id:
+        return None
+    return (
+        session.execute(
+            select(PosOrder)
+            .options(*_order_load_options())
+            .where(
+                PosOrder.location_id == location_id,
+                PosOrder.opened_by_clerk_user_id == user_id,
+                PosOrder.note == PUBLIC_MENU_ORDER_NOTE,
+                PosOrder.status == POS_STATUS_OPEN,
+            )
+            .order_by(PosOrder.id.desc())
+            .limit(1)
         )
         .unique()
         .scalar_one_or_none()
