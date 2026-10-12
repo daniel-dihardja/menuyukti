@@ -32,6 +32,10 @@ class PosRegister(Base):
     )
     code: Mapped[str] = mapped_column(String(64), nullable=False, default="DEFAULT")
     label: Mapped[str] = mapped_column(String(128), nullable=False, default="Register 1")
+    # Future TSE binding (populated when a certified provider is wired).
+    tse_client_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    certificate_serial: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    external_tss_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),

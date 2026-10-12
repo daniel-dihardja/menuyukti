@@ -1,6 +1,7 @@
 'use client'
 
-import { useTranslations } from 'next-intl'
+import { QRCodeSVG } from 'qrcode.react'
+import { useLocale, useTranslations } from 'next-intl'
 
 import type { PosOrder } from '@/lib/graphql/queries/pos-orders'
 import { formatCurrency } from '@/lib/currency'
@@ -21,10 +22,14 @@ type PosReceiptProps = {
   seller?: PosReceiptSeller
 }
 
-function formatWhen(iso: string | null | undefined): string {
+function receiptDateLocale(appLocale: string): string {
+  return appLocale === 'de' ? 'de-DE' : 'en-GB'
+}
+
+function formatWhen(iso: string | null | undefined, locale: string): string {
   if (!iso) return '—'
   try {
-    return new Date(iso).toLocaleString(undefined, {
+    return new Date(iso).toLocaleString(receiptDateLocale(locale), {
       dateStyle: 'medium',
       timeStyle: 'short',
     })
@@ -39,6 +44,7 @@ function formatTaxRate(bps: number): string {
 
 export function PosReceipt({ order, locationName, currencyCode, seller }: PosReceiptProps) {
   const t = useTranslations('pos')
+  const locale = useLocale()
   const subtotal = order.lines.reduce((sum, line) => sum + line.lineTotal, 0)
   const discount = order.discountAmount ?? 0
   const total = order.gross ?? Math.max(0, subtotal - discount)
@@ -85,9 +91,9 @@ export function PosReceipt({ order, locationName, currencyCode, seller }: PosRec
 
       <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
         <dt className="text-neutral-600">{t('receiptOpened')}</dt>
-        <dd className="text-right tabular-nums">{formatWhen(order.openedAt)}</dd>
+        <dd className="text-right tabular-nums">{formatWhen(order.openedAt, locale)}</dd>
         <dt className="text-neutral-600">{t('receiptClosed')}</dt>
-        <dd className="text-right tabular-nums">{formatWhen(order.closedAt)}</dd>
+        <dd className="text-right tabular-nums">{formatWhen(order.closedAt, locale)}</dd>
         {order.paymentMethod ? (
           <>
             <dt className="text-neutral-600">{t('receiptPayment')}</dt>
@@ -211,14 +217,36 @@ export function PosReceipt({ order, locationName, currencyCode, seller }: PosRec
             </dl>
           ) : null}
           {saleFiscal?.qrPayload ? (
-            <p className="break-all font-mono text-[9px] leading-snug text-neutral-700">
-              {saleFiscal.qrPayload}
-            </p>
+            <div className="flex flex-col items-center gap-2 pt-1">
+              <QRCodeSVG
+                value={saleFiscal.qrPayload}
+                size={128}
+                level="M"
+                title={t('receiptTseTitle')}
+                className="bg-white"
+              />
+              <p className="max-w-full break-all font-mono text-[9px] leading-snug text-neutral-500">
+                {saleFiscal.qrPayload}
+              </p>
+            </div>
           ) : null}
           {refundFiscal?.state === 'finished' ? (
-            <p className="text-neutral-700">
-              {t('receiptTseRefund')}: {refundFiscal.tseTransactionId ?? '—'}
-            </p>
+            <div className="space-y-2">
+              <p className="text-neutral-700">
+                {t('receiptTseRefund')}: {refundFiscal.tseTransactionId ?? '—'}
+              </p>
+              {refundFiscal.qrPayload ? (
+                <div className="flex flex-col items-center gap-2">
+                  <QRCodeSVG
+                    value={refundFiscal.qrPayload}
+                    size={96}
+                    level="M"
+                    title={t('receiptTseRefund')}
+                    className="bg-white"
+                  />
+                </div>
+              ) : null}
+            </div>
           ) : null}
         </div>
       ) : null}

@@ -1,9 +1,11 @@
+import { headers } from 'next/headers'
 import { getRequestConfig } from 'next-intl/server'
 
-import { DEFAULT_LOCALE, loadMessages } from './load-messages'
+import { loadMessages, resolveLocaleFromAcceptLanguage } from './load-messages'
 
 export default getRequestConfig(async () => {
-  const locale = DEFAULT_LOCALE
+  const headerStore = await headers()
+  const locale = resolveLocaleFromAcceptLanguage(headerStore.get('accept-language'))
 
   return {
     locale,

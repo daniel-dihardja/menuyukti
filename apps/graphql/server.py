@@ -63,6 +63,23 @@ def validate_startup_security() -> None:
             "(or set GRAPHQL_REQUIRE_INTERNAL_API_KEY=0 only for local dev)."
         )
         raise RuntimeError(msg)
+    if is_production_runtime():
+        _validate_production_fiscal_provider()
+
+
+def _validate_production_fiscal_provider() -> None:
+    """Refuse production boot with mock / unset / unknown fiscal providers."""
+    raw = (os.environ.get("POS_FISCAL_PROVIDER") or "").strip().lower()
+    if raw in {"", "mock"}:
+        raise RuntimeError(
+            "POS_FISCAL_PROVIDER must be set to 'fiskaly' or 'off' in production "
+            "(mock TSE is not allowed)."
+        )
+    if raw in {"off", "none", "disabled", "fiskaly"}:
+        return
+    raise RuntimeError(
+        f"Unknown POS_FISCAL_PROVIDER={raw!r} in production; allowed: off, fiskaly"
+    )
 
 
 def _cors_allow_origins() -> list[str]:

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, date, datetime, time
+from datetime import date, datetime
 
 import strawberry
 
@@ -20,14 +20,7 @@ from graphql.schema.types.pos_order import (
     PosPaymentMethod,
 )
 from graphql.services.pos_audit import list_audit_events_for_order
-
-
-def _start_of_utc_day(when: datetime | None = None) -> datetime:
-    now = when or datetime.now(UTC)
-    if now.tzinfo is None:
-        now = now.replace(tzinfo=UTC)
-    day = now.astimezone(UTC).date()
-    return datetime.combine(day, time.min, tzinfo=UTC)
+from graphql.services.pos_time import berlin_calendar_date, start_of_berlin_day
 
 
 @strawberry.type
@@ -48,7 +41,7 @@ class PosOrdersQuery:
     @strawberry.field(
         description=(
             "List POS tickets for a location. Defaults to tickets opened since "
-            "start of the current UTC day."
+            "start of the current Europe/Berlin business day."
         )
     )
     def pos_orders(
@@ -67,7 +60,7 @@ class PosOrdersQuery:
                 return []
             if not is_location_owner(session, location_id, user_id, info=info):
                 return []
-            since_dt = since if since is not None else _start_of_utc_day()
+            since_dt = since if since is not None else start_of_berlin_day()
             status_value = status.value if status is not None else None
             orders = pos_svc.list_orders(
                 session,
@@ -93,7 +86,7 @@ class PosOrdersQuery:
                 return None
             if not is_location_owner(session, location_id, user_id, info=info):
                 return None
-            day = date.fromisoformat(on_date) if on_date else datetime.now(UTC).date()
+            day = date.fromisoformat(on_date) if on_date else berlin_calendar_date()
             summary = pos_svc.day_summary(session, location_id=location_id, on_date=day)
             paid = [
                 PosDayPaymentTotalType(

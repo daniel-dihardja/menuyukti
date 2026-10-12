@@ -1,4 +1,14 @@
-"""Orchestrate fiscal processes for native POS tickets."""
+"""Orchestrate fiscal processes for native POS tickets.
+
+Fiscal provider selection (``POS_FISCAL_PROVIDER``):
+
+- unset / ``mock`` — in-process mock TSE (local/test only; refused in production)
+- ``off`` / ``none`` / ``disabled`` — skip fiscalization
+- ``fiskaly`` — SIGN DE adapter (stub until HTTP client lands)
+
+Related env for the fiskaly path: ``FISKALY_API_KEY``, ``FISKALY_API_SECRET``,
+``FISKALY_ENV`` (``test`` | ``live``).
+"""
 
 from __future__ import annotations
 
@@ -11,6 +21,7 @@ from sqlalchemy.orm import Session
 from graphql.data_sources.models.pos_fiscal_process import PosFiscalProcess
 from graphql.data_sources.models.pos_order import PosOrder
 from graphql.services.pos_audit import record_pos_audit
+from graphql.services.pos_fiscal_fiskaly import FiskalyTseAdapter
 from graphql.services.pos_fiscal_mock import MockTseAdapter
 from graphql.services.pos_fiscal_port import FiscalizationPort, FiscalProcessContext
 
@@ -23,28 +34,56 @@ STATE_FAILED = "failed"
 
 PROVIDER_OFF = "off"
 PROVIDER_MOCK = "mock"
+PROVIDER_FISKALY = "fiskaly"
 
 
 def _utcnow() -> datetime:
     return datetime.now(UTC)
 
 
+def _is_production_runtime() -> bool:
+    """Mirror graphql.server.is_production_runtime (avoid importing server from services)."""
+    for key in ("GRAPHQL_ENV", "ENV", "VERCEL_ENV", "NODE_ENV"):
+        if os.environ.get(key, "").strip().lower() == "production":
+            return True
+    return False
+
+
 def fiscal_provider_name() -> str:
+    """Resolve allowlisted provider; unknown values raise (no silent mock fallback)."""
     raw = (os.environ.get("POS_FISCAL_PROVIDER") or PROVIDER_MOCK).strip().lower()
     if raw in {"", "mock"}:
         return PROVIDER_MOCK
     if raw in {"off", "none", "disabled"}:
         return PROVIDER_OFF
-    # Unknown providers fall back to mock until fiskaly lands
-    return PROVIDER_MOCK
+    if raw == PROVIDER_FISKALY:
+        return PROVIDER_FISKALY
+    raise ValueError(
+        f"Unknown POS_FISCAL_PROVIDER={raw!r}; allowed: off, mock, fiskaly"
+    )
 
 
 def get_fiscal_port() -> FiscalizationPort | None:
     name = fiscal_provider_name()
     if name == PROVIDER_OFF:
         return None
+    if name == PROVIDER_FISKALY:
+        return FiskalyTseAdapter()
+    if _is_production_runtime():
+        raise RuntimeError(
+            "POS_FISCAL_PROVIDER=mock is not allowed in production. "
+            "Set POS_FISCAL_PROVIDER=fiskaly (or off) before starting."
+        )
     return MockTseAdapter()
 
+
+def assert_finished_fiscal_immutable(process: PosFiscalProcess) -> None:
+    """Refuse in-place mutation of a finished fiscal process row."""
+    if process.state == STATE_FINISHED:
+        raise ValueError(
+            f"Cannot mutate finished fiscal process id={process.id} "
+            f"(order_id={process.pos_order_id}, kind={process.kind})"
+        )
 
 def _ctx_from_order(order: PosOrder, *, kind: str, payment_method: str | None = None) -> FiscalProcessContext:
     return FiscalProcessContext(

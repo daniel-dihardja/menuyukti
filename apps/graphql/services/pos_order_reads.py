@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, date, datetime
+from datetime import date, datetime, timedelta
 from typing import Any
 
 from sqlalchemy import select
@@ -18,6 +18,7 @@ from graphql.services.pos_order_constants import (
     POS_STATUS_VOID,
 )
 from graphql.services.pos_tax import tax_breakdown_by_rate
+from graphql.services.pos_time import is_on_berlin_day, start_of_berlin_day
 
 
 def _order_load_options():
@@ -83,9 +84,10 @@ def day_summary(
     location_id: int,
     on_date: date,
 ) -> dict[str, object]:
-    """Aggregate POS ticket stats for a UTC calendar day."""
-    start = datetime.combine(on_date, datetime.min.time(), tzinfo=UTC)
-    orders = list_orders(session, location_id, since=start)
+    """Aggregate POS ticket stats for a Europe/Berlin calendar day."""
+    # Include previous Berlin day so overnight open→close tickets are visible.
+    since = start_of_berlin_day(on_date - timedelta(days=1))
+    orders = list_orders(session, location_id, since=since)
 
     open_count = 0
     paid_count = 0
@@ -99,23 +101,23 @@ def day_summary(
 
     for order in orders:
         if order.status == POS_STATUS_OPEN:
-            if order.opened_at.astimezone(UTC).date() == on_date:
+            if is_on_berlin_day(order.opened_at, on_date):
                 open_count += 1
             continue
         if order.status == POS_STATUS_VOID:
             closed = order.closed_at or order.opened_at
-            if closed.astimezone(UTC).date() == on_date:
+            if is_on_berlin_day(closed, on_date):
                 void_count += 1
             continue
         if order.status == POS_STATUS_REFUNDED:
             when = order.refunded_at or order.closed_at or order.opened_at
-            if when.astimezone(UTC).date() == on_date:
+            if is_on_berlin_day(when, on_date):
                 refunded_count += 1
                 refunded_gross_total += order_gross_total(order)
             continue
         if order.status == POS_STATUS_PAID:
             closed = order.closed_at or order.opened_at
-            if closed.astimezone(UTC).date() != on_date:
+            if not is_on_berlin_day(closed, on_date):
                 continue
             paid_count += 1
             paid_discount_total += cents_to_euros(int(order.discount_cents or 0))

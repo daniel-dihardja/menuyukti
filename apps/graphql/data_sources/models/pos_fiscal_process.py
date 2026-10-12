@@ -26,7 +26,7 @@ class PosFiscalProcess(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     pos_order_id: Mapped[int] = mapped_column(
         Integer,
-        ForeignKey("pos_order.id", ondelete="CASCADE"),
+        ForeignKey("pos_order.id", ondelete="RESTRICT"),
         nullable=False,
         index=True,
     )
