@@ -7,30 +7,35 @@ alwaysApply: true
 
 ## Product
 
-Menuyukti is an **agentic AI platform for data-driven restaurant marketing**. Operators use a **chat-first** home (`/advisor`, modes `general` | `image_assistant`) plus analytics, media, IG Studio, and calendar — without a live campaign-workflow / milestone pipeline.
+Menuyukti is an **agentic AI platform for data-driven restaurant marketing and operations**. Operators use a **chat-first** home (`/advisor`, modes `general` | `image_assistant`) plus analytics, **native POS**, inventar, media, IG Studio, calendar, and CRM — without a live campaign-workflow / milestone pipeline.
+
+**Customer-facing focus** is the **web PWA** (`apps/web` customer shell + Serwist). The Expo native app remains in the repo but is **deprecated / inactive** (not the product focus).
 
 ## Apps and frameworks
 
 | App | Path | Role |
 |-----|------|------|
-| **GraphQL API** | `apps/graphql` | Python backend: structured data, analytics, persistence. **Single source of truth** for reads/writes used by the web app and agent services. |
-| **Web** | `apps/web` | Next.js user-facing app: chat (`agentThreadId`), artifacts, CRUD for product entities. Calls GraphQL. |
-| **Mobile** | `apps/mobile-app` | Expo (React Native) client. Calls GraphQL over HTTP; does not open DB connections. |
-| **LangGraph agents** | `apps/agents` | Python FastAPI service: LangChain / LangGraph **streaming chat** (OpenAI via AI Gateway). Calls GraphQL over HTTP. |
+| **GraphQL API** | `apps/graphql` | Python backend: structured data, analytics, POS, inventory, CRM, persistence. **Single source of truth** for reads/writes used by the web app and agent services. |
+| **Web (operator + PWA)** | `apps/web` | Next.js: operator shell (`/advisor`, analytics/POS, inventar, …) and **customer PWA** shell. Calls GraphQL. |
+| **Mobile (deprecated)** | `apps/mobile-app` | Expo (React Native) CRM client — **kept in repo, inactive**. Prefer web PWA for customer work. No direct DB. |
+| **LangGraph agents** | `apps/agents` | Python FastAPI: LangChain / LangGraph **streaming chat** (`general` \| `image_assistant` \| `inventar`) via AI Gateway. Calls GraphQL over HTTP. |
 
 ## Agentic patterns in use
 
 - **LangChain / LangGraph (`apps/agents`)** — chat ReAct via `create_agent`, checkpointer threads, async streaming (`astream` with `messages`/`updates`), tools that call GraphQL. Prefer modular layout: **`agents/core/chat/`**, **`models/`**, **`routers/`**, **`server.py`**. See `.cursor/rules/langchain.mdc` and `.cursor/rules/langgraph.mdc`.
-- **Mode-driven tools** — general vs image assistant bind different tool sets (location/charts vs story scratchpad / IG image).
+- **Mode-driven tools** — `general` (media/schedule/location/charts/web), `image_assistant` (scratchpad / IG image), `inventar` (refill forecast; inventar surface only).
 - **Reflect** — generate → critique → revise remains useful for draft helpers (e.g. style specs) with iteration bounds when those flows exist.
 
 ## Layering and boundaries
 
-- **`apps/graphql`:** Strawberry schema, SQLAlchemy persistence, analytics — the database and migrations live here; other apps call GraphQL over HTTP.
-- **`apps/web` / `apps/mobile-app`:** Clients of GraphQL only — no direct DB access.
+- **`apps/graphql`:** Strawberry schema, SQLAlchemy persistence (polymorphic `node` rows **and** dedicated tables such as POS/CRM/inventory), analytics — the database and migrations live here; other apps call GraphQL over HTTP.
+- **`apps/web`:** Primary client (operator + customer PWA). GraphQL only — no direct DB access.
+- **`apps/mobile-app`:** Deprecated / inactive; if touched, still GraphQL/BFF only — no direct DB.
 - **`apps/agents`:** FastAPI routers validate DTOs and delegate to compiled graphs / runnables; keep prompts, model config, and graph topology in separate modules — not monolithic route handlers. Agents use `httpx` to call GraphQL; they do not open DB connections.
 
 ## Further reading
 
 - Root [`README.md`](../../README.md) — features and high-level architecture.
+- Feature glossary: [`.agents/menuyukti-features.md`](../../.agents/menuyukti-features.md).
 - Cleanup history (milestones removed): [`packages/docs/menuyukti/remove-milestones.md`](../../packages/docs/menuyukti/remove-milestones.md).
+- Germany POS readiness audits: [`.agents/skills/menuyukti-germany-pos-readiness/SKILL.md`](../../.agents/skills/menuyukti-germany-pos-readiness/SKILL.md).

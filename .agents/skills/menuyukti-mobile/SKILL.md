@@ -1,15 +1,16 @@
 ---
 name: menuyukti-mobile
 description: >-
-  Expo React Native app (apps/mobile-app): CRM enroll, device keys, React Navigation tabs,
-  brand/session theme, GraphQL/CRM HTTP clients. Use when changing mobile screens, navigation,
-  enroll flow, SecureStore keys, or mobile-side API calls. For Expo UI/data/upgrades and RN
-  performance, also use the companion skills listed below.
+  DEPRECATED / inactive Expo React Native app (apps/mobile-app). Kept in the repo but not an
+  active product track — prefer the web customer PWA in apps/web. Use this skill only when
+  maintaining legacy CRM enroll, device keys, React Navigation, or mobile BFF clients.
 ---
 
-# Menuyukti: `apps/mobile-app`
+# Menuyukti: `apps/mobile-app` (deprecated)
 
-**Expo** (React Native) customer app: enroll via CRM token, then Home / Rewards / Profile. **Product data** goes through the **Next.js mobile BFF** (proxies private GraphQL). CRM enroll: `POST /api/mobile/crm/v1/enroll` on the web app.
+**Status:** **Deprecated / inactive.** Customer focus is the **web PWA** (`apps/web` customer shell + Serwist). Keep this app in the monorepo for now; do not expand it as the primary customer path. Prefer [`menuyukti-web`](../menuyukti-web/SKILL.md) for new customer work.
+
+**Expo** (React Native) CRM client (legacy): enroll via CRM token, then Home / Rewards / Profile. **Product data** goes through the **Next.js mobile BFF** (proxies private GraphQL). CRM enroll: `POST /api/mobile/crm/v1/enroll` on the web app.
 
 For monorepo boundaries, see [`menuyukti-repo-orientation`](../menuyukti-repo-orientation/SKILL.md).
 
@@ -36,16 +37,18 @@ When implementing in **`apps/mobile-app`**, follow these skills in addition to t
 
 ## Layout (high level)
 
-| Concern           | Typical locations                                                                                                                                                                                               |
-| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Entry             | [`App.tsx`](../../../apps/mobile-app/App.tsx), [`index.ts`](../../../apps/mobile-app/index.ts)                                                                                                                  |
-| Navigation        | [`navigation/RootNavigator.tsx`](../../../apps/mobile-app/navigation/RootNavigator.tsx), [`MainTabs.tsx`](../../../apps/mobile-app/navigation/MainTabs.tsx)                                                     |
-| Screens           | [`screens/`](../../../apps/mobile-app/screens/) — `EnrollScreen`, `HomeScreen`, `RewardsScreen`, `ProfileScreen`                                                                                                |
-| UI primitives     | [`components/`](../../../apps/mobile-app/components/) — `Screen`, `Button`, `TextField`, cards                                                                                                                  |
-| Theme / brand     | [`theme/tokens.ts`](../../../apps/mobile-app/theme/tokens.ts), [`BrandContext.tsx`](../../../apps/mobile-app/theme/BrandContext.tsx), [`SessionContext.tsx`](../../../apps/mobile-app/theme/SessionContext.tsx) |
-| CRM enroll + keys | [`lib/enroll.ts`](../../../apps/mobile-app/lib/enroll.ts), [`lib/keys.ts`](../../../apps/mobile-app/lib/keys.ts)                                                                                                |
-| Mock / demo data  | [`data/mockRestaurant.ts`](../../../apps/mobile-app/data/mockRestaurant.ts)                                                                                                                                     |
-| Expo config       | [`app.json`](../../../apps/mobile-app/app.json), [`package.json`](../../../apps/mobile-app/package.json)                                                                                                        |
+| Concern              | Typical locations                                                                                                                                                                                                                                                                                                               |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Entry                | [`App.tsx`](../../../apps/mobile-app/App.tsx), [`index.ts`](../../../apps/mobile-app/index.ts)                                                                                                                                                                                                                                  |
+| Navigation           | [`navigation/RootNavigator.tsx`](../../../apps/mobile-app/navigation/RootNavigator.tsx), [`MainTabs.tsx`](../../../apps/mobile-app/navigation/MainTabs.tsx)                                                                                                                                                                     |
+| Screens              | [`screens/`](../../../apps/mobile-app/screens/) — `EnrollScreen`, `HomeScreen`, `RewardsScreen`, `ProfileScreen`                                                                                                                                                                                                                |
+| UI primitives        | [`components/`](../../../apps/mobile-app/components/) — `Screen`, `Button`, `TextField`, cards                                                                                                                                                                                                                                  |
+| Theme / brand        | [`theme/tokens.ts`](../../../apps/mobile-app/theme/tokens.ts), [`BrandContext.tsx`](../../../apps/mobile-app/theme/BrandContext.tsx), [`SessionContext.tsx`](../../../apps/mobile-app/theme/SessionContext.tsx)                                                                                                                 |
+| CRM enroll + session | [`lib/enroll.ts`](../../../apps/mobile-app/lib/enroll.ts), [`lib/keys.ts`](../../../apps/mobile-app/lib/keys.ts), [`sessionStorage.ts`](../../../apps/mobile-app/lib/sessionStorage.ts), [`sessionCodec.ts`](../../../apps/mobile-app/lib/sessionCodec.ts), [`secureStorage.ts`](../../../apps/mobile-app/lib/secureStorage.ts) |
+| CRM auth / API       | [`lib/crmAuth.ts`](../../../apps/mobile-app/lib/crmAuth.ts), [`crmClient.ts`](../../../apps/mobile-app/lib/crmClient.ts), [`accessToken.ts`](../../../apps/mobile-app/lib/accessToken.ts), [`tokenStorage.ts`](../../../apps/mobile-app/lib/tokenStorage.ts), [`signNonce.ts`](../../../apps/mobile-app/lib/signNonce.ts)       |
+| Cashback             | [`lib/cashback.ts`](../../../apps/mobile-app/lib/cashback.ts) — authenticated CRM reads via `crmFetch`                                                                                                                                                                                                                          |
+| Mock / demo data     | [`data/mockRestaurant.ts`](../../../apps/mobile-app/data/mockRestaurant.ts)                                                                                                                                                                                                                                                     |
+| Expo config          | [`app.json`](../../../apps/mobile-app/app.json), [`package.json`](../../../apps/mobile-app/package.json)                                                                                                                                                                                                                        |
 
 Commands: [`apps/mobile-app/package.json`](../../../apps/mobile-app/package.json) scripts (`pnpm --filter mobile-app …`).
 
@@ -67,9 +70,12 @@ Brand theming uses **`BrandProvider`** + Warm Editorial tokens in `theme/tokens.
 
 ## Networking
 
-- Public BFF base: `EXPO_PUBLIC_CRM_API_URL` (default `http://localhost:3000`); enroll posts to `/api/mobile/crm/v1/enroll` (`lib/enroll.ts`).
+- Public BFF base: `EXPO_PUBLIC_CRM_API_URL` (default `http://localhost:3000`).
+- Enroll: `POST /api/mobile/crm/v1/enroll` (`lib/enroll.ts`).
+- Authenticated CRM: `crmFetch` (`lib/crmClient.ts`) → `/api/mobile/crm/v1/*` with device access token from `crmAuth` / `accessToken` (refresh token in SecureStore via `tokenStorage`).
+- Example product read: cashback via `lib/cashback.ts` (`GET .../me/cashback`).
 - Quality: `pnpm lint` (ESLint / `eslint-config-expo`), `pnpm check-types`, `pnpm test`, `pnpm check:expo` (`expo-doctor`), `pnpm format-check`.
-- Future product reads: Next.js mobile BFF → private GraphQL; keep client code under `lib/` and follow [`expo-data-fetching`](../expo-data-fetching/SKILL.md).
+- Keep new client code under `lib/` and follow [`expo-data-fetching`](../expo-data-fetching/SKILL.md).
 
 ## Related
 

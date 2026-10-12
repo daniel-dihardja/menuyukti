@@ -10,7 +10,7 @@ description: >-
 
 # Menuyukti: `apps/web`
 
-**Next.js** user-facing app: **chat-first** home, analytics (incl. native POS), media, IG Studio, calendar, CRM, inventar, staff. **All product data** goes through **GraphQL** (no direct DB). Auth: **Clerk**. Copy: **next-intl** (no hardcoded user-facing strings).
+**Next.js** user-facing app: **operator** shell (chat-first `/advisor`, analytics incl. native POS, inventar, media, IG Studio, calendar, CRM, staff) and **customer PWA** shell (Serwist). **All product data** goes through **GraphQL** (no direct DB). Auth: **Clerk**. Copy: **next-intl** (no hardcoded user-facing strings). The Expo app (`apps/mobile-app`) is **deprecated / inactive** — customer work belongs here in the PWA.
 
 For monorepo boundaries, see [`menuyukti-repo-orientation`](../menuyukti-repo-orientation/SKILL.md). For UI and i18n rules, see [`.cursor/rules/web-conventions.mdc`](../../../.cursor/rules/web-conventions.mdc).
 
@@ -36,16 +36,18 @@ When improving an existing implementation (not only greenfield features), also r
 
 ## Layout (high level)
 
-| Concern          | Typical locations                                                                                                                                                                                 |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| App Router       | [`apps/web/app/`](../../../apps/web/app/)                                                                                                                                                         |
-| Operator shell   | [`apps/web/app/(protected)/`](<../../../apps/web/app/(protected)/>) — `/advisor`, `/analytics`, `/calendar`, `/ig-studio`, `/media`, `/inventar`, `/crm`, `/staff`, …                             |
-| Customer shell   | [`apps/web/app/(customer)/`](<../../../apps/web/app/(customer)/>) — `/home`, `/continue`, `/profile` (auth, no sidebar; free-plan default)                                                        |
-| Chat home        | Public URL **`/advisor`** (rewrites to `app/(protected)/agent/`); thread id = **`agentThreadId`**. Shared UI: [`components/chat/`](../../../apps/web/components/chat/)                            |
-| Chat modes       | [`lib/chat/chat-modes.ts`](../../../apps/web/lib/chat/chat-modes.ts) — advisor picker: `general` \| `image_assistant`; also `inventar` (inventar surface only)                                    |
-| Native POS       | [`app/(protected)/analytics/locations/[id]/pos/`](<../../../apps/web/app/(protected)/analytics/locations/[id]/pos/>) — cashier UI; route helper `routes.branchesPos(id)`                          |
-| GraphQL client   | [`apps/web/lib/graphql/client.ts`](../../../apps/web/lib/graphql/client.ts), [`queries/`](../../../apps/web/lib/graphql/queries/), [`node-schemas/`](../../../apps/web/lib/graphql/node-schemas/) |
-| API routes (BFF) | [`apps/web/app/api/`](../../../apps/web/app/api/) — e.g. `/api/chat`, `/api/calendar-entries`, `/api/locations/[id]/pos`, media, styles                                                           |
+| Concern          | Typical locations                                                                                                                                                                                   |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| App Router       | [`apps/web/app/`](../../../apps/web/app/)                                                                                                                                                           |
+| Operator shell   | [`apps/web/app/(protected)/`](<../../../apps/web/app/(protected)/>) — `/advisor`, `/analytics`, `/calendar`, `/ig-studio`, `/media`, `/inventar`, `/crm`, `/staff`, …                               |
+| Customer shell   | [`apps/web/app/(customer)/`](<../../../apps/web/app/(customer)/>) — `/home`, `/continue`, `/profile` (auth, no sidebar; free-plan default)                                                          |
+| Chat home        | Public URL **`/advisor`** (rewrites to `app/(protected)/agent/`); thread id = **`agentThreadId`**. Shared UI: [`components/chat/`](../../../apps/web/components/chat/)                              |
+| Chat modes       | [`lib/chat/chat-modes.ts`](../../../apps/web/lib/chat/chat-modes.ts) — advisor picker: `general` \| `image_assistant`; also `inventar` (inventar surface only)                                      |
+| Native POS       | [`app/(protected)/analytics/locations/[id]/pos/`](<../../../apps/web/app/(protected)/analytics/locations/[id]/pos/>) — cashier UI; route helper `routes.branchesPos(id)`                            |
+| GraphQL client   | [`apps/web/lib/graphql/client.ts`](../../../apps/web/lib/graphql/client.ts), [`queries/`](../../../apps/web/lib/graphql/queries/) (barrel [`queries.ts`](../../../apps/web/lib/graphql/queries.ts)) |
+| Zod / validation | Co-located `app/api/**/schema.ts` and feature libs (e.g. `lib/styles/style-spec.ts`) — not a global `node-schemas` module                                                                           |
+| PWA              | Serwist via production webpack build; `app/manifest.ts`, `apps/web/README.md`                                                                                                                       |
+| API routes (BFF) | [`apps/web/app/api/`](../../../apps/web/app/api/) — e.g. `/api/chat`, `/api/calendar-entries`, `/api/locations/[id]/pos`, media, styles                                                             |
 
 Named product features: see [`.agents/menuyukti-features.md`](../../menuyukti-features.md). Germany POS readiness audits: [`menuyukti-germany-pos-readiness`](../menuyukti-germany-pos-readiness/SKILL.md).
 
@@ -71,7 +73,7 @@ Default authenticated path is **`/advisor`** (`defaultAuthenticatedPath`). Legac
 ## GraphQL from the web
 
 - Use `graphqlQuery` from [`lib/graphql/client.ts`](../../../apps/web/lib/graphql/client.ts) in Server Components and `app/api/` handlers.
-- Validate node `data` JSON with Zod via `parseNodeData` / schemas under `lib/graphql/node-schemas/` — avoid casting.
+- Validate payloads with Zod at the feature/API boundary (`app/api/**/schema.ts`, feature libs) — avoid casting.
 - Keep server/client boundaries aligned with Next.js conventions ([`next-best-practices`](../next-best-practices/SKILL.md)).
 
 ## Related

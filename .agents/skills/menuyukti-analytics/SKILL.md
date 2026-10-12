@@ -44,7 +44,9 @@ When implementing in **`packages/menuyukti` analytics**, follow these skills in 
 | `calculate_menu_engineering_matrix`          | Menu-level revenue + COGS                       | Star / plow_horse / puzzle / low_end                 |
 | `compute_menu_engineering_from_orders`       | Typed order rows                                | Delegates to `calculate_menu_engineering_matrix`     |
 | `calculate_category_mix`                     | Line items with optional categories             | Revenue/qty share per category                       |
+| `compute_category_mix_from_orders`           | Typed order rows                                | Delegates to `calculate_category_mix`                |
 | `calculate_revenue_trends`                   | Current vs previous period frames               | Deltas, ranks, trend labels                          |
+| `compute_revenue_trends_from_orders`         | Typed order rows                                | Delegates to `calculate_revenue_trends`              |
 | `calculate_popularity_index`                 | Frame per `popularity_index_columns`            | Popularity scoring where used                        |
 | `calculate_menu_basket_affinities`           | Line-item frame                                 | Co-purchase pair affinities                          |
 | `compute_menu_basket_affinities_from_orders` | Typed order rows                                | Delegates to basket affinities                       |

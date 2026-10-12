@@ -12,34 +12,35 @@ This skill is for **Cursor/agents** navigating the repo. The **product home** is
 
 ## Service map
 
-| Area                 | Path              | Role                                                                                                                                                      |
-| -------------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Web**              | `apps/web`        | Next.js UI: chat (`/advisor`), analytics, media, calendar, IG Studio, CRM. **Reads/writes go through GraphQL** (not direct DB).                           |
-| **Mobile**           | `apps/mobile-app` | Expo (React Native) client. **Reads/writes go through GraphQL** (not direct DB).                                                                          |
-| **GraphQL API**      | `apps/graphql`    | Strawberry schema, **SQLAlchemy persistence**, analytics. **Single HTTP API** for structured data used by web and agents.                                 |
-| **LangGraph agents** | `apps/agents`     | FastAPI, LangChain / LangGraph **streaming chat**. **Calls GraphQL over HTTP** (e.g. `httpx`); **does not** open database connections.                    |
-| **Shared packages**  | `packages/*`      | Shared TypeScript libraries; Python: [`packages/menuyukti`](../../../packages/menuyukti) (analytics), optional legacy workspace packages per root config. |
+| Area                    | Path              | Role                                                                                                                                                                                            |
+| ----------------------- | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Web**                 | `apps/web`        | Next.js: operator shell (chat `/advisor`, analytics + **native POS**, inventar, …) and **customer PWA** (Serwist). **GraphQL only** — no direct DB.                                             |
+| **Mobile (deprecated)** | `apps/mobile-app` | Expo CRM client — **inactive**; kept in repo. Prefer **web PWA** for customer work. Still GraphQL/BFF only if touched.                                                                          |
+| **GraphQL API**         | `apps/graphql`    | Strawberry schema, **SQLAlchemy persistence**, analytics, POS, inventory, CRM. **Single HTTP API** for web and agents (and legacy mobile BFF).                                                  |
+| **LangGraph agents**    | `apps/agents`     | FastAPI, LangChain / LangGraph **streaming chat** (`general` \| `image_assistant` \| `inventar`) + holiday/nearby helpers. **Calls GraphQL over HTTP**; **does not** open database connections. |
+| **Shared packages**     | `packages/*`      | Shared TypeScript libraries; Python: [`packages/menuyukti`](../../../packages/menuyukti) (analytics), optional legacy workspace packages per root config.                                       |
 
 ```mermaid
 flowchart LR
-  web["apps/web"]
-  mobile["apps/mobile-app"]
+  web["apps/web operator + PWA"]
   gql["apps/graphql"]
   ag["apps/agents"]
   web -->|"GraphQL HTTP"| gql
-  mobile -->|"GraphQL HTTP"| gql
   ag -->|"GraphQL HTTP"| gql
 ```
 
+`apps/mobile-app` is deprecated/inactive and omitted from the active flow.
+
 ## Domain skills (go deeper)
 
-| Skill                                                    | When to open it                                                                             |
-| -------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| [`menuyukti-agents`](../menuyukti-agents/SKILL.md)       | `apps/agents`: FastAPI, LangGraph streaming chat (general + story), GraphQL clients.        |
-| [`menuyukti-graphql`](../menuyukti-graphql/SKILL.md)     | `apps/graphql`: Strawberry, Alembic, resolvers, queries for web/agents.                     |
-| [`menuyukti-web`](../menuyukti-web/SKILL.md)             | `apps/web`: Next.js, Clerk, next-intl, `/advisor` chat, GraphQL from the browser/BFF.       |
-| [`menuyukti-mobile`](../menuyukti-mobile/SKILL.md)       | `apps/mobile-app`: Expo, CRM enroll, React Navigation, brand/session, mobile HTTP clients.  |
-| [`menuyukti-analytics`](../menuyukti-analytics/SKILL.md) | `packages/menuyukti`: pandas pipelines, Instagram signals, GraphQL `transform` integration. |
+| Skill                                                                            | When to open it                                                                                      |
+| -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| [`menuyukti-agents`](../menuyukti-agents/SKILL.md)                               | `apps/agents`: FastAPI, LangGraph chat (general + image_assistant + inventar), GraphQL clients.      |
+| [`menuyukti-graphql`](../menuyukti-graphql/SKILL.md)                             | `apps/graphql`: Strawberry, Alembic, POS/fiscalization, inventory, CRM, resolvers for web/agents.    |
+| [`menuyukti-web`](../menuyukti-web/SKILL.md)                                     | `apps/web`: Next.js, Clerk, next-intl, `/advisor`, PWA, native POS UI, GraphQL from the browser/BFF. |
+| [`menuyukti-mobile`](../menuyukti-mobile/SKILL.md)                               | Legacy Expo app only — **deprecated / inactive**; prefer web PWA.                                    |
+| [`menuyukti-analytics`](../menuyukti-analytics/SKILL.md)                         | `packages/menuyukti`: pandas pipelines, Instagram signals, GraphQL `transform` integration.          |
+| [`menuyukti-germany-pos-readiness`](../menuyukti-germany-pos-readiness/SKILL.md) | Evidence-based Germany POS engineering readiness audits (fiscal, VAT, payments, GDPR, reliability).  |
 
 ## Cross-app flow: chat
 
@@ -53,7 +54,7 @@ See [`menuyukti-agents`](../menuyukti-agents/SKILL.md) and [`menuyukti-web`](../
 ## Database ownership
 
 - **Schema, migrations, and SQLAlchemy** live **only** in **`apps/graphql`**.
-- **`apps/web`**, **`apps/mobile-app`**, and **`apps/agents`** must **not** add DB drivers, connection strings for app data, or migration scripts for product data.
+- **`apps/web`** and **`apps/agents`** must **not** add DB drivers, connection strings for app data, or migration scripts for product data. Same rule if anyone touches deprecated **`apps/mobile-app`**.
 - Turbo may expose `db:*` scripts when the GraphQL package defines them; **ownership** stays in GraphQL — see `apps/graphql` README / Makefile.
 
 ## pnpm versus uv

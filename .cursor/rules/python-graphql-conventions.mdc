@@ -9,7 +9,9 @@ alwaysApply: false
 ## Stack
 
 - **Strawberry** for GraphQL schema and resolvers.
-- **SQLAlchemy** (via `graphql.data_sources`) for persistence; single `Node` table with polymorphic `node_type` + JSON `data`.
+- **SQLAlchemy** (via `graphql.data_sources`) for persistence:
+  - Polymorphic **`node`** rows (`node_type` + JSON `data`) for some product entities.
+  - **Dedicated tables** for domains such as native POS (`pos_order`, `pos_fiscal_process`, …), CRM, inventory, and related audit/register models — not everything is a `Node`.
 - **ASGI app** exposed as `graphql.server:app` (`uvicorn graphql.server:app`, port **8000**).
 
 ## Directory layout
@@ -18,20 +20,20 @@ alwaysApply: false
 schema/
   query.py          # Root Query — merges mixin classes via multiple inheritance
   mutation.py       # Root Mutation — same pattern
-  queries/          # One mixin per root field (or tight field group)
-  mutations/        # One mixin per mutation (or tight mutation group)
-  types/            # Shared GraphQL output types (NodeType, LocationType, …)
+  queries/          # One mixin per root field (or tight field group; incl. pos_orders, inventory_*)
+  mutations/        # One mixin per mutation (or tight mutation group; incl. pos_orders)
+  types/            # Shared GraphQL output types (NodeType, LocationType, PosOrderType, …)
   node_handlers/    # NodeHandler strategy registry keyed by node_type
   auth.py           # user_id_from_info, is_location_owner, require_location_owner
 data_sources/       # SQLAlchemy models + SessionLocal
-services/           # App-layer orchestration (e.g. sales reports, menu engineering helpers)
+services/           # App-layer orchestration (sales reports, menu engineering, pos_*, fiscalization, …)
 reports/            # Analytics transform / ingest logic
 resolvers/          # Package stub (setuptools); Strawberry fields live under schema/queries|mutations
 scripts/            # One-off dev scripts (never import from schema)
 tests/
 ```
 
-Heavy **analytics and matrix math** belong in **`packages/menuyukti`**; this app imports them and maps results to GraphQL types (see `apps/graphql/README.md`).
+Heavy **analytics and matrix math** belong in **`packages/menuyukti`**; this app imports them and maps results to GraphQL types (see `apps/graphql/README.md`). Native POS fiscalization lives under `services/pos_fiscal*.py` / `pos_fiscalization.py` — see skill `menuyukti-graphql` and `menuyukti-germany-pos-readiness`.
 
 > Field implementations live in **`schema/queries/`** and **`schema/mutations/`**, not under a separate `resolvers/` module beyond the package placeholder.
 

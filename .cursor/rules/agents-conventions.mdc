@@ -40,12 +40,14 @@ routers/
   chat.py                # SSE chat + history (orchestration lives here today)
   format_markdown.py
   style_specs.py
+  nearby_locations_scan.py
+  holiday_relevance.py / holiday_story_draft.py / holiday_style_analysis.py / holiday_visual_brief.py
 server.py
 tests/
   core/
 ```
 
-**Convention:** product work belongs in **`agents/core/chat/`** (`graph.py`, `tools.py`, `prompts.py`, mode-gated tools). Expose HTTP via routers that call **`compile_chat_graph(...)`** (and other `compile_*` / `build_*` factories). Keep **graph topology** out of routers; prefer extracting SSE/history helpers when `routers/chat.py` grows. Do **not** add milestone-run / preset-registry layout as live product.
+**Convention:** product work belongs in **`agents/core/chat/`** (`graph.py`, `tools.py`, `prompts/`, mode-gated tools: `general` \| `image_assistant` \| `inventar`). Expose HTTP via routers that call **`compile_chat_graph(...)`** (and other `compile_*` / `build_*` factories). Keep **graph topology** out of routers; prefer extracting SSE/history helpers when `routers/chat.py` grows. Do **not** add milestone-run / preset-registry layout as live product.
 
 ## Graph factory pattern
 
