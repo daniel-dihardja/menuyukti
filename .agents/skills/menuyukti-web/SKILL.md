@@ -2,15 +2,15 @@
 name: menuyukti-web
 description: >-
   Next.js web app (apps/web): GraphQL data fetching, Clerk auth, next-intl, chat-first UI
-  (`/advisor`, agentThreadId, components/chat), API routes and Zod schemas. Use when changing
-  chat modes, BFF routes, calendar, IG Studio, or web-side GraphQL usage. For performance,
-  caching, and composition refactors, also use nextjs-performance, next-cache-components, and
-  vercel-composition-patterns (see Companion skills).
+  (`/advisor`, agentThreadId, components/chat), native POS cashier, inventar, API routes and
+  Zod schemas. Use when changing chat modes, BFF routes, calendar, IG Studio, POS, or
+  web-side GraphQL usage. For performance, caching, and composition refactors, also use
+  nextjs-performance, next-cache-components, and vercel-composition-patterns (see Companion skills).
 ---
 
 # Menuyukti: `apps/web`
 
-**Next.js** user-facing app: **chat-first** home, analytics, media, IG Studio, calendar, CRM. **All product data** goes through **GraphQL** (no direct DB). Auth: **Clerk**. Copy: **next-intl** (no hardcoded user-facing strings).
+**Next.js** user-facing app: **chat-first** home, analytics (incl. native POS), media, IG Studio, calendar, CRM, inventar, staff. **All product data** goes through **GraphQL** (no direct DB). Auth: **Clerk**. Copy: **next-intl** (no hardcoded user-facing strings).
 
 For monorepo boundaries, see [`menuyukti-repo-orientation`](../menuyukti-repo-orientation/SKILL.md). For UI and i18n rules, see [`.cursor/rules/web-conventions.mdc`](../../../.cursor/rules/web-conventions.mdc).
 
@@ -39,14 +39,15 @@ When improving an existing implementation (not only greenfield features), also r
 | Concern          | Typical locations                                                                                                                                                                                 |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | App Router       | [`apps/web/app/`](../../../apps/web/app/)                                                                                                                                                         |
-| Operator shell   | [`apps/web/app/(protected)/`](<../../../apps/web/app/(protected)/>) — `/advisor`, `/analytics`, `/calendar`, `/ig-studio`, `/media`, …                                                            |
+| Operator shell   | [`apps/web/app/(protected)/`](<../../../apps/web/app/(protected)/>) — `/advisor`, `/analytics`, `/calendar`, `/ig-studio`, `/media`, `/inventar`, `/crm`, `/staff`, …                             |
 | Customer shell   | [`apps/web/app/(customer)/`](<../../../apps/web/app/(customer)/>) — `/home`, `/continue`, `/profile` (auth, no sidebar; free-plan default)                                                        |
 | Chat home        | Public URL **`/advisor`** (rewrites to `app/(protected)/agent/`); thread id = **`agentThreadId`**. Shared UI: [`components/chat/`](../../../apps/web/components/chat/)                            |
-| Chat modes       | [`lib/chat/chat-modes.ts`](../../../apps/web/lib/chat/chat-modes.ts) — `general` \| `image_assistant`                                                                                             |
+| Chat modes       | [`lib/chat/chat-modes.ts`](../../../apps/web/lib/chat/chat-modes.ts) — advisor picker: `general` \| `image_assistant`; also `inventar` (inventar surface only)                                    |
+| Native POS       | [`app/(protected)/analytics/locations/[id]/pos/`](<../../../apps/web/app/(protected)/analytics/locations/[id]/pos/>) — cashier UI; route helper `routes.branchesPos(id)`                          |
 | GraphQL client   | [`apps/web/lib/graphql/client.ts`](../../../apps/web/lib/graphql/client.ts), [`queries/`](../../../apps/web/lib/graphql/queries/), [`node-schemas/`](../../../apps/web/lib/graphql/node-schemas/) |
-| API routes (BFF) | [`apps/web/app/api/`](../../../apps/web/app/api/) — e.g. `/api/chat`, `/api/calendar-entries`, media, styles                                                                                      |
+| API routes (BFF) | [`apps/web/app/api/`](../../../apps/web/app/api/) — e.g. `/api/chat`, `/api/calendar-entries`, `/api/locations/[id]/pos`, media, styles                                                           |
 
-Named product features: see [`.agents/menuyukti-features.md`](../../menuyukti-features.md).
+Named product features: see [`.agents/menuyukti-features.md`](../../menuyukti-features.md). Germany POS readiness audits: [`menuyukti-germany-pos-readiness`](../menuyukti-germany-pos-readiness/SKILL.md).
 
 Commands: [`apps/web/README.md`](../../../apps/web/README.md).
 
@@ -55,9 +56,17 @@ Commands: [`apps/web/README.md`](../../../apps/web/README.md).
 Default authenticated path is **`/advisor`** (`defaultAuthenticatedPath`). Legacy `/workflow` and `/agent` redirect or rewrite to `/advisor`.
 
 - **Thread identity:** `agentThreadId` only (no workflow container for chat).
-- **BFF:** `/api/chat` and `/api/chat/history` forward to agents with `agent_thread_id`.
+- **BFF:** `/api/chat` and `/api/chat/history` forward to agents with `agent_thread_id` (+ `chat_mode`).
 - **UI:** compose from [`components/chat/`](../../../apps/web/components/chat/) (layout, composer, modes, story artifact, visualizations). Feature pages under `app/(protected)/agent/` host the advisor surface.
+- **Inventar:** `/inventar` uses chat mode `inventar` (refill forecast tools) — not shown in the advisor mode picker (`ADVISOR_CHAT_MODE_IDS`).
 - **Do not** restore milestone timeline, preset BFF (`.../milestones/.../run`), or workflow-list CRUD as live product.
+
+## Native POS
+
+- **URL:** `/analytics/locations/[id]/pos` (`routes.branchesPos`).
+- **UI:** `pos-cashier.tsx` and siblings under the same folder (cart, receipt, kitchen ticket, ops sheet).
+- **Data:** GraphQL POS queries/mutations via `lib/graphql/queries/pos-orders` (and related); BFF helper `app/api/locations/[id]/pos`.
+- Persistence and fiscalization live in **`apps/graphql`** — see [`menuyukti-graphql`](../menuyukti-graphql/SKILL.md).
 
 ## GraphQL from the web
 
@@ -67,11 +76,12 @@ Default authenticated path is **`/advisor`** (`defaultAuthenticatedPath`). Legac
 
 ## Related
 
-| Topic          | Skill                                                                  |
-| -------------- | ---------------------------------------------------------------------- |
-| Chat agents    | [`menuyukti-agents`](../menuyukti-agents/SKILL.md)                     |
-| Backend schema | [`menuyukti-graphql`](../menuyukti-graphql/SKILL.md)                   |
-| Monorepo map   | [`menuyukti-repo-orientation`](../menuyukti-repo-orientation/SKILL.md) |
+| Topic             | Skill                                                                            |
+| ----------------- | -------------------------------------------------------------------------------- |
+| Chat agents       | [`menuyukti-agents`](../menuyukti-agents/SKILL.md)                               |
+| Backend schema    | [`menuyukti-graphql`](../menuyukti-graphql/SKILL.md)                             |
+| Germany POS audit | [`menuyukti-germany-pos-readiness`](../menuyukti-germany-pos-readiness/SKILL.md) |
+| Monorepo map      | [`menuyukti-repo-orientation`](../menuyukti-repo-orientation/SKILL.md)           |
 
 ## Canonical docs
 

@@ -2,13 +2,14 @@
 name: menuyukti-agents
 description: >-
   LangGraph agents app (apps/agents): FastAPI, streaming chat ReAct (general +
-  image_assistant modes), graphql_post, format-markdown helper. Use when adding
-  chat tools, routers, or agents-side GraphQL clients.
+  image_assistant + inventar modes), graphql_post, format-markdown, holiday and
+  nearby-locations helpers. Use when adding chat tools, routers, or agents-side
+  GraphQL clients.
 ---
 
 # Menuyukti: `apps/agents`
 
-Python **FastAPI** service: LangChain / LangGraph **streaming chat** only. **`POST /chat`** runs a ReAct graph keyed by **`agent_thread_id`** (modes: `general` | `image_assistant`; legacy alias `story_image_assistant`). Agents call **GraphQL over HTTP** only — no direct DB. Default LLM via Vercel AI Gateway (`openai/gpt-5.4` unless `OPENAI_MODEL` overrides).
+Python **FastAPI** service: LangChain / LangGraph **streaming chat** plus small helper routers. **`POST /chat`** runs a ReAct graph keyed by **`agent_thread_id`** (modes: `general` | `image_assistant` | `inventar`; legacy alias `story_image_assistant`). Agents call **GraphQL over HTTP** only — no direct DB. Default LLM via Vercel AI Gateway (`openai/gpt-5.4` unless `OPENAI_MODEL` overrides).
 
 For monorepo boundaries and pnpm vs uv, see [`menuyukti-repo-orientation`](../menuyukti-repo-orientation/SKILL.md).
 
@@ -22,29 +23,33 @@ When implementing in **`apps/agents`**, follow these skills in addition to this 
 
 ## Layout
 
-| Area           | Path                                                                                                         | Role                                                                                        |
-| -------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
-| Chat           | [`apps/agents/agents/core/chat/`](../../../apps/agents/agents/core/chat/)                                    | `compile_chat_graph` / `create_agent` ReAct + checkpointer; modes, tools, story scratchpad. |
-| Format MD      | [`apps/agents/agents/core/format_markdown/`](../../../apps/agents/agents/core/format_markdown/)              | Preset-driven Markdown cleanup (`POST /format-markdown`).                                   |
-| Style spec     | [`apps/agents/agents/core/style_spec/`](../../../apps/agents/agents/core/style_spec/)                        | Vision draft helpers for IG Studio styles.                                                  |
-| LLM helpers    | [`apps/agents/agents/core/llm_invoke.py`](../../../apps/agents/agents/core/llm_invoke.py)                    | Retries + structured-output errors.                                                         |
-| AI usage       | [`apps/agents/agents/core/ai_usage_client.py`](../../../apps/agents/agents/core/ai_usage_client.py)          | GraphQL metering for LLM / feature usage.                                                   |
-| Web search     | [`apps/agents/agents/core/tavily_search_tool.py`](../../../apps/agents/agents/core/tavily_search_tool.py)    | Optional `search_web` when `TAVILY_API_KEY` is set.                                         |
-| Routers        | [`apps/agents/routers/`](../../../apps/agents/routers/)                                                      | FastAPI routes (`chat`, `format-markdown`, `style_specs`).                                  |
-| GraphQL helper | [`apps/agents/agents/graphql_base.py`](../../../apps/agents/agents/graphql_base.py)                          | `graphql_post` (retry on transient failures).                                               |
-| GraphQL ops    | [`apps/agents/agents/graphql_operations.py`](../../../apps/agents/agents/graphql_operations.py)              | Query/mutation documents used by tools.                                                     |
-| Errors / trace | [`errors.py`](../../../apps/agents/agents/errors.py), [`tracing.py`](../../../apps/agents/agents/tracing.py) | SSE error payloads; LangSmith / `traceparent`.                                              |
-| LLM config     | [`apps/agents/models/llm_config.py`](../../../apps/agents/models/llm_config.py)                              | AI Gateway `ChatOpenAI` factories + reporting extras.                                       |
-| Tests          | [`apps/agents/tests/core/`](../../../apps/agents/tests/core/)                                                | Pytest for chat graph, tools, routers.                                                      |
+| Area              | Path                                                                                                          | Role                                                                                        |
+| ----------------- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Chat              | [`apps/agents/agents/core/chat/`](../../../apps/agents/agents/core/chat/)                                     | `compile_chat_graph` / `create_agent` ReAct + checkpointer; modes, tools, story scratchpad. |
+| Format MD         | [`apps/agents/agents/core/format_markdown/`](../../../apps/agents/agents/core/format_markdown/)               | Preset-driven Markdown cleanup (`POST /format-markdown`).                                   |
+| Style spec        | [`apps/agents/agents/core/style_spec/`](../../../apps/agents/agents/core/style_spec/)                         | Vision draft helpers for IG Studio styles.                                                  |
+| Nearby locations  | [`apps/agents/agents/core/nearby_locations/`](../../../apps/agents/agents/core/nearby_locations/)             | Places scan for playbooks (`POST` via `nearby_locations_scan` router).                      |
+| Holiday helpers   | `core/holiday_relevance/`, `holiday_story_draft/`, `holiday_style_analysis/`, `holiday_visual_brief/`         | Public-holidays playbook draft/analysis helpers (matching routers under `routers/`).        |
+| LLM helpers       | [`apps/agents/agents/core/llm_invoke.py`](../../../apps/agents/agents/core/llm_invoke.py)                     | Retries + structured-output errors.                                                         |
+| AI usage          | [`apps/agents/agents/core/ai_usage_client.py`](../../../apps/agents/agents/core/ai_usage_client.py)           | GraphQL metering for LLM / feature usage.                                                   |
+| Web search        | [`apps/agents/agents/core/tavily_search_tool.py`](../../../apps/agents/agents/core/tavily_search_tool.py)     | Optional `search_web` when `TAVILY_API_KEY` is set.                                         |
+| Location page fmt | [`apps/agents/agents/core/location_page_format.py`](../../../apps/agents/agents/core/location_page_format.py) | Shared location page formatting for tools.                                                  |
+| Routers           | [`apps/agents/routers/`](../../../apps/agents/routers/)                                                       | `chat`, `format_markdown`, `style_specs`, holiday\_\*, `nearby_locations_scan`.             |
+| GraphQL helper    | [`apps/agents/agents/graphql_base.py`](../../../apps/agents/agents/graphql_base.py)                           | `graphql_post` (retry on transient failures).                                               |
+| GraphQL ops       | [`apps/agents/agents/graphql_operations.py`](../../../apps/agents/agents/graphql_operations.py)               | Query/mutation documents used by tools.                                                     |
+| Errors / trace    | [`errors.py`](../../../apps/agents/agents/errors.py), [`tracing.py`](../../../apps/agents/agents/tracing.py)  | SSE error payloads; LangSmith / `traceparent`.                                              |
+| LLM config        | [`apps/agents/models/llm_config.py`](../../../apps/agents/models/llm_config.py)                               | AI Gateway `ChatOpenAI` factories + reporting extras.                                       |
+| Tests             | [`apps/agents/tests/core/`](../../../apps/agents/tests/core/)                                                 | Pytest for chat graph, tools, routers.                                                      |
 
-Chat helpers under `core/chat/` also include `tools_registry.py`, `middleware.py`, `sse_stream.py`, `chat_run_config.py`, `limits.py`, `allowed_models.py`, `story_assets.py`, `history_messages.py`, `http_context.py`, `chart_data.py`, `present_weekly_instagram_schedule.py`, `generate_instagram_post_image.py`, and `generate_confirmation_gate.py`.
+Chat helpers under `core/chat/` also include `tools_registry.py`, `middleware.py`, `sse_stream.py`, `chat_run_config.py`, `limits.py`, `allowed_models.py`, `story_assets.py`, `history_messages.py`, `http_context.py`, `chart_data.py`, `present_weekly_instagram_schedule.py`, `generate_instagram_post_image.py`, `generate_confirmation_gate.py`, `inventory_refill_forecast.py`, and `prompts/` (`general`, `image_assistant`, `inventar`).
 
 Commands and ports: [`apps/agents/README.md`](../../../apps/agents/README.md).
 
 ## Chat (primary product surface)
 
-- **Identity:** `agent_thread_id` (required). Optional `location_id` for location/chart tools; optional `analytics_run_id` for chart tools.
-- **Modes:** `general` (media, weekly schedule, optional location/charts/web search/IG generate) and `image_assistant` (media + story scratchpad + confirmation + IG image generate; format from UI).
+- **Identity:** `agent_thread_id` (required). Optional `location_id` for location/chart/inventar tools; optional `analytics_run_id` for chart tools.
+- **Modes:** `general` (media, weekly schedule, optional location/charts/web search/IG generate); `image_assistant` (media + story scratchpad + confirmation + IG image generate; format from UI); `inventar` (inventory refill forecast + optional location data — used by `/inventar`, not the advisor mode picker).
+- **Tool gates:** [`chat/tools_registry.py`](../../../apps/agents/agents/core/chat/tools_registry.py) — `chat_tools_list` / `chat_tools_list_from_config` bind tools by mode.
 - **Graph:** [`chat/graph.py`](../../../apps/agents/agents/core/chat/graph.py) — `compile_chat_graph` / `create_agent`; tools in [`chat/tools.py`](../../../apps/agents/agents/core/chat/tools.py) plus related modules. Middleware: dynamic prompt, model/tool selection + history trim, model retry, AI usage recording, `wrap_tool_call` error handling. `CHAT_RECURSION_LIMIT` (20) is applied on the router runnable config.
 - **History:** `GET` / `DELETE /chat/history` by `agent_thread_id` (Postgres checkpointer when configured; required in production).
 - **Auth:** routers require `X-Menuyukti-User-Id`; when `INTERNAL_API_KEY` or `GRAPHQL_INTERNAL_API_KEY` is set, inbound requests (except `GET /health`) need matching `X-Internal-Api-Key`. Outbound GraphQL / web generate use the same shared-secret resolution.
