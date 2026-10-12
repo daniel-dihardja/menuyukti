@@ -23,6 +23,12 @@ class PosPaymentMethod(Enum):
     OTHER = "other"
 
 
+@strawberry.enum(description="How a digital-menu (or similar) ticket should be fulfilled.")
+class PosFulfillmentMode(Enum):
+    DINE_IN = "dine_in"
+    PICKUP = "pickup"
+
+
 @strawberry.type(description="Selected modifier snapshot on a POS line.")
 class PosOrderLineModifierType:
     id: int
@@ -96,6 +102,7 @@ class PosOrderType:
     gross: float
     tax_breakdown: list[PosTaxBreakdownType]
     table_label: str | None
+    fulfillment_mode: PosFulfillmentMode | None
     note: str | None
     refunded_at: datetime | None
     fiscal_processes: list[PosFiscalProcessType]

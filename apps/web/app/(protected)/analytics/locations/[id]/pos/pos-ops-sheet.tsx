@@ -122,7 +122,12 @@ export function PosOpsSheet({
                         >
                           <span className="min-w-0 truncate font-medium">
                             {order.billNumber}
-                            {order.tableLabel ? (
+                            {order.fulfillmentMode === 'PICKUP' ? (
+                              <span className="font-normal text-muted-foreground">
+                                {' '}
+                                · {t('fulfillmentPickup')}
+                              </span>
+                            ) : order.tableLabel ? (
                               <span className="font-normal text-muted-foreground">
                                 {' '}
                                 ·{' '}

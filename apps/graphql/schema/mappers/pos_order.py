@@ -10,6 +10,7 @@ from graphql.data_sources.models.pos_order import PosOrder, PosOrderLine, PosOrd
 from graphql.schema.types.pos_order import (
     PosAuditEventType,
     PosFiscalProcessType,
+    PosFulfillmentMode,
     PosOrderLineModifierType,
     PosOrderLineType,
     PosOrderStatus,
@@ -78,6 +79,9 @@ def pos_order_to_gql(row: PosOrder) -> PosOrderType:
     payment: PosPaymentMethod | None = None
     if row.payment_method:
         payment = PosPaymentMethod(row.payment_method)
+    fulfillment: PosFulfillmentMode | None = None
+    if row.fulfillment_mode:
+        fulfillment = PosFulfillmentMode(row.fulfillment_mode)
     breakdown = [
         PosTaxBreakdownType(
             tax_rate_bps=int(b["tax_rate_bps"]),
@@ -107,6 +111,7 @@ def pos_order_to_gql(row: PosOrder) -> PosOrderType:
         gross=cents_to_euros(int(row.gross_cents or 0)),
         tax_breakdown=breakdown,
         table_label=row.table_label,
+        fulfillment_mode=fulfillment,
         note=row.note,
         refunded_at=row.refunded_at,
         fiscal_processes=[pos_fiscal_process_to_gql(p) for p in fiscal_rows],

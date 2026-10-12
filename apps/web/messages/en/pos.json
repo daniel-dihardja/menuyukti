@@ -40,6 +40,7 @@
     "applyTableLabel": "Apply",
     "clearTableLabel": "Clear",
     "tableLabelReadOnly": "Table · {label}",
+    "fulfillmentPickup": "Pickup",
     "total": "Total",
     "pay": "Pay",
     "payCancel": "Cancel",

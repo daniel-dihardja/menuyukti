@@ -69,6 +69,7 @@ export type PosOrder = {
   gross: number
   taxBreakdown: PosTaxBreakdown[]
   tableLabel: string | null
+  fulfillmentMode: 'DINE_IN' | 'PICKUP' | null
   note: string | null
   refundedAt: string | null
   fiscalProcesses: PosFiscalProcess[]
@@ -115,6 +116,7 @@ const POS_ORDER_FIELDS = `
     gross
   }
   tableLabel
+  fulfillmentMode
   note
   refundedAt
   fiscalProcesses {

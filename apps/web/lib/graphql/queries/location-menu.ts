@@ -220,15 +220,19 @@ export type PublicLocationMenuData = {
   publicLocationMenu: PublicLocationMenuPayload | null
 }
 
+export type PublicMenuFulfillmentMode = 'dine_in' | 'pickup'
+
 export const SUBMIT_PUBLIC_MENU_ORDER_MUTATION = `
   mutation SubmitPublicMenuOrder(
     $locationId: Int!
     $lines: [PublicMenuOrderLineInput!]!
+    $fulfillmentMode: PosFulfillmentMode!
     $tableLabel: String
   ) {
     submitPublicMenuOrder(
       locationId: $locationId
       lines: $lines
+      fulfillmentMode: $fulfillmentMode
       tableLabel: $tableLabel
     ) {
       id
@@ -236,6 +240,7 @@ export const SUBMIT_PUBLIC_MENU_ORDER_MUTATION = `
       status
       note
       tableLabel
+      fulfillmentMode
       openedByClerkUserId
       lines {
         menuItemId
@@ -254,6 +259,7 @@ export type SubmitPublicMenuOrderResult = {
   status: string
   note: string | null
   tableLabel: string | null
+  fulfillmentMode: 'DINE_IN' | 'PICKUP' | null
   openedByClerkUserId: string
   lines: Array<{
     menuItemId: number

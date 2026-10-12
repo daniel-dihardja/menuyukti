@@ -1604,6 +1604,12 @@ export type PosOrderLineType = {
   unitPrice: Scalars['Float']['output']
 }
 
+/** How a digital-menu (or similar) ticket should be fulfilled. */
+export enum PosFulfillmentMode {
+  DineIn = 'DINE_IN',
+  Pickup = 'PICKUP',
+}
+
 /** Lifecycle status of a POS ticket. */
 export enum PosOrderStatus {
   Open = 'OPEN',
@@ -1618,6 +1624,7 @@ export type PosOrderType = {
   billNumber: Scalars['String']['output']
   closedAt?: Maybe<Scalars['DateTime']['output']>
   discountAmount: Scalars['Float']['output']
+  fulfillmentMode?: Maybe<PosFulfillmentMode>
   id: Scalars['Int']['output']
   lines: Array<PosOrderLineType>
   locationId: Scalars['Int']['output']

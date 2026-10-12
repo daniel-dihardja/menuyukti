@@ -67,8 +67,13 @@ SUBMIT_MENU_ORDER = """
 mutation SubmitPublicMenuOrder(
   $locationId: Int!
   $lines: [PublicMenuOrderLineInput!]!
+  $fulfillmentMode: PosFulfillmentMode!
 ) {
-  submitPublicMenuOrder(locationId: $locationId, lines: $lines) {
+  submitPublicMenuOrder(
+    locationId: $locationId
+    lines: $lines
+    fulfillmentMode: $fulfillmentMode
+  ) {
     id
     note
     openedByClerkUserId
@@ -383,6 +388,7 @@ def test_complete_order_awards_digital_menu_guest(points_venue):
             variable_values={
                 "locationId": lid,
                 "lines": [{"menuItemId": item_id, "qty": 1}],
+                "fulfillmentMode": "PICKUP",
             },
             context_value={"user_id": GUEST_USER_ID},
         )

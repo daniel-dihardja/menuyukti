@@ -13,6 +13,19 @@ LINE_NOTE_MAX_LEN = 256
 DEFAULT_REGISTER_CODE = "DEFAULT"
 DEFAULT_REGISTER_LABEL = "Register 1"
 PUBLIC_MENU_ORDER_NOTE = "digital_menu"
+FULFILLMENT_DINE_IN = "dine_in"
+FULFILLMENT_PICKUP = "pickup"
+FULFILLMENT_MODES = frozenset({FULFILLMENT_DINE_IN, FULFILLMENT_PICKUP})
+
+
+def normalize_fulfillment_mode(mode: str) -> str:
+    """Require dine_in or pickup; raise ValueError otherwise."""
+    cleaned = (mode or "").strip().lower()
+    if cleaned not in FULFILLMENT_MODES:
+        raise ValueError(
+            f"fulfillment_mode must be one of: {', '.join(sorted(FULFILLMENT_MODES))}"
+        )
+    return cleaned
 
 
 def normalize_table_label(label: str | None) -> str | None:

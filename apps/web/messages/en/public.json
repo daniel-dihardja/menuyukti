@@ -103,8 +103,10 @@
         "signInToOrder": "Sign in to send order",
         "submitFailedTitle": "Order not sent",
         "submitFailed": "Could not send your order. Please try again.",
-        "successTitle": "Order sent",
-        "successBody": "Your ticket is {billNumber}. Staff will take it from here."
+        "successTitleDineIn": "Order in progress",
+        "successBodyDineIn": "Ticket {billNumber} — we are preparing your order and will bring it to table {tableLabel}.",
+        "successTitlePickup": "Order received",
+        "successBodyPickup": "Ticket {billNumber} — we are preparing your order. Pick it up when it is ready."
       },
       "dietary": {
         "vegan": "Vegan",

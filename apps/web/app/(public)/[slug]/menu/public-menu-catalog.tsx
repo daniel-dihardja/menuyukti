@@ -61,6 +61,12 @@ type CartLine = {
   qty: number
 }
 
+type OrderSuccess = {
+  billNumber: string
+  fulfillmentMode: 'dine_in' | 'pickup'
+  tableLabel: string | null
+}
+
 function categorySectionId(category: PublicMenuCategoryView): string {
   return `cat-${category.sortOrder}-${encodeURIComponent(category.name)}`
 }
@@ -163,7 +169,8 @@ export function PublicMenuCatalog({
   const [basketOpen, setBasketOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
-  const [successBillNumber, setSuccessBillNumber] = useState<string | null>(null)
+  const [orderSuccess, setOrderSuccess] = useState<OrderSuccess | null>(null)
+  const fulfillmentMode = tableLabel ? 'dine_in' : 'pickup'
 
   const allItems = useMemo(() => categories.flatMap((category) => category.items), [categories])
   const itemsById = useMemo(() => new Map(allItems.map((item) => [item.id, item])), [allItems])
@@ -223,7 +230,7 @@ export function PublicMenuCatalog({
   }, [isLoaded, isSignedIn, locationId])
 
   const addItem = (item: PublicMenuItemView) => {
-    setSuccessBillNumber(null)
+    setOrderSuccess(null)
     setSubmitError(null)
     setCart((prev) => {
       const existing = prev[item.id]
@@ -290,11 +297,14 @@ export function PublicMenuCatalog({
             menuItemId: line.menuItemId,
             qty: line.qty,
           })),
+          fulfillmentMode,
           tableLabel,
         }),
       })
       const body = (await res.json().catch(() => ({}))) as {
         billNumber?: string
+        fulfillmentMode?: 'DINE_IN' | 'PICKUP' | null
+        tableLabel?: string | null
         message?: string
         error?: string
       }
@@ -310,10 +320,20 @@ export function PublicMenuCatalog({
         setSubmitError(t('order.submitFailed'))
         return
       }
+      const successMode =
+        body.fulfillmentMode === 'DINE_IN'
+          ? 'dine_in'
+          : body.fulfillmentMode === 'PICKUP'
+            ? 'pickup'
+            : fulfillmentMode
       setCart({})
       clearPublicMenuCart(locationId)
       setBasketOpen(false)
-      setSuccessBillNumber(body.billNumber)
+      setOrderSuccess({
+        billNumber: body.billNumber,
+        fulfillmentMode: successMode,
+        tableLabel: body.tableLabel ?? tableLabel,
+      })
     } catch {
       setSubmitError(t('order.submitFailed'))
     } finally {
@@ -333,12 +353,21 @@ export function PublicMenuCatalog({
         hasCart ? 'pb-[calc(7rem+env(safe-area-inset-bottom))]' : undefined,
       )}
     >
-      {successBillNumber ? (
+      {orderSuccess ? (
         <Alert role="status">
           <CheckCircle2 />
-          <AlertTitle>{t('order.successTitle')}</AlertTitle>
+          <AlertTitle>
+            {orderSuccess.fulfillmentMode === 'dine_in'
+              ? t('order.successTitleDineIn')
+              : t('order.successTitlePickup')}
+          </AlertTitle>
           <AlertDescription>
-            {t('order.successBody', { billNumber: successBillNumber })}
+            {orderSuccess.fulfillmentMode === 'dine_in' && orderSuccess.tableLabel
+              ? t('order.successBodyDineIn', {
+                  billNumber: orderSuccess.billNumber,
+                  tableLabel: orderSuccess.tableLabel,
+                })
+              : t('order.successBodyPickup', { billNumber: orderSuccess.billNumber })}
           </AlertDescription>
         </Alert>
       ) : null}

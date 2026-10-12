@@ -14,9 +14,11 @@ from graphql.services import pos_fiscalization as fiscal
 from graphql.services.pos_audit import record_pos_audit
 from graphql.services.pos_money import euros_to_cents
 from graphql.services.pos_order_constants import (
+    FULFILLMENT_PICKUP,
     POS_STATUS_OPEN,
     POS_STATUS_VOID,
     PUBLIC_MENU_ORDER_NOTE,
+    normalize_fulfillment_mode,
     normalize_line_note,
     normalize_table_label,
 )
@@ -71,11 +73,20 @@ def submit_public_menu_order(
     location_id: int,
     clerk_user_id: str,
     lines: Sequence[tuple[int, int]],
+    fulfillment_mode: str,
     table_label: str | None = None,
 ) -> PosOrder:
     """Open a guest digital-menu ticket and add lines (no modifiers / no payment)."""
     if not lines:
         raise ValueError("At least one line is required")
+
+    mode = normalize_fulfillment_mode(fulfillment_mode)
+    if mode == FULFILLMENT_PICKUP:
+        resolved_table: str | None = None
+    else:
+        resolved_table = normalize_table_label(table_label)
+        if resolved_table is None:
+            raise ValueError("table_label is required for dine_in fulfillment")
 
     menu = session.scalar(select(Menu).where(Menu.location_id == location_id))
     if menu is None or not bool(menu.public_enabled):
@@ -85,9 +96,10 @@ def submit_public_menu_order(
         session,
         location_id=location_id,
         clerk_user_id=clerk_user_id,
-        table_label=table_label,
+        table_label=resolved_table,
     )
     order.note = PUBLIC_MENU_ORDER_NOTE
+    order.fulfillment_mode = mode
     session.flush()
 
     for menu_item_id, qty in lines:
