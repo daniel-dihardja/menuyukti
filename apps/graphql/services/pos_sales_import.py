@@ -97,7 +97,10 @@ def ingest_pos_sales_range(
             continue
         if closed_at.tzinfo is None:
             closed_at = closed_at.replace(tzinfo=UTC)
-        revenues = allocate_line_revenues(order.lines, order.discount_amount)
+        from graphql.services.pos_money import cents_to_euros
+
+        discount_euros = cents_to_euros(int(order.discount_cents or 0))
+        revenues = allocate_line_revenues(order.lines, discount_euros)
         for line, revenue in zip(order.lines, revenues, strict=True):
             menus.add(line.name_snapshot)
             mappings.append(
@@ -106,7 +109,7 @@ def ingest_pos_sales_range(
                     "bill_number": order.bill_number,
                     "menu": line.name_snapshot,
                     "qty": line.qty,
-                    "price": float(line.unit_price),
+                    "price": cents_to_euros(int(line.unit_price_cents)),
                     "total_after_bill_discount": revenue,
                     "order_time": closed_at,
                     "menu_category": line.menu_category_snapshot,

@@ -73,6 +73,7 @@ class PosOrderMutations:
                 qty=qty,
                 modifier_option_ids=modifier_option_ids,
                 note=note,
+                actor_clerk_user_id=user_id,
             )
             session.commit()
             refreshed = pos_svc.get_order(session, order.id)
@@ -95,7 +96,9 @@ class PosOrderMutations:
             if line is None:
                 raise ValueError("Order line not found")
             _load_owned_order(session, line.pos_order_id, user_id, info)
-            order = pos_svc.update_line_qty(session, line_id=line_id, qty=qty)
+            order = pos_svc.update_line_qty(
+                session, line_id=line_id, qty=qty, actor_clerk_user_id=user_id
+            )
             session.commit()
             refreshed = pos_svc.get_order(session, order.id)
             return pos_order_to_gql(refreshed or order)
@@ -117,7 +120,9 @@ class PosOrderMutations:
             if line is None:
                 raise ValueError("Order line not found")
             _load_owned_order(session, line.pos_order_id, user_id, info)
-            order = pos_svc.set_line_note(session, line_id=line_id, note=note)
+            order = pos_svc.set_line_note(
+                session, line_id=line_id, note=note, actor_clerk_user_id=user_id
+            )
             session.commit()
             refreshed = pos_svc.get_order(session, order.id)
             return pos_order_to_gql(refreshed or order)
@@ -134,7 +139,7 @@ class PosOrderMutations:
             if line is None:
                 raise ValueError("Order line not found")
             _load_owned_order(session, line.pos_order_id, user_id, info)
-            order = pos_svc.remove_line(session, line_id=line_id)
+            order = pos_svc.remove_line(session, line_id=line_id, actor_clerk_user_id=user_id)
             session.commit()
             refreshed = pos_svc.get_order(session, order.id)
             return pos_order_to_gql(refreshed or order)
@@ -151,7 +156,9 @@ class PosOrderMutations:
             raise ValueError("Missing authenticated user for setPosOrderDiscount")
         with request_session_scope(info) as session:
             _load_owned_order(session, order_id, user_id, info)
-            order = pos_svc.set_discount(session, order_id=order_id, amount=amount)
+            order = pos_svc.set_discount(
+                session, order_id=order_id, amount=amount, actor_clerk_user_id=user_id
+            )
             session.commit()
             refreshed = pos_svc.get_order(session, order.id)
             return pos_order_to_gql(refreshed or order)
@@ -173,7 +180,9 @@ class PosOrderMutations:
             raise ValueError("Missing authenticated user for setPosOrderTableLabel")
         with request_session_scope(info) as session:
             _load_owned_order(session, order_id, user_id, info)
-            order = pos_svc.set_table_label(session, order_id=order_id, label=table_label)
+            order = pos_svc.set_table_label(
+                session, order_id=order_id, label=table_label, actor_clerk_user_id=user_id
+            )
             session.commit()
             refreshed = pos_svc.get_order(session, order.id)
             return pos_order_to_gql(refreshed or order)
@@ -199,6 +208,26 @@ class PosOrderMutations:
                 session,
                 order_id=order_id,
                 payment_method=payment_method.value,
+                actor_clerk_user_id=user_id,
+            )
+            session.commit()
+            refreshed = pos_svc.get_order(session, order.id)
+            return pos_order_to_gql(refreshed or order)
+
+    @strawberry.mutation(
+        description=(
+            "Advance digital-menu prep_status one step forward "
+            "(received → preparing → ready → served|picked_up)."
+        )
+    )
+    def advance_pos_order_prep_status(self, info: strawberry.Info, order_id: int) -> PosOrderType:
+        user_id = user_id_from_info(info)
+        if not user_id:
+            raise ValueError("Missing authenticated user for advancePosOrderPrepStatus")
+        with request_session_scope(info) as session:
+            _load_owned_order(session, order_id, user_id, info)
+            order = pos_svc.advance_pos_order_prep_status(
+                session, order_id=order_id, actor_clerk_user_id=user_id
             )
             session.commit()
             refreshed = pos_svc.get_order(session, order.id)
@@ -211,14 +240,14 @@ class PosOrderMutations:
             raise ValueError("Missing authenticated user for voidPosOrder")
         with request_session_scope(info) as session:
             _load_owned_order(session, order_id, user_id, info)
-            order = pos_svc.void_order(session, order_id=order_id)
+            order = pos_svc.void_order(session, order_id=order_id, actor_clerk_user_id=user_id)
             session.commit()
             refreshed = pos_svc.get_order(session, order.id)
             return pos_order_to_gql(refreshed or order)
 
     @strawberry.mutation(
         description=(
-            "Fully refund a paid POS ticket: delete projected OrderFact rows and "
+            "Fully refund a paid POS ticket: insert compensating OrderFact rows and "
             "set status to refunded. Open/void tickets cannot be refunded."
         )
     )
@@ -229,7 +258,7 @@ class PosOrderMutations:
         with request_session_scope(info) as session:
             order = _load_owned_order(session, order_id, user_id, info)
             require_location_refund_manager(session, order.location_id, user_id, info=info)
-            order = pos_svc.refund_order(session, order_id=order_id)
+            order = pos_svc.refund_order(session, order_id=order_id, actor_clerk_user_id=user_id)
             session.commit()
             refreshed = pos_svc.get_order(session, order.id)
             return pos_order_to_gql(refreshed or order)

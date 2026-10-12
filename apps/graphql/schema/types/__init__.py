@@ -5,7 +5,14 @@ from .menu import MenuCategoryType, MenuItemType, MenuType
 from .menu_item_cogs import MenuItemCogsType
 from .point_earn_rule import PointEarnRuleInput, PointEarnRuleType
 from .point_ledger import MyPointBalanceType, MyPointEntryType, RecordPointEarnEventResultType
-from .pos_order import PosOrderLineType, PosOrderStatus, PosOrderType, PosPaymentMethod
+from .pos_order import (
+    PosFulfillmentMode,
+    PosOrderLineType,
+    PosOrderStatus,
+    PosOrderType,
+    PosPaymentMethod,
+    PublicMenuOrderStatusType,
+)
 from .post import PostType
 from .post_page import PostPageType
 from .post_page_media_version import PostPageMediaVersionType
@@ -33,7 +40,9 @@ __all__ = [
     "PosOrderType",
     "PosOrderLineType",
     "PosOrderStatus",
+    "PosFulfillmentMode",
     "PosPaymentMethod",
+    "PublicMenuOrderStatusType",
     "PublicHolidayType",
     "PublicLocationServiceType",
     "PublicLocationType",

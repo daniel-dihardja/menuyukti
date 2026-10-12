@@ -24,6 +24,7 @@ export type LocationMenuItem = {
   name: string
   description: string
   price: number
+  taxClass: string
   sortOrder: number
   isAvailable: boolean
   imageFilename: string | null
@@ -45,6 +46,8 @@ export type LocationMenu = {
   locationId: number
   title: string
   publicEnabled: boolean
+  allowDineIn: boolean
+  allowPickup: boolean
   headerImageFilename: string | null
   categories: LocationMenuCategory[]
 }
@@ -73,6 +76,7 @@ const MENU_ITEM_FIELDS = `
   name
   description
   price
+  taxClass
   sortOrder
   isAvailable
   imageFilename
@@ -88,6 +92,8 @@ const MENU_FIELDS = `
   locationId
   title
   publicEnabled
+  allowDineIn
+  allowPickup
   headerImageFilename
   categories {
     id
@@ -130,12 +136,16 @@ export const UPDATE_LOCATION_PUBLIC_MENU_MUTATION = `
     $publicEnabled: Boolean
     $publicSlug: String
     $headerImageFilename: String
+    $allowDineIn: Boolean
+    $allowPickup: Boolean
   ) {
     updateLocationPublicMenu(
       locationId: $locationId
       publicEnabled: $publicEnabled
       publicSlug: $publicSlug
       headerImageFilename: $headerImageFilename
+      allowDineIn: $allowDineIn
+      allowPickup: $allowPickup
     ) {
       locationId
       publicEnabled
@@ -168,6 +178,8 @@ export const PUBLIC_LOCATION_MENU_QUERY = `
       workspaceId
       mediaOwnerClerkUserId
       headerImageFilename
+      allowDineIn
+      allowPickup
       categories {
         name
         sortOrder
@@ -180,11 +192,27 @@ export const PUBLIC_LOCATION_MENU_QUERY = `
           imageFilename
           dietaryTags
           allergens
+          publishedFeedbackCount
+          publishedFeedbacks {
+            sentiment
+            body
+            guestDisplayName
+            ownerReply
+            createdAt
+          }
         }
       }
     }
   }
 `
+
+export type PublicMenuItemFeedbackSnippet = {
+  sentiment: 'POSITIVE' | 'NEGATIVE' | null
+  body: string
+  guestDisplayName: string | null
+  ownerReply: string | null
+  createdAt: string
+}
 
 export type PublicMenuItem = {
   id: number
@@ -195,6 +223,8 @@ export type PublicMenuItem = {
   imageFilename: string | null
   dietaryTags: string[]
   allergens: string[]
+  publishedFeedbackCount: number
+  publishedFeedbacks: PublicMenuItemFeedbackSnippet[]
 }
 
 export type PublicMenuCategory = {
@@ -211,6 +241,8 @@ export type PublicLocationMenuPayload = {
   workspaceId: string | null
   mediaOwnerClerkUserId: string | null
   headerImageFilename: string | null
+  allowDineIn: boolean
+  allowPickup: boolean
   categories: PublicMenuCategory[]
 }
 
@@ -218,15 +250,19 @@ export type PublicLocationMenuData = {
   publicLocationMenu: PublicLocationMenuPayload | null
 }
 
+export type PublicMenuFulfillmentMode = 'dine_in' | 'pickup'
+
 export const SUBMIT_PUBLIC_MENU_ORDER_MUTATION = `
   mutation SubmitPublicMenuOrder(
     $locationId: Int!
     $lines: [PublicMenuOrderLineInput!]!
+    $fulfillmentMode: PosFulfillmentMode!
     $tableLabel: String
   ) {
     submitPublicMenuOrder(
       locationId: $locationId
       lines: $lines
+      fulfillmentMode: $fulfillmentMode
       tableLabel: $tableLabel
     ) {
       id
@@ -234,6 +270,8 @@ export const SUBMIT_PUBLIC_MENU_ORDER_MUTATION = `
       status
       note
       tableLabel
+      fulfillmentMode
+      prepStatus
       openedByClerkUserId
       lines {
         menuItemId
@@ -252,6 +290,8 @@ export type SubmitPublicMenuOrderResult = {
   status: string
   note: string | null
   tableLabel: string | null
+  fulfillmentMode: 'DINE_IN' | 'PICKUP' | null
+  prepStatus: 'RECEIVED' | 'PREPARING' | 'READY' | 'SERVED' | 'PICKED_UP' | null
   openedByClerkUserId: string
   lines: Array<{
     menuItemId: number
@@ -264,4 +304,56 @@ export type SubmitPublicMenuOrderResult = {
 
 export type SubmitPublicMenuOrderData = {
   submitPublicMenuOrder: SubmitPublicMenuOrderResult
+}
+
+export const PUBLIC_MENU_ORDER_QUERY = `
+  query PublicMenuOrder($orderId: Int!) {
+    publicMenuOrder(orderId: $orderId) {
+      id
+      billNumber
+      status
+      prepStatus
+      fulfillmentMode
+      tableLabel
+      lines {
+        menuItemId
+        name
+      }
+    }
+  }
+`
+
+export type PublicMenuOrderResult = {
+  id: number
+  billNumber: string
+  status: string
+  prepStatus: 'RECEIVED' | 'PREPARING' | 'READY' | 'SERVED' | 'PICKED_UP' | null
+  fulfillmentMode: 'DINE_IN' | 'PICKUP' | null
+  tableLabel: string | null
+  lines?: Array<{ menuItemId: number; name: string }>
+}
+
+export type PublicMenuOrderData = {
+  publicMenuOrder: PublicMenuOrderResult | null
+}
+
+export const MY_OPEN_PUBLIC_MENU_ORDER_QUERY = `
+  query MyOpenPublicMenuOrder($locationId: Int!) {
+    myOpenPublicMenuOrder(locationId: $locationId) {
+      id
+      billNumber
+      status
+      prepStatus
+      fulfillmentMode
+      tableLabel
+      lines {
+        menuItemId
+        name
+      }
+    }
+  }
+`
+
+export type MyOpenPublicMenuOrderData = {
+  myOpenPublicMenuOrder: PublicMenuOrderResult | null
 }

@@ -8,6 +8,8 @@ from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 import pytest
+from starlette.testclient import TestClient
+
 from graphql.crm_auth.tokens import hash_opaque_token
 from graphql.data_sources import (
     CrmApp,
@@ -23,7 +25,6 @@ from graphql.data_sources import (
 from graphql.schema import schema
 from graphql.server import app as fastapi_app
 from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID, graphql_auth_context
-from starlette.testclient import TestClient
 
 os.environ.setdefault("CRM_JWT_SECRET", "test-crm-jwt-secret-at-least-32-chars!!")
 

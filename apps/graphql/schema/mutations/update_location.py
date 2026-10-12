@@ -31,6 +31,9 @@ class UpdateLocationMutation:
         city: str | None = UNSET,
         country: str | None = UNSET,
         currency: str | None = UNSET,
+        legal_name: str | None = UNSET,
+        tax_number: str | None = UNSET,
+        vat_id: str | None = UNSET,
         public_slug: str | None = UNSET,
         opening_hours: list[OpeningHourInput] | None = UNSET,
     ) -> LocationType:
@@ -60,6 +63,12 @@ class UpdateLocationMutation:
                 row.country = country.strip() if country else None
             if currency is not UNSET:
                 row.currency = currency.strip().upper() if currency else None
+            if legal_name is not UNSET:
+                row.legal_name = legal_name.strip() if legal_name else None
+            if tax_number is not UNSET:
+                row.tax_number = tax_number.strip() if tax_number else None
+            if vat_id is not UNSET:
+                row.vat_id = vat_id.strip() if vat_id else None
             if public_slug is not UNSET:
                 apply_location_public_slug(session, row, public_slug)
 

@@ -5,6 +5,12 @@ from unittest.mock import patch
 
 import pandas as pd
 import pytest
+from menuyukti.core.analytics import compute_menu_heatmaps_from_orders
+from menuyukti.core.analytics.calculate_menu_engineering_matrix import (
+    compute_menu_engineering_from_orders,
+)
+from menuyukti.core.analytics.extract_menu_items import extract_menu_items
+
 from graphql.schema import schema
 from graphql.services.promotion_menu_items import (
     _peak_day_from_weekly,
@@ -16,11 +22,6 @@ from graphql.tests.fixtures.qa_data import (
     qa_order_rows_for_heatmap,
     qa_order_rows_for_matrix,
 )
-from menuyukti.core.analytics import compute_menu_heatmaps_from_orders
-from menuyukti.core.analytics.calculate_menu_engineering_matrix import (
-    compute_menu_engineering_from_orders,
-)
-from menuyukti.core.analytics.extract_menu_items import extract_menu_items
 
 PROMOTION_MENU_ITEMS_QUERY = """
 query PromotionMenuItems($runId: ID!, $locationId: ID) {

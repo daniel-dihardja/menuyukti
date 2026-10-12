@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 import pytest
+
 from graphql.data_sources import (
     InventoryCatalogItem,
     InventoryStock,
@@ -20,12 +21,17 @@ from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID
 
 @pytest.fixture
 def inventar_workspace_and_location():
+    from graphql.tests.pos_cleanup import clear_pos_for_locations, delete_all_pos_orders
+
     session = SessionLocal()
     try:
         session.query(InventoryStockMovement).delete()
         session.query(InventoryStock).delete()
         session.query(InventoryCatalogItem).delete()
         session.query(LocationArea).delete()
+        delete_all_pos_orders(session)
+        location_ids = [int(row[0]) for row in session.query(Location.id).all()]
+        clear_pos_for_locations(session, location_ids)
         session.query(Location).delete()
         session.query(WorkspaceMembership).delete()
         session.query(Workspace).delete()
@@ -57,12 +63,21 @@ def inventar_workspace_and_location():
     finally:
         session.close()
     yield payload
+    from graphql.tests.pos_cleanup import clear_pos_for_locations
+
     session = SessionLocal()
     try:
         session.query(InventoryStockMovement).delete()
         session.query(InventoryStock).delete()
         session.query(InventoryCatalogItem).delete()
         session.query(LocationArea).delete()
+        location_ids = [
+            int(row[0])
+            for row in session.query(Location.id)
+            .filter(Location.workspace_id == payload["workspace_id"])
+            .all()
+        ]
+        clear_pos_for_locations(session, location_ids)
         session.query(Location).filter(Location.workspace_id == payload["workspace_id"]).delete()
         session.query(WorkspaceMembership).filter(
             WorkspaceMembership.workspace_id == payload["workspace_id"]
@@ -92,6 +107,8 @@ def inventar_two_locations(inventar_workspace_and_location):
         **inventar_workspace_and_location,
         "location_id_b": second_id,
     }
+    from graphql.tests.pos_cleanup import clear_pos_for_locations
+
     session = SessionLocal()
     try:
         session.query(InventoryStockMovement).filter(
@@ -99,6 +116,7 @@ def inventar_two_locations(inventar_workspace_and_location):
         ).delete()
         session.query(InventoryStock).filter(InventoryStock.location_id == second_id).delete()
         session.query(LocationArea).filter(LocationArea.location_id == second_id).delete()
+        clear_pos_for_locations(session, [second_id])
         session.query(Location).filter(Location.id == second_id).delete()
         session.commit()
     finally:

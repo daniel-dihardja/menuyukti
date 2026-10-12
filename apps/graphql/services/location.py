@@ -21,7 +21,10 @@ from graphql.data_sources import (
     MenuItemCogs,
     Node,
     OrderFact,
+    PosOrder,
 )
+from graphql.data_sources.models.pos_fiscal_process import PosFiscalProcess
+from graphql.data_sources.models.pos_order import PosOrderLine, PosOrderLineModifier
 
 VALID_WEEKDAYS = ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
 
@@ -117,10 +120,59 @@ def delete_location_row(session: Session, location_id: int) -> bool:
     Idempotent: returns True when the location is already gone.
     Instagram posts keep their rows but lose the location link.
     Workspace-scoped inventar catalog items are left intact.
+
+    Refuses when paid or refunded POS tickets exist (fiscal retention).
     """
     loc = session.get(Location, location_id)
     if loc is None:
         return True
+
+    retained = (
+        session.query(PosOrder.id)
+        .filter(
+            PosOrder.location_id == location_id,
+            PosOrder.status.in_(("paid", "refunded")),
+        )
+        .count()
+    )
+    if retained:
+        raise ValueError(
+            "Cannot delete location while paid or refunded POS tickets exist. "
+            "Fiscal history must be retained; remove or archive via a dedicated process later."
+        )
+
+    # Open/void tickets only reach here. Fiscal FK is RESTRICT — clear fiscal
+    # rows and tickets before location CASCADE would try (and fail) to delete them.
+    open_void_ids = [
+        int(row[0])
+        for row in session.query(PosOrder.id)
+        .filter(
+            PosOrder.location_id == location_id,
+            PosOrder.status.in_(("open", "void")),
+        )
+        .all()
+    ]
+    if open_void_ids:
+        session.query(PosFiscalProcess).filter(
+            PosFiscalProcess.pos_order_id.in_(open_void_ids)
+        ).delete(synchronize_session=False)
+        line_ids = [
+            int(row[0])
+            for row in session.query(PosOrderLine.id)
+            .filter(PosOrderLine.pos_order_id.in_(open_void_ids))
+            .all()
+        ]
+        if line_ids:
+            session.query(PosOrderLineModifier).filter(
+                PosOrderLineModifier.pos_order_line_id.in_(line_ids)
+            ).delete(synchronize_session=False)
+            session.query(PosOrderLine).filter(PosOrderLine.id.in_(line_ids)).delete(
+                synchronize_session=False
+            )
+        session.query(PosOrder).filter(PosOrder.id.in_(open_void_ids)).delete(
+            synchronize_session=False
+        )
+        session.flush()
 
     # Break circular Location.node_id ↔ Node.id before other cleanup.
     if loc.node_id is not None:

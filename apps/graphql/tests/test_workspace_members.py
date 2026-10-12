@@ -24,8 +24,15 @@ INVITEE_ID = "clerk_test_invitee"
 
 
 def _seed_workspace(*, owner_id: str = OWNER_ID, with_member: bool = False) -> int:
+    from graphql.data_sources import Location
+    from graphql.tests.pos_cleanup import clear_location_dependents, delete_all_pos_orders
+
     session = SessionLocal()
     try:
+        delete_all_pos_orders(session)
+        location_ids = [int(row[0]) for row in session.query(Location.id).all()]
+        clear_location_dependents(session, location_ids)
+        session.query(Location).delete()
         session.query(WorkspaceMembership).delete()
         session.query(Workspace).delete()
         session.commit()

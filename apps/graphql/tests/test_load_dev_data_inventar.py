@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 import pytest
+
 from graphql.data_sources import (
     InventoryCatalogItem,
     InventoryStock,
@@ -35,15 +36,9 @@ def inventar_seed_workspace():
         # SQLite tests often run without PRAGMA foreign_keys, so deleting a location
         # can leave orphan PosOrder rows. Clear them before creating a new location
         # so autoincrement id reuse cannot reattach stale tickets.
-        from graphql.data_sources.models.pos_order import (
-            PosOrder,
-            PosOrderLine,
-            PosOrderLineModifier,
-        )
+        from graphql.tests.pos_cleanup import delete_all_pos_orders
 
-        session.query(PosOrderLineModifier).delete()
-        session.query(PosOrderLine).delete()
-        session.query(PosOrder).delete()
+        delete_all_pos_orders(session)
 
         now = datetime.now(tz=UTC)
         ws = Workspace(name="Dev Seed Inventar WS", owner_clerk_user_id=SEED_USER)
@@ -79,35 +74,29 @@ def inventar_seed_workspace():
 
     session = SessionLocal()
     try:
-        from graphql.data_sources.models.pos_order import (
-            PosOrder,
-            PosOrderLine,
-            PosOrderLineModifier,
-        )
+        from graphql.tests.pos_cleanup import delete_pos_orders
 
-        order_ids = [
+        location_ids = [
             row[0]
-            for row in session.query(PosOrder.id)
-            .filter(PosOrder.location_id == payload["inventar_id"])
+            for row in session.query(Location.id)
+            .filter(Location.workspace_id == payload["workspace_id"])
             .all()
         ]
-        if order_ids:
-            line_ids = [
-                row[0]
-                for row in session.query(PosOrderLine.id)
-                .filter(PosOrderLine.pos_order_id.in_(order_ids))
-                .all()
-            ]
-            if line_ids:
-                session.query(PosOrderLineModifier).filter(
-                    PosOrderLineModifier.pos_order_line_id.in_(line_ids)
-                ).delete(synchronize_session=False)
-            session.query(PosOrderLine).filter(PosOrderLine.pos_order_id.in_(order_ids)).delete(
+        delete_pos_orders(session, location_ids=location_ids)
+        menu_ids = [
+            row[0]
+            for row in session.query(Menu.id).filter(Menu.location_id.in_(location_ids)).all()
+        ]
+        if menu_ids:
+            # SQLite tests often run without PRAGMA foreign_keys, so deleting a
+            # location/menu can leave orphan MenuItem rows that reattach on id reuse.
+            session.query(MenuItem).filter(MenuItem.menu_id.in_(menu_ids)).delete(
                 synchronize_session=False
             )
-            session.query(PosOrder).filter(PosOrder.id.in_(order_ids)).delete(
+            session.query(MenuCategory).filter(MenuCategory.menu_id.in_(menu_ids)).delete(
                 synchronize_session=False
             )
+            session.query(Menu).filter(Menu.id.in_(menu_ids)).delete(synchronize_session=False)
         reset_inventar(session, payload["workspace_id"])
         session.query(Location).filter(Location.workspace_id == payload["workspace_id"]).delete()
         session.query(WorkspaceMembership).filter(
@@ -287,13 +276,16 @@ def test_warung_sunda_menu_seed(inventar_seed_workspace):
         from graphql.data_sources.models.pos_order import PosOrder, PosOrderLine
 
         sample_item = items[0]
+        from graphql.services.pos_money import euros_to_cents
+
+        cents = euros_to_cents(float(sample_item.price))
         order = PosOrder(
             location_id=inventar.id,
             bill_number="MY-20260918-00001",
             status="paid",
             opened_by_clerk_user_id=SEED_USER,
             payment_method="cash",
-            discount_amount=0.0,
+            discount_cents=0,
         )
         session.add(order)
         session.flush()
@@ -305,8 +297,12 @@ def test_warung_sunda_menu_seed(inventar_seed_workspace):
                 menu_category_snapshot="Makanan",
                 menu_category_detail_snapshot="Makanan",
                 qty=1,
-                unit_price=float(sample_item.price),
-                line_total=float(sample_item.price),
+                unit_price_cents=cents,
+                tax_class_snapshot="standard",
+                tax_rate_bps_snapshot=1900,
+                net_cents=0,
+                tax_cents=0,
+                gross_cents=cents,
                 sort_order=0,
             )
         )
@@ -375,15 +371,17 @@ def test_kaffeestube_menu_seed(inventar_seed_workspace):
         assert any("dairy_free" in (row.dietary_tags or []) for row in items)
 
         from graphql.data_sources.models.pos_order import PosOrder, PosOrderLine
+        from graphql.services.pos_money import euros_to_cents
 
         sample_item = items[0]
+        cents = euros_to_cents(float(sample_item.price))
         order = PosOrder(
             location_id=analytics.id,
             bill_number="KS-20260701-00001",
             status="paid",
             opened_by_clerk_user_id=SEED_USER,
             payment_method="cash",
-            discount_amount=0.0,
+            discount_cents=0,
         )
         session.add(order)
         session.flush()
@@ -395,8 +393,12 @@ def test_kaffeestube_menu_seed(inventar_seed_workspace):
                 menu_category_snapshot="Coffee",
                 menu_category_detail_snapshot="Espresso",
                 qty=1,
-                unit_price=float(sample_item.price),
-                line_total=float(sample_item.price),
+                unit_price_cents=cents,
+                tax_class_snapshot="standard",
+                tax_rate_bps_snapshot=1900,
+                net_cents=0,
+                tax_cents=0,
+                gross_cents=cents,
                 sort_order=0,
             )
         )

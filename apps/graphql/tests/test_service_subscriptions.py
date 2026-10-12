@@ -5,9 +5,9 @@ from __future__ import annotations
 import asyncio
 
 import pytest
+
 from graphql.data_sources import (
     Location,
-    ServiceSubscription,
     SessionLocal,
     Workspace,
     WorkspaceMembership,
@@ -80,29 +80,9 @@ OTHER_USER = "clerk_other_user"
 
 
 def _clear(session) -> None:
-    session.query(ServiceSubscription).filter(
-        ServiceSubscription.workspace_id.in_(
-            session.query(Workspace.id).filter(
-                Workspace.owner_clerk_user_id.in_([GRAPHQL_TEST_USER_ID, OTHER_USER])
-            )
-        )
-    ).delete(synchronize_session=False)
-    session.query(Menu).filter(
-        Menu.location_id.in_(
-            session.query(Location.id).filter(
-                Location.clerk_user_id.in_([GRAPHQL_TEST_USER_ID, OTHER_USER])
-            )
-        )
-    ).delete(synchronize_session=False)
-    session.query(Location).filter(
-        Location.clerk_user_id.in_([GRAPHQL_TEST_USER_ID, OTHER_USER])
-    ).delete()
-    session.query(WorkspaceMembership).filter(
-        WorkspaceMembership.clerk_user_id.in_([GRAPHQL_TEST_USER_ID, OTHER_USER])
-    ).delete()
-    session.query(Workspace).filter(
-        Workspace.owner_clerk_user_id.in_([GRAPHQL_TEST_USER_ID, OTHER_USER])
-    ).delete()
+    from graphql.tests.pos_cleanup import clear_workspaces_for_owners
+
+    clear_workspaces_for_owners(session, [GRAPHQL_TEST_USER_ID, OTHER_USER])
     session.commit()
 
 

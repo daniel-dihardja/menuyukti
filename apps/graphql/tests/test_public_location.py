@@ -6,6 +6,7 @@ import asyncio
 from datetime import UTC, datetime, timedelta
 
 import pytest
+
 from graphql.data_sources import (
     Location,
     ServiceSubscription,
@@ -99,27 +100,15 @@ mutation SetSlug($locationId: Int!, $publicSlug: String) {
 
 
 def _clear(session) -> None:
+    from graphql.tests.pos_cleanup import clear_workspaces_for_owners
+
     session.query(Prediction).update(
         {Prediction.winning_outcome_id: None},
         synchronize_session=False,
     )
     session.query(PredictionOutcome).delete(synchronize_session=False)
     session.query(Prediction).delete(synchronize_session=False)
-    session.query(Menu).filter(
-        Menu.location_id.in_(
-            session.query(Location.id).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID)
-        )
-    ).delete(synchronize_session=False)
-    session.query(ServiceSubscription).filter(
-        ServiceSubscription.location_id.in_(
-            session.query(Location.id).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID)
-        )
-    ).delete(synchronize_session=False)
-    session.query(Location).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
-    session.query(WorkspaceMembership).filter(
-        WorkspaceMembership.clerk_user_id == GRAPHQL_TEST_USER_ID
-    ).delete()
-    session.query(Workspace).filter(Workspace.owner_clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
+    clear_workspaces_for_owners(session, [GRAPHQL_TEST_USER_ID])
     session.commit()
 
 

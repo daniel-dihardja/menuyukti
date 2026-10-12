@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, date, datetime, time
+from datetime import date, datetime
 
 import strawberry
 
@@ -10,22 +10,23 @@ import graphql.services.pos_orders as pos_svc
 from graphql.context import request_session_scope
 from graphql.data_sources import Location
 from graphql.schema.auth import is_location_owner, user_id_from_info
-from graphql.schema.mappers.pos_order import pos_order_to_gql
+from graphql.schema.mappers.pos_order import (
+    pos_audit_event_to_gql,
+    pos_order_to_gql,
+    public_menu_order_status_to_gql,
+)
 from graphql.schema.types.pos_order import (
+    PosAuditEventType,
     PosDayPaymentTotalType,
     PosDaySummaryType,
     PosOrderStatus,
     PosOrderType,
     PosPaymentMethod,
+    PublicMenuOrderStatusType,
 )
-
-
-def _start_of_utc_day(when: datetime | None = None) -> datetime:
-    now = when or datetime.now(UTC)
-    if now.tzinfo is None:
-        now = now.replace(tzinfo=UTC)
-    day = now.astimezone(UTC).date()
-    return datetime.combine(day, time.min, tzinfo=UTC)
+from graphql.services.pos_audit import list_audit_events_for_order
+from graphql.services.pos_order_constants import PUBLIC_MENU_ORDER_NOTE
+from graphql.services.pos_time import berlin_calendar_date, start_of_berlin_day
 
 
 @strawberry.type
@@ -46,7 +47,7 @@ class PosOrdersQuery:
     @strawberry.field(
         description=(
             "List POS tickets for a location. Defaults to tickets opened since "
-            "start of the current UTC day."
+            "start of the current Europe/Berlin business day."
         )
     )
     def pos_orders(
@@ -65,7 +66,7 @@ class PosOrdersQuery:
                 return []
             if not is_location_owner(session, location_id, user_id, info=info):
                 return []
-            since_dt = since if since is not None else _start_of_utc_day()
+            since_dt = since if since is not None else start_of_berlin_day()
             status_value = status.value if status is not None else None
             orders = pos_svc.list_orders(
                 session,
@@ -91,7 +92,7 @@ class PosOrdersQuery:
                 return None
             if not is_location_owner(session, location_id, user_id, info=info):
                 return None
-            day = date.fromisoformat(on_date) if on_date else datetime.now(UTC).date()
+            day = date.fromisoformat(on_date) if on_date else berlin_calendar_date()
             summary = pos_svc.day_summary(session, location_id=location_id, on_date=day)
             paid = [
                 PosDayPaymentTotalType(
@@ -113,3 +114,61 @@ class PosOrdersQuery:
                 refunded_gross_total=float(summary["refunded_gross_total"]),  # type: ignore[arg-type]
                 open_tickets_remaining=int(summary["open_tickets_remaining"]),  # type: ignore[arg-type]
             )
+
+    @strawberry.field(description="Append-only audit events for a POS ticket (owner-only).")
+    def pos_audit_events(self, info: strawberry.Info, order_id: int) -> list[PosAuditEventType]:
+        user_id = user_id_from_info(info)
+        if not user_id:
+            return []
+        with request_session_scope(info) as session:
+            order = pos_svc.get_order(session, order_id)
+            if order is None:
+                return []
+            if not is_location_owner(session, order.location_id, user_id, info=info):
+                return []
+            events = list_audit_events_for_order(session, order_id)
+            return [pos_audit_event_to_gql(event) for event in events]
+
+    @strawberry.field(
+        description=(
+            "Guest status poll for a digital-menu order the caller opened. "
+            "Returns null if unauthenticated, not the opener, or not a digital-menu ticket."
+        )
+    )
+    def public_menu_order(
+        self, info: strawberry.Info, order_id: int
+    ) -> PublicMenuOrderStatusType | None:
+        user_id = user_id_from_info(info)
+        if not user_id:
+            return None
+        with request_session_scope(info) as session:
+            order = pos_svc.get_order(session, order_id)
+            if order is None:
+                return None
+            if order.note != PUBLIC_MENU_ORDER_NOTE:
+                return None
+            if order.opened_by_clerk_user_id != user_id:
+                return None
+            return public_menu_order_status_to_gql(order)
+
+    @strawberry.field(
+        description=(
+            "Signed-in guest: latest open digital-menu ticket at this location "
+            "(for restoring My order after reload when local storage is empty)."
+        )
+    )
+    def my_open_public_menu_order(
+        self, info: strawberry.Info, location_id: int
+    ) -> PublicMenuOrderStatusType | None:
+        user_id = user_id_from_info(info)
+        if not user_id:
+            return None
+        with request_session_scope(info) as session:
+            order = pos_svc.get_open_public_menu_order_for_guest(
+                session,
+                location_id=location_id,
+                clerk_user_id=user_id,
+            )
+            if order is None:
+                return None
+            return public_menu_order_status_to_gql(order, include_lines=True)

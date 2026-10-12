@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 
 import pytest
+
 from graphql.data_sources import Location, LocationManualBriefInput, SessionLocal
 from graphql.schema import schema
 from graphql.services.manual_quick_profile import (

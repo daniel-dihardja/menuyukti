@@ -65,6 +65,7 @@ export type LocationMenuFormItem = {
   name: string
   price: string
   description: string
+  taxClass: 'standard' | 'reduced'
   isAvailable: boolean
   imageFilename: string | null
   dietaryTags: MenuDietaryTag[]
@@ -104,6 +105,7 @@ type SavePayloadItem = {
   name: string
   price: number
   description: string
+  taxClass: 'standard' | 'reduced'
   isAvailable: boolean
   imageFilename: string | null
   dietaryTags: MenuDietaryTag[]
@@ -141,6 +143,7 @@ function newItem(): LocationMenuFormItem {
     name: '',
     price: '',
     description: '',
+    taxClass: 'standard',
     isAvailable: true,
     imageFilename: null,
     dietaryTags: [],
@@ -376,6 +379,23 @@ function LocationMenuItemRow({
                 className="tabular-nums"
               />
             </InputGroup>
+          </Field>
+          <Field>
+            <FieldLabel htmlFor={`menu-tax-${item.key}`}>{t('fields.taxClass')}</FieldLabel>
+            <select
+              id={`menu-tax-${item.key}`}
+              className="border-input bg-background h-9 w-full rounded-md border px-3 text-sm"
+              value={item.taxClass}
+              disabled={loading}
+              onChange={(e) =>
+                onUpdate({
+                  taxClass: e.target.value === 'reduced' ? 'reduced' : 'standard',
+                })
+              }
+            >
+              <option value="standard">{t('fields.taxClassStandard')}</option>
+              <option value="reduced">{t('fields.taxClassReduced')}</option>
+            </select>
           </Field>
           <Field
             orientation="horizontal"
@@ -717,6 +737,7 @@ export function LocationMenuForm({
             name,
             price,
             description,
+            taxClass: row.taxClass,
             isAvailable: row.isAvailable,
             imageFilename: row.imageFilename,
             dietaryTags: row.dietaryTags,

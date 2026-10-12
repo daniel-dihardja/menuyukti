@@ -7,6 +7,7 @@ import uuid
 from datetime import UTC, datetime, timedelta
 
 import pytest
+
 from graphql.data_sources import (
     Location,
     PointEarnRule,
@@ -45,6 +46,7 @@ from graphql.services.service_subscriptions import (
 )
 from graphql.services.votings import ACTION_KEY_VOTING_VOTE
 from graphql.tests.auth_context import graphql_auth_context
+from graphql.tests.pos_cleanup import delete_pos_orders
 
 CLEAR = """
 mutation ClearWorkspaceServiceData($targetClerkUserId: String!, $serviceKey: String!) {
@@ -161,9 +163,7 @@ def clear_workspace():
             session.query(ServiceSubscription).filter(
                 ServiceSubscription.location_id == lid
             ).delete(synchronize_session=False)
-            session.query(PosOrder).filter(PosOrder.location_id == lid).delete(
-                synchronize_session=False
-            )
+            delete_pos_orders(session, location_ids=[lid])
             menu = session.query(Menu).filter(Menu.location_id == lid).first()
             if menu is not None:
                 session.query(MenuItem).filter(MenuItem.menu_id == menu.id).delete(
@@ -537,7 +537,9 @@ def test_clear_digital_menu(clear_workspace):
         session.add(order)
         session.flush()
         from graphql.data_sources.models.pos_order import PosOrderLine
+        from graphql.services.pos_money import euros_to_cents
 
+        cents = euros_to_cents(float(item.price))
         session.add(
             PosOrderLine(
                 pos_order_id=order.id,
@@ -545,8 +547,12 @@ def test_clear_digital_menu(clear_workspace):
                 name_snapshot=item.name,
                 menu_category_snapshot="Mains",
                 qty=1,
-                unit_price=float(item.price),
-                line_total=float(item.price),
+                unit_price_cents=cents,
+                tax_class_snapshot="standard",
+                tax_rate_bps_snapshot=1900,
+                net_cents=0,
+                tax_cents=0,
+                gross_cents=cents,
                 sort_order=0,
             )
         )

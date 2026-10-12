@@ -12,6 +12,7 @@ from graphql.schema.mappers.menu import menu_to_gql
 from graphql.schema.mutations.public_slug import apply_location_public_slug
 from graphql.schema.types.menu import MenuType
 from graphql.services.menu import get_or_create_menu
+from graphql.services.pos_order_constants import validate_menu_fulfillment_allows
 from graphql.services.service_subscriptions import (
     SERVICE_KEY_DIGITAL_MENU,
     is_active_subscription,
@@ -41,6 +42,8 @@ class UpdateLocationPublicMenuMutation:
         public_enabled: bool | None = UNSET,
         public_slug: str | None = UNSET,
         header_image_filename: str | None = UNSET,
+        allow_dine_in: bool | None = UNSET,
+        allow_pickup: bool | None = UNSET,
     ) -> LocationPublicMenuSettingsType:
         user_id = user_id_from_info(info)
         if not user_id:
@@ -81,6 +84,20 @@ class UpdateLocationPublicMenuMutation:
             if header_image_filename is not UNSET:
                 cleaned = (header_image_filename or "").strip() or None
                 menu.header_image_filename = cleaned
+
+            next_allow_dine_in = (
+                bool(allow_dine_in) if allow_dine_in is not UNSET else bool(menu.allow_dine_in)
+            )
+            next_allow_pickup = (
+                bool(allow_pickup) if allow_pickup is not UNSET else bool(menu.allow_pickup)
+            )
+            if allow_dine_in is not UNSET or allow_pickup is not UNSET:
+                validate_menu_fulfillment_allows(
+                    allow_dine_in=next_allow_dine_in,
+                    allow_pickup=next_allow_pickup,
+                )
+                menu.allow_dine_in = next_allow_dine_in
+                menu.allow_pickup = next_allow_pickup
 
             session.commit()
             session.refresh(menu)

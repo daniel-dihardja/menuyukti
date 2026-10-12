@@ -5,16 +5,17 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
-from graphql.data_sources import AnalyticsRun, Location, OrderFact, SessionLocal
-from graphql.reports import normalize_sales_report
-from graphql.reports.transform import line_items_to_dataframe
-from graphql.schema import schema
-from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID, graphql_auth_context
 from menuyukti.core.analytics.calculate_menu_heatmaps import (
     calculate_menu_heatmaps,
     compute_menu_heatmaps_from_orders,
 )
 from starlette.datastructures import Headers, UploadFile
+
+from graphql.data_sources import AnalyticsRun, Location, OrderFact, SessionLocal
+from graphql.reports import normalize_sales_report
+from graphql.reports.transform import line_items_to_dataframe
+from graphql.schema import schema
+from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID, graphql_auth_context
 
 ROOT_DIR = Path(__file__).resolve().parents[3]
 REPORT_FILE = ROOT_DIR / "reports" / "Sales_Recapitulation_Detail_Report_Test.xlsx"

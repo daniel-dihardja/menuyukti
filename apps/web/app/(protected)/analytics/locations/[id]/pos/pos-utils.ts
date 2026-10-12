@@ -2,7 +2,7 @@ import type {
   LocationMenuItem,
   LocationMenuModifierGroup,
 } from '@/lib/graphql/queries/location-menu'
-import type { PosOrderStatus } from '@/lib/graphql/queries/pos-orders'
+import type { PosOrder, PosOrderStatus, PosPrepStatus } from '@/lib/graphql/queries/pos-orders'
 
 export type TodayFilter = 'all' | PosOrderStatus
 export type DiscountMode = 'amount' | 'percent'
@@ -73,4 +73,23 @@ export function statusBadgeVariant(
     default:
       return 'outline'
   }
+}
+
+const PREP_TERMINAL: ReadonlySet<PosPrepStatus> = new Set(['SERVED', 'PICKED_UP'])
+
+export function isDigitalMenuOrder(order: Pick<PosOrder, 'note' | 'fulfillmentMode'>): boolean {
+  return order.note === 'digital_menu' || order.fulfillmentMode != null
+}
+
+export function nextPrepStatus(
+  current: PosPrepStatus | null,
+  fulfillmentMode: PosOrder['fulfillmentMode'],
+): PosPrepStatus | null {
+  if (!current || PREP_TERMINAL.has(current)) return null
+  if (current === 'RECEIVED') return 'PREPARING'
+  if (current === 'PREPARING') return 'READY'
+  if (current === 'READY') {
+    return fulfillmentMode === 'PICKUP' ? 'PICKED_UP' : 'SERVED'
+  }
+  return null
 }

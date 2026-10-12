@@ -4,6 +4,11 @@ from io import BytesIO
 from pathlib import Path
 
 import pytest
+from menuyukti.core.analytics.calculate_menu_engineering_matrix import (
+    compute_menu_engineering_from_orders,
+)
+from starlette.datastructures import Headers, UploadFile
+
 from graphql.data_sources import (
     AnalyticsRun,
     Location,
@@ -14,10 +19,6 @@ from graphql.data_sources import (
 from graphql.schema import schema
 from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID, graphql_auth_context
 from graphql.tests.fixtures.qa_data import qa_order_rows_for_matrix
-from menuyukti.core.analytics.calculate_menu_engineering_matrix import (
-    compute_menu_engineering_from_orders,
-)
-from starlette.datastructures import Headers, UploadFile
 
 ROOT_DIR = Path(__file__).resolve().parents[3]
 REPORT_FILE = ROOT_DIR / "reports" / "Sales_Recapitulation_Detail_Report_Test.xlsx"

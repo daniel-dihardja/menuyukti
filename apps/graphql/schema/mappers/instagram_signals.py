@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 import strawberry
+
 from graphql.schema.types.instagram_signals import (
     AdditionalSignalsType,
     BestPostingWindowType,

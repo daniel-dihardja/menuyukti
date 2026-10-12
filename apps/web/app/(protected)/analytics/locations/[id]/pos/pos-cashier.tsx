@@ -44,12 +44,11 @@ import { PosCustomizeDialog } from './pos-customize-dialog'
 import { PosKitchenTicket } from './pos-kitchen-ticket'
 import { PosMenuGrid } from './pos-menu-grid'
 import { PosOpsSheet } from './pos-ops-sheet'
-import { PosReceipt } from './pos-receipt'
+import { PosReceipt, type PosReceiptSeller } from './pos-receipt'
 import {
   availableModifierGroups,
   type DiscountMode,
   roundMoney,
-  todayIsoDate,
   type TodayFilter,
 } from './pos-utils'
 
@@ -57,10 +56,13 @@ type PosCashierProps = {
   locationId: number
   locationName: string
   currencyCode: string
+  seller: PosReceiptSeller
   initialMenu: LocationMenu | null
   initialOrders: PosOrder[]
   /** Presigned photo URLs keyed by `imageFilename` (same source as media / public menu). */
   itemImageUrls: Record<string, string>
+  /** YYYY-MM-DD from the server (after `connection()`), used as day-close default. */
+  initialDayCloseDate: string
 }
 
 async function posAction(locationId: number, body: Record<string, unknown>): Promise<PosOrder> {
@@ -90,9 +92,11 @@ export function PosCashier({
   locationId,
   locationName,
   currencyCode,
+  seller,
   initialMenu,
   initialOrders,
   itemImageUrls,
+  initialDayCloseDate,
 }: PosCashierProps) {
   const t = useTranslations('pos')
   const [pending, startTransition] = useTransition()
@@ -115,7 +119,7 @@ export function PosCashier({
   const [lineNoteDraft, setLineNoteDraft] = useState('')
   const [editingNoteLineId, setEditingNoteLineId] = useState<number | null>(null)
   const [editNoteDraft, setEditNoteDraft] = useState('')
-  const [dayCloseDate, setDayCloseDate] = useState(todayIsoDate)
+  const [dayCloseDate, setDayCloseDate] = useState(initialDayCloseDate)
   const [daySummary, setDaySummary] = useState<PosDaySummary | null>(null)
 
   const isEditable = currentOrder?.status === 'OPEN'
@@ -433,6 +437,18 @@ export function PosCashier({
     })
   }
 
+  const handleAdvancePrep = () => {
+    if (!currentOrder) return
+    run(async () => {
+      const updated = await posAction(locationId, {
+        action: 'advancePrep',
+        orderId: currentOrder.id,
+      })
+      showOrder(updated)
+      await refreshToday(updated.id)
+    })
+  }
+
   const handleRefund = () => {
     if (!currentOrder || !canRefund) return
     run(async () => {
@@ -507,6 +523,7 @@ export function PosCashier({
       setCartSheetOpen(false)
       setKitchenOpen(true)
     },
+    onAdvancePrep: handleAdvancePrep,
     onVoid: () => {
       setCartSheetOpen(false)
       setVoidConfirmOpen(true)
@@ -708,6 +725,7 @@ export function PosCashier({
               order={currentOrder}
               locationName={locationName}
               currencyCode={currencyCode}
+              seller={seller}
             />
           ) : null}
           <DialogFooter className="print:hidden sm:justify-between">

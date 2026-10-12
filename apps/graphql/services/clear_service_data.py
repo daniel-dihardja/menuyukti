@@ -11,6 +11,7 @@ from graphql.data_sources.models.location import Location
 from graphql.data_sources.models.menu import MenuCategory
 from graphql.data_sources.models.point_earn_rule import PointEarnRule
 from graphql.data_sources.models.point_ledger_entry import PointLedgerEntry
+from graphql.data_sources.models.pos_fiscal_process import PosFiscalProcess
 from graphql.data_sources.models.pos_order import (
     PosOrder,
     PosOrderLine,
@@ -232,11 +233,29 @@ def _clear_digital_menu(
     if not location_ids:
         return
 
+    retained = (
+        session.query(PosOrder.id)
+        .filter(
+            PosOrder.location_id.in_(location_ids),
+            PosOrder.status.in_(("paid", "refunded")),
+        )
+        .count()
+    )
+    if retained:
+        raise ValueError(
+            "Cannot clear digital menu while paid or refunded POS tickets exist. "
+            "Archive or keep fiscal history; only open/void tickets may be cleared."
+        )
+
     order_ids = [
         int(row[0])
         for row in session.query(PosOrder.id).filter(PosOrder.location_id.in_(location_ids)).all()
     ]
     if order_ids:
+        # Fiscal FK is RESTRICT — delete open/void fiscal rows before tickets.
+        session.query(PosFiscalProcess).filter(PosFiscalProcess.pos_order_id.in_(order_ids)).delete(
+            synchronize_session=False
+        )
         line_ids = [
             int(row[0])
             for row in session.query(PosOrderLine.id)

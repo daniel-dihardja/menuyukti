@@ -1,6 +1,7 @@
 """Startup security guards for GraphQL internal API key."""
 
 import pytest
+
 from graphql.server import is_production_runtime, validate_startup_security
 
 
@@ -17,6 +18,7 @@ def test_validate_startup_allows_local_without_key(monkeypatch: pytest.MonkeyPat
 
 def test_validate_startup_requires_key_in_production(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("GRAPHQL_ENV", "production")
+    monkeypatch.setenv("POS_FISCAL_PROVIDER", "off")
     monkeypatch.setenv("INTERNAL_API_KEY", "")
     monkeypatch.setenv("GRAPHQL_INTERNAL_API_KEY", "")
     with pytest.raises(RuntimeError, match="INTERNAL_API_KEY"):
@@ -27,6 +29,7 @@ def test_validate_startup_accepts_graphql_internal_api_key(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setenv("GRAPHQL_ENV", "production")
+    monkeypatch.setenv("POS_FISCAL_PROVIDER", "off")
     monkeypatch.setenv("INTERNAL_API_KEY", "")
     monkeypatch.setenv("GRAPHQL_INTERNAL_API_KEY", "secret")
     validate_startup_security()

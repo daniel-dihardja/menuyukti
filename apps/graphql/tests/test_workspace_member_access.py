@@ -72,9 +72,14 @@ def _auth(user_id: str) -> dict[str, str]:
 
 
 def _clear_workspace_tables(session) -> None:
+    from graphql.tests.pos_cleanup import clear_location_dependents, delete_all_pos_orders
+
     session.query(InstagramPostPageMediaVersion).delete()
     session.query(InstagramPostPage).delete()
     session.query(InstagramPost).delete()
+    delete_all_pos_orders(session)
+    location_ids = [int(row[0]) for row in session.query(Location.id).all()]
+    clear_location_dependents(session, location_ids)
     session.query(Location).delete()
     session.query(WorkspaceMembership).delete()
     session.query(Workspace).delete()

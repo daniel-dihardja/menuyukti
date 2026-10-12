@@ -5,6 +5,7 @@ from __future__ import annotations
 from unittest import mock
 
 import pytest
+
 from graphql.data_sources import Location, LocationManualBriefInput, SessionLocal
 from graphql.schema import schema
 from graphql.schema.queries.location_manual_brief_input import load_manual_brief_type

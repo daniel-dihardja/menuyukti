@@ -11,6 +11,7 @@ alwaysApply: true
 - Workspaces are defined in `pnpm-workspace.yaml`: **`apps/*`** and **`packages/*`**.
 - **Node:** `>=20` (see root `package.json` `engines`).
 - **Root `devDependencies`** are shared tooling (ESLint, TypeScript, Prettier, Turbo). Only add a root devDependency if it is truly shared across packages; otherwise add it to the specific app/package.
+- **`apps/mobile-app`** remains in the workspace but is **deprecated / inactive** (customer focus is the **web PWA** in `apps/web`). Keep it buildable if touched; do not treat it as an active product track.
 
 ## Turborepo
 

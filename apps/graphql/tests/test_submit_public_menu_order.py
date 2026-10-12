@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 
 import pytest
+
 from graphql.data_sources import (
     Location,
     ServiceSubscription,
@@ -13,7 +14,6 @@ from graphql.data_sources import (
     WorkspaceMembership,
 )
 from graphql.data_sources.models.menu import Menu, MenuCategory, MenuItem
-from graphql.data_sources.models.pos_order import PosOrder, PosOrderLine
 from graphql.schema import schema
 from graphql.services.pos_orders import PUBLIC_MENU_ORDER_NOTE
 from graphql.services.service_subscriptions import (
@@ -22,6 +22,7 @@ from graphql.services.service_subscriptions import (
 )
 from graphql.services.workspace_plan import WORKSPACE_PLAN_PRO
 from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID, graphql_auth_context
+from graphql.tests.pos_cleanup import clear_location_dependents
 
 GUEST_USER_ID = "clerk_guest_diner"
 
@@ -29,11 +30,13 @@ _SUBMIT = """
 mutation SubmitPublicMenuOrder(
   $locationId: Int!
   $lines: [PublicMenuOrderLineInput!]!
+  $fulfillmentMode: PosFulfillmentMode!
   $tableLabel: String
 ) {
   submitPublicMenuOrder(
     locationId: $locationId
     lines: $lines
+    fulfillmentMode: $fulfillmentMode
     tableLabel: $tableLabel
   ) {
     id
@@ -42,6 +45,8 @@ mutation SubmitPublicMenuOrder(
     status
     note
     tableLabel
+    fulfillmentMode
+    prepStatus
     openedByClerkUserId
     lines {
       menuItemId
@@ -131,12 +136,7 @@ def published_menu_location():
 
     session = SessionLocal()
     try:
-        session.query(PosOrderLine).filter(
-            PosOrderLine.pos_order_id.in_(
-                session.query(PosOrder.id).filter(PosOrder.location_id == lid)
-            )
-        ).delete(synchronize_session=False)
-        session.query(PosOrder).filter(PosOrder.location_id == lid).delete()
+        clear_location_dependents(session, [lid])
         session.query(MenuItem).filter(
             MenuItem.menu_id.in_(session.query(Menu.id).filter(Menu.location_id == lid))
         ).delete(synchronize_session=False)
@@ -153,7 +153,7 @@ def published_menu_location():
         session.close()
 
 
-def test_guest_can_submit_public_menu_order(published_menu_location):
+def test_guest_can_submit_dine_in_public_menu_order(published_menu_location):
     location_id, item_id, _unavailable = published_menu_location
     result = asyncio.run(
         schema.execute(
@@ -161,6 +161,7 @@ def test_guest_can_submit_public_menu_order(published_menu_location):
             variable_values={
                 "locationId": location_id,
                 "lines": [{"menuItemId": item_id, "qty": 2}],
+                "fulfillmentMode": "DINE_IN",
                 "tableLabel": "T12",
             },
             context_value={"user_id": GUEST_USER_ID},
@@ -172,6 +173,8 @@ def test_guest_can_submit_public_menu_order(published_menu_location):
     assert order["status"] == "OPEN"
     assert order["note"] == PUBLIC_MENU_ORDER_NOTE
     assert order["tableLabel"] == "T12"
+    assert order["fulfillmentMode"] == "DINE_IN"
+    assert order["prepStatus"] == "RECEIVED"
     assert order["openedByClerkUserId"] == GUEST_USER_ID
     assert order["billNumber"]
     assert len(order["lines"]) == 1
@@ -179,6 +182,45 @@ def test_guest_can_submit_public_menu_order(published_menu_location):
     assert order["lines"][0]["qty"] == 2
     assert order["lines"][0]["nameSnapshot"] == "Nasi Goreng"
     assert order["lines"][0]["lineTotal"] == 25.0
+
+
+def test_guest_can_submit_pickup_public_menu_order(published_menu_location):
+    location_id, item_id, _ = published_menu_location
+    result = asyncio.run(
+        schema.execute(
+            _SUBMIT,
+            variable_values={
+                "locationId": location_id,
+                "lines": [{"menuItemId": item_id, "qty": 1}],
+                "fulfillmentMode": "PICKUP",
+                "tableLabel": "ignored-table",
+            },
+            context_value={"user_id": GUEST_USER_ID},
+        )
+    )
+    assert result.errors is None, result.errors
+    order = result.data["submitPublicMenuOrder"]
+    assert order["fulfillmentMode"] == "PICKUP"
+    assert order["prepStatus"] == "RECEIVED"
+    assert order["tableLabel"] is None
+    assert order["note"] == PUBLIC_MENU_ORDER_NOTE
+
+
+def test_dine_in_requires_table_label(published_menu_location):
+    location_id, item_id, _ = published_menu_location
+    result = asyncio.run(
+        schema.execute(
+            _SUBMIT,
+            variable_values={
+                "locationId": location_id,
+                "lines": [{"menuItemId": item_id, "qty": 1}],
+                "fulfillmentMode": "DINE_IN",
+            },
+            context_value={"user_id": GUEST_USER_ID},
+        )
+    )
+    assert result.errors
+    assert "table_label is required" in result.errors[0].message
 
 
 def test_submit_requires_auth(published_menu_location):
@@ -189,6 +231,7 @@ def test_submit_requires_auth(published_menu_location):
             variable_values={
                 "locationId": location_id,
                 "lines": [{"menuItemId": item_id, "qty": 1}],
+                "fulfillmentMode": "PICKUP",
             },
             context_value={},
         )
@@ -213,6 +256,7 @@ def test_submit_rejected_when_menu_unpublished(published_menu_location):
             variable_values={
                 "locationId": location_id,
                 "lines": [{"menuItemId": item_id, "qty": 1}],
+                "fulfillmentMode": "PICKUP",
             },
             context_value={"user_id": GUEST_USER_ID},
         )
@@ -229,6 +273,7 @@ def test_submit_rejected_for_unavailable_item(published_menu_location):
             variable_values={
                 "locationId": location_id,
                 "lines": [{"menuItemId": unavailable_id, "qty": 1}],
+                "fulfillmentMode": "PICKUP",
             },
             context_value={"user_id": GUEST_USER_ID},
         )
@@ -242,7 +287,11 @@ def test_submit_rejected_for_empty_lines(published_menu_location):
     result = asyncio.run(
         schema.execute(
             _SUBMIT,
-            variable_values={"locationId": location_id, "lines": []},
+            variable_values={
+                "locationId": location_id,
+                "lines": [],
+                "fulfillmentMode": "PICKUP",
+            },
             context_value={"user_id": GUEST_USER_ID},
         )
     )
@@ -259,9 +308,203 @@ def test_owner_can_still_submit_as_guest_path(published_menu_location):
             variable_values={
                 "locationId": location_id,
                 "lines": [{"menuItemId": item_id, "qty": 1}],
+                "fulfillmentMode": "PICKUP",
             },
             context_value=graphql_auth_context(),
         )
     )
     assert result.errors is None, result.errors
     assert result.data["submitPublicMenuOrder"]["openedByClerkUserId"] == GRAPHQL_TEST_USER_ID
+
+
+def test_submit_rejected_when_pickup_disabled(published_menu_location):
+    location_id, item_id, _ = published_menu_location
+    session = SessionLocal()
+    try:
+        menu = session.query(Menu).filter(Menu.location_id == location_id).one()
+        menu.allow_pickup = False
+        menu.allow_dine_in = True
+        session.commit()
+    finally:
+        session.close()
+
+    result = asyncio.run(
+        schema.execute(
+            _SUBMIT,
+            variable_values={
+                "locationId": location_id,
+                "lines": [{"menuItemId": item_id, "qty": 1}],
+                "fulfillmentMode": "PICKUP",
+            },
+            context_value={"user_id": GUEST_USER_ID},
+        )
+    )
+    assert result.errors
+    assert "pickup fulfillment is not enabled" in result.errors[0].message
+
+
+def test_submit_rejected_when_dine_in_disabled(published_menu_location):
+    location_id, item_id, _ = published_menu_location
+    session = SessionLocal()
+    try:
+        menu = session.query(Menu).filter(Menu.location_id == location_id).one()
+        menu.allow_dine_in = False
+        menu.allow_pickup = True
+        session.commit()
+    finally:
+        session.close()
+
+    result = asyncio.run(
+        schema.execute(
+            _SUBMIT,
+            variable_values={
+                "locationId": location_id,
+                "lines": [{"menuItemId": item_id, "qty": 1}],
+                "fulfillmentMode": "DINE_IN",
+                "tableLabel": "T1",
+            },
+            context_value={"user_id": GUEST_USER_ID},
+        )
+    )
+    assert result.errors
+    assert "dine_in fulfillment is not enabled" in result.errors[0].message
+
+
+_CLOSE = """
+mutation ClosePosOrder($orderId: Int!, $paymentMethod: PosPaymentMethod!) {
+  closePosOrder(orderId: $orderId, paymentMethod: $paymentMethod) {
+    id
+    status
+  }
+}
+"""
+
+
+def test_second_submit_appends_to_open_ticket(published_menu_location):
+    location_id, item_id, _ = published_menu_location
+    first = asyncio.run(
+        schema.execute(
+            _SUBMIT,
+            variable_values={
+                "locationId": location_id,
+                "lines": [{"menuItemId": item_id, "qty": 1}],
+                "fulfillmentMode": "DINE_IN",
+                "tableLabel": "A1",
+            },
+            context_value={"user_id": GUEST_USER_ID},
+        )
+    )
+    assert first.errors is None, first.errors
+    first_order = first.data["submitPublicMenuOrder"]
+    first_id = int(first_order["id"])
+    first_bill = first_order["billNumber"]
+
+    second = asyncio.run(
+        schema.execute(
+            _SUBMIT,
+            variable_values={
+                "locationId": location_id,
+                "lines": [{"menuItemId": item_id, "qty": 2}],
+                "fulfillmentMode": "PICKUP",
+                "tableLabel": "ignored",
+            },
+            context_value={"user_id": GUEST_USER_ID},
+        )
+    )
+    assert second.errors is None, second.errors
+    order = second.data["submitPublicMenuOrder"]
+    assert int(order["id"]) == first_id
+    assert order["billNumber"] == first_bill
+    assert order["fulfillmentMode"] == "DINE_IN"
+    assert order["tableLabel"] == "A1"
+    assert len(order["lines"]) == 2
+    assert sum(int(line["qty"]) for line in order["lines"]) == 3
+
+
+def test_submit_after_paid_creates_new_ticket(published_menu_location):
+    location_id, item_id, _ = published_menu_location
+    first = asyncio.run(
+        schema.execute(
+            _SUBMIT,
+            variable_values={
+                "locationId": location_id,
+                "lines": [{"menuItemId": item_id, "qty": 1}],
+                "fulfillmentMode": "PICKUP",
+            },
+            context_value={"user_id": GUEST_USER_ID},
+        )
+    )
+    assert first.errors is None, first.errors
+    first_id = int(first.data["submitPublicMenuOrder"]["id"])
+
+    closed = asyncio.run(
+        schema.execute(
+            _CLOSE,
+            variable_values={"orderId": first_id, "paymentMethod": "CASH"},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert closed.errors is None, closed.errors
+    assert closed.data["closePosOrder"]["status"] == "PAID"
+
+    second = asyncio.run(
+        schema.execute(
+            _SUBMIT,
+            variable_values={
+                "locationId": location_id,
+                "lines": [{"menuItemId": item_id, "qty": 1}],
+                "fulfillmentMode": "PICKUP",
+            },
+            context_value={"user_id": GUEST_USER_ID},
+        )
+    )
+    assert second.errors is None, second.errors
+    second_id = int(second.data["submitPublicMenuOrder"]["id"])
+    assert second_id != first_id
+
+
+def test_append_resets_prep_when_ready_or_served(published_menu_location):
+    location_id, item_id, _ = published_menu_location
+    first = asyncio.run(
+        schema.execute(
+            _SUBMIT,
+            variable_values={
+                "locationId": location_id,
+                "lines": [{"menuItemId": item_id, "qty": 1}],
+                "fulfillmentMode": "DINE_IN",
+                "tableLabel": "B2",
+            },
+            context_value={"user_id": GUEST_USER_ID},
+        )
+    )
+    assert first.errors is None, first.errors
+    order_id = int(first.data["submitPublicMenuOrder"]["id"])
+
+    session = SessionLocal()
+    try:
+        from graphql.data_sources.models.pos_order import PosOrder
+
+        row = session.get(PosOrder, order_id)
+        assert row is not None
+        row.prep_status = "ready"
+        session.commit()
+    finally:
+        session.close()
+
+    second = asyncio.run(
+        schema.execute(
+            _SUBMIT,
+            variable_values={
+                "locationId": location_id,
+                "lines": [{"menuItemId": item_id, "qty": 1}],
+                "fulfillmentMode": "DINE_IN",
+                "tableLabel": "B2",
+            },
+            context_value={"user_id": GUEST_USER_ID},
+        )
+    )
+    assert second.errors is None, second.errors
+    order = second.data["submitPublicMenuOrder"]
+    assert int(order["id"]) == order_id
+    assert order["prepStatus"] == "RECEIVED"
+    assert len(order["lines"]) == 2

@@ -1,6 +1,8 @@
 import type { AbstractIntlMessages } from 'next-intl'
 
 export const DEFAULT_LOCALE = 'en'
+export const SUPPORTED_LOCALES = ['en', 'de'] as const
+export type AppLocale = (typeof SUPPORTED_LOCALES)[number]
 
 async function loadEnglishMessages(): Promise<AbstractIntlMessages> {
   const chunks = await Promise.all([
@@ -52,16 +54,57 @@ async function loadEnglishMessages(): Promise<AbstractIntlMessages> {
   return Object.assign({}, ...chunks.map((m) => m.default)) as AbstractIntlMessages
 }
 
+function deepMergeMessages(
+  base: AbstractIntlMessages,
+  overlay: AbstractIntlMessages,
+): AbstractIntlMessages {
+  const out: Record<string, unknown> = { ...base }
+  for (const [key, value] of Object.entries(overlay)) {
+    const existing = out[key]
+    if (
+      value &&
+      typeof value === 'object' &&
+      !Array.isArray(value) &&
+      existing &&
+      typeof existing === 'object' &&
+      !Array.isArray(existing)
+    ) {
+      out[key] = deepMergeMessages(existing as AbstractIntlMessages, value as AbstractIntlMessages)
+    } else {
+      out[key] = value
+    }
+  }
+  return out as AbstractIntlMessages
+}
+
 /**
  * Load next-intl message catalogs for a locale.
  * Catalogs live under `messages/<locale>/<namespace>.json` (one top-level key each).
- * Falls back to English when the locale is missing (only `en` is shipped today).
+ * For ``de``, English is the base; ``messages/de/pos.json`` and ``messages/de/public.json``
+ * overlay those namespaces (deep-merged so partial public catalogs keep English keys).
  * Touch this module when message JSON changes fail to hot-reload under Turbopack.
  */
 export async function loadMessages(locale: string): Promise<AbstractIntlMessages> {
-  // Future locales: branch on locale and load messages/<locale>/*.json.
-  if (locale !== DEFAULT_LOCALE) {
-    return loadEnglishMessages()
+  const base = await loadEnglishMessages()
+  if (locale === 'de') {
+    const [dePos, dePublic] = await Promise.all([
+      import('../messages/de/pos.json'),
+      import('../messages/de/public.json'),
+    ])
+    return deepMergeMessages(deepMergeMessages(base, dePos.default), dePublic.default)
   }
-  return loadEnglishMessages()
+  return base
+}
+
+/** Pick ``de`` or ``en`` from an Accept-Language header value. */
+export function resolveLocaleFromAcceptLanguage(header: string | null | undefined): AppLocale {
+  if (!header?.trim()) return DEFAULT_LOCALE
+  const parts = header.split(',')
+  for (const part of parts) {
+    const tag = part.trim().split(';')[0]?.trim().toLowerCase()
+    if (!tag) continue
+    if (tag === 'de' || tag.startsWith('de-')) return 'de'
+    if (tag === 'en' || tag.startsWith('en-')) return 'en'
+  }
+  return DEFAULT_LOCALE
 }

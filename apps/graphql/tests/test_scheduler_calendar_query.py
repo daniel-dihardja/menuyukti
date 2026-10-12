@@ -57,10 +57,19 @@ mutation CreateCalendarEntry(
 
 
 def _create_location(name: str) -> int:
+    from graphql.tests.pos_cleanup import clear_location_dependents
+
     session = SessionLocal()
     try:
         session.query(CalendarEntry).delete()
         session.query(Node).delete()
+        location_ids = [
+            int(row[0])
+            for row in session.query(Location.id)
+            .filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID)
+            .all()
+        ]
+        clear_location_dependents(session, location_ids)
         session.query(Location).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
         session.commit()
 
@@ -159,10 +168,19 @@ def test_scheduler_calendar_returns_manual_entries_window():
 
 
 def test_scheduler_calendar_empty_for_other_user_location():
+    from graphql.tests.pos_cleanup import clear_location_dependents
+
     session = SessionLocal()
     try:
         session.query(CalendarEntry).delete()
         session.query(Node).delete()
+        location_ids = [
+            int(row[0])
+            for row in session.query(Location.id)
+            .filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID)
+            .all()
+        ]
+        clear_location_dependents(session, location_ids)
         session.query(Location).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
         session.commit()
 

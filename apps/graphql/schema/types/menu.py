@@ -36,6 +36,7 @@ class MenuItemType:
     name: str
     description: str
     price: float
+    tax_class: str
     sort_order: int
     is_available: bool
     image_filename: str | None
@@ -59,6 +60,8 @@ class MenuType:
     location_id: int
     title: str
     public_enabled: bool
+    allow_dine_in: bool
+    allow_pickup: bool
     header_image_filename: str | None
     categories: list[MenuCategoryType]
 
@@ -83,6 +86,7 @@ class MenuItemInput:
     name: str
     price: float
     description: str | None = None
+    tax_class: str | None = None
     is_available: bool | None = None
     image_filename: str | None = None
     dietary_tags: list[MenuDietaryTag] | None = None

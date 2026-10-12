@@ -7,6 +7,7 @@ import uuid
 from datetime import UTC, datetime
 
 import pytest
+
 from graphql.data_sources import (
     InventoryCatalogItem,
     Location,

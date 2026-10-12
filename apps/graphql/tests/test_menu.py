@@ -12,9 +12,9 @@ from graphql.data_sources.models.menu import (
     MenuModifierGroup,
     MenuModifierOption,
 )
-from graphql.data_sources.models.pos_order import PosOrder, PosOrderLine, PosOrderLineModifier
 from graphql.schema import schema
 from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID, graphql_auth_context
+from graphql.tests.pos_cleanup import clear_location_dependents, delete_all_pos_orders
 
 OTHER_USER_ID = "clerk_other_user"
 
@@ -76,9 +76,14 @@ def _create_location(name: str, *, clerk_user_id: str = GRAPHQL_TEST_USER_ID) ->
     session = SessionLocal()
     try:
         # Clear POS first so recycled menu_item ids are not treated as POS-referenced.
-        session.query(PosOrderLineModifier).delete()
-        session.query(PosOrderLine).delete()
-        session.query(PosOrder).delete()
+        delete_all_pos_orders(session)
+        location_ids = [
+            int(row[0])
+            for row in session.query(Location.id)
+            .filter(Location.clerk_user_id.in_([clerk_user_id, GRAPHQL_TEST_USER_ID]))
+            .all()
+        ]
+        clear_location_dependents(session, location_ids)
         session.query(MenuModifierOption).delete()
         session.query(MenuModifierGroup).delete()
         session.query(MenuItem).delete()

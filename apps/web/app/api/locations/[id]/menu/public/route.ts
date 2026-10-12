@@ -15,6 +15,8 @@ const updatePublicMenuSchema = z.object({
   /** Optional; omit to leave the location public slug unchanged. */
   publicSlug: z.string().max(128).nullable().optional(),
   headerImageFilename: z.string().max(512).nullable(),
+  allowDineIn: z.boolean(),
+  allowPickup: z.boolean(),
 })
 
 type RouteContext = {
@@ -47,6 +49,8 @@ export async function PATCH(req: Request, context: RouteContext) {
       locationId: locId,
       publicEnabled: payload.publicEnabled,
       headerImageFilename: payload.headerImageFilename,
+      allowDineIn: payload.allowDineIn,
+      allowPickup: payload.allowPickup,
     }
     if (payload.publicSlug !== undefined) {
       variables.publicSlug = payload.publicSlug

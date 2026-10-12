@@ -6,10 +6,12 @@ import strawberry
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
+import graphql.services.menu_item_feedback as feedback_svc
 from graphql.context import request_session_scope
 from graphql.data_sources import Location, Workspace
 from graphql.data_sources.models.menu import Menu, MenuCategory
 from graphql.schema.mappers.menu import allergens_to_gql, dietary_tags_to_gql
+from graphql.schema.mappers.menu_item_feedback import public_feedback_to_gql
 from graphql.schema.types.public_location_menu import (
     PublicLocationMenuType,
     PublicMenuCategoryType,
@@ -17,7 +19,12 @@ from graphql.schema.types.public_location_menu import (
 )
 
 
-def _public_categories(menu: Menu) -> list[PublicMenuCategoryType]:
+def _public_categories(
+    menu: Menu,
+    *,
+    published_by_item: dict[int, list],
+    published_counts: dict[int, int],
+) -> list[PublicMenuCategoryType]:
     categories = sorted(menu.categories, key=lambda cat: (cat.sort_order, cat.id))
     result: list[PublicMenuCategoryType] = []
     for cat in categories:
@@ -41,6 +48,11 @@ def _public_categories(menu: Menu) -> list[PublicMenuCategoryType]:
                         image_filename=item.image_filename,
                         dietary_tags=dietary_tags_to_gql(item.dietary_tags),
                         allergens=allergens_to_gql(item.allergens),
+                        published_feedback_count=published_counts.get(int(item.id), 0),
+                        published_feedbacks=[
+                            public_feedback_to_gql(view)
+                            for view in published_by_item.get(int(item.id), [])
+                        ],
                     )
                     for item in available
                 ],
@@ -91,6 +103,21 @@ class PublicLocationMenuQuery:
                 if workspace is not None:
                     media_owner = workspace.owner_clerk_user_id
 
+            item_ids = [
+                int(item.id)
+                for cat in menu.categories
+                for item in cat.items
+                if item.is_available
+            ]
+            published_by_item = feedback_svc.list_published_for_menu_items(
+                session,
+                menu_item_ids=item_ids,
+            )
+            published_counts = feedback_svc.count_published_for_menu_items(
+                session,
+                menu_item_ids=item_ids,
+            )
+
             return PublicLocationMenuType(
                 location_id=location.id,
                 name=location.name,
@@ -99,5 +126,11 @@ class PublicLocationMenuQuery:
                 workspace_id=strawberry.ID(workspace_id) if workspace_id else None,
                 media_owner_clerk_user_id=media_owner,
                 header_image_filename=menu.header_image_filename,
-                categories=_public_categories(menu),
+                allow_dine_in=bool(menu.allow_dine_in),
+                allow_pickup=bool(menu.allow_pickup),
+                categories=_public_categories(
+                    menu,
+                    published_by_item=published_by_item,
+                    published_counts=published_counts,
+                ),
             )

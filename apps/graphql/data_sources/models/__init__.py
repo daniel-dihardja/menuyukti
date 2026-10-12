@@ -35,17 +35,23 @@ from graphql.data_sources.models.menu import (
     MenuModifierGroup,
     MenuModifierOption,
 )
+from graphql.data_sources.models.menu_item_feedback import MenuItemFeedback
 from graphql.data_sources.models.node import Node
 from graphql.data_sources.models.playbook import Playbook
 from graphql.data_sources.models.point_earn_rule import PointEarnRule
 from graphql.data_sources.models.point_ledger_entry import PointLedgerEntry
+from graphql.data_sources.models.pos_audit_event import PosAuditEvent
+from graphql.data_sources.models.pos_bill_sequence import PosBillSequence
+from graphql.data_sources.models.pos_fiscal_process import PosFiscalProcess
 from graphql.data_sources.models.pos_order import PosOrder, PosOrderLine, PosOrderLineModifier
+from graphql.data_sources.models.pos_register import PosRegister
 from graphql.data_sources.models.prediction import (
     Prediction,
     PredictionOutcome,
     PredictionVote,
 )
 from graphql.data_sources.models.service_subscription import ServiceSubscription
+from graphql.data_sources.models.tax_rate import TaxRate
 from graphql.data_sources.models.visual_style import VisualStyle
 from graphql.data_sources.models.voting import (
     Voting,
@@ -83,6 +89,7 @@ __all__ = [
     "MenuCategory",
     "MenuItem",
     "MenuItemCogs",
+    "MenuItemFeedback",
     "MenuModifierGroup",
     "MenuModifierOption",
     "Node",
@@ -90,13 +97,18 @@ __all__ = [
     "Playbook",
     "PointEarnRule",
     "PointLedgerEntry",
+    "PosAuditEvent",
+    "PosBillSequence",
+    "PosFiscalProcess",
     "PosOrder",
     "PosOrderLine",
     "PosOrderLineModifier",
+    "PosRegister",
     "Prediction",
     "PredictionOutcome",
     "PredictionVote",
     "ServiceSubscription",
+    "TaxRate",
     "Voting",
     "VotingOption",
     "VotingVote",

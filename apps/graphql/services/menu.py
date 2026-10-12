@@ -46,6 +46,7 @@ class MenuItemReplaceInput:
     name: str
     price: float
     description: str = ""
+    tax_class: str = "standard"
     is_available: bool = True
     image_filename: str | None = None
     dietary_tags: list[str] = field(default_factory=list)
@@ -112,6 +113,7 @@ def validate_menu_item_fields(
     name: str,
     price: float,
     description: str | None = None,
+    tax_class: str | None = None,
     is_available: bool = True,
     image_filename: str | None = None,
     dietary_tags: list[str] | None = None,
@@ -119,6 +121,8 @@ def validate_menu_item_fields(
     modifier_groups: list[MenuModifierGroupReplaceInput] | None = None,
     id: int | None = None,
 ) -> MenuItemReplaceInput:
+    from graphql.services.pos_tax import normalize_tax_class
+
     name_clean = name.strip()
     if not name_clean:
         raise ValueError("Menu item name cannot be empty")
@@ -141,6 +145,7 @@ def validate_menu_item_fields(
     if id is not None and (not isinstance(id, int) or id < 1):
         raise ValueError("Menu item id is invalid")
 
+    tax_class_clean = normalize_tax_class(tax_class)
     tags = normalize_dietary_tags(dietary_tags)
     allergen_list = normalize_allergens(allergens)
     groups = list(modifier_groups or [])
@@ -148,6 +153,7 @@ def validate_menu_item_fields(
         name=name_clean,
         price=float(price),
         description=desc_clean,
+        tax_class=tax_class_clean,
         is_available=bool(is_available),
         image_filename=image_clean,
         dietary_tags=tags,
@@ -278,6 +284,7 @@ def replace_menu_categories(
                 name=item.name,
                 price=item.price,
                 description=item.description,
+                tax_class=item.tax_class,
                 is_available=item.is_available,
                 image_filename=item.image_filename,
                 dietary_tags=item.dietary_tags,
@@ -361,6 +368,7 @@ def replace_menu_categories(
                 item_row.name = item.name
                 item_row.description = item.description
                 item_row.price = item.price
+                item_row.tax_class = item.tax_class
                 item_row.sort_order = item_index
                 item_row.is_available = item.is_available
                 item_row.image_filename = item.image_filename
@@ -375,6 +383,7 @@ def replace_menu_categories(
                     name=item.name,
                     description=item.description,
                     price=item.price,
+                    tax_class=item.tax_class,
                     sort_order=item_index,
                     is_available=item.is_available,
                     image_filename=item.image_filename,

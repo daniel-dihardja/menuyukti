@@ -52,6 +52,18 @@ class Menu(Base):
         default=False,
         server_default=text("false"),
     )
+    allow_dine_in: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=True,
+        server_default=text("true"),
+    )
+    allow_pickup: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=True,
+        server_default=text("true"),
+    )
     header_image_filename: Mapped[str | None] = mapped_column(String(512), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
@@ -148,6 +160,12 @@ class MenuItem(Base):
         server_default="",
     )
     price: Mapped[float] = mapped_column(Float, nullable=False)
+    tax_class: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False,
+        default="standard",
+        server_default="standard",
+    )
     sort_order: Mapped[int] = mapped_column(
         Integer,
         nullable=False,

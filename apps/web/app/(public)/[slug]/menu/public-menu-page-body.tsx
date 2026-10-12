@@ -93,6 +93,8 @@ export async function PublicLocationMenuBody({ slug, tableLabel }: PublicLocatio
             categories={menu.categories}
             currencyCode={currencyCode}
             tableLabel={tableLabel}
+            allowDineIn={menu.allowDineIn}
+            allowPickup={menu.allowPickup}
           />
         )}
       </main>

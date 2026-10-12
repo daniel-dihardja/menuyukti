@@ -10,6 +10,9 @@ import { mediaDownloadHref, type MediaCatalogItem } from '@/lib/media/client-api
 import { parsePublicMenuTableLabel } from '@/lib/public-menu/table-label'
 import { routes } from '@/lib/routes'
 
+import type { MenuItemFeedbackRow } from '@/lib/graphql/queries/menu-item-feedback'
+
+import { DigitalMenuFeedbackInbox } from './digital-menu-feedback-inbox'
 import { DigitalMenuQr, useClientAbsoluteUrl } from './digital-menu-qr'
 import {
   AlertDialog,
@@ -32,6 +35,10 @@ type Props = {
   initialPublicEnabled: boolean
   initialPublicSlug: string
   initialHeaderImageFilename: string | null
+  initialAllowDineIn: boolean
+  initialAllowPickup: boolean
+  initialFeedbacks: MenuItemFeedbackRow[]
+  initialFeedbackPendingCount: number
 }
 
 export function DigitalMenuConsole({
@@ -40,6 +47,10 @@ export function DigitalMenuConsole({
   initialPublicEnabled,
   initialPublicSlug,
   initialHeaderImageFilename,
+  initialAllowDineIn,
+  initialAllowPickup,
+  initialFeedbacks,
+  initialFeedbackPendingCount,
 }: Props) {
   const t = useTranslations('services.digitalMenu.console')
   const router = useRouter()
@@ -47,6 +58,8 @@ export function DigitalMenuConsole({
   const [headerImageFilename, setHeaderImageFilename] = useState<string | null>(
     initialHeaderImageFilename,
   )
+  const [allowDineIn, setAllowDineIn] = useState(initialAllowDineIn)
+  const [allowPickup, setAllowPickup] = useState(initialAllowPickup)
   const [persistedPublicEnabled, setPersistedPublicEnabled] = useState(initialPublicEnabled)
   const [copied, setCopied] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -103,6 +116,10 @@ export function DigitalMenuConsole({
       setError(t('errors.slugRequired'))
       return
     }
+    if (!allowDineIn && !allowPickup) {
+      setError(t('errors.fulfillmentRequired'))
+      return
+    }
     setLoading(true)
     try {
       const res = await fetch(`/api/locations/${locationId}/menu/public`, {
@@ -111,6 +128,8 @@ export function DigitalMenuConsole({
         body: JSON.stringify({
           publicEnabled,
           headerImageFilename,
+          allowDineIn,
+          allowPickup,
         }),
       })
       if (!res.ok) {
@@ -122,11 +141,18 @@ export function DigitalMenuConsole({
         if (message.toLowerCase().includes('publicslug')) {
           throw new Error(t('errors.slugRequired'))
         }
+        if (message.toLowerCase().includes('allow_dine_in or allow_pickup')) {
+          throw new Error(t('errors.fulfillmentRequired'))
+        }
         throw new Error(message)
       }
       const body = (await res.json()) as {
         publicEnabled?: boolean
-        menu?: { headerImageFilename?: string | null }
+        menu?: {
+          headerImageFilename?: string | null
+          allowDineIn?: boolean
+          allowPickup?: boolean
+        }
       }
       if (typeof body.publicEnabled === 'boolean') {
         setPublicEnabled(body.publicEnabled)
@@ -134,6 +160,12 @@ export function DigitalMenuConsole({
       }
       if (body.menu && 'headerImageFilename' in body.menu) {
         setHeaderImageFilename(body.menu.headerImageFilename ?? null)
+      }
+      if (typeof body.menu?.allowDineIn === 'boolean') {
+        setAllowDineIn(body.menu.allowDineIn)
+      }
+      if (typeof body.menu?.allowPickup === 'boolean') {
+        setAllowPickup(body.menu.allowPickup)
       }
       setSaved(true)
       router.refresh()
@@ -163,6 +195,12 @@ export function DigitalMenuConsole({
           <h1 className="text-2xl font-semibold tracking-tight">{t('heading')}</h1>
           <p className="text-muted-foreground text-sm">{t('description')}</p>
         </section>
+
+        <DigitalMenuFeedbackInbox
+          locationId={locationId}
+          initialFeedbacks={initialFeedbacks}
+          initialPendingCount={initialFeedbackPendingCount}
+        />
 
         <section className="border-border flex max-w-xl flex-col gap-4 rounded-lg border p-4">
           <h2 className="text-base font-semibold">{t('statusTitle')}</h2>
@@ -243,7 +281,46 @@ export function DigitalMenuConsole({
                 </div>
               </Field>
             ) : null}
-            {publicEnabled && livePublicPath ? (
+          </FieldGroup>
+        </section>
+
+        <section className="border-border flex max-w-xl flex-col gap-4 rounded-lg border p-4">
+          <h2 className="text-base font-semibold">{t('fulfillmentTitle')}</h2>
+          <p className="text-muted-foreground text-xs">{t('fulfillmentHint')}</p>
+          <FieldGroup>
+            <Field orientation="horizontal" className="items-center justify-between gap-4">
+              <div className="flex flex-col gap-1">
+                <FieldLabel htmlFor="digital-menu-allow-dine-in">{t('allowDineIn')}</FieldLabel>
+                <p className="text-muted-foreground text-xs">{t('allowDineInHint')}</p>
+              </div>
+              <Switch
+                id="digital-menu-allow-dine-in"
+                checked={allowDineIn}
+                onCheckedChange={(next) => {
+                  setAllowDineIn(next)
+                  setSaved(false)
+                  setError(null)
+                }}
+                disabled={loading}
+              />
+            </Field>
+            <Field orientation="horizontal" className="items-center justify-between gap-4">
+              <div className="flex flex-col gap-1">
+                <FieldLabel htmlFor="digital-menu-allow-pickup">{t('allowPickup')}</FieldLabel>
+                <p className="text-muted-foreground text-xs">{t('allowPickupHint')}</p>
+              </div>
+              <Switch
+                id="digital-menu-allow-pickup"
+                checked={allowPickup}
+                onCheckedChange={(next) => {
+                  setAllowPickup(next)
+                  setSaved(false)
+                  setError(null)
+                }}
+                disabled={loading}
+              />
+            </Field>
+            {publicEnabled && livePublicPath && allowDineIn ? (
               <Field>
                 <FieldLabel htmlFor="digital-menu-table-label">{t('tableLabel')}</FieldLabel>
                 <p className="text-muted-foreground text-xs">{t('tableLabelHint')}</p>

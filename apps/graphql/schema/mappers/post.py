@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import strawberry
+
 from graphql.data_sources import InstagramPost
 from graphql.schema.types import PostPageMediaVersionType, PostPageType, PostType
 

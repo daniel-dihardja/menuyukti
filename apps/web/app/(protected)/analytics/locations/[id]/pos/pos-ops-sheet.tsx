@@ -122,13 +122,24 @@ export function PosOpsSheet({
                         >
                           <span className="min-w-0 truncate font-medium">
                             {order.billNumber}
-                            {order.tableLabel ? (
+                            {order.fulfillmentMode === 'PICKUP' ? (
+                              <span className="font-normal text-muted-foreground">
+                                {' '}
+                                · {t('fulfillmentPickup')}
+                              </span>
+                            ) : order.tableLabel ? (
                               <span className="font-normal text-muted-foreground">
                                 {' '}
                                 ·{' '}
                                 {order.tableLabel.length > 12
                                   ? `${order.tableLabel.slice(0, 12)}…`
                                   : order.tableLabel}
+                              </span>
+                            ) : null}
+                            {order.prepStatus ? (
+                              <span className="font-normal text-muted-foreground">
+                                {' '}
+                                · {t(`prep.status.${order.prepStatus.toLowerCase()}`)}
                               </span>
                             ) : null}
                             {order.openedByClerkUserId ? (

@@ -5,6 +5,7 @@ from __future__ import annotations
 import strawberry
 
 from graphql.schema.types.menu_attributes import MenuAllergen, MenuDietaryTag
+from graphql.schema.types.menu_item_feedback import PublicMenuItemFeedbackType
 
 
 @strawberry.type(description="One available item on the public digital menu.")
@@ -17,6 +18,10 @@ class PublicMenuItemType:
     image_filename: str | None
     dietary_tags: list[MenuDietaryTag]
     allergens: list[MenuAllergen]
+    published_feedback_count: int = 0
+    published_feedbacks: list[PublicMenuItemFeedbackType] = strawberry.field(
+        default_factory=list
+    )
 
 
 @strawberry.type(description="One category section on the public digital menu.")
@@ -40,4 +45,6 @@ class PublicLocationMenuType:
     workspace_id: strawberry.ID | None
     media_owner_clerk_user_id: str | None
     header_image_filename: str | None
+    allow_dine_in: bool
+    allow_pickup: bool
     categories: list[PublicMenuCategoryType]

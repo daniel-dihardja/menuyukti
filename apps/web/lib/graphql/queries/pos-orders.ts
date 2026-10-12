@@ -1,5 +1,6 @@
 export type PosOrderStatus = 'OPEN' | 'PAID' | 'VOID' | 'REFUNDED'
 export type PosPaymentMethod = 'CASH' | 'CARD' | 'OTHER'
+export type PosPrepStatus = 'RECEIVED' | 'PREPARING' | 'READY' | 'SERVED' | 'PICKED_UP'
 
 export type PosOrderLineModifier = {
   id: number
@@ -8,6 +9,13 @@ export type PosOrderLineModifier = {
   nameSnapshot: string
   priceDeltaSnapshot: number
   sortOrder: number
+}
+
+export type PosTaxBreakdown = {
+  taxRateBps: number
+  net: number
+  tax: number
+  gross: number
 }
 
 export type PosOrderLine = {
@@ -20,14 +28,36 @@ export type PosOrderLine = {
   qty: number
   unitPrice: number
   lineTotal: number
+  taxClass: string
+  taxRateBps: number
+  net: number
+  tax: number
   note: string | null
   sortOrder: number
   modifiers: PosOrderLineModifier[]
 }
 
+export type PosFiscalProcess = {
+  id: number
+  kind: string
+  state: string
+  provider: string
+  tseTransactionId: string | null
+  tseSignature: string | null
+  signatureCounter: number | null
+  certificateSerial: string | null
+  clientId: string | null
+  qrPayload: string | null
+  processType: string
+  startedAt: string | null
+  finishedAt: string | null
+  lastError: string | null
+}
+
 export type PosOrder = {
   id: number
   locationId: number
+  registerId: number | null
   billNumber: string
   status: PosOrderStatus
   openedAt: string
@@ -35,9 +65,16 @@ export type PosOrder = {
   openedByClerkUserId: string
   paymentMethod: PosPaymentMethod | null
   discountAmount: number
+  net: number
+  tax: number
+  gross: number
+  taxBreakdown: PosTaxBreakdown[]
   tableLabel: string | null
+  fulfillmentMode: 'DINE_IN' | 'PICKUP' | null
+  prepStatus: PosPrepStatus | null
   note: string | null
   refundedAt: string | null
+  fiscalProcesses: PosFiscalProcess[]
   lines: PosOrderLine[]
 }
 
@@ -63,6 +100,7 @@ export type PosDaySummary = {
 const POS_ORDER_FIELDS = `
   id
   locationId
+  registerId
   billNumber
   status
   openedAt
@@ -70,9 +108,36 @@ const POS_ORDER_FIELDS = `
   openedByClerkUserId
   paymentMethod
   discountAmount
+  net
+  tax
+  gross
+  taxBreakdown {
+    taxRateBps
+    net
+    tax
+    gross
+  }
   tableLabel
+  fulfillmentMode
+  prepStatus
   note
   refundedAt
+  fiscalProcesses {
+    id
+    kind
+    state
+    provider
+    tseTransactionId
+    tseSignature
+    signatureCounter
+    certificateSerial
+    clientId
+    qrPayload
+    processType
+    startedAt
+    finishedAt
+    lastError
+  }
   lines {
     id
     posOrderId
@@ -83,6 +148,10 @@ const POS_ORDER_FIELDS = `
     qty
     unitPrice
     lineTotal
+    taxClass
+    taxRateBps
+    net
+    tax
     note
     sortOrder
     modifiers {
@@ -251,6 +320,18 @@ export const VOID_POS_ORDER_MUTATION = `
 
 export type VoidPosOrderData = {
   voidPosOrder: PosOrder
+}
+
+export const ADVANCE_POS_ORDER_PREP_STATUS_MUTATION = `
+  mutation AdvancePosOrderPrepStatus($orderId: Int!) {
+    advancePosOrderPrepStatus(orderId: $orderId) {
+      ${POS_ORDER_FIELDS}
+    }
+  }
+`
+
+export type AdvancePosOrderPrepStatusData = {
+  advancePosOrderPrepStatus: PosOrder
 }
 
 export const REFUND_POS_ORDER_MUTATION = `

@@ -17,6 +17,7 @@ os.environ.setdefault("GRAPHQL_ENV", "")
 os.environ.setdefault("NODE_ENV", "test")
 
 import pytest
+
 from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID
 
 pytest_plugins = ("graphql.tests.inventar_fixtures",)
@@ -66,10 +67,15 @@ def analytics_run_with_qa_data(qa_sales_rows, qa_cogs_by_menu):
 
     session = SessionLocal()
     try:
+        from graphql.tests.pos_cleanup import clear_pos_for_locations, delete_all_pos_orders
+
         session.query(MenuItemCogs).delete()
         session.query(LocationMenuItemCogs).delete()
         session.query(OrderFact).delete()
         session.query(AnalyticsRun).delete()
+        delete_all_pos_orders(session)
+        location_ids = [int(row[0]) for row in session.query(Location.id).all()]
+        clear_pos_for_locations(session, location_ids)
         session.query(Location).delete()
         session.commit()
 

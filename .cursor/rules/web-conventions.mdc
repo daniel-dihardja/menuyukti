@@ -1,5 +1,5 @@
 ---
-description: Next.js, Clerk, shadcn, i18n, GraphQL client, UX/UI quality bar, and testing for apps/web
+description: Next.js, Clerk, shadcn, i18n, GraphQL client, PWA, UX/UI quality bar, and testing for apps/web
 globs: apps/web/**
 alwaysApply: false
 ---
@@ -10,6 +10,7 @@ alwaysApply: false
 
 - **Next.js App Router** (`next dev --turbopack`). Output `standalone`; transpiles `@workspace/ui`.
 - Prefer **React Server Components** by default. Add **`"use client"`** only when you need hooks, browser-only APIs, or event handlers directly in that module.
+- **Customer product surface** is this app’s **PWA** (Serwist). Production builds use **`pnpm build`** → webpack so `@serwist/next` emits `public/sw.js` (Turbopack does not). See `apps/web/README.md`. The Expo app under `apps/mobile-app` is **deprecated / inactive** — do not expand native mobile as the customer path.
 
 ## Routing structure
 
@@ -17,13 +18,13 @@ Use **route groups** to separate concerns:
 
 | Group | Path | Notes |
 |---|---|---|
-| `(protected)` | `/advisor` (chat home), `/analytics/*`, `/calendar`, `/ig-studio/*`, `/media`, `/content/*`, `/crm/*`, `/dashboard`, `/staff`, `/usage`, `/inventar`, … | Operator shell: sidebar + context providers; `auth()` guard — see `OPERATOR_APP_SHELL_PREFIXES` in `lib/routes.ts` |
-| `(customer)` | `/home`, `/continue`, `/profile/*` | Auth-required customer shell (no sidebar); global `MainHeader` — see `CUSTOMER_AUTH_PREFIXES` |
+| `(protected)` | `/advisor` (chat home), `/analytics/*` (incl. `/analytics/locations/[id]/pos`), `/calendar`, `/ig-studio/*`, `/media`, `/content/*`, `/crm/*`, `/dashboard`, `/staff`, `/usage`, `/inventar`, … | Operator shell: sidebar + context providers; `auth()` guard — see `OPERATOR_APP_SHELL_PREFIXES` in `lib/routes.ts` |
+| `(customer)` | `/home`, `/continue`, `/profile/*` | Auth-required **customer PWA** shell (no sidebar); global `MainHeader` — see `CUSTOMER_AUTH_PREFIXES` |
 | `(standalone)` | `/login`, `/sign-up`, `/sso-callback` | No sidebar; Clerk-branded pages |
 | `(public)` | `/m/[slug]`, `/l/[slug]` | Public digital menu (and legacy wall redirect) |
-| `app/api/` | `/api/**` | BFF route handlers — call `graphqlQuery` with Clerk user id |
+| `app/api/` | `/api/**` | BFF route handlers — call `graphqlQuery` with Clerk user id (incl. `/api/mobile/crm/v1/*` for legacy mobile BFF) |
 
-Chat home public URL is **`/advisor`** (`routes.agent`); App Router pages live under `app/(protected)/agent/` via rewrite. Legacy `/workflow` redirects to `/advisor`. Shared chat UI lives in `components/chat/`. Other feature-specific client components live **next to their route** under `app/(protected)/<feature>/_components/`.
+Chat home public URL is **`/advisor`** (`routes.agent`); App Router pages live under `app/(protected)/agent/` via rewrite. Legacy `/workflow` redirects to `/advisor`. Shared chat UI lives in `components/chat/`. Other feature-specific client components live **next to their route** under `app/(protected)/<feature>/_components/`. Native POS UI: `app/(protected)/analytics/locations/[id]/pos/` (`routes.branchesPos`).
 
 ## Auth
 
@@ -43,8 +44,8 @@ const data = await graphqlQuery<ResponseType>(QUERY_STRING, variables, userId);
 ```
 
 - `graphqlQuery<T>` sends to `process.env.GRAPHQL_ENDPOINT`, sets `X-User-Id` and (when available) `X-Internal-Api-Key`. Fetch uses `cache: 'no-store'`; cross-request caching is via `'use cache'` helpers in `lib/graphql/cached-queries.ts` (`cacheTag` / `cacheLife`). `React.cache` only dedupes within a single request.
-- Query/mutation strings and TypeScript response types live in `lib/graphql/queries.ts`.
-- Node `data` JSON is validated with **Zod** schemas from `lib/graphql/node-schemas.ts`; always use `parseNodeData` / `parseNodesData` rather than casting.
+- Query/mutation documents and response types live under `lib/graphql/queries/` and are re-exported from `lib/graphql/queries.ts`.
+- Validate request/response payloads with **Zod** co-located with the feature (e.g. `app/api/**/schema.ts`, `lib/styles/style-spec.ts`) — avoid unchecked casts.
 - Server Components and `app/api/` route handlers call `graphqlQuery`; **no Apollo/React Query** in the browser for the main data path.
 
 ## UI components
@@ -95,7 +96,7 @@ Prefer purposeful improvements over decorative churn; when tradeoffs exist, choo
 ## TypeScript
 
 - **Strict typing** — avoid `any`; export explicit return types for public functions and server actions.
-- Prefer inferring types from Zod schemas (`z.infer<typeof schema>`) for node data shapes rather than duplicating type definitions.
+- Prefer inferring types from Zod schemas (`z.infer<typeof schema>`) at API/feature boundaries rather than duplicating type definitions.
 
 ## Testing
 

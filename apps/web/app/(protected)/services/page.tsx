@@ -187,7 +187,7 @@ function CatalogCard({
         <ServicePreviewFrame>{preview}</ServicePreviewFrame>
       </CardContent>
       <div className="flex flex-col gap-5">
-        <CardHeader className="pt-0">
+        <CardHeader className={cn('pt-0', !(href && ctaLabel) && 'pb-5')}>
           <CardTitle className="text-lg">{title}</CardTitle>
           <CardAction>{status}</CardAction>
           <CardDescription className="text-pretty">{benefit}</CardDescription>

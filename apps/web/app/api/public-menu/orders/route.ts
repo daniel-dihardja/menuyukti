@@ -19,6 +19,7 @@ const submitPublicMenuOrderSchema = z.object({
     )
     .min(1)
     .max(50),
+  fulfillmentMode: z.enum(['dine_in', 'pickup']),
   tableLabel: z.string().trim().max(64).optional().nullable(),
 })
 
@@ -33,6 +34,7 @@ export async function POST(req: Request) {
     const json = await req.json()
     const payload = submitPublicMenuOrderSchema.parse(json)
     const tableLabel = payload.tableLabel?.trim() || null
+    const fulfillmentMode = payload.fulfillmentMode === 'dine_in' ? 'DINE_IN' : 'PICKUP'
 
     const data = await graphqlQuery<SubmitPublicMenuOrderData>(
       SUBMIT_PUBLIC_MENU_ORDER_MUTATION,
@@ -42,6 +44,7 @@ export async function POST(req: Request) {
           menuItemId: line.menuItemId,
           qty: line.qty,
         })),
+        fulfillmentMode,
         tableLabel,
       },
       userId,
@@ -53,6 +56,15 @@ export async function POST(req: Request) {
       {
         orderId: order.id,
         billNumber: order.billNumber,
+        status: order.status,
+        fulfillmentMode: order.fulfillmentMode,
+        prepStatus: order.prepStatus,
+        tableLabel: order.tableLabel,
+        lines: order.lines.map((line) => ({
+          menuItemId: line.menuItemId,
+          name: line.nameSnapshot,
+          qty: line.qty,
+        })),
       },
       { status: 201 },
     )

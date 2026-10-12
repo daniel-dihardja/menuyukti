@@ -6,10 +6,10 @@ import asyncio
 from datetime import UTC, datetime, timedelta
 
 import pytest
+
 from graphql.data_sources import (
     Location,
     PointLedgerEntry,
-    ServiceSubscription,
     SessionLocal,
     Workspace,
     WorkspaceMembership,
@@ -134,19 +134,9 @@ def _clear(session) -> None:
     )
     session.query(PredictionOutcome).delete(synchronize_session=False)
     session.query(Prediction).delete(synchronize_session=False)
-    session.query(PosOrder).filter(PosOrder.opened_by_clerk_user_id.in_([GUEST_A, GUEST_B])).delete(
-        synchronize_session=False
-    )
-    session.query(ServiceSubscription).filter(
-        ServiceSubscription.location_id.in_(
-            session.query(Location.id).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID)
-        )
-    ).delete(synchronize_session=False)
-    session.query(Location).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
-    session.query(WorkspaceMembership).filter(
-        WorkspaceMembership.clerk_user_id == GRAPHQL_TEST_USER_ID
-    ).delete()
-    session.query(Workspace).filter(Workspace.owner_clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
+    from graphql.tests.pos_cleanup import clear_workspaces_for_owners
+
+    clear_workspaces_for_owners(session, [GRAPHQL_TEST_USER_ID])
     session.commit()
 
 
