@@ -85,10 +85,16 @@ def inventar_seed_workspace():
             PosOrderLineModifier,
         )
 
+        location_ids = [
+            row[0]
+            for row in session.query(Location.id)
+            .filter(Location.workspace_id == payload["workspace_id"])
+            .all()
+        ]
         order_ids = [
             row[0]
             for row in session.query(PosOrder.id)
-            .filter(PosOrder.location_id == payload["inventar_id"])
+            .filter(PosOrder.location_id.in_(location_ids))
             .all()
         ]
         if order_ids:
@@ -108,6 +114,20 @@ def inventar_seed_workspace():
             session.query(PosOrder).filter(PosOrder.id.in_(order_ids)).delete(
                 synchronize_session=False
             )
+        menu_ids = [
+            row[0]
+            for row in session.query(Menu.id).filter(Menu.location_id.in_(location_ids)).all()
+        ]
+        if menu_ids:
+            # SQLite tests often run without PRAGMA foreign_keys, so deleting a
+            # location/menu can leave orphan MenuItem rows that reattach on id reuse.
+            session.query(MenuItem).filter(MenuItem.menu_id.in_(menu_ids)).delete(
+                synchronize_session=False
+            )
+            session.query(MenuCategory).filter(MenuCategory.menu_id.in_(menu_ids)).delete(
+                synchronize_session=False
+            )
+            session.query(Menu).filter(Menu.id.in_(menu_ids)).delete(synchronize_session=False)
         reset_inventar(session, payload["workspace_id"])
         session.query(Location).filter(Location.workspace_id == payload["workspace_id"]).delete()
         session.query(WorkspaceMembership).filter(
