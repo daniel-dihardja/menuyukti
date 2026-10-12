@@ -271,6 +271,12 @@
         "openPublicUrl": "Open",
         "openLocationHome": "Open home",
         "saveToPublishHint": "Save to publish this link. Guests only see the menu after it’s saved as on.",
+        "fulfillmentTitle": "Order fulfillment",
+        "fulfillmentHint": "Choose how guests can receive orders from the digital menu. At least one option must stay on.",
+        "allowDineIn": "Bring to table",
+        "allowDineInHint": "Guests order from a table QR (or enter a table) and staff bring the order.",
+        "allowPickup": "Pickup",
+        "allowPickupHint": "Guests order for counter pickup.",
         "tableLabel": "Table for QR",
         "tableLabelPlaceholder": "e.g. 12 or Patio 2",
         "tableLabelHint": "Enter a table label, then download or print a sticker QR for that table. Guests who scan it skip entering a table number.",
@@ -306,6 +312,7 @@
         "errors": {
           "slugRequired": "Set a public URL slug on location Basics before turning the menu on",
           "subscriptionRequired": "Activate Digital Menu for this location before publishing",
+          "fulfillmentRequired": "Turn on at least one fulfillment option: bring to table or pickup",
           "saveFailed": "Failed to save Digital Menu settings",
           "unknown": "Something went wrong"
         }

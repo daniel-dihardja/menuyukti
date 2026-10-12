@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { getTranslations } from 'next-intl/server'
 import type { Metadata } from 'next'
+import { connection } from 'next/server'
 import { notFound } from 'next/navigation'
 
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
@@ -14,6 +15,7 @@ import { presignPhotoUrlsForAccess } from '@/lib/media/presign-photo-urls'
 import { routes } from '@/lib/routes'
 
 import { PosCashier } from './pos-cashier'
+import { todayIsoDate } from './pos-utils'
 
 type PageProps = {
   params: Promise<{ id: string }>
@@ -33,6 +35,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function Page({ params }: PageProps) {
+  // Bind this route to the request before reading "today" for day-close defaults.
+  // Avoids Cache Components treating Date.now() in the POS shell as static prerender.
+  await connection()
   const { id } = await params
   const { isAuthenticated, userId } = await auth()
   if (!isAuthenticated || !userId) {
@@ -41,6 +46,7 @@ export default async function Page({ params }: PageProps) {
 
   const locationId = Number(id)
   if (!Number.isInteger(locationId) || locationId < 1) notFound()
+  const initialDayCloseDate = todayIsoDate()
 
   const [locationData, menuData, ordersData] = await Promise.all([
     getCachedLocation(userId, id),
@@ -101,6 +107,7 @@ export default async function Page({ params }: PageProps) {
           initialMenu={menu}
           initialOrders={ordersData.posOrders}
           itemImageUrls={itemImageUrls}
+          initialDayCloseDate={initialDayCloseDate}
         />
       </section>
     </AnalyticsPageShell>

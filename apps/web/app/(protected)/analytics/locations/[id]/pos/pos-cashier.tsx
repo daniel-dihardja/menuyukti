@@ -49,7 +49,6 @@ import {
   availableModifierGroups,
   type DiscountMode,
   roundMoney,
-  todayIsoDate,
   type TodayFilter,
 } from './pos-utils'
 
@@ -62,6 +61,8 @@ type PosCashierProps = {
   initialOrders: PosOrder[]
   /** Presigned photo URLs keyed by `imageFilename` (same source as media / public menu). */
   itemImageUrls: Record<string, string>
+  /** YYYY-MM-DD from the server (after `connection()`), used as day-close default. */
+  initialDayCloseDate: string
 }
 
 async function posAction(locationId: number, body: Record<string, unknown>): Promise<PosOrder> {
@@ -95,6 +96,7 @@ export function PosCashier({
   initialMenu,
   initialOrders,
   itemImageUrls,
+  initialDayCloseDate,
 }: PosCashierProps) {
   const t = useTranslations('pos')
   const [pending, startTransition] = useTransition()
@@ -117,7 +119,7 @@ export function PosCashier({
   const [lineNoteDraft, setLineNoteDraft] = useState('')
   const [editingNoteLineId, setEditingNoteLineId] = useState<number | null>(null)
   const [editNoteDraft, setEditNoteDraft] = useState('')
-  const [dayCloseDate, setDayCloseDate] = useState(todayIsoDate)
+  const [dayCloseDate, setDayCloseDate] = useState(initialDayCloseDate)
   const [daySummary, setDaySummary] = useState<PosDaySummary | null>(null)
 
   const isEditable = currentOrder?.status === 'OPEN'

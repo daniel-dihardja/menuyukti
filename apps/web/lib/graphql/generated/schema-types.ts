@@ -837,6 +837,8 @@ export type MenuModifierOptionType = {
 /** Curated menu catalog for a location (one per location). */
 export type MenuType = {
   __typename?: 'MenuType'
+  allowDineIn: Scalars['Boolean']['output']
+  allowPickup: Scalars['Boolean']['output']
   categories: Array<MenuCategoryType>
   headerImageFilename?: Maybe<Scalars['String']['output']>
   id: Scalars['Int']['output']
@@ -1371,6 +1373,8 @@ export type MutationUpdateLocationManualBriefInputArgs = {
 
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationUpdateLocationPublicMenuArgs = {
+  allowDineIn?: InputMaybe<Scalars['Boolean']['input']>
+  allowPickup?: InputMaybe<Scalars['Boolean']['input']>
   headerImageFilename?: InputMaybe<Scalars['String']['input']>
   locationId: Scalars['Int']['input']
   publicEnabled?: InputMaybe<Scalars['Boolean']['input']>
@@ -1729,6 +1733,8 @@ export type PublicHolidayType = {
 /** Public digital menu for a location. Null when the slug is unknown or the menu is not published. */
 export type PublicLocationMenuType = {
   __typename?: 'PublicLocationMenuType'
+  allowDineIn: Scalars['Boolean']['output']
+  allowPickup: Scalars['Boolean']['output']
   categories: Array<PublicMenuCategoryType>
   currency?: Maybe<Scalars['String']['output']>
   headerImageFilename?: Maybe<Scalars['String']['output']>

@@ -14,6 +14,7 @@ from graphql.services import pos_fiscalization as fiscal
 from graphql.services.pos_audit import record_pos_audit
 from graphql.services.pos_money import euros_to_cents
 from graphql.services.pos_order_constants import (
+    FULFILLMENT_DINE_IN,
     FULFILLMENT_PICKUP,
     POS_STATUS_OPEN,
     POS_STATUS_VOID,
@@ -91,6 +92,10 @@ def submit_public_menu_order(
     menu = session.scalar(select(Menu).where(Menu.location_id == location_id))
     if menu is None or not bool(menu.public_enabled):
         raise ValueError("Public digital menu is not published for this location")
+    if mode == FULFILLMENT_DINE_IN and not bool(menu.allow_dine_in):
+        raise ValueError("dine_in fulfillment is not enabled for this menu")
+    if mode == FULFILLMENT_PICKUP and not bool(menu.allow_pickup):
+        raise ValueError("pickup fulfillment is not enabled for this menu")
 
     order = open_order(
         session,

@@ -20,10 +20,16 @@ import {
   loadPublicMenuCart,
   savePublicMenuCart,
 } from '@/lib/public-menu/cart-storage'
+import {
+  resolveGuestFulfillment,
+  type PublicMenuFulfillmentMode,
+} from '@/lib/public-menu/fulfillment-mode'
 import type { PublicMenuCategoryView, PublicMenuItemView } from '@/lib/public-menu/load-public-menu'
+import { PUBLIC_MENU_TABLE_LABEL_MAX_LEN } from '@/lib/public-menu/table-label'
 import { Alert, AlertDescription, AlertTitle } from '@workspace/ui/components/alert'
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
+import { Input } from '@workspace/ui/components/input'
 import {
   Drawer,
   DrawerContent,
@@ -52,6 +58,8 @@ type Props = {
   currencyCode: string
   /** Locked table from `/{slug}/menu/t/{label}`; null on the shared menu URL. */
   tableLabel: string | null
+  allowDineIn: boolean
+  allowPickup: boolean
 }
 
 type CartLine = {
@@ -63,7 +71,7 @@ type CartLine = {
 
 type OrderSuccess = {
   billNumber: string
-  fulfillmentMode: 'dine_in' | 'pickup'
+  fulfillmentMode: PublicMenuFulfillmentMode
   tableLabel: string | null
 }
 
@@ -157,6 +165,8 @@ export function PublicMenuCatalog({
   categories,
   currencyCode,
   tableLabel,
+  allowDineIn,
+  allowPickup,
 }: Props) {
   const t = useTranslations('public.menu')
   const pathname = usePathname()
@@ -170,7 +180,14 @@ export function PublicMenuCatalog({
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [orderSuccess, setOrderSuccess] = useState<OrderSuccess | null>(null)
-  const fulfillmentMode = tableLabel ? 'dine_in' : 'pickup'
+  const bothModes = allowDineIn && allowPickup
+  const defaultGuestChoice: PublicMenuFulfillmentMode =
+    allowPickup && !allowDineIn ? 'pickup' : allowDineIn && !allowPickup ? 'dine_in' : 'pickup'
+  const [guestChoice, setGuestChoice] = useState<PublicMenuFulfillmentMode>(defaultGuestChoice)
+  const [guestTableInput, setGuestTableInput] = useState('')
+  const showModeToggle = bothModes && !tableLabel
+  const needsGuestTable =
+    !tableLabel && allowDineIn && (guestChoice === 'dine_in' || (allowDineIn && !allowPickup))
 
   const allItems = useMemo(() => categories.flatMap((category) => category.items), [categories])
   const itemsById = useMemo(() => new Map(allItems.map((item) => [item.id, item])), [allItems])
@@ -286,6 +303,22 @@ export function PublicMenuCatalog({
       return
     }
 
+    const resolved = resolveGuestFulfillment({
+      allowDineIn,
+      allowPickup,
+      lockedTableLabel: tableLabel,
+      guestChoice,
+      guestTableLabel: guestTableInput,
+    })
+    if (!resolved.ok) {
+      setSubmitError(
+        resolved.reason === 'table_required'
+          ? t('order.tableRequired')
+          : t('order.noFulfillmentModes'),
+      )
+      return
+    }
+
     setSubmitting(true)
     try {
       const res = await fetch('/api/public-menu/orders', {
@@ -297,8 +330,8 @@ export function PublicMenuCatalog({
             menuItemId: line.menuItemId,
             qty: line.qty,
           })),
-          fulfillmentMode,
-          tableLabel,
+          fulfillmentMode: resolved.mode,
+          tableLabel: resolved.tableLabel,
         }),
       })
       const body = (await res.json().catch(() => ({}))) as {
@@ -325,14 +358,15 @@ export function PublicMenuCatalog({
           ? 'dine_in'
           : body.fulfillmentMode === 'PICKUP'
             ? 'pickup'
-            : fulfillmentMode
+            : resolved.mode
       setCart({})
       clearPublicMenuCart(locationId)
       setBasketOpen(false)
+      setGuestTableInput('')
       setOrderSuccess({
         billNumber: body.billNumber,
         fulfillmentMode: successMode,
-        tableLabel: body.tableLabel ?? tableLabel,
+        tableLabel: body.tableLabel ?? resolved.tableLabel,
       })
     } catch {
       setSubmitError(t('order.submitFailed'))
@@ -649,12 +683,69 @@ export function PublicMenuCatalog({
                     {formatCurrency(cartTotal, currencyCode, locale)}
                   </p>
                 </div>
-                {tableLabel ? (
+                {tableLabel && allowDineIn ? (
                   <p className="text-muted-foreground text-sm font-medium">
                     {t('order.tableLabelReadOnly', { label: tableLabel })}
                   </p>
+                ) : !showModeToggle && allowPickup && !allowDineIn ? (
+                  <p className="text-muted-foreground text-sm font-medium">
+                    {t('order.fulfillmentPickup')}
+                  </p>
                 ) : null}
               </div>
+              {showModeToggle ? (
+                <div className="flex flex-col gap-2">
+                  <p className="text-muted-foreground text-xs font-medium">
+                    {t('order.fulfillmentLabel')}
+                  </p>
+                  <ToggleGroup
+                    type="single"
+                    value={guestChoice}
+                    onValueChange={(value) => {
+                      if (value === 'dine_in' || value === 'pickup') {
+                        setGuestChoice(value)
+                        setSubmitError(null)
+                      }
+                    }}
+                    className="flex w-full justify-start gap-2"
+                    aria-label={t('order.fulfillmentLabel')}
+                  >
+                    <ToggleGroupItem
+                      value="pickup"
+                      className="h-11 min-h-11 flex-1 touch-manipulation sm:h-9 sm:min-h-9"
+                    >
+                      {t('order.fulfillmentPickup')}
+                    </ToggleGroupItem>
+                    <ToggleGroupItem
+                      value="dine_in"
+                      className="h-11 min-h-11 flex-1 touch-manipulation sm:h-9 sm:min-h-9"
+                    >
+                      {t('order.fulfillmentDineIn')}
+                    </ToggleGroupItem>
+                  </ToggleGroup>
+                </div>
+              ) : null}
+              {needsGuestTable ? (
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="public-menu-guest-table" className="text-sm font-medium">
+                    {t('order.tableInputLabel')}
+                  </label>
+                  <p className="text-muted-foreground text-xs">{t('order.tableInputHint')}</p>
+                  <Input
+                    id="public-menu-guest-table"
+                    value={guestTableInput}
+                    onChange={(e) => {
+                      setGuestTableInput(e.target.value)
+                      setSubmitError(null)
+                    }}
+                    placeholder={t('order.tableInputPlaceholder')}
+                    maxLength={PUBLIC_MENU_TABLE_LABEL_MAX_LEN}
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
+                  />
+                </div>
+              ) : null}
               {submitError ? (
                 <Alert variant="destructive">
                   <AlertTitle>{t('order.submitFailedTitle')}</AlertTitle>
@@ -664,7 +755,7 @@ export function PublicMenuCatalog({
               <Button
                 type="button"
                 className="min-h-11 w-full touch-manipulation"
-                disabled={submitting || !isLoaded || !hasCart}
+                disabled={submitting || !isLoaded || !hasCart || (!allowDineIn && !allowPickup)}
                 onClick={() => void submitOrder()}
               >
                 {!isLoaded || submitting ? <Spinner /> : null}

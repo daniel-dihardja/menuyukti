@@ -66,6 +66,8 @@ export default async function DigitalMenuConsolePage({ params }: PageProps) {
           initialPublicEnabled={menuData.locationMenu?.publicEnabled ?? false}
           initialPublicSlug={location.publicSlug ?? ''}
           initialHeaderImageFilename={menuData.locationMenu?.headerImageFilename ?? null}
+          initialAllowDineIn={menuData.locationMenu?.allowDineIn ?? true}
+          initialAllowPickup={menuData.locationMenu?.allowPickup ?? true}
         />
       </section>
     </AnalyticsPageShell>

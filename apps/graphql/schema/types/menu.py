@@ -60,6 +60,8 @@ class MenuType:
     location_id: int
     title: str
     public_enabled: bool
+    allow_dine_in: bool
+    allow_pickup: bool
     header_image_filename: str | None
     categories: list[MenuCategoryType]
 

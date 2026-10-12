@@ -316,3 +316,56 @@ def test_owner_can_still_submit_as_guest_path(published_menu_location):
     )
     assert result.errors is None, result.errors
     assert result.data["submitPublicMenuOrder"]["openedByClerkUserId"] == GRAPHQL_TEST_USER_ID
+
+
+def test_submit_rejected_when_pickup_disabled(published_menu_location):
+    location_id, item_id, _ = published_menu_location
+    session = SessionLocal()
+    try:
+        menu = session.query(Menu).filter(Menu.location_id == location_id).one()
+        menu.allow_pickup = False
+        menu.allow_dine_in = True
+        session.commit()
+    finally:
+        session.close()
+
+    result = asyncio.run(
+        schema.execute(
+            _SUBMIT,
+            variable_values={
+                "locationId": location_id,
+                "lines": [{"menuItemId": item_id, "qty": 1}],
+                "fulfillmentMode": "PICKUP",
+            },
+            context_value={"user_id": GUEST_USER_ID},
+        )
+    )
+    assert result.errors
+    assert "pickup fulfillment is not enabled" in result.errors[0].message
+
+
+def test_submit_rejected_when_dine_in_disabled(published_menu_location):
+    location_id, item_id, _ = published_menu_location
+    session = SessionLocal()
+    try:
+        menu = session.query(Menu).filter(Menu.location_id == location_id).one()
+        menu.allow_dine_in = False
+        menu.allow_pickup = True
+        session.commit()
+    finally:
+        session.close()
+
+    result = asyncio.run(
+        schema.execute(
+            _SUBMIT,
+            variable_values={
+                "locationId": location_id,
+                "lines": [{"menuItemId": item_id, "qty": 1}],
+                "fulfillmentMode": "DINE_IN",
+                "tableLabel": "T1",
+            },
+            context_value={"user_id": GUEST_USER_ID},
+        )
+    )
+    assert result.errors
+    assert "dine_in fulfillment is not enabled" in result.errors[0].message

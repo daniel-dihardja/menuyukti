@@ -21,6 +21,8 @@ export type PublicLocationMenuView = {
   publicSlug: string
   currency: string | null
   headerImageUrl: string | null
+  allowDineIn: boolean
+  allowPickup: boolean
   categories: PublicMenuCategoryView[]
 }
 
@@ -61,6 +63,8 @@ export async function loadPublicLocationMenu(
       headerFilename && allowedNames.has(headerFilename)
         ? (urlByName[headerFilename] ?? null)
         : null,
+    allowDineIn: menu.allowDineIn !== false,
+    allowPickup: menu.allowPickup !== false,
     categories: menu.categories.map((category) => ({
       name: category.name,
       sortOrder: category.sortOrder,

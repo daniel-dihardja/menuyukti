@@ -102,6 +102,8 @@ def menu_to_gql(row: Menu) -> MenuType:
         location_id=row.location_id,
         title=row.title,
         public_enabled=bool(row.public_enabled),
+        allow_dine_in=bool(row.allow_dine_in),
+        allow_pickup=bool(row.allow_pickup),
         header_image_filename=row.header_image_filename,
         categories=[menu_category_to_gql(cat) for cat in categories],
     )

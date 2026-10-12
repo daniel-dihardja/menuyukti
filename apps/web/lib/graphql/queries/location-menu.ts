@@ -46,6 +46,8 @@ export type LocationMenu = {
   locationId: number
   title: string
   publicEnabled: boolean
+  allowDineIn: boolean
+  allowPickup: boolean
   headerImageFilename: string | null
   categories: LocationMenuCategory[]
 }
@@ -90,6 +92,8 @@ const MENU_FIELDS = `
   locationId
   title
   publicEnabled
+  allowDineIn
+  allowPickup
   headerImageFilename
   categories {
     id
@@ -132,12 +136,16 @@ export const UPDATE_LOCATION_PUBLIC_MENU_MUTATION = `
     $publicEnabled: Boolean
     $publicSlug: String
     $headerImageFilename: String
+    $allowDineIn: Boolean
+    $allowPickup: Boolean
   ) {
     updateLocationPublicMenu(
       locationId: $locationId
       publicEnabled: $publicEnabled
       publicSlug: $publicSlug
       headerImageFilename: $headerImageFilename
+      allowDineIn: $allowDineIn
+      allowPickup: $allowPickup
     ) {
       locationId
       publicEnabled
@@ -170,6 +178,8 @@ export const PUBLIC_LOCATION_MENU_QUERY = `
       workspaceId
       mediaOwnerClerkUserId
       headerImageFilename
+      allowDineIn
+      allowPickup
       categories {
         name
         sortOrder
@@ -213,6 +223,8 @@ export type PublicLocationMenuPayload = {
   workspaceId: string | null
   mediaOwnerClerkUserId: string | null
   headerImageFilename: string | null
+  allowDineIn: boolean
+  allowPickup: boolean
   categories: PublicMenuCategory[]
 }
 

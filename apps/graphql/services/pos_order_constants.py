@@ -18,6 +18,12 @@ FULFILLMENT_PICKUP = "pickup"
 FULFILLMENT_MODES = frozenset({FULFILLMENT_DINE_IN, FULFILLMENT_PICKUP})
 
 
+def validate_menu_fulfillment_allows(*, allow_dine_in: bool, allow_pickup: bool) -> None:
+    """Require at least one digital-menu fulfillment mode enabled."""
+    if not allow_dine_in and not allow_pickup:
+        raise ValueError("At least one of allow_dine_in or allow_pickup must be true")
+
+
 def normalize_fulfillment_mode(mode: str) -> str:
     """Require dine_in or pickup; raise ValueError otherwise."""
     cleaned = (mode or "").strip().lower()

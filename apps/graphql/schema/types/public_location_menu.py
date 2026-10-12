@@ -40,4 +40,6 @@ class PublicLocationMenuType:
     workspace_id: strawberry.ID | None
     media_owner_clerk_user_id: str | None
     header_image_filename: str | None
+    allow_dine_in: bool
+    allow_pickup: bool
     categories: list[PublicMenuCategoryType]
