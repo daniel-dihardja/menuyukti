@@ -489,7 +489,7 @@ function LocationMenuItemRow({
           </Field>
         </FieldGroup>
 
-        <FieldSet className="gap-4 rounded-lg border border-border/80 p-4">
+        <FieldSet className="gap-4">
           <FieldLegend variant="label">{t('fields.modifiers')}</FieldLegend>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <FieldDescription className="sm:max-w-md">{t('fields.modifiersHint')}</FieldDescription>
@@ -527,10 +527,7 @@ function LocationMenuItemRow({
           ) : (
             <FieldGroup className="gap-4">
               {item.modifierGroups.map((group) => (
-                <FieldSet
-                  key={group.key}
-                  className="gap-4 rounded-md border border-border/70 bg-muted/20 p-3"
-                >
+                <FieldSet key={group.key} className="gap-4 rounded-md bg-muted/30 p-3">
                   <FieldLegend variant="label">
                     {group.name.trim() || t('fields.modifierGroupUntitled')}
                   </FieldLegend>
