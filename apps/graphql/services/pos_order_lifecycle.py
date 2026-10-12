@@ -30,10 +30,10 @@ from graphql.services.pos_order_constants import (
     normalize_table_label,
 )
 from graphql.services.pos_order_reads import get_open_public_menu_order_for_guest, get_order
-
-_PREP_RESET_ON_APPEND = frozenset({PREP_READY, PREP_SERVED, PREP_PICKED_UP})
 from graphql.services.pos_register_bill import ensure_default_register, next_bill_number
 from graphql.services.pos_tax import normalize_tax_class, recompute_order_tax, resolve_tax_rate_bps
+
+_PREP_RESET_ON_APPEND = frozenset({PREP_READY, PREP_SERVED, PREP_PICKED_UP})
 
 
 def _utcnow() -> datetime:
