@@ -359,15 +359,16 @@ export function PublicMenuCatalog({
     }
   }, [isLoaded, isSignedIn, locationId])
 
-  // Poll ticket + prep status until paid/void/refunded (or panel dismissed).
+  // Poll ticket + prep status until paid/void/refunded.
   useEffect(() => {
     if (!activeOrder?.orderId) return
     if (isTerminalTicketStatus(activeOrder.status)) return
 
+    const orderId = activeOrder.orderId
     let cancelled = false
     const poll = async () => {
       try {
-        const res = await fetch(`/api/public-menu/orders/${activeOrder.orderId}`)
+        const res = await fetch(`/api/public-menu/orders/${orderId}`)
         if (!res.ok || cancelled) return
         const body = (await res.json()) as {
           status?: string | null
@@ -375,19 +376,23 @@ export function PublicMenuCatalog({
         }
         if (cancelled) return
 
-        const nextStatus =
-          normalizeTicketStatus(body.status) ?? normalizeTicketStatus(activeOrder.status) ?? 'open'
-        if (isTerminalTicketStatus(nextStatus)) {
+        const bodyStatus = normalizeTicketStatus(body.status)
+        if (bodyStatus && isTerminalTicketStatus(bodyStatus)) {
           clearPublicMenuActiveOrder(locationId)
           setActiveOrder(null)
           setOrderSheetOpen(false)
           return
         }
 
-        const nextPrep = normalizePrepStatus(body.prepStatus) ?? activeOrder.prepStatus
-
         setActiveOrder((prev) => {
-          if (!prev || prev.orderId !== activeOrder.orderId) return prev
+          if (!prev || prev.orderId !== orderId) return prev
+          const nextStatus = bodyStatus ?? normalizeTicketStatus(prev.status) ?? 'open'
+          if (isTerminalTicketStatus(nextStatus)) {
+            clearPublicMenuActiveOrder(locationId)
+            return null
+          }
+          const nextPrep = normalizePrepStatus(body.prepStatus) ?? prev.prepStatus
+          if (nextStatus === prev.status && nextPrep === prev.prepStatus) return prev
           const updated: ActiveOrder = {
             ...prev,
             status: nextStatus,
