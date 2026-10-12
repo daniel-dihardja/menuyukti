@@ -11,6 +11,7 @@ from .pos_order import (
     PosOrderStatus,
     PosOrderType,
     PosPaymentMethod,
+    PublicMenuOrderStatusType,
 )
 from .post import PostType
 from .post_page import PostPageType
@@ -41,6 +42,7 @@ __all__ = [
     "PosOrderStatus",
     "PosFulfillmentMode",
     "PosPaymentMethod",
+    "PublicMenuOrderStatusType",
     "PublicHolidayType",
     "PublicLocationServiceType",
     "PublicLocationType",

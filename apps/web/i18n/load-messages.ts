@@ -54,17 +54,44 @@ async function loadEnglishMessages(): Promise<AbstractIntlMessages> {
   return Object.assign({}, ...chunks.map((m) => m.default)) as AbstractIntlMessages
 }
 
+function deepMergeMessages(
+  base: AbstractIntlMessages,
+  overlay: AbstractIntlMessages,
+): AbstractIntlMessages {
+  const out: Record<string, unknown> = { ...base }
+  for (const [key, value] of Object.entries(overlay)) {
+    const existing = out[key]
+    if (
+      value &&
+      typeof value === 'object' &&
+      !Array.isArray(value) &&
+      existing &&
+      typeof existing === 'object' &&
+      !Array.isArray(existing)
+    ) {
+      out[key] = deepMergeMessages(existing as AbstractIntlMessages, value as AbstractIntlMessages)
+    } else {
+      out[key] = value
+    }
+  }
+  return out as AbstractIntlMessages
+}
+
 /**
  * Load next-intl message catalogs for a locale.
  * Catalogs live under `messages/<locale>/<namespace>.json` (one top-level key each).
- * For ``de``, English is the base and ``messages/de/pos.json`` overlays the POS namespace.
+ * For ``de``, English is the base; ``messages/de/pos.json`` and ``messages/de/public.json``
+ * overlay those namespaces (deep-merged so partial public catalogs keep English keys).
  * Touch this module when message JSON changes fail to hot-reload under Turbopack.
  */
 export async function loadMessages(locale: string): Promise<AbstractIntlMessages> {
   const base = await loadEnglishMessages()
   if (locale === 'de') {
-    const dePos = (await import('../messages/de/pos.json')).default
-    return { ...base, ...dePos } as AbstractIntlMessages
+    const [dePos, dePublic] = await Promise.all([
+      import('../messages/de/pos.json'),
+      import('../messages/de/public.json'),
+    ])
+    return deepMergeMessages(deepMergeMessages(base, dePos.default), dePublic.default)
   }
   return base
 }

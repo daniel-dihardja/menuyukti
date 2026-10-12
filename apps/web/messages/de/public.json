@@ -1,0 +1,20 @@
+{
+  "public": {
+    "menu": {
+      "order": {
+        "successTitleDineIn": "Bestellung unterwegs",
+        "successBodyDineIn": "Bon {billNumber} — wir bereiten deine Bestellung zu und bringen sie an Tisch {tableLabel}.",
+        "successTitlePickup": "Bestellung eingegangen",
+        "successBodyPickup": "Bon {billNumber} — wir bereiten deine Bestellung zu. Hole sie ab, sobald sie fertig ist.",
+        "prepStatus": {
+          "received": "Bestellung eingegangen — die Küche hat deinen Bon.",
+          "preparing": "Wird gerade zubereitet.",
+          "ready_dine_in": "Fertig — wir bringen sie an deinen Tisch.",
+          "ready_pickup": "Fertig zur Abholung.",
+          "served": "Serviert. Guten Appetit!",
+          "picked_up": "Abgeholt. Guten Appetit!"
+        }
+      }
+    }
+  }
+}

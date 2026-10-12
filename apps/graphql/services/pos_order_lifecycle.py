@@ -17,6 +17,7 @@ from graphql.services.pos_order_constants import (
     FULFILLMENT_DINE_IN,
     FULFILLMENT_PICKUP,
     POS_STATUS_OPEN,
+    POS_STATUS_REFUNDED,
     POS_STATUS_VOID,
     PREP_RECEIVED,
     PUBLIC_MENU_ORDER_NOTE,
@@ -131,13 +132,15 @@ def advance_pos_order_prep_status(
     actor_clerk_user_id: str,
 ) -> PosOrder:
     """Advance digital-menu prep_status one step forward (no skip / rewind)."""
-    order = get_order(session, order_id)
+    order = session.scalar(select(PosOrder).where(PosOrder.id == order_id).with_for_update())
     if order is None:
         raise ValueError("Order not found")
-    if order.note != PUBLIC_MENU_ORDER_NOTE and not order.fulfillment_mode:
+    if order.note != PUBLIC_MENU_ORDER_NOTE:
         raise ValueError("prep_status only applies to digital-menu orders")
     if not order.fulfillment_mode:
         raise ValueError("fulfillment_mode is required to advance prep_status")
+    if order.status in (POS_STATUS_VOID, POS_STATUS_REFUNDED):
+        raise ValueError(f"Cannot advance prep_status on {order.status} order")
 
     previous = order.prep_status
     nxt = next_prep_status(previous, order.fulfillment_mode)

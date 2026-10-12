@@ -10,7 +10,11 @@ import graphql.services.pos_orders as pos_svc
 from graphql.context import request_session_scope
 from graphql.data_sources import Location
 from graphql.schema.auth import is_location_owner, user_id_from_info
-from graphql.schema.mappers.pos_order import pos_audit_event_to_gql, pos_order_to_gql
+from graphql.schema.mappers.pos_order import (
+    pos_audit_event_to_gql,
+    pos_order_to_gql,
+    public_menu_order_status_to_gql,
+)
 from graphql.schema.types.pos_order import (
     PosAuditEventType,
     PosDayPaymentTotalType,
@@ -18,6 +22,7 @@ from graphql.schema.types.pos_order import (
     PosOrderStatus,
     PosOrderType,
     PosPaymentMethod,
+    PublicMenuOrderStatusType,
 )
 from graphql.services.pos_audit import list_audit_events_for_order
 from graphql.services.pos_order_constants import PUBLIC_MENU_ORDER_NOTE
@@ -132,7 +137,9 @@ class PosOrdersQuery:
             "Returns null if unauthenticated, not the opener, or not a digital-menu ticket."
         )
     )
-    def public_menu_order(self, info: strawberry.Info, order_id: int) -> PosOrderType | None:
+    def public_menu_order(
+        self, info: strawberry.Info, order_id: int
+    ) -> PublicMenuOrderStatusType | None:
         user_id = user_id_from_info(info)
         if not user_id:
             return None
@@ -144,4 +151,4 @@ class PosOrdersQuery:
                 return None
             if order.opened_by_clerk_user_id != user_id:
                 return None
-            return pos_order_to_gql(order)
+            return public_menu_order_status_to_gql(order)

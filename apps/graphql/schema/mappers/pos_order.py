@@ -18,6 +18,7 @@ from graphql.schema.types.pos_order import (
     PosPaymentMethod,
     PosPrepStatus,
     PosTaxBreakdownType,
+    PublicMenuOrderStatusType,
 )
 from graphql.services.pos_money import cents_to_euros
 from graphql.services.pos_orders import order_tax_breakdown
@@ -121,6 +122,23 @@ def pos_order_to_gql(row: PosOrder) -> PosOrderType:
         refunded_at=row.refunded_at,
         fiscal_processes=[pos_fiscal_process_to_gql(p) for p in fiscal_rows],
         lines=[pos_order_line_to_gql(line) for line in lines],
+    )
+
+
+def public_menu_order_status_to_gql(row: PosOrder) -> PublicMenuOrderStatusType:
+    fulfillment: PosFulfillmentMode | None = None
+    if row.fulfillment_mode:
+        fulfillment = PosFulfillmentMode(row.fulfillment_mode)
+    prep: PosPrepStatus | None = None
+    if row.prep_status:
+        prep = PosPrepStatus(row.prep_status)
+    return PublicMenuOrderStatusType(
+        id=row.id,
+        bill_number=row.bill_number,
+        status=PosOrderStatus(row.status),
+        prep_status=prep,
+        fulfillment_mode=fulfillment,
+        table_label=row.table_label,
     )
 
 

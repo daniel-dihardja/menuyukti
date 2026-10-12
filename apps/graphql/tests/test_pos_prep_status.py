@@ -85,6 +85,15 @@ mutation Open($locationId: Int!) {
 }
 """
 
+_VOID = """
+mutation Void($orderId: Int!) {
+  voidPosOrder(orderId: $orderId) {
+    id
+    status
+  }
+}
+"""
+
 
 @pytest.fixture
 def published_menu_location():
@@ -256,6 +265,65 @@ def test_cannot_advance_cashier_ticket(published_menu_location):
     assert opened.errors is None, opened.errors
     assert opened.data["openPosOrder"]["prepStatus"] is None
     order_id = int(opened.data["openPosOrder"]["id"])
+
+    result = asyncio.run(
+        schema.execute(
+            _ADVANCE,
+            variable_values={"orderId": order_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert result.errors
+    assert "digital-menu" in result.errors[0].message
+
+
+def test_cannot_advance_voided_digital_menu_order(published_menu_location):
+    location_id, item_id = published_menu_location
+    order_id = _submit(location_id, item_id, "PICKUP")
+    voided = asyncio.run(
+        schema.execute(
+            _VOID,
+            variable_values={"orderId": order_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert voided.errors is None, voided.errors
+    assert voided.data["voidPosOrder"]["status"] == "VOID"
+
+    result = asyncio.run(
+        schema.execute(
+            _ADVANCE,
+            variable_values={"orderId": order_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert result.errors
+    assert "void" in result.errors[0].message.lower()
+
+
+def test_cannot_advance_without_digital_menu_note(published_menu_location):
+    """fulfillment_mode alone is not enough — note must be digital_menu."""
+    location_id, _ = published_menu_location
+    opened = asyncio.run(
+        schema.execute(
+            _OPEN,
+            variable_values={"locationId": location_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert opened.errors is None, opened.errors
+    order_id = int(opened.data["openPosOrder"]["id"])
+
+    session = SessionLocal()
+    try:
+        order = session.get(PosOrder, order_id)
+        assert order is not None
+        order.fulfillment_mode = "pickup"
+        order.prep_status = "received"
+        order.note = None
+        session.commit()
+    finally:
+        session.close()
 
     result = asyncio.run(
         schema.execute(

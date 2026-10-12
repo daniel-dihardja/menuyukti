@@ -7,9 +7,31 @@ import {
   type PublicMenuOrderData,
 } from '@/lib/graphql/queries/location-menu'
 
+/** Per-process guest poll throttle (single-instance / Fluid; not multi-region). */
+const GUEST_STATUS_MIN_INTERVAL_MS = 3000
+const guestStatusLastHit = new Map<string, number>()
+
 function parseOrderId(param: string): number | null {
   const value = Number(param)
   return Number.isInteger(value) && value > 0 ? value : null
+}
+
+function allowGuestStatusPoll(userId: string, orderId: number): boolean {
+  const key = `${userId}:${orderId}`
+  const now = Date.now()
+  const last = guestStatusLastHit.get(key) ?? 0
+  if (now - last < GUEST_STATUS_MIN_INTERVAL_MS) {
+    return false
+  }
+  guestStatusLastHit.set(key, now)
+  // Bound map growth for long-lived processes.
+  if (guestStatusLastHit.size > 10_000) {
+    const cutoff = now - GUEST_STATUS_MIN_INTERVAL_MS * 2
+    for (const [k, ts] of guestStatusLastHit) {
+      if (ts < cutoff) guestStatusLastHit.delete(k)
+    }
+  }
+  return true
 }
 
 export async function GET(_req: Request, { params }: { params: Promise<{ orderId: string }> }) {
@@ -24,6 +46,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ orderId
     const orderId = parseOrderId(raw)
     if (!orderId) {
       return NextResponse.json({ error: 'Invalid orderId' }, { status: 400 })
+    }
+
+    if (!allowGuestStatusPoll(userId, orderId)) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
     }
 
     const data = await graphqlQuery<PublicMenuOrderData>(
