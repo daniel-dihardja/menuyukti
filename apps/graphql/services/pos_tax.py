@@ -171,7 +171,9 @@ def tax_breakdown_by_rate(order: PosOrder) -> list[dict[str, int]]:
     buckets: dict[int, dict[str, int]] = {}
     for line in order.lines:
         rate = int(line.tax_rate_bps_snapshot)
-        bucket = buckets.setdefault(rate, {"tax_rate_bps": rate, "net_cents": 0, "tax_cents": 0, "gross_cents": 0})
+        bucket = buckets.setdefault(
+            rate, {"tax_rate_bps": rate, "net_cents": 0, "tax_cents": 0, "gross_cents": 0}
+        )
         bucket["net_cents"] += int(line.net_cents)
         bucket["tax_cents"] += int(line.tax_cents)
         bucket["gross_cents"] += int(line.gross_cents)

@@ -58,9 +58,7 @@ def fiscal_provider_name() -> str:
         return PROVIDER_OFF
     if raw == PROVIDER_FISKALY:
         return PROVIDER_FISKALY
-    raise ValueError(
-        f"Unknown POS_FISCAL_PROVIDER={raw!r}; allowed: off, mock, fiskaly"
-    )
+    raise ValueError(f"Unknown POS_FISCAL_PROVIDER={raw!r}; allowed: off, mock, fiskaly")
 
 
 def get_fiscal_port() -> FiscalizationPort | None:
@@ -85,7 +83,10 @@ def assert_finished_fiscal_immutable(process: PosFiscalProcess) -> None:
             f"(order_id={process.pos_order_id}, kind={process.kind})"
         )
 
-def _ctx_from_order(order: PosOrder, *, kind: str, payment_method: str | None = None) -> FiscalProcessContext:
+
+def _ctx_from_order(
+    order: PosOrder, *, kind: str, payment_method: str | None = None
+) -> FiscalProcessContext:
     return FiscalProcessContext(
         order_id=order.id,
         bill_number=order.bill_number,
@@ -262,8 +263,7 @@ def finish_sale_process(
 
     if process.state != STATE_STARTED or not process.tse_transaction_id:
         raise ValueError(
-            f"Cannot finish fiscal process in state={process.state!r} "
-            f"(order_id={order.id})"
+            f"Cannot finish fiscal process in state={process.state!r} (order_id={order.id})"
         )
 
     ctx = _ctx_from_order(order, kind=KIND_SALE, payment_method=payment_method)

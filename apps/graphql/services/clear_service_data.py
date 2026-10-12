@@ -253,9 +253,9 @@ def _clear_digital_menu(
     ]
     if order_ids:
         # Fiscal FK is RESTRICT — delete open/void fiscal rows before tickets.
-        session.query(PosFiscalProcess).filter(
-            PosFiscalProcess.pos_order_id.in_(order_ids)
-        ).delete(synchronize_session=False)
+        session.query(PosFiscalProcess).filter(PosFiscalProcess.pos_order_id.in_(order_ids)).delete(
+            synchronize_session=False
+        )
         line_ids = [
             int(row[0])
             for row in session.query(PosOrderLine.id)

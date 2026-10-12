@@ -135,7 +135,9 @@ def upgrade() -> None:
     )
     op.add_column(
         "pos_order_line",
-        sa.Column("tax_class_snapshot", sa.String(length=32), server_default="standard", nullable=False),
+        sa.Column(
+            "tax_class_snapshot", sa.String(length=32), server_default="standard", nullable=False
+        ),
     )
     op.add_column(
         "pos_order_line",
@@ -282,8 +284,12 @@ def downgrade() -> None:
     )
     op.drop_column("pos_order_line_modifier", "price_delta_cents")
 
-    op.add_column("pos_order_line", sa.Column("unit_price", sa.Float(), nullable=False, server_default="0"))
-    op.add_column("pos_order_line", sa.Column("line_total", sa.Float(), nullable=False, server_default="0"))
+    op.add_column(
+        "pos_order_line", sa.Column("unit_price", sa.Float(), nullable=False, server_default="0")
+    )
+    op.add_column(
+        "pos_order_line", sa.Column("line_total", sa.Float(), nullable=False, server_default="0")
+    )
     op.execute(
         sa.text(
             """
@@ -305,9 +311,7 @@ def downgrade() -> None:
         "pos_order",
         sa.Column("discount_amount", sa.Float(), server_default="0", nullable=False),
     )
-    op.execute(
-        sa.text("UPDATE pos_order SET discount_amount = discount_cents / 100.0")
-    )
+    op.execute(sa.text("UPDATE pos_order SET discount_amount = discount_cents / 100.0"))
     op.drop_column("pos_order", "gross_cents")
     op.drop_column("pos_order", "tax_cents")
     op.drop_column("pos_order", "net_cents")

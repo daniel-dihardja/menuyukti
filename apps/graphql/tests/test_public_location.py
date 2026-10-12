@@ -99,9 +99,7 @@ mutation SetSlug($locationId: Int!, $publicSlug: String) {
 
 
 def _clear(session) -> None:
-    location_ids = session.query(Location.id).filter(
-        Location.clerk_user_id == GRAPHQL_TEST_USER_ID
-    )
+    location_ids = session.query(Location.id).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID)
     menu_ids = session.query(Menu.id).filter(Menu.location_id.in_(location_ids))
     session.query(Prediction).update(
         {Prediction.winning_outcome_id: None},
@@ -111,15 +109,11 @@ def _clear(session) -> None:
     session.query(Prediction).delete(synchronize_session=False)
     # SQLite tests often run without PRAGMA foreign_keys: deleting Menu alone
     # leaves MenuItem rows that can reattach when autoincrement ids are reused.
-    session.query(MenuItem).filter(MenuItem.menu_id.in_(menu_ids)).delete(
-        synchronize_session=False
-    )
+    session.query(MenuItem).filter(MenuItem.menu_id.in_(menu_ids)).delete(synchronize_session=False)
     session.query(MenuCategory).filter(MenuCategory.menu_id.in_(menu_ids)).delete(
         synchronize_session=False
     )
-    session.query(Menu).filter(Menu.location_id.in_(location_ids)).delete(
-        synchronize_session=False
-    )
+    session.query(Menu).filter(Menu.location_id.in_(location_ids)).delete(synchronize_session=False)
     session.query(ServiceSubscription).filter(
         ServiceSubscription.location_id.in_(location_ids)
     ).delete(synchronize_session=False)

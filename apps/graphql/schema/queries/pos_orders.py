@@ -116,9 +116,7 @@ class PosOrdersQuery:
             )
 
     @strawberry.field(description="Append-only audit events for a POS ticket (owner-only).")
-    def pos_audit_events(
-        self, info: strawberry.Info, order_id: int
-    ) -> list[PosAuditEventType]:
+    def pos_audit_events(self, info: strawberry.Info, order_id: int) -> list[PosAuditEventType]:
         user_id = user_id_from_info(info)
         if not user_id:
             return []

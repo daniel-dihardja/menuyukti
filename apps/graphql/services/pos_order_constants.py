@@ -21,9 +21,7 @@ PREP_PREPARING = "preparing"
 PREP_READY = "ready"
 PREP_SERVED = "served"
 PREP_PICKED_UP = "picked_up"
-PREP_STATUSES = frozenset(
-    {PREP_RECEIVED, PREP_PREPARING, PREP_READY, PREP_SERVED, PREP_PICKED_UP}
-)
+PREP_STATUSES = frozenset({PREP_RECEIVED, PREP_PREPARING, PREP_READY, PREP_SERVED, PREP_PICKED_UP})
 PREP_TERMINAL = frozenset({PREP_SERVED, PREP_PICKED_UP})
 
 
@@ -37,9 +35,7 @@ def normalize_fulfillment_mode(mode: str) -> str:
     """Require dine_in or pickup; raise ValueError otherwise."""
     cleaned = (mode or "").strip().lower()
     if cleaned not in FULFILLMENT_MODES:
-        raise ValueError(
-            f"fulfillment_mode must be one of: {', '.join(sorted(FULFILLMENT_MODES))}"
-        )
+        raise ValueError(f"fulfillment_mode must be one of: {', '.join(sorted(FULFILLMENT_MODES))}")
     return cleaned
 
 

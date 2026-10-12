@@ -121,8 +121,7 @@ class PosOrderType:
 
 @strawberry.type(
     description=(
-        "Minimal guest-facing digital-menu order status "
-        "(no lines, fiscal, or money fields)."
+        "Minimal guest-facing digital-menu order status (no lines, fiscal, or money fields)."
     )
 )
 class PublicMenuOrderStatusType:

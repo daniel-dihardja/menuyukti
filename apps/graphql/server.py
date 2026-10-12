@@ -77,9 +77,7 @@ def _validate_production_fiscal_provider() -> None:
         )
     if raw in {"off", "none", "disabled", "fiskaly"}:
         return
-    raise RuntimeError(
-        f"Unknown POS_FISCAL_PROVIDER={raw!r} in production; allowed: off, fiskaly"
-    )
+    raise RuntimeError(f"Unknown POS_FISCAL_PROVIDER={raw!r} in production; allowed: off, fiskaly")
 
 
 def _cors_allow_origins() -> list[str]:

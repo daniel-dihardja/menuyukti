@@ -139,9 +139,7 @@ class PosOrderMutations:
             if line is None:
                 raise ValueError("Order line not found")
             _load_owned_order(session, line.pos_order_id, user_id, info)
-            order = pos_svc.remove_line(
-                session, line_id=line_id, actor_clerk_user_id=user_id
-            )
+            order = pos_svc.remove_line(session, line_id=line_id, actor_clerk_user_id=user_id)
             session.commit()
             refreshed = pos_svc.get_order(session, order.id)
             return pos_order_to_gql(refreshed or order)
@@ -222,9 +220,7 @@ class PosOrderMutations:
             "(received → preparing → ready → served|picked_up)."
         )
     )
-    def advance_pos_order_prep_status(
-        self, info: strawberry.Info, order_id: int
-    ) -> PosOrderType:
+    def advance_pos_order_prep_status(self, info: strawberry.Info, order_id: int) -> PosOrderType:
         user_id = user_id_from_info(info)
         if not user_id:
             raise ValueError("Missing authenticated user for advancePosOrderPrepStatus")
@@ -244,9 +240,7 @@ class PosOrderMutations:
             raise ValueError("Missing authenticated user for voidPosOrder")
         with request_session_scope(info) as session:
             _load_owned_order(session, order_id, user_id, info)
-            order = pos_svc.void_order(
-                session, order_id=order_id, actor_clerk_user_id=user_id
-            )
+            order = pos_svc.void_order(session, order_id=order_id, actor_clerk_user_id=user_id)
             session.commit()
             refreshed = pos_svc.get_order(session, order.id)
             return pos_order_to_gql(refreshed or order)
@@ -264,9 +258,7 @@ class PosOrderMutations:
         with request_session_scope(info) as session:
             order = _load_owned_order(session, order_id, user_id, info)
             require_location_refund_manager(session, order.location_id, user_id, info=info)
-            order = pos_svc.refund_order(
-                session, order_id=order_id, actor_clerk_user_id=user_id
-            )
+            order = pos_svc.refund_order(session, order_id=order_id, actor_clerk_user_id=user_id)
             session.commit()
             refreshed = pos_svc.get_order(session, order.id)
             return pos_order_to_gql(refreshed or order)

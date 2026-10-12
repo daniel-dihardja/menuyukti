@@ -92,15 +92,11 @@ def _clear(session) -> None:
         )
     ).delete(synchronize_session=False)
     # SQLite tests often run without PRAGMA foreign_keys: delete children first.
-    session.query(MenuItem).filter(MenuItem.menu_id.in_(menu_ids)).delete(
-        synchronize_session=False
-    )
+    session.query(MenuItem).filter(MenuItem.menu_id.in_(menu_ids)).delete(synchronize_session=False)
     session.query(MenuCategory).filter(MenuCategory.menu_id.in_(menu_ids)).delete(
         synchronize_session=False
     )
-    session.query(Menu).filter(Menu.location_id.in_(location_ids)).delete(
-        synchronize_session=False
-    )
+    session.query(Menu).filter(Menu.location_id.in_(location_ids)).delete(synchronize_session=False)
     session.query(Location).filter(
         Location.clerk_user_id.in_([GRAPHQL_TEST_USER_ID, OTHER_USER])
     ).delete()
