@@ -537,7 +537,6 @@ def test_clear_digital_menu(clear_workspace):
         session.add(order)
         session.flush()
         from graphql.data_sources.models.pos_order import PosOrderLine
-
         from graphql.services.pos_money import euros_to_cents
 
         cents = euros_to_cents(float(item.price))
