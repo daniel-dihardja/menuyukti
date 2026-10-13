@@ -337,6 +337,16 @@ function LocationMenuItemRow({
                 open && 'rotate-180',
               )}
             />
+            {item.imageFilename ? (
+              <span className="bg-muted relative size-9 shrink-0 overflow-hidden rounded-md">
+                {/* eslint-disable-next-line @next/next/no-img-element -- media download proxy */}
+                <img
+                  src={mediaDownloadHref(item.imageFilename)}
+                  alt=""
+                  className="size-full object-cover"
+                />
+              </span>
+            ) : null}
             <span className="min-w-0 flex-1 truncate">{displayName}</span>
             <span className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
               {priceLabel ? (
