@@ -52,18 +52,20 @@ class GuestPreferenceProfile(Base):
     """Optional portable preference profile for a Clerk guest."""
 
     __tablename__ = "guest_preference_profile"
+    __table_args__ = (
+        UniqueConstraint(
+            "clerk_user_id",
+            name="uq_guest_preference_profile_clerk_user_id",
+        ),
+        Index("ix_guest_preference_profile_clerk_user_id", "clerk_user_id", unique=False),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         Uuid(as_uuid=True),
         primary_key=True,
         default=uuid.uuid4,
     )
-    clerk_user_id: Mapped[str] = mapped_column(
-        String(128),
-        nullable=False,
-        unique=True,
-        index=True,
-    )
+    clerk_user_id: Mapped[str] = mapped_column(String(128), nullable=False)
     status: Mapped[str] = mapped_column(
         String(32),
         nullable=False,
