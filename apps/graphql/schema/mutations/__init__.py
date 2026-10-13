@@ -25,6 +25,7 @@ from .delete_post import DeletePostMutation
 from .delete_post_page import DeletePostPageMutation
 from .delete_post_page_media_version import DeletePostPageMediaVersionMutation
 from .delete_style import DeleteStyleMutation
+from .food_profile import FoodProfileMutations
 from .import_pos_sales_report import ImportPosSalesReportMutation
 from .ingest_dev_data import IngestDevDataMutation
 from .inventory import InventoryCatalogMutations, InventoryStockMutations
@@ -74,6 +75,7 @@ from .vote_voting import VoteVotingMutation
 
 __all__ = [
     "ActivateServiceSubscriptionMutation",
+    "FoodProfileMutations",
     "ClearWorkspaceServiceDataMutation",
     "ClosePredictionMutation",
     "CloseVotingMutation",
