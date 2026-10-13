@@ -26,6 +26,8 @@ export function MainHeader() {
   const isSignUp =
     pathname === routes.signUp || (pathname?.startsWith(`${routes.signUp}/`) ?? false)
   const isAbout = pathname === routes.about || (pathname?.startsWith(`${routes.about}/`) ?? false)
+  const isExplore =
+    pathname === routes.explore || (pathname?.startsWith(`${routes.explore}/`) ?? false)
   const isGuestLocation = isPublicLocationSurfacePath(pathname)
   const guestPointsToShow =
     isGuestLocation && isSignedIn && guestPointBalance != null && Number.isFinite(guestPointBalance)
@@ -72,6 +74,16 @@ export function MainHeader() {
 
           {!isGuestLocation ? (
             <nav aria-label={t('navAria')} className="hidden min-w-0 items-center gap-1 md:flex">
+              <Link
+                href={routes.explore}
+                aria-current={isExplore ? 'page' : undefined}
+                className={cn(
+                  'rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors',
+                  isExplore ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
+                )}
+              >
+                {t('navExplore')}
+              </Link>
               <Link
                 href={routes.about}
                 aria-current={isAbout ? 'page' : undefined}

@@ -15,6 +15,8 @@ from graphql.schema.queries.predictions import prediction_to_gql
 from graphql.schema.queries.votings import voting_to_gql
 from graphql.schema.types.prediction import PredictionType
 from graphql.schema.types.public_location import (
+    PublicLocationDirectoryItemType,
+    PublicLocationDirectoryType,
     PublicLocationPredictionTeaserType,
     PublicLocationServiceType,
     PublicLocationType,
@@ -63,6 +65,21 @@ def _hub_to_gql(view: hub_svc.PublicLocationView) -> PublicLocationType:
     )
 
 
+def _directory_item_to_gql(
+    view: hub_svc.PublicLocationDirectoryItemView,
+) -> PublicLocationDirectoryItemType:
+    return PublicLocationDirectoryItemType(
+        id=view.id,
+        name=view.name,
+        public_slug=view.public_slug,
+        city=view.city,
+        header_image_filename=view.header_image_filename,
+        workspace_id=strawberry.ID(view.workspace_id) if view.workspace_id else None,
+        media_owner_clerk_user_id=view.media_owner_clerk_user_id,
+        menu_dish_count=view.menu_dish_count,
+    )
+
+
 @strawberry.type
 class PublicLocationQuery:
     @strawberry.field(
@@ -81,6 +98,34 @@ class PublicLocationQuery:
             if view is None:
                 return None
             return _hub_to_gql(view)
+
+    @strawberry.field(
+        description=(
+            "Discoverable venues with a published digital menu. "
+            "Optional city (exact, case-insensitive) and free-text query on name/city. "
+            "No authentication required."
+        )
+    )
+    def public_locations(
+        self,
+        info: strawberry.Info,
+        city: str | None = None,
+        query: str | None = None,
+        first: int | None = None,
+    ) -> PublicLocationDirectoryType:
+        limit = hub_svc.clamp_directory_limit(first)
+        with request_session_scope(info) as session:
+            cities = hub_svc.list_discoverable_cities(session)
+            locations = hub_svc.list_discoverable_locations(
+                session,
+                city=city,
+                query=query,
+                limit=limit,
+            )
+            return PublicLocationDirectoryType(
+                cities=cities,
+                locations=[_directory_item_to_gql(item) for item in locations],
+            )
 
     @strawberry.field(
         description=(

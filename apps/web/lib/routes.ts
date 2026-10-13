@@ -119,6 +119,8 @@ export const routes = {
 
   /** Public marketing / legal (not behind app shell). */
   about: '/about',
+  /** Guest venue directory (published digital menus). */
+  explore: '/explore',
   privacy: '/privacy',
   terms: '/terms',
 

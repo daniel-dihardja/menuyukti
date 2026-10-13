@@ -1,0 +1,22 @@
+{
+  "explore": {
+    "metaTitle": "Explore restaurants | Menuyukti",
+    "metaDescription": "Find restaurants, cafés, and bars on Menuyukti and open their digital menu.",
+    "skipToContent": "Skip to content",
+    "title": "Explore",
+    "subtitle": "Find restaurants, cafés, and bars with a digital menu on Menuyukti.",
+    "searchLabel": "Search venues",
+    "searchPlaceholder": "Search by name or city",
+    "searchSubmit": "Search",
+    "citiesLabel": "City",
+    "cityAll": "All",
+    "dishCount": "{count, plural, =0 {No dishes yet} one {# dish} other {# dishes}}",
+    "cardAria": "Open {name}",
+    "emptyCatalogTitle": "No venues yet",
+    "emptyCatalogBody": "Published digital menus will appear here when restaurants join Menuyukti.",
+    "emptyFiltersTitle": "No matches",
+    "emptyFiltersBody": "Try another city or a different search.",
+    "clearFilters": "Clear filters",
+    "imageAlt": "{name}"
+  }
+}

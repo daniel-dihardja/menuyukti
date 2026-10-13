@@ -23,7 +23,12 @@ from .prediction import (
     PredictionVoteType,
 )
 from .public_holiday import PublicHolidayType
-from .public_location import PublicLocationServiceType, PublicLocationType
+from .public_location import (
+    PublicLocationDirectoryItemType,
+    PublicLocationDirectoryType,
+    PublicLocationServiceType,
+    PublicLocationType,
+)
 from .service_subscription import ServiceSubscriptionType
 from .workspace import WorkspaceType
 from .workspace_membership import WorkspaceMembershipType
@@ -44,6 +49,8 @@ __all__ = [
     "PosPaymentMethod",
     "PublicMenuOrderStatusType",
     "PublicHolidayType",
+    "PublicLocationDirectoryItemType",
+    "PublicLocationDirectoryType",
     "PublicLocationServiceType",
     "PublicLocationType",
     "PostType",

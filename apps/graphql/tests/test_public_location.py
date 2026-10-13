@@ -98,6 +98,24 @@ mutation SetSlug($locationId: Int!, $publicSlug: String) {
 }
 """
 
+DIRECTORY = """
+query Directory($city: String, $query: String, $first: Int) {
+  publicLocations(city: $city, query: $query, first: $first) {
+    cities
+    locations {
+      id
+      name
+      publicSlug
+      city
+      headerImageFilename
+      workspaceId
+      mediaOwnerClerkUserId
+      menuDishCount
+    }
+  }
+}
+"""
+
 
 def _clear(session) -> None:
     from graphql.tests.pos_cleanup import clear_workspaces_for_owners
@@ -588,3 +606,135 @@ def test_create_location_with_public_slug(hub_venue):
     )
     assert result.errors is None, result.errors
     assert result.data["createLocation"]["publicSlug"] == "slug-cafe"
+
+
+def _publish_digital_menu(session, *, workspace_id: int, location_id: int, **menu_kwargs) -> Menu:
+    session.add(
+        ServiceSubscription(
+            workspace_id=workspace_id,
+            location_id=location_id,
+            service_key=SERVICE_KEY_DIGITAL_MENU,
+            status=SERVICE_STATUS_ACTIVE,
+        )
+    )
+    menu = Menu(location_id=location_id, title="", public_enabled=True, **menu_kwargs)
+    session.add(menu)
+    return menu
+
+
+def test_public_locations_excludes_unpublished_and_unsubscribed(hub_venue):
+    lid = hub_venue["location_id"]
+    wid = hub_venue["workspace_id"]
+    session = SessionLocal()
+    try:
+        loc = session.get(Location, lid)
+        assert loc is not None
+        loc.city = "Berlin"
+        # Menu published but no subscription → excluded
+        session.add(Menu(location_id=lid, title="", public_enabled=True))
+        session.commit()
+    finally:
+        session.close()
+
+    empty = asyncio.run(schema.execute(DIRECTORY))
+    assert empty.errors is None, empty.errors
+    assert empty.data["publicLocations"]["locations"] == []
+    assert empty.data["publicLocations"]["cities"] == []
+
+    session = SessionLocal()
+    try:
+        session.add(
+            ServiceSubscription(
+                workspace_id=wid,
+                location_id=lid,
+                service_key=SERVICE_KEY_DIGITAL_MENU,
+                status=SERVICE_STATUS_ACTIVE,
+            )
+        )
+        session.commit()
+    finally:
+        session.close()
+
+    result = asyncio.run(schema.execute(DIRECTORY))
+    assert result.errors is None, result.errors
+    directory = result.data["publicLocations"]
+    assert directory["cities"] == ["Berlin"]
+    assert len(directory["locations"]) == 1
+    item = directory["locations"][0]
+    assert item["publicSlug"] == "hub-cafe"
+    assert item["city"] == "Berlin"
+    assert item["name"] == "Hub Cafe"
+    assert item["workspaceId"] == str(wid)
+    assert item["mediaOwnerClerkUserId"] == GRAPHQL_TEST_USER_ID
+    assert item["menuDishCount"] == 0
+
+
+def test_public_locations_city_and_query_filters(hub_venue):
+    lid = hub_venue["location_id"]
+    wid = hub_venue["workspace_id"]
+    session = SessionLocal()
+    try:
+        loc = session.get(Location, lid)
+        assert loc is not None
+        loc.city = "Berlin"
+        _publish_digital_menu(session, workspace_id=wid, location_id=lid)
+
+        munich = Location(
+            name="Munich Bar",
+            clerk_user_id=GRAPHQL_TEST_USER_ID,
+            workspace_id=wid,
+            currency="EUR",
+            public_slug="munich-bar",
+            city="Munich",
+        )
+        session.add(munich)
+        session.flush()
+        _publish_digital_menu(session, workspace_id=wid, location_id=munich.id)
+
+        unpublished = Location(
+            name="Hidden Spot",
+            clerk_user_id=GRAPHQL_TEST_USER_ID,
+            workspace_id=wid,
+            currency="EUR",
+            public_slug="hidden-spot",
+            city="Berlin",
+        )
+        session.add(unpublished)
+        session.flush()
+        session.add(Menu(location_id=unpublished.id, title="", public_enabled=False))
+        session.add(
+            ServiceSubscription(
+                workspace_id=wid,
+                location_id=unpublished.id,
+                service_key=SERVICE_KEY_DIGITAL_MENU,
+                status=SERVICE_STATUS_ACTIVE,
+            )
+        )
+        session.commit()
+    finally:
+        session.close()
+
+    all_dir = asyncio.run(schema.execute(DIRECTORY))
+    assert all_dir.errors is None, all_dir.errors
+    assert all_dir.data["publicLocations"]["cities"] == ["Berlin", "Munich"]
+    slugs = {row["publicSlug"] for row in all_dir.data["publicLocations"]["locations"]}
+    assert slugs == {"hub-cafe", "munich-bar"}
+
+    berlin = asyncio.run(schema.execute(DIRECTORY, variable_values={"city": "berlin"}))
+    assert berlin.errors is None, berlin.errors
+    berlin_rows = berlin.data["publicLocations"]["locations"]
+    assert len(berlin_rows) == 1
+    assert berlin_rows[0]["publicSlug"] == "hub-cafe"
+    # Cities list is always the full discoverable set (chip options)
+    assert berlin.data["publicLocations"]["cities"] == ["Berlin", "Munich"]
+
+    by_name = asyncio.run(schema.execute(DIRECTORY, variable_values={"query": "munich"}))
+    assert by_name.errors is None, by_name.errors
+    assert len(by_name.data["publicLocations"]["locations"]) == 1
+    assert by_name.data["publicLocations"]["locations"][0]["publicSlug"] == "munich-bar"
+
+    no_match = asyncio.run(
+        schema.execute(DIRECTORY, variable_values={"city": "Berlin", "query": "munich"})
+    )
+    assert no_match.errors is None, no_match.errors
+    assert no_match.data["publicLocations"]["locations"] == []

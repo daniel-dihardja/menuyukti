@@ -51,3 +51,28 @@ class PublicLocationType:
     menu_open_points: int | None
     prediction_teaser: PublicLocationPredictionTeaserType | None
     voting_teaser: PublicLocationVotingTeaserType | None
+
+
+@strawberry.type(
+    description="One discoverable venue card for the public explore directory.",
+)
+class PublicLocationDirectoryItemType:
+    id: int
+    name: str
+    public_slug: str
+    city: str | None
+    header_image_filename: str | None
+    workspace_id: strawberry.ID | None
+    media_owner_clerk_user_id: str | None
+    menu_dish_count: int
+
+
+@strawberry.type(
+    description=(
+        "Public explore directory: distinct cities for chips plus matching venues "
+        "with a published digital menu."
+    )
+)
+class PublicLocationDirectoryType:
+    cities: list[str]
+    locations: list[PublicLocationDirectoryItemType]
