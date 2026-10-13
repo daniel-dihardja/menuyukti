@@ -119,6 +119,9 @@ def pos_order_to_gql(row: PosOrder) -> PosOrderType:
         table_label=row.table_label,
         fulfillment_mode=fulfillment,
         prep_status=prep,
+        delivery_address=row.delivery_address,
+        delivery_phone=row.delivery_phone,
+        delivery_notes=row.delivery_notes,
         note=row.note,
         refunded_at=row.refunded_at,
         fiscal_processes=[pos_fiscal_process_to_gql(p) for p in fiscal_rows],
@@ -153,6 +156,9 @@ def public_menu_order_status_to_gql(
         prep_status=prep,
         fulfillment_mode=fulfillment,
         table_label=row.table_label,
+        delivery_address=row.delivery_address,
+        delivery_phone=row.delivery_phone,
+        delivery_notes=row.delivery_notes,
         lines=lines,
     )
 

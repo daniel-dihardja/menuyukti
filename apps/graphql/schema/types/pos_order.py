@@ -27,6 +27,7 @@ class PosPaymentMethod(Enum):
 class PosFulfillmentMode(Enum):
     DINE_IN = "dine_in"
     PICKUP = "pickup"
+    DELIVERY = "delivery"
 
 
 @strawberry.enum(description="Kitchen / fulfillment prep status (independent of payment).")
@@ -36,6 +37,7 @@ class PosPrepStatus(Enum):
     READY = "ready"
     SERVED = "served"
     PICKED_UP = "picked_up"
+    DELIVERED = "delivered"
 
 
 @strawberry.type(description="Selected modifier snapshot on a POS line.")
@@ -113,6 +115,9 @@ class PosOrderType:
     table_label: str | None
     fulfillment_mode: PosFulfillmentMode | None
     prep_status: PosPrepStatus | None
+    delivery_address: str | None
+    delivery_phone: str | None
+    delivery_notes: str | None
     note: str | None
     refunded_at: datetime | None
     fiscal_processes: list[PosFiscalProcessType]
@@ -138,6 +143,9 @@ class PublicMenuOrderStatusType:
     prep_status: PosPrepStatus | None
     fulfillment_mode: PosFulfillmentMode | None
     table_label: str | None
+    delivery_address: str | None
+    delivery_phone: str | None
+    delivery_notes: str | None
     lines: list[PublicMenuOrderLineGuestType]
 
 

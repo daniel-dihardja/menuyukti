@@ -69,6 +69,26 @@ describe('public-menu active-order-storage', () => {
     expect(normalizePrepStatus('READY')).toBe('READY')
     expect(normalizeFulfillmentMode('DINE_IN')).toBe('dine_in')
     expect(normalizeFulfillmentMode('PICKUP')).toBe('pickup')
+    expect(normalizeFulfillmentMode('DELIVERY')).toBe('delivery')
+    expect(normalizePrepStatus('delivered')).toBe('DELIVERED')
+  })
+
+  it('round-trips a delivery active order', () => {
+    savePublicMenuActiveOrder(7, {
+      orderId: 99,
+      billNumber: 'B-99',
+      fulfillmentMode: 'delivery',
+      tableLabel: null,
+      prepStatus: 'READY',
+      status: 'open',
+      lines: [{ menuItemId: 1, name: 'Pizza' }],
+    })
+    expect(loadPublicMenuActiveOrder(7)).toMatchObject({
+      orderId: 99,
+      fulfillmentMode: 'delivery',
+      prepStatus: 'READY',
+      tableLabel: null,
+    })
   })
 
   it('round-trips an active order for a location', () => {

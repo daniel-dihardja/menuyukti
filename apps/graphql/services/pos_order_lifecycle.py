@@ -14,17 +14,22 @@ from graphql.services import pos_fiscalization as fiscal
 from graphql.services.pos_audit import record_pos_audit
 from graphql.services.pos_money import euros_to_cents
 from graphql.services.pos_order_constants import (
+    FULFILLMENT_DELIVERY,
     FULFILLMENT_DINE_IN,
     FULFILLMENT_PICKUP,
     POS_STATUS_OPEN,
     POS_STATUS_REFUNDED,
     POS_STATUS_VOID,
+    PREP_DELIVERED,
     PREP_PICKED_UP,
     PREP_READY,
     PREP_RECEIVED,
     PREP_SERVED,
     PUBLIC_MENU_ORDER_NOTE,
     next_prep_status,
+    normalize_delivery_address,
+    normalize_delivery_notes,
+    normalize_delivery_phone,
     normalize_fulfillment_mode,
     normalize_line_note,
     normalize_table_label,
@@ -33,7 +38,7 @@ from graphql.services.pos_order_reads import get_open_public_menu_order_for_gues
 from graphql.services.pos_register_bill import ensure_default_register, next_bill_number
 from graphql.services.pos_tax import normalize_tax_class, recompute_order_tax, resolve_tax_rate_bps
 
-_PREP_RESET_ON_APPEND = frozenset({PREP_READY, PREP_SERVED, PREP_PICKED_UP})
+_PREP_RESET_ON_APPEND = frozenset({PREP_READY, PREP_SERVED, PREP_PICKED_UP, PREP_DELIVERED})
 
 
 def _utcnow() -> datetime:
@@ -84,12 +89,15 @@ def submit_public_menu_order(
     lines: Sequence[tuple[int, int]],
     fulfillment_mode: str,
     table_label: str | None = None,
+    delivery_address: str | None = None,
+    delivery_phone: str | None = None,
+    delivery_notes: str | None = None,
 ) -> PosOrder:
     """Open or append to a guest digital-menu ticket (no modifiers / no payment).
 
     If the guest already has an open digital-menu ticket at this location, lines
-    are appended to that ticket (fulfillment/table unchanged). Otherwise a new
-    ticket is opened.
+    are appended to that ticket (fulfillment/table/delivery unchanged). Otherwise
+    a new ticket is opened.
     """
     if not lines:
         raise ValueError("At least one line is required")
@@ -134,17 +142,30 @@ def submit_public_menu_order(
         return get_order(session, order.id) or order
 
     mode = normalize_fulfillment_mode(fulfillment_mode)
-    if mode == FULFILLMENT_PICKUP:
-        resolved_table: str | None = None
-    else:
+    resolved_table: str | None = None
+    resolved_address: str | None = None
+    resolved_phone: str | None = None
+    resolved_notes: str | None = None
+
+    if mode == FULFILLMENT_DINE_IN:
+        if not bool(menu.allow_dine_in):
+            raise ValueError("dine_in fulfillment is not enabled for this menu")
         resolved_table = normalize_table_label(table_label)
         if resolved_table is None:
             raise ValueError("table_label is required for dine_in fulfillment")
-
-    if mode == FULFILLMENT_DINE_IN and not bool(menu.allow_dine_in):
-        raise ValueError("dine_in fulfillment is not enabled for this menu")
-    if mode == FULFILLMENT_PICKUP and not bool(menu.allow_pickup):
-        raise ValueError("pickup fulfillment is not enabled for this menu")
+    elif mode == FULFILLMENT_PICKUP:
+        if not bool(menu.allow_pickup):
+            raise ValueError("pickup fulfillment is not enabled for this menu")
+    elif mode == FULFILLMENT_DELIVERY:
+        if not bool(menu.allow_delivery):
+            raise ValueError("delivery fulfillment is not enabled for this menu")
+        resolved_address = normalize_delivery_address(delivery_address)
+        if resolved_address is None:
+            raise ValueError("delivery_address is required for delivery fulfillment")
+        resolved_phone = normalize_delivery_phone(delivery_phone)
+        if resolved_phone is None:
+            raise ValueError("delivery_phone is required for delivery fulfillment")
+        resolved_notes = normalize_delivery_notes(delivery_notes)
 
     order = open_order(
         session,
@@ -155,6 +176,9 @@ def submit_public_menu_order(
     order.note = PUBLIC_MENU_ORDER_NOTE
     order.fulfillment_mode = mode
     order.prep_status = PREP_RECEIVED
+    order.delivery_address = resolved_address
+    order.delivery_phone = resolved_phone
+    order.delivery_notes = resolved_notes
     session.flush()
 
     for menu_item_id, qty in lines:

@@ -107,6 +107,7 @@ export async function PublicLocationMenuBody({ slug, tableLabel }: PublicLocatio
             tableLabel={tableLabel}
             allowDineIn={menu.allowDineIn}
             allowPickup={menu.allowPickup}
+            allowDelivery={menu.allowDelivery}
           />
         )}
       </main>

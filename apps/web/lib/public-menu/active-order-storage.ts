@@ -1,6 +1,12 @@
 import type { PublicMenuFulfillmentMode } from '@/lib/public-menu/fulfillment-mode'
 
-export type PublicMenuPrepStatus = 'RECEIVED' | 'PREPARING' | 'READY' | 'SERVED' | 'PICKED_UP'
+export type PublicMenuPrepStatus =
+  | 'RECEIVED'
+  | 'PREPARING'
+  | 'READY'
+  | 'SERVED'
+  | 'PICKED_UP'
+  | 'DELIVERED'
 
 export type PublicMenuOrderTicketStatus = 'open' | 'paid' | 'void' | 'refunded' | string
 
@@ -23,6 +29,7 @@ const PREP_STATUSES = new Set<PublicMenuPrepStatus>([
   'READY',
   'SERVED',
   'PICKED_UP',
+  'DELIVERED',
 ])
 
 export function isTerminalTicketStatus(status: string | null | undefined): boolean {
@@ -51,6 +58,7 @@ export function normalizeFulfillmentMode(
   const value = raw.trim().toLowerCase()
   if (value === 'dine_in' || value === 'dine-in') return 'dine_in'
   if (value === 'pickup') return 'pickup'
+  if (value === 'delivery') return 'delivery'
   return null
 }
 
@@ -67,7 +75,9 @@ function parseActiveOrder(raw: unknown): PublicMenuActiveOrder | null {
     value.orderId < 1 ||
     typeof value.billNumber !== 'string' ||
     !value.billNumber.trim() ||
-    (value.fulfillmentMode !== 'dine_in' && value.fulfillmentMode !== 'pickup') ||
+    (value.fulfillmentMode !== 'dine_in' &&
+      value.fulfillmentMode !== 'pickup' &&
+      value.fulfillmentMode !== 'delivery') ||
     (value.tableLabel != null && typeof value.tableLabel !== 'string') ||
     typeof value.status !== 'string' ||
     typeof value.savedAt !== 'number'
@@ -80,7 +90,8 @@ function parseActiveOrder(raw: unknown): PublicMenuActiveOrder | null {
     value.prepStatus === 'PREPARING' ||
     value.prepStatus === 'READY' ||
     value.prepStatus === 'SERVED' ||
-    value.prepStatus === 'PICKED_UP'
+    value.prepStatus === 'PICKED_UP' ||
+    value.prepStatus === 'DELIVERED'
       ? value.prepStatus
       : null
 

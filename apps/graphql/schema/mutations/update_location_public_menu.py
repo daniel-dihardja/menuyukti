@@ -44,6 +44,7 @@ class UpdateLocationPublicMenuMutation:
         header_image_filename: str | None = UNSET,
         allow_dine_in: bool | None = UNSET,
         allow_pickup: bool | None = UNSET,
+        allow_delivery: bool | None = UNSET,
     ) -> LocationPublicMenuSettingsType:
         user_id = user_id_from_info(info)
         if not user_id:
@@ -91,13 +92,24 @@ class UpdateLocationPublicMenuMutation:
             next_allow_pickup = (
                 bool(allow_pickup) if allow_pickup is not UNSET else bool(menu.allow_pickup)
             )
-            if allow_dine_in is not UNSET or allow_pickup is not UNSET:
+            next_allow_delivery = (
+                bool(allow_delivery)
+                if allow_delivery is not UNSET
+                else bool(menu.allow_delivery)
+            )
+            if (
+                allow_dine_in is not UNSET
+                or allow_pickup is not UNSET
+                or allow_delivery is not UNSET
+            ):
                 validate_menu_fulfillment_allows(
                     allow_dine_in=next_allow_dine_in,
                     allow_pickup=next_allow_pickup,
+                    allow_delivery=next_allow_delivery,
                 )
                 menu.allow_dine_in = next_allow_dine_in
                 menu.allow_pickup = next_allow_pickup
+                menu.allow_delivery = next_allow_delivery
 
             session.commit()
             session.refresh(menu)

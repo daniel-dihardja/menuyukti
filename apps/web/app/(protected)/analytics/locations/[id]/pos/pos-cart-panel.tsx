@@ -243,7 +243,11 @@ export function PosCartPanel({
           {currentOrder ? (
             <p className="truncate text-xs text-muted-foreground">
               {currentOrder.billNumber}
-              {currentOrder.fulfillmentMode === 'PICKUP' ? ` · ${t('fulfillmentPickup')}` : null}
+              {currentOrder.fulfillmentMode === 'PICKUP'
+                ? ` · ${t('fulfillmentPickup')}`
+                : currentOrder.fulfillmentMode === 'DELIVERY'
+                  ? ` · ${t('fulfillmentDelivery')}`
+                  : null}
             </p>
           ) : (
             <p className="text-xs text-muted-foreground">{t('noOpenTicket')}</p>
@@ -270,7 +274,24 @@ export function PosCartPanel({
         ) : null}
       </div>
 
-      {currentOrder && isEditable ? (
+      {currentOrder?.fulfillmentMode === 'DELIVERY' &&
+      (currentOrder.deliveryAddress || currentOrder.deliveryPhone) ? (
+        <div className="shrink-0 space-y-1 text-xs text-muted-foreground">
+          {currentOrder.deliveryAddress ? (
+            <p className="whitespace-pre-wrap">{currentOrder.deliveryAddress}</p>
+          ) : null}
+          {currentOrder.deliveryPhone ? (
+            <p>
+              {t('deliveryPhone')}: {currentOrder.deliveryPhone}
+            </p>
+          ) : null}
+          {currentOrder.deliveryNotes ? (
+            <p className="whitespace-pre-wrap">
+              {t('deliveryNotes')}: {currentOrder.deliveryNotes}
+            </p>
+          ) : null}
+        </div>
+      ) : currentOrder && isEditable ? (
         <FieldGroup className="shrink-0 gap-3">
           <Field orientation="horizontal" className="flex-wrap items-end gap-2">
             <FieldLabel htmlFor="pos-table-label">{t('tableLabel')}</FieldLabel>

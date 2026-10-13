@@ -127,6 +127,18 @@ export function PosOpsSheet({
                                 {' '}
                                 · {t('fulfillmentPickup')}
                               </span>
+                            ) : order.fulfillmentMode === 'DELIVERY' ? (
+                              <span className="font-normal text-muted-foreground">
+                                {' '}
+                                · {t('fulfillmentDelivery')}
+                                {order.deliveryAddress
+                                  ? ` · ${
+                                      order.deliveryAddress.length > 18
+                                        ? `${order.deliveryAddress.slice(0, 18)}…`
+                                        : order.deliveryAddress
+                                    }`
+                                  : null}
+                              </span>
                             ) : order.tableLabel ? (
                               <span className="font-normal text-muted-foreground">
                                 {' '}

@@ -41,19 +41,24 @@
     "clearTableLabel": "Löschen",
     "tableLabelReadOnly": "Tisch · {label}",
     "fulfillmentPickup": "Abholung",
+    "fulfillmentDelivery": "Lieferung",
+    "deliveryPhone": "Telefon",
+    "deliveryNotes": "Hinweise",
     "prep": {
       "status": {
         "received": "Eingegangen",
         "preparing": "In Zubereitung",
         "ready": "Fertig",
         "served": "Serviert",
-        "picked_up": "Abgeholt"
+        "picked_up": "Abgeholt",
+        "delivered": "Geliefert"
       },
       "advanceTo": {
         "preparing": "Zubereitung starten",
         "ready": "Als fertig markieren",
         "served": "Als serviert markieren",
-        "picked_up": "Als abgeholt markieren"
+        "picked_up": "Als abgeholt markieren",
+        "delivered": "Als geliefert markieren"
       }
     },
     "total": "Summe",

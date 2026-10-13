@@ -48,6 +48,7 @@ export type LocationMenu = {
   publicEnabled: boolean
   allowDineIn: boolean
   allowPickup: boolean
+  allowDelivery: boolean
   headerImageFilename: string | null
   categories: LocationMenuCategory[]
 }
@@ -94,6 +95,7 @@ const MENU_FIELDS = `
   publicEnabled
   allowDineIn
   allowPickup
+  allowDelivery
   headerImageFilename
   categories {
     id
@@ -138,6 +140,7 @@ export const UPDATE_LOCATION_PUBLIC_MENU_MUTATION = `
     $headerImageFilename: String
     $allowDineIn: Boolean
     $allowPickup: Boolean
+    $allowDelivery: Boolean
   ) {
     updateLocationPublicMenu(
       locationId: $locationId
@@ -146,6 +149,7 @@ export const UPDATE_LOCATION_PUBLIC_MENU_MUTATION = `
       headerImageFilename: $headerImageFilename
       allowDineIn: $allowDineIn
       allowPickup: $allowPickup
+      allowDelivery: $allowDelivery
     ) {
       locationId
       publicEnabled
@@ -180,6 +184,7 @@ export const PUBLIC_LOCATION_MENU_QUERY = `
       headerImageFilename
       allowDineIn
       allowPickup
+      allowDelivery
       categories {
         name
         sortOrder
@@ -243,6 +248,7 @@ export type PublicLocationMenuPayload = {
   headerImageFilename: string | null
   allowDineIn: boolean
   allowPickup: boolean
+  allowDelivery: boolean
   categories: PublicMenuCategory[]
 }
 
@@ -250,7 +256,7 @@ export type PublicLocationMenuData = {
   publicLocationMenu: PublicLocationMenuPayload | null
 }
 
-export type PublicMenuFulfillmentMode = 'dine_in' | 'pickup'
+export type PublicMenuFulfillmentMode = 'dine_in' | 'pickup' | 'delivery'
 
 export const SUBMIT_PUBLIC_MENU_ORDER_MUTATION = `
   mutation SubmitPublicMenuOrder(
@@ -258,12 +264,18 @@ export const SUBMIT_PUBLIC_MENU_ORDER_MUTATION = `
     $lines: [PublicMenuOrderLineInput!]!
     $fulfillmentMode: PosFulfillmentMode!
     $tableLabel: String
+    $deliveryAddress: String
+    $deliveryPhone: String
+    $deliveryNotes: String
   ) {
     submitPublicMenuOrder(
       locationId: $locationId
       lines: $lines
       fulfillmentMode: $fulfillmentMode
       tableLabel: $tableLabel
+      deliveryAddress: $deliveryAddress
+      deliveryPhone: $deliveryPhone
+      deliveryNotes: $deliveryNotes
     ) {
       id
       billNumber
@@ -272,6 +284,9 @@ export const SUBMIT_PUBLIC_MENU_ORDER_MUTATION = `
       tableLabel
       fulfillmentMode
       prepStatus
+      deliveryAddress
+      deliveryPhone
+      deliveryNotes
       openedByClerkUserId
       lines {
         menuItemId
@@ -290,8 +305,11 @@ export type SubmitPublicMenuOrderResult = {
   status: string
   note: string | null
   tableLabel: string | null
-  fulfillmentMode: 'DINE_IN' | 'PICKUP' | null
-  prepStatus: 'RECEIVED' | 'PREPARING' | 'READY' | 'SERVED' | 'PICKED_UP' | null
+  fulfillmentMode: 'DINE_IN' | 'PICKUP' | 'DELIVERY' | null
+  prepStatus: 'RECEIVED' | 'PREPARING' | 'READY' | 'SERVED' | 'PICKED_UP' | 'DELIVERED' | null
+  deliveryAddress: string | null
+  deliveryPhone: string | null
+  deliveryNotes: string | null
   openedByClerkUserId: string
   lines: Array<{
     menuItemId: number
@@ -315,6 +333,9 @@ export const PUBLIC_MENU_ORDER_QUERY = `
       prepStatus
       fulfillmentMode
       tableLabel
+      deliveryAddress
+      deliveryPhone
+      deliveryNotes
       lines {
         menuItemId
         name
@@ -327,9 +348,12 @@ export type PublicMenuOrderResult = {
   id: number
   billNumber: string
   status: string
-  prepStatus: 'RECEIVED' | 'PREPARING' | 'READY' | 'SERVED' | 'PICKED_UP' | null
-  fulfillmentMode: 'DINE_IN' | 'PICKUP' | null
+  prepStatus: 'RECEIVED' | 'PREPARING' | 'READY' | 'SERVED' | 'PICKED_UP' | 'DELIVERED' | null
+  fulfillmentMode: 'DINE_IN' | 'PICKUP' | 'DELIVERY' | null
   tableLabel: string | null
+  deliveryAddress?: string | null
+  deliveryPhone?: string | null
+  deliveryNotes?: string | null
   lines?: Array<{ menuItemId: number; name: string }>
 }
 
@@ -346,6 +370,9 @@ export const MY_OPEN_PUBLIC_MENU_ORDER_QUERY = `
       prepStatus
       fulfillmentMode
       tableLabel
+      deliveryAddress
+      deliveryPhone
+      deliveryNotes
       lines {
         menuItemId
         name

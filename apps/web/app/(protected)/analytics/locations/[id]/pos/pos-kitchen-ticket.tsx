@@ -32,6 +32,23 @@ export function PosKitchenTicket({ order, locationName }: PosKitchenTicketProps)
         <p className="text-xl font-bold tabular-nums">{order.billNumber}</p>
         {order.fulfillmentMode === 'PICKUP' ? (
           <p className="text-lg font-semibold">{t('fulfillmentPickup')}</p>
+        ) : order.fulfillmentMode === 'DELIVERY' ? (
+          <div className="space-y-1 text-left">
+            <p className="text-lg font-semibold text-center">{t('fulfillmentDelivery')}</p>
+            {order.deliveryAddress ? (
+              <p className="text-base font-semibold whitespace-pre-wrap">{order.deliveryAddress}</p>
+            ) : null}
+            {order.deliveryPhone ? (
+              <p className="text-base font-semibold">
+                {t('deliveryPhone')}: {order.deliveryPhone}
+              </p>
+            ) : null}
+            {order.deliveryNotes ? (
+              <p className="text-sm whitespace-pre-wrap">
+                {t('deliveryNotes')}: {order.deliveryNotes}
+              </p>
+            ) : null}
+          </div>
         ) : order.tableLabel ? (
           <p className="text-lg font-semibold">
             {t('tableLabel')}: {order.tableLabel}

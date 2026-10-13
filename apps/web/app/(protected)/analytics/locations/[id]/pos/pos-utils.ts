@@ -75,7 +75,7 @@ export function statusBadgeVariant(
   }
 }
 
-const PREP_TERMINAL: ReadonlySet<PosPrepStatus> = new Set(['SERVED', 'PICKED_UP'])
+const PREP_TERMINAL: ReadonlySet<PosPrepStatus> = new Set(['SERVED', 'PICKED_UP', 'DELIVERED'])
 
 export function isDigitalMenuOrder(order: Pick<PosOrder, 'note' | 'fulfillmentMode'>): boolean {
   return order.note === 'digital_menu' || order.fulfillmentMode != null
@@ -89,7 +89,9 @@ export function nextPrepStatus(
   if (current === 'RECEIVED') return 'PREPARING'
   if (current === 'PREPARING') return 'READY'
   if (current === 'READY') {
-    return fulfillmentMode === 'PICKUP' ? 'PICKED_UP' : 'SERVED'
+    if (fulfillmentMode === 'PICKUP') return 'PICKED_UP'
+    if (fulfillmentMode === 'DELIVERY') return 'DELIVERED'
+    return 'SERVED'
   }
   return null
 }
