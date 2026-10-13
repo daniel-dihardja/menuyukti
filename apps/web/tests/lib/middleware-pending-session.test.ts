@@ -26,6 +26,7 @@ describe('shouldRedirectPendingSession', () => {
     expect(shouldRedirectPendingSession('/dashboard', 'pending')).toBe(true)
     expect(shouldRedirectPendingSession('/agent', 'pending')).toBe(true)
     expect(shouldRedirectPendingSession('/shop', 'pending')).toBe(true)
+    expect(shouldRedirectPendingSession('/explore', 'pending')).toBe(true)
     expect(shouldRedirectPendingSession('/home', 'pending')).toBe(true)
     expect(shouldRedirectPendingSession('/profile', 'pending')).toBe(true)
   })

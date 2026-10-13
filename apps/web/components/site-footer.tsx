@@ -1,6 +1,9 @@
+import { auth } from '@clerk/nextjs/server'
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 
+import { isMenuyuktiAdmin } from '@/lib/menuyukti-role'
+import { resolveMenuyuktiRole } from '@/lib/menuyukti-role-server'
 import { routes } from '@/lib/routes'
 
 const COPYRIGHT_YEAR = 2026
@@ -10,6 +13,8 @@ const linkClassName =
 
 export async function SiteFooter() {
   const t = await getTranslations('siteFooter')
+  const { isAuthenticated } = await auth()
+  const showExploreNav = isAuthenticated && isMenuyuktiAdmin(await resolveMenuyuktiRole())
 
   return (
     <footer className="mt-auto bg-surface text-foreground">
@@ -20,9 +25,11 @@ export async function SiteFooter() {
           aria-label={t('navAria')}
           className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-sm md:hidden"
         >
-          <Link href={routes.explore} className={linkClassName}>
-            {t('explore')}
-          </Link>
+          {showExploreNav ? (
+            <Link href={routes.explore} className={linkClassName}>
+              {t('explore')}
+            </Link>
+          ) : null}
           <Link href={routes.about} className={linkClassName}>
             {t('about')}
           </Link>

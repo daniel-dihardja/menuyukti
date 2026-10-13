@@ -37,6 +37,7 @@ describe('feature-flags', () => {
     expect(isPathnameFeatureEnabled('/crm/registrations')).toBe(true)
     expect(isPathnameFeatureEnabled('/media')).toBe(true)
     expect(isPathnameFeatureEnabled('/shop')).toBe(true)
+    expect(isPathnameFeatureEnabled('/explore')).toBe(true)
     expect(isPathnameFeatureEnabled('/print-orders')).toBe(true)
     expect(isPathnameFeatureEnabled('/advisor')).toBe(true)
     expect(isPathnameFeatureEnabled('/advisor/abc')).toBe(true)

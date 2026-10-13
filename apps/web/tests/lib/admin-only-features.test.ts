@@ -36,6 +36,8 @@ describe('admin-only-features', () => {
     expect(pathnameRequiresAdmin('/crm/apps')).toBe(true)
     expect(pathnameRequiresAdmin('/shop')).toBe(true)
     expect(pathnameRequiresAdmin('/shop/poster-1')).toBe(true)
+    expect(pathnameRequiresAdmin('/explore')).toBe(true)
+    expect(pathnameRequiresAdmin('/explore?city=Berlin')).toBe(true)
     expect(pathnameRequiresAdmin('/usage')).toBe(false)
     expect(pathnameRequiresAdmin('/staff')).toBe(true)
     expect(pathnameRequiresAdmin('/ig-studio')).toBe(true)

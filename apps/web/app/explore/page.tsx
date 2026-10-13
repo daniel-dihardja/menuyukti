@@ -41,7 +41,7 @@ export async function generateMetadata(): Promise<Metadata> {
       siteName: 'Menuyukti',
       type: 'website',
     },
-    robots: { index: true, follow: true },
+    robots: { index: false, follow: false },
   }
 }
 

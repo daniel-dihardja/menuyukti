@@ -40,9 +40,9 @@ export const PUBLIC_LOCATION_SURFACE_PREFIXES = ['/m', '/l'] as const
 
 /**
  * Auth-required paths that are not operator sidebar shell and not customer shell
- * (legacy `/agent` rewrite alias; admin-only print shop catalog).
+ * (legacy `/agent` rewrite alias; admin-only print shop catalog + explore directory).
  */
-export const CLERK_AUTH_EXTRA_PREFIXES = ['/agent', '/shop'] as const
+export const CLERK_AUTH_EXTRA_PREFIXES = ['/agent', '/shop', '/explore'] as const
 
 /**
  * All Clerk-protected app prefixes (operator + customer + extras). Keep in sync with `proxy.ts`.

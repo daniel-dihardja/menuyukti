@@ -11,6 +11,8 @@ import { AccountMenu } from '@/components/account/account-menu'
 import { GuestSignInMenu } from '@/components/guest-sign-in-menu'
 import { usePublicGuestPoints } from '@/components/public-guest-points-context'
 import { useOptionalWorkspacePlan } from '@/components/workspace-plan-provider'
+import { useMenuyuktiRole } from '@/hooks/use-menuyukti-role'
+import { isMenuyuktiAdmin } from '@/lib/menuyukti-role'
 import { isPublicLocationSurfacePath, routes } from '@/lib/routes'
 import { getDefaultPathForPlan } from '@/lib/workspace-plan'
 import { cn } from '@workspace/ui/lib/utils'
@@ -19,6 +21,7 @@ export function MainHeader() {
   const pathname = usePathname()
   const t = useTranslations('mainHeader')
   const { isSignedIn } = useAuth()
+  const { role, isLoaded: roleLoaded } = useMenuyuktiRole()
   const planCtx = useOptionalWorkspacePlan()
   const { balance: guestPointBalance } = usePublicGuestPoints()
   const tPublic = useTranslations('public.locationHome')
@@ -28,6 +31,7 @@ export function MainHeader() {
   const isAbout = pathname === routes.about || (pathname?.startsWith(`${routes.about}/`) ?? false)
   const isExplore =
     pathname === routes.explore || (pathname?.startsWith(`${routes.explore}/`) ?? false)
+  const showExploreNav = roleLoaded && isMenuyuktiAdmin(role)
   const isGuestLocation = isPublicLocationSurfacePath(pathname)
   const guestPointsToShow =
     isGuestLocation && isSignedIn && guestPointBalance != null && Number.isFinite(guestPointBalance)
@@ -74,16 +78,18 @@ export function MainHeader() {
 
           {!isGuestLocation ? (
             <nav aria-label={t('navAria')} className="hidden min-w-0 items-center gap-1 md:flex">
-              <Link
-                href={routes.explore}
-                aria-current={isExplore ? 'page' : undefined}
-                className={cn(
-                  'rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors',
-                  isExplore ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
-                )}
-              >
-                {t('navExplore')}
-              </Link>
+              {showExploreNav ? (
+                <Link
+                  href={routes.explore}
+                  aria-current={isExplore ? 'page' : undefined}
+                  className={cn(
+                    'rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors',
+                    isExplore ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
+                  )}
+                >
+                  {t('navExplore')}
+                </Link>
+              ) : null}
               <Link
                 href={routes.about}
                 aria-current={isAbout ? 'page' : undefined}

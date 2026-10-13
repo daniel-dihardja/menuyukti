@@ -50,6 +50,13 @@
       "actionMenuKeys": []
     },
     {
+      "id": "explore",
+      "description": "Public venue discovery directory (/explore)—admin only until guest launch.",
+      "routePrefixes": ["/explore"],
+      "navKeys": [],
+      "actionMenuKeys": []
+    },
+    {
       "id": "analyticsHeatmap",
       "description": "Menu sales heatmap report from the sales actions menu (admin).",
       "routePrefixes": [],
