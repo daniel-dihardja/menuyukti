@@ -19,7 +19,6 @@ const isProtectedRoute = createRouteMatcher([
   '/agent(.*)',
   '/crm(.*)',
   '/shop(.*)',
-  '/explore(.*)',
   '/print-orders(.*)',
   '/dashboard(.*)',
   '/home(.*)',

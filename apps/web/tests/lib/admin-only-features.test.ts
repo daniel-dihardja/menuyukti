@@ -9,7 +9,7 @@ import {
 describe('admin-only-features', () => {
   it('marks operator product nav keys as admin-only', () => {
     expect(isNavItemHiddenFromNonAdmin('chat')).toBe(false)
-    expect(isNavItemHiddenFromNonAdmin('playbooks')).toBe(true)
+    expect(isNavItemHiddenFromNonAdmin('playbooks')).toBe(false)
     expect(isNavItemHiddenFromNonAdmin('media')).toBe(false)
     expect(isNavItemHiddenFromNonAdmin('calendar')).toBe(true)
     expect(isNavItemHiddenFromNonAdmin('crm')).toBe(true)
@@ -27,8 +27,8 @@ describe('admin-only-features', () => {
     expect(pathnameRequiresAdmin('/advisor')).toBe(false)
     expect(pathnameRequiresAdmin('/advisor/thread-1')).toBe(false)
     expect(pathnameRequiresAdmin('/agent')).toBe(false)
-    expect(pathnameRequiresAdmin('/playbooks')).toBe(true)
-    expect(pathnameRequiresAdmin('/playbooks/holiday')).toBe(true)
+    expect(pathnameRequiresAdmin('/playbooks')).toBe(false)
+    expect(pathnameRequiresAdmin('/playbooks/holiday')).toBe(false)
     expect(pathnameRequiresAdmin('/media')).toBe(false)
     expect(pathnameRequiresAdmin('/content/legacy')).toBe(false)
     expect(pathnameRequiresAdmin('/calendar')).toBe(true)
@@ -36,8 +36,8 @@ describe('admin-only-features', () => {
     expect(pathnameRequiresAdmin('/crm/apps')).toBe(true)
     expect(pathnameRequiresAdmin('/shop')).toBe(true)
     expect(pathnameRequiresAdmin('/shop/poster-1')).toBe(true)
-    expect(pathnameRequiresAdmin('/explore')).toBe(true)
-    expect(pathnameRequiresAdmin('/explore?city=Berlin')).toBe(true)
+    expect(pathnameRequiresAdmin('/explore')).toBe(false)
+    expect(pathnameRequiresAdmin('/explore?city=Berlin')).toBe(false)
     expect(pathnameRequiresAdmin('/usage')).toBe(false)
     expect(pathnameRequiresAdmin('/staff')).toBe(true)
     expect(pathnameRequiresAdmin('/ig-studio')).toBe(true)
@@ -53,6 +53,8 @@ describe('admin-only-features', () => {
     expect(pathnameRequiresAdmin('/home')).toBe(false)
     expect(pathnameRequiresAdmin('/advisor')).toBe(false)
     expect(pathnameRequiresAdmin('/media')).toBe(false)
+    expect(pathnameRequiresAdmin('/playbooks')).toBe(false)
+    expect(pathnameRequiresAdmin('/explore')).toBe(false)
   })
 
   it('keeps analytics action menu admin keys', () => {

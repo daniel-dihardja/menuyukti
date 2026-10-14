@@ -22,13 +22,6 @@
       "actionMenuKeys": []
     },
     {
-      "id": "playbooks",
-      "description": "Playbooks catalog and drafts.",
-      "routePrefixes": ["/playbooks"],
-      "navKeys": ["playbooks"],
-      "actionMenuKeys": []
-    },
-    {
       "id": "calendar",
       "description": "Content calendar.",
       "routePrefixes": ["/calendar"],
@@ -47,13 +40,6 @@
       "description": "Print shop catalog (/shop)—admin only; distinct from /print-orders fulfillment.",
       "routePrefixes": ["/shop"],
       "navKeys": ["printShop"],
-      "actionMenuKeys": []
-    },
-    {
-      "id": "explore",
-      "description": "Public venue discovery directory (/explore)—admin only until guest launch.",
-      "routePrefixes": ["/explore"],
-      "navKeys": [],
       "actionMenuKeys": []
     },
     {
