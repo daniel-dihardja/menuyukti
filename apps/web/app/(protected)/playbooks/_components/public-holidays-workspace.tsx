@@ -136,6 +136,7 @@ export function PublicHolidaysWorkspace({
   onRunningChange,
 }: PublicHolidaysWorkspaceProps) {
   const t = useTranslations('playbooks.items.publicHolidays.workspace')
+  const tPlaybooks = useTranslations('playbooks')
   const locale = useLocale()
   const aiRelevanceId = useId()
   const relevanceInstructionsId = useId()
@@ -463,46 +464,55 @@ export function PublicHolidaysWorkspace({
     setRunningState(true)
     setFetchError(null)
     try {
-      const ctx = await prepareRun()
-      const holidays = await fetchHolidays({
-        locationId: ctx.locationId,
-        dateStart: ctx.startDate,
-        dateEnd: ctx.endDate,
-      })
-      const confirmedIds = new Set(confirmed.map((h) => h.id))
-      const nextCandidates = sortByDate(
-        holidays
-          .filter((h) => !confirmedIds.has(h.id))
-          .map((h) => ({ id: h.id, date: h.date, name: h.name })),
-      )
-
-      let nextSelected = new Set<string>()
-      if (useAiRelevance && nextCandidates.length > 0) {
-        const scored = await scoreHolidayRelevance({
-          locationId: ctx.locationId,
-          holidays: holidays
-            .filter((h) => !confirmedIds.has(h.id))
-            .map((h) => ({
-              id: h.id,
-              date: h.date,
-              name: h.name,
-              localName: h.localName,
-            })),
-          instructions: relevanceInstructions,
-        })
-        nextSelected = relevantHolidayIds(scored, confirmedIds)
-      }
-
-      setCandidates(nextCandidates)
-      setSelectedIds(nextSelected)
-      setHasRun(true)
-      setLastFetchEmpty(holidays.length === 0)
-    } catch (err) {
-      if (err instanceof Error && err.message === 'validation') {
+      let ctx: { locationId: number; startDate: string; endDate: string }
+      try {
+        ctx = await prepareRun()
+      } catch (err) {
+        if (err instanceof Error && err.message === 'validation') {
+          return
+        }
+        toast.error(err instanceof Error ? err.message : tPlaybooks('toast.updateError'))
         return
       }
-      setFetchError(t('fetchError'))
-      toast.error(err instanceof Error ? err.message : t('fetchError'))
+
+      try {
+        const holidays = await fetchHolidays({
+          locationId: ctx.locationId,
+          dateStart: ctx.startDate,
+          dateEnd: ctx.endDate,
+        })
+        const confirmedIds = new Set(confirmed.map((h) => h.id))
+        const nextCandidates = sortByDate(
+          holidays
+            .filter((h) => !confirmedIds.has(h.id))
+            .map((h) => ({ id: h.id, date: h.date, name: h.name })),
+        )
+
+        let nextSelected = new Set<string>()
+        if (useAiRelevance && nextCandidates.length > 0) {
+          const scored = await scoreHolidayRelevance({
+            locationId: ctx.locationId,
+            holidays: holidays
+              .filter((h) => !confirmedIds.has(h.id))
+              .map((h) => ({
+                id: h.id,
+                date: h.date,
+                name: h.name,
+                localName: h.localName,
+              })),
+            instructions: relevanceInstructions,
+          })
+          nextSelected = relevantHolidayIds(scored, confirmedIds)
+        }
+
+        setCandidates(nextCandidates)
+        setSelectedIds(nextSelected)
+        setHasRun(true)
+        setLastFetchEmpty(holidays.length === 0)
+      } catch (err) {
+        setFetchError(t('fetchError'))
+        toast.error(err instanceof Error ? err.message : t('fetchError'))
+      }
     } finally {
       setRunningState(false)
     }

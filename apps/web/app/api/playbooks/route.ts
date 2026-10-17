@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 
-import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
+import { requireAuthenticatedApi } from '@/lib/authenticated-api'
 import { ZodError } from 'zod'
 
 import { graphqlQuery } from '@/lib/graphql/client'
@@ -15,7 +15,7 @@ import { createPlaybookBodySchema } from './schema'
 
 export async function GET(req: Request) {
   try {
-    const authz = await requireMenuyuktiAdminApi()
+    const authz = await requireAuthenticatedApi()
     if (!authz.ok) return authz.response
     const { userId } = authz
 
@@ -35,7 +35,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const authz = await requireMenuyuktiAdminApi()
+    const authz = await requireAuthenticatedApi()
     if (!authz.ok) return authz.response
     const { userId } = authz
 

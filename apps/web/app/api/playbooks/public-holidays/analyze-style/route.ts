@@ -4,7 +4,7 @@ import { ZodError } from 'zod'
 import { buildAgentsHeaders } from '@/lib/agents/headers'
 import { ChatImageError, loadUserPhotoAsDataUrl } from '@/lib/chat/build-python-user-message'
 import { getPythonAgentsUrl } from '@/lib/config'
-import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
+import { requireAuthenticatedApi } from '@/lib/authenticated-api'
 import { assertUserPhotoExists } from '@/app/api/styles/helpers'
 
 import { analyzeStyleBodySchema, styleAnalysisResultSchema } from './schema'
@@ -14,7 +14,7 @@ export const maxDuration = 120
 export async function POST(req: Request) {
   await connection()
   try {
-    const authz = await requireMenuyuktiAdminApi()
+    const authz = await requireAuthenticatedApi()
     if (!authz.ok) return authz.response
     const { userId } = authz
 
