@@ -52,7 +52,6 @@ export default async function ProfilePage() {
   const name = getDisplayName(user)
   const email = getPrimaryEmail(user) || t('noEmail')
   const imageUrl = user.imageUrl
-  const passwordEnabledFromServer = user.passwordEnabled === true
 
   return (
     <CustomerPageShell maxWidth="lg">
@@ -66,7 +65,7 @@ export default async function ProfilePage() {
             imageUrl={imageUrl}
             avatarAlt={t('avatarAlt', { name })}
           />
-          <ProfileChangePasswordCard passwordEnabledFromServer={passwordEnabledFromServer} />
+          <ProfileChangePasswordCard />
         </div>
       </div>
     </CustomerPageShell>

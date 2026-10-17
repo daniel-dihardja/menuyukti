@@ -239,11 +239,11 @@ export const routes = {
   servicesVoting: '/services/voting',
   servicesVotingLocation: (locationId: string | number) =>
     `/services/voting/${encodeURIComponent(String(locationId))}`,
-  /** Custom profile overview (name, email, avatar). */
+  /** Shared profile (avatar + password) for every signed-in user. */
   profile: '/profile',
   /** Workspace team management (invite existing users) — operator shell. */
   team: '/team',
-  /** Clerk `<UserProfile />` host path (security, sessions, etc.); catch-all under `/profile/account/...`. */
+  /** Legacy alias; redirects to {@link routes.profile}. */
   profileAccount: '/profile/account',
 
   shop: '/shop',
