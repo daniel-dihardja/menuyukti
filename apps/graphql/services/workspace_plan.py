@@ -1,13 +1,11 @@
-"""Workspace product plan helpers (free vs pro).
+"""Workspace product plan helpers.
 
 Menuyukti is a creative agency for restaurants, cafés, and bars.
 
-- free / no workspace: guest / customer accounts (mainly PWA). Sign-up creates a
-  Clerk user with no workspace; location creation is blocked. Existing free
-  workspaces stay location-blocked until staff upgrades them.
-- pro: restaurant-owner clients. Agency staff provision via provisionWorkspace
-  (staff BFF). Full operator surface, including locations. Self-serve
-  createWorkspace is disabled.
+Authenticated users share one product surface. `workspace.plan` (free/pro) remains
+a staff-provisioning field but does not gate location creation or operator APIs.
+Self-serve default workspaces use ensureMyWorkspace; createWorkspace stays disabled.
+Staff may still use provisionWorkspace for custom agency setups.
 """
 
 from __future__ import annotations
@@ -33,12 +31,7 @@ def is_pro_plan(plan: str | None) -> bool:
 
 
 def assert_can_create_location(session: Session, workspace_id: int) -> None:
-    """Raise ValueError when a free (guest) workspace tries to create a location."""
+    """Ensure the workspace exists. Plan no longer blocks location creation."""
     ws = session.get(Workspace, workspace_id)
     if ws is None:
         raise ValueError("Workspace not found")
-    if is_pro_plan(ws.plan):
-        return
-    raise ValueError(
-        "Free (guest) plan cannot create locations. Upgrade to Pro for operator access."
-    )

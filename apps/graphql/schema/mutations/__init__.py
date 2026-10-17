@@ -14,6 +14,7 @@ from .create_prediction import CreatePredictionMutation
 from .create_style import CreateStyleMutation
 from .create_voting import CreateVotingMutation
 from .create_workspace import CreateWorkspaceMutation
+from .ensure_my_workspace import EnsureMyWorkspaceMutation
 from .delete_analytics_run import DeleteAnalyticsRunMutation
 from .delete_calendar_entry import DeleteCalendarEntryMutation
 from .delete_crm_app import DeleteCrmAppMutation
@@ -101,6 +102,7 @@ __all__ = [
     "CreatePostMutation",
     "CreatePostPageMutation",
     "CreateWorkspaceMutation",
+    "EnsureMyWorkspaceMutation",
     "ProvisionWorkspaceMutation",
     "DeleteAnalyticsRunMutation",
     "DeleteCalendarEntryMutation",

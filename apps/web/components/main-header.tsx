@@ -18,7 +18,7 @@ import { cn } from '@workspace/ui/lib/utils'
 export function MainHeader() {
   const pathname = usePathname()
   const t = useTranslations('mainHeader')
-  const { isSignedIn } = useAuth()
+  const { isSignedIn, isLoaded: authLoaded } = useAuth()
   const planCtx = useOptionalWorkspacePlan()
   const { balance: guestPointBalance } = usePublicGuestPoints()
   const tPublic = useTranslations('public.locationHome')
@@ -108,10 +108,16 @@ export function MainHeader() {
               {tPublic('pointsBalance', { balance: guestPointsToShow })}
             </span>
           ) : null}
-          <Show when="signed-out">{showSignIn ? <GuestSignInMenu /> : null}</Show>
-          <Show when="signed-in">
-            <AccountMenu />
-          </Show>
+          {!authLoaded ? (
+            <div className="size-8 shrink-0 animate-pulse rounded-full bg-muted" aria-hidden />
+          ) : (
+            <>
+              <Show when="signed-out">{showSignIn ? <GuestSignInMenu /> : null}</Show>
+              <Show when="signed-in">
+                <AccountMenu />
+              </Show>
+            </>
+          )}
         </div>
       </div>
     </header>

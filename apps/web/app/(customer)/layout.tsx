@@ -9,7 +9,7 @@ import { getWorkspacePlanForUser } from '@/lib/workspace-plan-server'
 
 /**
  * Auth-required customer shell (no operator sidebar).
- * Chrome: global `MainHeader` via `AppChrome`. Plan gates: free → `/home` | `/profile`.
+ * Chrome: global `MainHeader` via `AppChrome`. Shared `/home` for all authenticated users.
  */
 /** Auth + workspace-plan GraphQL gate; layout is allowed to block navigations. */
 export const instant = false

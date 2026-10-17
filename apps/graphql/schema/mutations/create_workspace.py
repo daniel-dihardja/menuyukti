@@ -1,4 +1,4 @@
-"""Self-serve createWorkspace is disabled; use provisionWorkspace via staff BFF."""
+"""Named createWorkspace is disabled; self-serve use ensureMyWorkspace."""
 
 from __future__ import annotations
 
@@ -12,8 +12,8 @@ from graphql.schema.types import WorkspaceType
 class CreateWorkspaceMutation:
     @strawberry.mutation(
         description=(
-            "Disabled for self-serve. Workspaces are staff-provisioned via "
-            "provisionWorkspace (Menuyukti admin BFF)."
+            "Disabled. Use ensureMyWorkspace for self-serve default workspaces, "
+            "or provisionWorkspace via the Menuyukti admin BFF for custom setups."
         )
     )
     def create_workspace(self, info: strawberry.Info, name: str) -> WorkspaceType:
@@ -21,5 +21,6 @@ class CreateWorkspaceMutation:
         if not user_id:
             raise ValueError("Missing authenticated user for createWorkspace")
         raise PermissionError(
-            "Self-serve workspace creation is disabled. Workspaces are staff-provisioned only."
+            "Self-serve workspace creation via createWorkspace is disabled. "
+            "Use ensureMyWorkspace or staff provisionWorkspace."
         )

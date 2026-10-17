@@ -15,7 +15,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 type Step = 'email' | 'code'
 
 function navigateHome(decorateUrl: (url: string) => string): void {
-  const url = decorateUrl(routes.authContinue)
+  const url = decorateUrl(routes.home)
   // Hard navigation so the session cookie is picked up by the Next.js proxy.
   window.location.assign(url)
 }
@@ -53,7 +53,7 @@ export function MenuyuktiSignUp({ className }: { className?: string }) {
   // If the session is already active (e.g. finalize set the cookie but soft nav failed).
   useEffect(() => {
     if (!clerk.loaded || !isSignedIn) return
-    window.location.assign(routes.authContinue)
+    window.location.assign(routes.home)
   }, [clerk.loaded, isSignedIn])
 
   // Complete sign-up if status reaches complete outside the submit handler.
@@ -140,7 +140,7 @@ export function MenuyuktiSignUp({ className }: { className?: string }) {
     try {
       const { error } = await signUp.sso({
         strategy: 'oauth_google',
-        redirectUrl: routes.authContinue,
+        redirectUrl: routes.home,
         redirectCallbackUrl: routes.ssoCallback,
       })
       if (error) {

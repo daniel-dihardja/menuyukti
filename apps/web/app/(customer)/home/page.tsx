@@ -3,7 +3,6 @@ import Link from 'next/link'
 import { Suspense } from 'react'
 import { auth } from '@clerk/nextjs/server'
 import { getTranslations } from 'next-intl/server'
-import { redirect } from 'next/navigation'
 
 import { CustomerPointsSection } from '@/app/(customer)/home/_components/customer-points-section'
 import { CustomerPointsSkeleton } from '@/app/(customer)/home/_components/customer-points-skeleton'
@@ -26,8 +25,6 @@ import {
 } from '@/lib/graphql/queries/predictions'
 import { MY_OPEN_VOTINGS_QUERY, type MyOpenVotingsData } from '@/lib/graphql/queries/votings'
 import { routes } from '@/lib/routes'
-import { isProPlan } from '@/lib/workspace-plan'
-import { getWorkspacePlanForUser } from '@/lib/workspace-plan-server'
 import { Button } from '@workspace/ui/components/button'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -123,11 +120,6 @@ async function CustomerVotingsData() {
 }
 
 export default async function CustomerHomePage() {
-  const { plan } = await getWorkspacePlanForUser()
-  if (isProPlan(plan)) {
-    redirect(routes.analytics.branches)
-  }
-
   const t = await getTranslations('guestHome')
 
   return (
@@ -155,7 +147,10 @@ export default async function CustomerHomePage() {
 
       <PwaInstallGuide headingId="guest-home-pwa-heading" />
 
-      <div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+        <Button asChild className="min-h-11 w-full sm:w-auto">
+          <Link href={routes.analytics.branches}>{t('workspaceCta')}</Link>
+        </Button>
         <Button asChild className="min-h-11 w-full sm:w-auto" variant="outline">
           <Link href={routes.profile}>{t('profileCta')}</Link>
         </Button>

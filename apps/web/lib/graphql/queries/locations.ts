@@ -193,6 +193,28 @@ export type MyWorkspaceData = {
   } | null
 }
 
+export const ENSURE_MY_WORKSPACE_MUTATION = `
+  mutation EnsureMyWorkspace {
+    ensureMyWorkspace {
+      id
+      name
+      ownerClerkUserId
+      plan
+      createdAt
+    }
+  }
+`
+
+export type EnsureMyWorkspaceData = {
+  ensureMyWorkspace: {
+    id: string
+    name: string
+    ownerClerkUserId: string
+    plan: string
+    createdAt: string | null
+  }
+}
+
 export const PROVISION_WORKSPACE_MUTATION = `
   mutation ProvisionWorkspace($ownerClerkUserId: String!, $name: String!, $plan: String) {
     provisionWorkspace(ownerClerkUserId: $ownerClerkUserId, name: $name, plan: $plan) {

@@ -18,12 +18,12 @@ describe('workspace-plan', () => {
     expect(normalizeWorkspacePlan('enterprise')).toBe('free')
   })
 
-  it('treats only pro as unrestricted', () => {
+  it('classifies plan labels without using them for access control', () => {
     expect(isProPlan('pro')).toBe(true)
     expect(isProPlan('free')).toBe(false)
   })
 
-  it('allows home nav on both plans; hides branches; pro unlocks operator nav', () => {
+  it('allows operator nav on all plans; hides branches sidebar key', () => {
     expect(isNavKeyAllowedForPlan('home', 'free')).toBe(true)
     expect(isNavKeyAllowedForPlan('home', 'pro')).toBe(true)
     expect(isNavKeyAllowedForPlan('branches', 'pro')).toBe(false)
@@ -34,11 +34,11 @@ describe('workspace-plan', () => {
     expect(isNavKeyAllowedForPlan('usage', 'pro')).toBe(true)
     expect(isNavKeyAllowedForPlan('team', 'pro')).toBe(true)
     expect(isNavKeyAllowedForPlan('posts', 'pro')).toBe(true)
-    expect(isNavKeyAllowedForPlan('chat', 'free')).toBe(false)
-    expect(isNavKeyAllowedForPlan('services', 'free')).toBe(false)
-    expect(isNavKeyAllowedForPlan('inventar', 'free')).toBe(false)
-    expect(isNavKeyAllowedForPlan('usage', 'free')).toBe(false)
-    expect(isNavKeyAllowedForPlan('team', 'free')).toBe(false)
+    expect(isNavKeyAllowedForPlan('chat', 'free')).toBe(true)
+    expect(isNavKeyAllowedForPlan('services', 'free')).toBe(true)
+    expect(isNavKeyAllowedForPlan('inventar', 'free')).toBe(true)
+    expect(isNavKeyAllowedForPlan('usage', 'free')).toBe(true)
+    expect(isNavKeyAllowedForPlan('team', 'free')).toBe(true)
     expect(FREE_NAV_KEYS.has('home')).toBe(true)
     expect(FREE_NAV_KEYS.size).toBe(1)
     expect(PRO_NAV_KEYS.has('home')).toBe(true)
@@ -50,20 +50,20 @@ describe('workspace-plan', () => {
     expect(PRO_NAV_KEYS.has('media')).toBe(true)
   })
 
-  it('allows home, continue, and profile on free; pro allows operator routes', () => {
-    expect(isPathnameAllowedForPlan('/advisor', 'free')).toBe(false)
-    expect(isPathnameAllowedForPlan('/calendar', 'free')).toBe(false)
-    expect(isPathnameAllowedForPlan('/analytics/locations', 'free')).toBe(false)
-    expect(isPathnameAllowedForPlan('/inventar', 'free')).toBe(false)
-    expect(isPathnameAllowedForPlan('/services', 'free')).toBe(false)
-    expect(isPathnameAllowedForPlan('/usage', 'free')).toBe(false)
-    expect(isPathnameAllowedForPlan('/ig-studio', 'free')).toBe(false)
+  it('allows all product paths on free and pro (admin-only gated separately)', () => {
+    expect(isPathnameAllowedForPlan('/advisor', 'free')).toBe(true)
+    expect(isPathnameAllowedForPlan('/calendar', 'free')).toBe(true)
+    expect(isPathnameAllowedForPlan('/analytics/locations', 'free')).toBe(true)
+    expect(isPathnameAllowedForPlan('/inventar', 'free')).toBe(true)
+    expect(isPathnameAllowedForPlan('/services', 'free')).toBe(true)
+    expect(isPathnameAllowedForPlan('/usage', 'free')).toBe(true)
+    expect(isPathnameAllowedForPlan('/ig-studio', 'free')).toBe(true)
     expect(isPathnameAllowedForPlan('/home', 'free')).toBe(true)
     expect(isPathnameAllowedForPlan('/continue', 'free')).toBe(true)
     expect(isPathnameAllowedForPlan('/profile', 'free')).toBe(true)
     expect(isPathnameAllowedForPlan('/profile/account', 'free')).toBe(true)
-    expect(isPathnameAllowedForPlan('/profile/team', 'free')).toBe(false)
-    expect(isPathnameAllowedForPlan('/team', 'free')).toBe(false)
+    expect(isPathnameAllowedForPlan('/profile/team', 'free')).toBe(true)
+    expect(isPathnameAllowedForPlan('/team', 'free')).toBe(true)
 
     expect(isPathnameAllowedForPlan('/advisor', 'pro')).toBe(true)
     expect(isPathnameAllowedForPlan('/analytics/locations', 'pro')).toBe(true)
@@ -76,8 +76,8 @@ describe('workspace-plan', () => {
     expect(isPathnameAllowedForPlan('/home', 'pro')).toBe(true)
   })
 
-  it('uses customer home for free and Locations for pro', () => {
+  it('uses shared customer home for free and pro', () => {
     expect(getDefaultPathForPlan('free')).toBe('/home')
-    expect(getDefaultPathForPlan('pro')).toBe('/analytics/locations')
+    expect(getDefaultPathForPlan('pro')).toBe('/home')
   })
 })

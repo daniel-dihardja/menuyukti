@@ -207,13 +207,13 @@ export const routes = {
   agentThread: (threadId: string) => `/advisor/${encodeURIComponent(threadId)}`,
   printOrders: '/print-orders',
   dashboard: '/dashboard',
-  /** Marketing / QR landing — free-plan post-auth default. */
+  /** Marketing / QR landing. */
   root: '/',
-  /** Free-plan customer home (customer shell; PWA guide). Pro redirects away. */
+  /** Shared authenticated home (customer shell; PWA guide). Free and pro both land here. */
   home: '/home',
   /**
-   * Post-auth landing: server resolves workspace plan and redirects to
-   * the plan home (`/` free, `/analytics/locations` pro).
+   * Legacy post-auth hop (feature-flag bounce / bookmarks). Redirects to `/home`
+   * immediately; prefer `routes.home` or `buildAuthContinueUrl` for new flows.
    */
   authContinue: '/continue',
   /** Menuyukti staff-only console (platform role `admin`). */

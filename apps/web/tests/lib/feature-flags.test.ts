@@ -7,7 +7,7 @@ import {
 } from '@/lib/feature-flags'
 
 describe('feature-flags', () => {
-  it('reports operator product surface enabled (gated further by workspace plan)', () => {
+  it('reports operator product surface enabled', () => {
     expect(isNavKeyEnabled('home')).toBe(true)
     expect(isNavKeyEnabled('dashboard')).toBe(false)
     expect(isNavKeyEnabled('media')).toBe(true)
@@ -27,7 +27,7 @@ describe('feature-flags', () => {
     expect(isNavKeyEnabled('notARealNavKey')).toBe(true)
   })
 
-  it('enables operator route prefixes (free guests still blocked by workspace plan)', () => {
+  it('enables operator route prefixes', () => {
     expect(isPathnameFeatureEnabled('/home')).toBe(true)
     expect(isPathnameFeatureEnabled('/continue')).toBe(true)
     expect(isPathnameFeatureEnabled('/ig-studio')).toBe(true)
@@ -57,7 +57,7 @@ describe('feature-flags', () => {
     expect(isNavKeyEnabled('usage')).toBe(true)
   })
 
-  it('returns /analytics/locations as default authenticated path', () => {
-    expect(getDefaultAuthenticatedPath()).toBe('/analytics/locations')
+  it('returns /home as default authenticated path', () => {
+    expect(getDefaultAuthenticatedPath()).toBe('/home')
   })
 })

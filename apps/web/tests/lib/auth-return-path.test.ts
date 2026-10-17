@@ -39,8 +39,8 @@ describe('buildAuthContinueUrl / buildLoginUrl', () => {
     )
   })
 
-  it('falls back to /continue when no safe return path', () => {
-    expect(buildAuthContinueUrl('/advisor')).toBe('/continue')
+  it('falls back to /home when no safe return path', () => {
+    expect(buildAuthContinueUrl('/advisor')).toBe('/home')
     expect(buildLoginUrl(null)).toBe('/login')
   })
 })

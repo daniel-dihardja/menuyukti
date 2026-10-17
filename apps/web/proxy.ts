@@ -45,7 +45,7 @@ function nextWithPathname(req: Request, pathname: string): NextResponse {
 export default clerkMiddleware(async (auth, req) => {
   const { sessionStatus, userId } = await auth()
   const pathname = req.nextUrl.pathname
-  /** Plan-aware post-auth landing (resolves free → `/home`, pro → Locations). */
+  /** Post-auth landing (`/continue` → shared `/home` for free and pro). */
   const continuePath = routes.authContinue
 
   // Session tasks (e.g. MFA): keep pending users on auth routes; block protected app until complete.
