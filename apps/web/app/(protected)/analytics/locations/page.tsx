@@ -1,6 +1,7 @@
 import { Suspense } from 'react'
 import { getTranslations } from 'next-intl/server'
 import type { Metadata } from 'next'
+import { connection } from 'next/server'
 import { Button } from '@workspace/ui/components/button'
 import Link from 'next/link'
 import { routes } from '@/lib/routes'
@@ -87,6 +88,10 @@ async function LocationsPageData() {
 }
 
 export default async function Page() {
+  // Bind this route to the request before auth/plan. Clerk session checks can
+  // read the current time; without this, Cache Components treats Date.now() as
+  // a blocking prerender value on the page segment (layout connection() is not enough).
+  await connection()
   const t = await getTranslations('analytics.branches')
   const { plan } = await getWorkspacePlanForUser()
   const canCreateLocation = isProPlan(plan)
