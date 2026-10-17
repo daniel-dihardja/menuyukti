@@ -34,6 +34,7 @@ query PublicMenu($slug: String!) {
     headerImageFilename
     allowDineIn
     allowPickup
+    allowDelivery
     categories {
       name
       sortOrder
@@ -60,6 +61,7 @@ mutation UpdatePublicMenu(
   $headerImageFilename: String
   $allowDineIn: Boolean
   $allowPickup: Boolean
+  $allowDelivery: Boolean
 ) {
   updateLocationPublicMenu(
     locationId: $locationId
@@ -68,6 +70,7 @@ mutation UpdatePublicMenu(
     headerImageFilename: $headerImageFilename
     allowDineIn: $allowDineIn
     allowPickup: $allowPickup
+    allowDelivery: $allowDelivery
   ) {
     locationId
     publicEnabled
@@ -78,6 +81,7 @@ mutation UpdatePublicMenu(
       publicEnabled
       allowDineIn
       allowPickup
+      allowDelivery
       headerImageFilename
     }
   }
@@ -352,6 +356,7 @@ def test_fulfillment_flags_round_trip_on_public_menu(menu_location_id):
                 "publicSlug": "fulfillment-flags-cafe",
                 "allowDineIn": False,
                 "allowPickup": True,
+                "allowDelivery": True,
             },
             context_value=graphql_auth_context(),
         )
@@ -360,6 +365,7 @@ def test_fulfillment_flags_round_trip_on_public_menu(menu_location_id):
     menu = enable.data["updateLocationPublicMenu"]["menu"]
     assert menu["allowDineIn"] is False
     assert menu["allowPickup"] is True
+    assert menu["allowDelivery"] is True
 
     public = asyncio.run(
         schema.execute(
@@ -372,9 +378,10 @@ def test_fulfillment_flags_round_trip_on_public_menu(menu_location_id):
     payload = public.data["publicLocationMenu"]
     assert payload["allowDineIn"] is False
     assert payload["allowPickup"] is True
+    assert payload["allowDelivery"] is True
 
 
-def test_cannot_disable_both_fulfillment_modes(menu_location_id):
+def test_cannot_disable_all_fulfillment_modes(menu_location_id):
     result = asyncio.run(
         schema.execute(
             _MUTATION,
@@ -384,9 +391,27 @@ def test_cannot_disable_both_fulfillment_modes(menu_location_id):
                 "publicSlug": "no-modes-cafe",
                 "allowDineIn": False,
                 "allowPickup": False,
+                "allowDelivery": False,
             },
             context_value=graphql_auth_context(),
         )
     )
     assert result.errors
-    assert "At least one of allow_dine_in or allow_pickup" in result.errors[0].message
+    assert "allow_delivery" in result.errors[0].message
+
+    delivery_only = asyncio.run(
+        schema.execute(
+            _MUTATION,
+            variable_values={
+                "locationId": menu_location_id,
+                "publicEnabled": True,
+                "publicSlug": "delivery-only-cafe",
+                "allowDineIn": False,
+                "allowPickup": False,
+                "allowDelivery": True,
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert delivery_only.errors is None, delivery_only.errors
+    assert delivery_only.data["updateLocationPublicMenu"]["menu"]["allowDelivery"] is True

@@ -20,6 +20,7 @@ async function loadEnglishMessages(): Promise<AbstractIntlMessages> {
     import('../messages/en/cookieConsent.json'),
     import('../messages/en/docs.json'),
     import('../messages/en/errorBoundary.json'),
+    import('../messages/en/explore.json'),
     import('../messages/en/guestHome.json'),
     import('../messages/en/igStudio.json'),
     import('../messages/en/igstories.json'),

@@ -128,6 +128,7 @@ class PublicLocationMenuQuery:
                 header_image_filename=menu.header_image_filename,
                 allow_dine_in=bool(menu.allow_dine_in),
                 allow_pickup=bool(menu.allow_pickup),
+                allow_delivery=bool(menu.allow_delivery),
                 categories=_public_categories(
                     menu,
                     published_by_item=published_by_item,

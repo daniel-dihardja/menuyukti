@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { ChevronDown, Plus, Trash2 } from 'lucide-react'
+import { ChevronDown, ListTree, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { MediaCatalogPicker } from '@/components/media/media-catalog-picker'
@@ -31,7 +31,22 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@workspace/ui/components/collapsible'
-import { Field, FieldDescription, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@workspace/ui/components/empty'
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+  FieldLegend,
+  FieldSet,
+} from '@workspace/ui/components/field'
 import {
   InputGroup,
   InputGroupAddon,
@@ -39,6 +54,7 @@ import {
   InputGroupText,
 } from '@workspace/ui/components/input-group'
 import { Input } from '@workspace/ui/components/input'
+import { Separator } from '@workspace/ui/components/separator'
 import { Spinner } from '@workspace/ui/components/spinner'
 import { Switch } from '@workspace/ui/components/switch'
 import { Textarea } from '@workspace/ui/components/textarea'
@@ -118,6 +134,10 @@ type SavePayloadCategory = {
   name: string
   items: SavePayloadItem[]
 }
+
+/** Contrast experiment: filled + square controls (scoped to this form). */
+const MENU_FIELD_CONTROL_CLASS = 'rounded-none bg-background'
+const MENU_FIELD_GROUP_CLASS = 'rounded-none bg-background'
 
 function newModifierOption(): LocationMenuFormModifierOption {
   return {
@@ -317,6 +337,16 @@ function LocationMenuItemRow({
                 open && 'rotate-180',
               )}
             />
+            {item.imageFilename ? (
+              <span className="bg-muted relative size-9 shrink-0 overflow-hidden rounded-md">
+                {/* eslint-disable-next-line @next/next/no-img-element -- media download proxy */}
+                <img
+                  src={mediaDownloadHref(item.imageFilename)}
+                  alt=""
+                  className="size-full object-cover"
+                />
+              </span>
+            ) : null}
             <span className="min-w-0 flex-1 truncate">{displayName}</span>
             <span className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
               {priceLabel ? (
@@ -359,13 +389,14 @@ function LocationMenuItemRow({
               disabled={loading}
               onChange={(e) => onUpdate({ name: e.target.value })}
               placeholder={t('fields.namePlaceholder')}
+              className={MENU_FIELD_CONTROL_CLASS}
             />
           </Field>
           <Field>
             <FieldLabel htmlFor={`menu-price-${item.key}`}>
               {t('fields.priceWithCurrency', { currency: currencyCode })}
             </FieldLabel>
-            <InputGroup>
+            <InputGroup className={MENU_FIELD_GROUP_CLASS}>
               <InputGroupAddon>
                 <InputGroupText>{currencyCode}</InputGroupText>
               </InputGroupAddon>
@@ -384,7 +415,10 @@ function LocationMenuItemRow({
             <FieldLabel htmlFor={`menu-tax-${item.key}`}>{t('fields.taxClass')}</FieldLabel>
             <select
               id={`menu-tax-${item.key}`}
-              className="border-input bg-background h-9 w-full rounded-md border px-3 text-sm"
+              className={cn(
+                'border-input h-9 w-full border px-3 text-sm',
+                MENU_FIELD_CONTROL_CLASS,
+              )}
               value={item.taxClass}
               disabled={loading}
               onChange={(e) =>
@@ -423,6 +457,7 @@ function LocationMenuItemRow({
               onChange={(e) => onUpdate({ description: e.target.value })}
               placeholder={t('fields.descriptionPlaceholder')}
               rows={2}
+              className={MENU_FIELD_CONTROL_CLASS}
             />
           </Field>
           <AttributeChipGroup
@@ -464,146 +499,192 @@ function LocationMenuItemRow({
           </Field>
         </FieldGroup>
 
-        <div className="flex flex-col gap-3 rounded-md border border-dashed border-border/80 p-3">
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-sm font-medium">{t('fields.modifiers')}</p>
-            <Button
-              type="button"
-              size="sm"
-              variant="secondary"
-              disabled={loading}
-              onClick={addGroup}
-            >
-              <Plus data-icon="inline-start" />
-              {t('actions.addModifierGroup')}
-            </Button>
-          </div>
-          {item.modifierGroups.length === 0 ? (
-            <FieldDescription>{t('fields.modifiersEmpty')}</FieldDescription>
-          ) : (
-            item.modifierGroups.map((group) => (
-              <div
-                key={group.key}
-                className="flex flex-col gap-3 rounded-md border border-border/60 bg-muted/20 p-3"
+        <FieldSet className="gap-4">
+          <FieldLegend variant="label">{t('fields.modifiers')}</FieldLegend>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <FieldDescription className="sm:max-w-md">{t('fields.modifiersHint')}</FieldDescription>
+            {item.modifierGroups.length > 0 ? (
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                disabled={loading}
+                onClick={addGroup}
+                className="shrink-0"
               >
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-                  <Field className="min-w-0 flex-1">
-                    <FieldLabel htmlFor={`mod-group-${group.key}`}>
-                      {t('fields.modifierGroupName')}
-                    </FieldLabel>
-                    <Input
-                      id={`mod-group-${group.key}`}
-                      value={group.name}
-                      disabled={loading}
-                      onChange={(e) => updateGroup(group.key, { name: e.target.value })}
-                      placeholder={t('fields.modifierGroupNamePlaceholder')}
-                    />
-                  </Field>
-                  <Field className="w-full sm:w-24">
-                    <FieldLabel htmlFor={`mod-min-${group.key}`}>
-                      {t('fields.modifierMinSelect')}
-                    </FieldLabel>
-                    <Input
-                      id={`mod-min-${group.key}`}
-                      inputMode="numeric"
-                      value={group.minSelect}
-                      disabled={loading}
-                      onChange={(e) => updateGroup(group.key, { minSelect: e.target.value })}
-                      className="tabular-nums"
-                    />
-                  </Field>
-                  <Field className="w-full sm:w-24">
-                    <FieldLabel htmlFor={`mod-max-${group.key}`}>
-                      {t('fields.modifierMaxSelect')}
-                    </FieldLabel>
-                    <Input
-                      id={`mod-max-${group.key}`}
-                      inputMode="numeric"
-                      value={group.maxSelect}
-                      disabled={loading}
-                      onChange={(e) => updateGroup(group.key, { maxSelect: e.target.value })}
-                      className="tabular-nums"
-                    />
-                  </Field>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    disabled={loading}
-                    onClick={() => removeGroup(group.key)}
-                    aria-label={t('actions.removeModifierGroup')}
-                  >
-                    <Trash2 />
-                  </Button>
-                </div>
+                <Plus data-icon="inline-start" />
+                {t('actions.addModifierGroup')}
+              </Button>
+            ) : null}
+          </div>
 
-                <div className="flex flex-col gap-2">
-                  {group.options.map((option) => (
-                    <div key={option.key} className="flex flex-col gap-2 sm:flex-row sm:items-end">
-                      <Field className="min-w-0 flex-1">
-                        <FieldLabel htmlFor={`mod-opt-${option.key}`}>
-                          {t('fields.modifierOptionName')}
+          {item.modifierGroups.length === 0 ? (
+            <Empty className="border border-dashed py-8 md:p-8">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <ListTree />
+                </EmptyMedia>
+                <EmptyTitle>{t('fields.modifiersEmptyTitle')}</EmptyTitle>
+                <EmptyDescription>{t('fields.modifiersEmpty')}</EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
+                <Button type="button" size="sm" disabled={loading} onClick={addGroup}>
+                  <Plus data-icon="inline-start" />
+                  {t('actions.addModifierGroup')}
+                </Button>
+              </EmptyContent>
+            </Empty>
+          ) : (
+            <FieldGroup className="gap-4">
+              {item.modifierGroups.map((group) => (
+                <FieldSet key={group.key} className="gap-4 rounded-md bg-muted/30 p-3">
+                  <FieldLegend variant="label">
+                    {group.name.trim() || t('fields.modifierGroupUntitled')}
+                  </FieldLegend>
+
+                  <FieldGroup className="gap-3">
+                    <div className="flex items-end gap-2">
+                      <Field className="min-w-0 flex-1" data-disabled={loading || undefined}>
+                        <FieldLabel htmlFor={`mod-group-${group.key}`}>
+                          {t('fields.modifierGroupName')}
                         </FieldLabel>
                         <Input
-                          id={`mod-opt-${option.key}`}
-                          value={option.name}
+                          id={`mod-group-${group.key}`}
+                          value={group.name}
                           disabled={loading}
-                          onChange={(e) =>
-                            updateOption(group.key, option.key, { name: e.target.value })
-                          }
-                          placeholder={t('fields.modifierOptionNamePlaceholder')}
+                          onChange={(e) => updateGroup(group.key, { name: e.target.value })}
+                          placeholder={t('fields.modifierGroupNamePlaceholder')}
+                          className={MENU_FIELD_CONTROL_CLASS}
                         />
-                      </Field>
-                      <Field className="w-full sm:w-40">
-                        <FieldLabel htmlFor={`mod-delta-${option.key}`}>
-                          {t('fields.modifierPriceDelta', { currency: currencyCode })}
-                        </FieldLabel>
-                        <InputGroup>
-                          <InputGroupAddon>
-                            <InputGroupText>{currencyCode}</InputGroupText>
-                          </InputGroupAddon>
-                          <InputGroupInput
-                            id={`mod-delta-${option.key}`}
-                            inputMode="decimal"
-                            value={option.priceDelta}
-                            disabled={loading}
-                            onChange={(e) =>
-                              updateOption(group.key, option.key, {
-                                priceDelta: e.target.value,
-                              })
-                            }
-                            placeholder="0"
-                            className="tabular-nums"
-                          />
-                        </InputGroup>
                       </Field>
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
                         disabled={loading}
-                        onClick={() => removeOption(group.key, option.key)}
-                        aria-label={t('actions.removeModifierOption')}
+                        onClick={() => removeGroup(group.key)}
+                        aria-label={t('actions.removeModifierGroup')}
+                        className="shrink-0"
                       >
                         <Trash2 />
                       </Button>
                     </div>
-                  ))}
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    disabled={loading}
-                    onClick={() => addOption(group.key)}
-                  >
-                    <Plus data-icon="inline-start" />
-                    {t('actions.addModifierOption')}
-                  </Button>
-                </div>
-              </div>
-            ))
+                    <FieldGroup className="grid max-w-xs grid-cols-2 gap-3">
+                      <Field data-disabled={loading || undefined}>
+                        <FieldLabel htmlFor={`mod-min-${group.key}`}>
+                          {t('fields.modifierMinSelect')}
+                        </FieldLabel>
+                        <Input
+                          id={`mod-min-${group.key}`}
+                          inputMode="numeric"
+                          value={group.minSelect}
+                          disabled={loading}
+                          onChange={(e) => updateGroup(group.key, { minSelect: e.target.value })}
+                          className={cn('tabular-nums', MENU_FIELD_CONTROL_CLASS)}
+                        />
+                      </Field>
+                      <Field data-disabled={loading || undefined}>
+                        <FieldLabel htmlFor={`mod-max-${group.key}`}>
+                          {t('fields.modifierMaxSelect')}
+                        </FieldLabel>
+                        <Input
+                          id={`mod-max-${group.key}`}
+                          inputMode="numeric"
+                          value={group.maxSelect}
+                          disabled={loading}
+                          onChange={(e) => updateGroup(group.key, { maxSelect: e.target.value })}
+                          className={cn('tabular-nums', MENU_FIELD_CONTROL_CLASS)}
+                        />
+                      </Field>
+                    </FieldGroup>
+                    <FieldDescription>{t('fields.modifierSelectRangeHint')}</FieldDescription>
+                  </FieldGroup>
+
+                  <Separator />
+
+                  <FieldSet className="gap-3">
+                    <FieldLegend variant="label">{t('fields.modifierOptions')}</FieldLegend>
+                    <FieldGroup className="gap-2">
+                      {group.options.map((option, optionIndex) => (
+                        <div
+                          key={option.key}
+                          className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_9rem_auto] sm:items-end"
+                        >
+                          <Field data-disabled={loading || undefined}>
+                            <FieldLabel
+                              htmlFor={`mod-opt-${option.key}`}
+                              className={optionIndex > 0 ? 'sr-only' : undefined}
+                            >
+                              {t('fields.modifierOptionName')}
+                            </FieldLabel>
+                            <Input
+                              id={`mod-opt-${option.key}`}
+                              value={option.name}
+                              disabled={loading}
+                              onChange={(e) =>
+                                updateOption(group.key, option.key, { name: e.target.value })
+                              }
+                              placeholder={t('fields.modifierOptionNamePlaceholder')}
+                              className={MENU_FIELD_CONTROL_CLASS}
+                            />
+                          </Field>
+                          <Field data-disabled={loading || undefined}>
+                            <FieldLabel
+                              htmlFor={`mod-delta-${option.key}`}
+                              className={optionIndex > 0 ? 'sr-only' : undefined}
+                            >
+                              {t('fields.modifierPriceDelta', { currency: currencyCode })}
+                            </FieldLabel>
+                            <InputGroup className={MENU_FIELD_GROUP_CLASS}>
+                              <InputGroupAddon>
+                                <InputGroupText>{currencyCode}</InputGroupText>
+                              </InputGroupAddon>
+                              <InputGroupInput
+                                id={`mod-delta-${option.key}`}
+                                inputMode="decimal"
+                                value={option.priceDelta}
+                                disabled={loading}
+                                onChange={(e) =>
+                                  updateOption(group.key, option.key, {
+                                    priceDelta: e.target.value,
+                                  })
+                                }
+                                placeholder="0"
+                                className="tabular-nums"
+                              />
+                            </InputGroup>
+                          </Field>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            disabled={loading}
+                            onClick={() => removeOption(group.key, option.key)}
+                            aria-label={t('actions.removeModifierOption')}
+                            className="shrink-0"
+                          >
+                            <Trash2 />
+                          </Button>
+                        </div>
+                      ))}
+                    </FieldGroup>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      disabled={loading}
+                      onClick={() => addOption(group.key)}
+                      className="w-fit"
+                    >
+                      <Plus data-icon="inline-start" />
+                      {t('actions.addModifierOption')}
+                    </Button>
+                  </FieldSet>
+                </FieldSet>
+              ))}
+            </FieldGroup>
           )}
-        </div>
+        </FieldSet>
       </CollapsibleContent>
     </Collapsible>
   )
@@ -819,6 +900,7 @@ export function LocationMenuForm({
                   disabled={loading}
                   onChange={(e) => updateCategory(category.key, { name: e.target.value })}
                   placeholder={t('fields.categoryNamePlaceholder')}
+                  className={MENU_FIELD_CONTROL_CLASS}
                 />
               </Field>
               <CardAction>

@@ -277,6 +277,8 @@
         "allowDineInHint": "Guests order from a table QR (or enter a table) and staff bring the order.",
         "allowPickup": "Pickup",
         "allowPickupHint": "Guests order for counter pickup.",
+        "allowDelivery": "Delivery",
+        "allowDeliveryHint": "Guests order for restaurant-owned home delivery (pay on delivery / at the venue).",
         "tableLabel": "Table for QR",
         "tableLabelPlaceholder": "e.g. 12 or Patio 2",
         "tableLabelHint": "Enter a table label, then download or print a sticker QR for that table. Guests who scan it skip entering a table number.",
@@ -344,7 +346,7 @@
         "errors": {
           "slugRequired": "Set a public URL slug on location Basics before turning the menu on",
           "subscriptionRequired": "Activate Digital Menu for this location before publishing",
-          "fulfillmentRequired": "Turn on at least one fulfillment option: bring to table or pickup",
+          "fulfillmentRequired": "Turn on at least one fulfillment option: bring to table, pickup, or delivery",
           "saveFailed": "Failed to save Digital Menu settings",
           "unknown": "Something went wrong"
         }

@@ -398,14 +398,19 @@
         "removeImage": "Remove image",
         "fromMedia": "From media library",
         "modifiers": "Modifiers",
-        "modifiersEmpty": "No modifier groups yet. Add groups like Size or Milk for POS choices.",
+        "modifiersHint": "Optional choices guests pick in POS — for example Size, Milk, or Extras.",
+        "modifiersEmptyTitle": "No modifiers yet",
+        "modifiersEmpty": "Add a group like Size or Milk, then list the options guests can choose.",
         "modifierGroupName": "Group name",
         "modifierGroupNamePlaceholder": "Size",
+        "modifierGroupUntitled": "Untitled group",
         "modifierMinSelect": "Min",
         "modifierMaxSelect": "Max",
+        "modifierSelectRangeHint": "How many options a guest must pick from this group (min ≤ max).",
+        "modifierOptions": "Options",
         "modifierOptionName": "Option",
         "modifierOptionNamePlaceholder": "Large",
-        "modifierPriceDelta": "Price delta ({currency})"
+        "modifierPriceDelta": "Extra ({currency})"
       },
       "actions": {
         "add": "Add item",

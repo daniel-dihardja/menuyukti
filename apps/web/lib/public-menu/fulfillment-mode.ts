@@ -1,62 +1,129 @@
 import { parsePublicMenuTableLabel } from '@/lib/public-menu/table-label'
 
-export type PublicMenuFulfillmentMode = 'dine_in' | 'pickup'
+export type PublicMenuFulfillmentMode = 'dine_in' | 'pickup' | 'delivery'
+
+export const DELIVERY_ADDRESS_MAX_LEN = 512
+export const DELIVERY_PHONE_MAX_LEN = 32
+export const DELIVERY_NOTES_MAX_LEN = 256
 
 export type ResolveGuestFulfillmentInput = {
   allowDineIn: boolean
   allowPickup: boolean
+  allowDelivery: boolean
   /** Table from `/{slug}/menu/t/{table}` when present. */
   lockedTableLabel: string | null
-  /** Guest choice when both modes allowed and no locked table. */
+  /** Guest choice when multiple modes allowed and no locked table. */
   guestChoice: PublicMenuFulfillmentMode
   /** Guest-entered table when ordering dine-in from the shared menu. */
   guestTableLabel: string | null
+  deliveryAddress: string | null
+  deliveryPhone: string | null
+  deliveryNotes: string | null
+}
+
+export type ResolveGuestFulfillmentOk = {
+  ok: true
+  mode: PublicMenuFulfillmentMode
+  tableLabel: string | null
+  deliveryAddress: string | null
+  deliveryPhone: string | null
+  deliveryNotes: string | null
 }
 
 export type ResolveGuestFulfillmentResult =
-  | { ok: true; mode: PublicMenuFulfillmentMode; tableLabel: string | null }
-  | { ok: false; reason: 'no_modes' | 'table_required' }
+  | ResolveGuestFulfillmentOk
+  | {
+      ok: false
+      reason:
+        | 'no_modes'
+        | 'table_required'
+        | 'delivery_address_required'
+        | 'delivery_phone_required'
+    }
+
+function trimOrNull(value: string | null | undefined, maxLen: number): string | null {
+  if (value == null) return null
+  const cleaned = value.trim()
+  if (!cleaned) return null
+  return cleaned.slice(0, maxLen)
+}
+
+function resolveDeliveryFields(input: ResolveGuestFulfillmentInput): ResolveGuestFulfillmentResult {
+  const address = trimOrNull(input.deliveryAddress, DELIVERY_ADDRESS_MAX_LEN)
+  if (!address) return { ok: false, reason: 'delivery_address_required' }
+  const phone = trimOrNull(input.deliveryPhone, DELIVERY_PHONE_MAX_LEN)
+  if (!phone) return { ok: false, reason: 'delivery_phone_required' }
+  return {
+    ok: true,
+    mode: 'delivery',
+    tableLabel: null,
+    deliveryAddress: address,
+    deliveryPhone: phone,
+    deliveryNotes: trimOrNull(input.deliveryNotes, DELIVERY_NOTES_MAX_LEN),
+  }
+}
+
+function resolveDineIn(tableLabel: string | null): ResolveGuestFulfillmentResult {
+  if (!tableLabel) return { ok: false, reason: 'table_required' }
+  return {
+    ok: true,
+    mode: 'dine_in',
+    tableLabel,
+    deliveryAddress: null,
+    deliveryPhone: null,
+    deliveryNotes: null,
+  }
+}
+
+function resolvePickup(): ResolveGuestFulfillmentOk {
+  return {
+    ok: true,
+    mode: 'pickup',
+    tableLabel: null,
+    deliveryAddress: null,
+    deliveryPhone: null,
+    deliveryNotes: null,
+  }
+}
+
+function defaultMode(input: ResolveGuestFulfillmentInput): PublicMenuFulfillmentMode | null {
+  const { guestChoice, allowDineIn, allowPickup, allowDelivery } = input
+  if (guestChoice === 'dine_in' && allowDineIn) return 'dine_in'
+  if (guestChoice === 'pickup' && allowPickup) return 'pickup'
+  if (guestChoice === 'delivery' && allowDelivery) return 'delivery'
+  if (allowPickup) return 'pickup'
+  if (allowDineIn) return 'dine_in'
+  if (allowDelivery) return 'delivery'
+  return null
+}
 
 /**
  * Resolve digital-menu fulfillment from location settings + entry URL + guest input.
  *
- * | Settings     | Table QR              | Shared menu                          |
- * |--------------|-----------------------|--------------------------------------|
- * | Both         | Lock dine_in + table  | guestChoice; dine_in needs table     |
- * | Pickup only  | pickup (ignore table) | pickup                               |
- * | Dine-in only | Lock dine_in + table  | dine_in + required table input       |
+ * Table QR locks dine_in when allowed; otherwise falls through to pickup/delivery.
+ * Shared menu uses guestChoice among enabled modes.
  */
 export function resolveGuestFulfillment(
   input: ResolveGuestFulfillmentInput,
 ): ResolveGuestFulfillmentResult {
-  const { allowDineIn, allowPickup, lockedTableLabel } = input
-  if (!allowDineIn && !allowPickup) {
+  const { allowDineIn, allowPickup, allowDelivery, lockedTableLabel } = input
+  if (!allowDineIn && !allowPickup && !allowDelivery) {
     return { ok: false, reason: 'no_modes' }
   }
 
   if (lockedTableLabel) {
     if (allowDineIn) {
-      return { ok: true, mode: 'dine_in', tableLabel: lockedTableLabel }
+      return resolveDineIn(lockedTableLabel)
     }
-    return { ok: true, mode: 'pickup', tableLabel: null }
+    if (allowPickup) return resolvePickup()
+    if (allowDelivery) return resolveDeliveryFields(input)
+    return { ok: false, reason: 'no_modes' }
   }
 
-  if (allowDineIn && !allowPickup) {
-    const table = parsePublicMenuTableLabel(input.guestTableLabel)
-    if (!table) return { ok: false, reason: 'table_required' }
-    return { ok: true, mode: 'dine_in', tableLabel: table }
-  }
+  const mode = defaultMode(input)
+  if (!mode) return { ok: false, reason: 'no_modes' }
 
-  if (!allowDineIn && allowPickup) {
-    return { ok: true, mode: 'pickup', tableLabel: null }
-  }
-
-  // Both allowed on shared menu
-  const mode = input.guestChoice === 'dine_in' ? 'dine_in' : 'pickup'
-  if (mode === 'pickup') {
-    return { ok: true, mode: 'pickup', tableLabel: null }
-  }
-  const table = parsePublicMenuTableLabel(input.guestTableLabel)
-  if (!table) return { ok: false, reason: 'table_required' }
-  return { ok: true, mode: 'dine_in', tableLabel: table }
+  if (mode === 'pickup') return resolvePickup()
+  if (mode === 'delivery') return resolveDeliveryFields(input)
+  return resolveDineIn(parsePublicMenuTableLabel(input.guestTableLabel))
 }

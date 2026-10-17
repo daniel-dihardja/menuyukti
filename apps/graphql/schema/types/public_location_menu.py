@@ -47,4 +47,5 @@ class PublicLocationMenuType:
     header_image_filename: str | None
     allow_dine_in: bool
     allow_pickup: bool
+    allow_delivery: bool
     categories: list[PublicMenuCategoryType]

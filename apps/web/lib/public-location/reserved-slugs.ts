@@ -13,6 +13,7 @@ export const RESERVED_PUBLIC_SLUGS = new Set([
   'content',
   'crm',
   'dashboard',
+  'explore',
   'home',
   'ig-studio',
   'inventar',

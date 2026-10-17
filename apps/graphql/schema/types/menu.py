@@ -62,6 +62,7 @@ class MenuType:
     public_enabled: bool
     allow_dine_in: bool
     allow_pickup: bool
+    allow_delivery: bool
     header_image_filename: str | None
     categories: list[MenuCategoryType]
 

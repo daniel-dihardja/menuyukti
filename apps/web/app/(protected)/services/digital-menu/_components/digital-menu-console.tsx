@@ -37,6 +37,7 @@ type Props = {
   initialHeaderImageFilename: string | null
   initialAllowDineIn: boolean
   initialAllowPickup: boolean
+  initialAllowDelivery: boolean
   initialFeedbacks: MenuItemFeedbackRow[]
   initialFeedbackPendingCount: number
 }
@@ -49,6 +50,7 @@ export function DigitalMenuConsole({
   initialHeaderImageFilename,
   initialAllowDineIn,
   initialAllowPickup,
+  initialAllowDelivery,
   initialFeedbacks,
   initialFeedbackPendingCount,
 }: Props) {
@@ -60,6 +62,7 @@ export function DigitalMenuConsole({
   )
   const [allowDineIn, setAllowDineIn] = useState(initialAllowDineIn)
   const [allowPickup, setAllowPickup] = useState(initialAllowPickup)
+  const [allowDelivery, setAllowDelivery] = useState(initialAllowDelivery)
   const [persistedPublicEnabled, setPersistedPublicEnabled] = useState(initialPublicEnabled)
   const [copied, setCopied] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -116,7 +119,7 @@ export function DigitalMenuConsole({
       setError(t('errors.slugRequired'))
       return
     }
-    if (!allowDineIn && !allowPickup) {
+    if (!allowDineIn && !allowPickup && !allowDelivery) {
       setError(t('errors.fulfillmentRequired'))
       return
     }
@@ -130,6 +133,7 @@ export function DigitalMenuConsole({
           headerImageFilename,
           allowDineIn,
           allowPickup,
+          allowDelivery,
         }),
       })
       if (!res.ok) {
@@ -141,7 +145,11 @@ export function DigitalMenuConsole({
         if (message.toLowerCase().includes('publicslug')) {
           throw new Error(t('errors.slugRequired'))
         }
-        if (message.toLowerCase().includes('allow_dine_in or allow_pickup')) {
+        if (
+          message.toLowerCase().includes('allow_dine_in') ||
+          message.toLowerCase().includes('allow_pickup') ||
+          message.toLowerCase().includes('allow_delivery')
+        ) {
           throw new Error(t('errors.fulfillmentRequired'))
         }
         throw new Error(message)
@@ -152,6 +160,7 @@ export function DigitalMenuConsole({
           headerImageFilename?: string | null
           allowDineIn?: boolean
           allowPickup?: boolean
+          allowDelivery?: boolean
         }
       }
       if (typeof body.publicEnabled === 'boolean') {
@@ -166,6 +175,9 @@ export function DigitalMenuConsole({
       }
       if (typeof body.menu?.allowPickup === 'boolean') {
         setAllowPickup(body.menu.allowPickup)
+      }
+      if (typeof body.menu?.allowDelivery === 'boolean') {
+        setAllowDelivery(body.menu.allowDelivery)
       }
       setSaved(true)
       router.refresh()
@@ -314,6 +326,22 @@ export function DigitalMenuConsole({
                 checked={allowPickup}
                 onCheckedChange={(next) => {
                   setAllowPickup(next)
+                  setSaved(false)
+                  setError(null)
+                }}
+                disabled={loading}
+              />
+            </Field>
+            <Field orientation="horizontal" className="items-center justify-between gap-4">
+              <div className="flex flex-col gap-1">
+                <FieldLabel htmlFor="digital-menu-allow-delivery">{t('allowDelivery')}</FieldLabel>
+                <p className="text-muted-foreground text-xs">{t('allowDeliveryHint')}</p>
+              </div>
+              <Switch
+                id="digital-menu-allow-delivery"
+                checked={allowDelivery}
+                onCheckedChange={(next) => {
+                  setAllowDelivery(next)
                   setSaved(false)
                   setError(null)
                 }}

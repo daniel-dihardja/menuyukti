@@ -1,6 +1,12 @@
 export type PosOrderStatus = 'OPEN' | 'PAID' | 'VOID' | 'REFUNDED'
 export type PosPaymentMethod = 'CASH' | 'CARD' | 'OTHER'
-export type PosPrepStatus = 'RECEIVED' | 'PREPARING' | 'READY' | 'SERVED' | 'PICKED_UP'
+export type PosPrepStatus =
+  | 'RECEIVED'
+  | 'PREPARING'
+  | 'READY'
+  | 'SERVED'
+  | 'PICKED_UP'
+  | 'DELIVERED'
 
 export type PosOrderLineModifier = {
   id: number
@@ -70,8 +76,11 @@ export type PosOrder = {
   gross: number
   taxBreakdown: PosTaxBreakdown[]
   tableLabel: string | null
-  fulfillmentMode: 'DINE_IN' | 'PICKUP' | null
+  fulfillmentMode: 'DINE_IN' | 'PICKUP' | 'DELIVERY' | null
   prepStatus: PosPrepStatus | null
+  deliveryAddress: string | null
+  deliveryPhone: string | null
+  deliveryNotes: string | null
   note: string | null
   refundedAt: string | null
   fiscalProcesses: PosFiscalProcess[]
@@ -120,6 +129,9 @@ const POS_ORDER_FIELDS = `
   tableLabel
   fulfillmentMode
   prepStatus
+  deliveryAddress
+  deliveryPhone
+  deliveryNotes
   note
   refundedAt
   fiscalProcesses {

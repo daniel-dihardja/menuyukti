@@ -10,6 +10,11 @@ from graphql.data_sources.models.crm_cashback_entry import CrmCashbackEntry
 from graphql.data_sources.models.crm_customer import CrmCustomer
 from graphql.data_sources.models.crm_device import CrmDevice
 from graphql.data_sources.models.crm_enrollment_token import CrmEnrollmentToken
+from graphql.data_sources.models.guest_preference import (
+    GuestPreferenceConsent,
+    GuestPreferenceProfile,
+    GuestPreferenceSignal,
+)
 from graphql.data_sources.models.instagram import (
     InstagramPost,
     InstagramPostPage,
@@ -71,6 +76,9 @@ __all__ = [
     "CrmCustomer",
     "CrmDevice",
     "CrmEnrollmentToken",
+    "GuestPreferenceConsent",
+    "GuestPreferenceProfile",
+    "GuestPreferenceSignal",
     "InventoryCatalogItem",
     "InventoryStock",
     "InventoryStockMovement",

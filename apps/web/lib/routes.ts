@@ -41,6 +41,7 @@ export const PUBLIC_LOCATION_SURFACE_PREFIXES = ['/m', '/l'] as const
 /**
  * Auth-required paths that are not operator sidebar shell and not customer shell
  * (legacy `/agent` rewrite alias; admin-only print shop catalog).
+ * `/explore` is public marketing (guest venue directory).
  */
 export const CLERK_AUTH_EXTRA_PREFIXES = ['/agent', '/shop'] as const
 
@@ -119,6 +120,8 @@ export const routes = {
 
   /** Public marketing / legal (not behind app shell). */
   about: '/about',
+  /** Guest venue directory (published digital menus). */
+  explore: '/explore',
   privacy: '/privacy',
   terms: '/terms',
 

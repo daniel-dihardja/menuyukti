@@ -33,6 +33,7 @@ describe('shouldRedirectPendingSession', () => {
   it('does not redirect pending sessions on public routes', () => {
     expect(shouldRedirectPendingSession('/', 'pending')).toBe(false)
     expect(shouldRedirectPendingSession('/privacy', 'pending')).toBe(false)
+    expect(shouldRedirectPendingSession('/explore', 'pending')).toBe(false)
   })
 
   it('does not redirect when session status is undefined', () => {

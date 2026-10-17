@@ -80,6 +80,8 @@ describe('POST /api/staff/dev-data', () => {
         inventarLocationName: 'Warung Sunda Lembur',
         analyticsLocationId: '8',
         analyticsLocationName: 'Kaffeestube Mitte',
+        midoLocationId: '9',
+        midoLocationName: 'MIDO Matcha Corner',
         inventarCatalogItems: null,
         inventarStockRows: null,
         inventarMovements: null,
@@ -94,6 +96,9 @@ describe('POST /api/staff/dev-data', () => {
         analyticsMenuCategories: null,
         analyticsMenuItems: null,
         analyticsClearedPosOrders: null,
+        midoMenuCategories: null,
+        midoMenuItems: null,
+        midoClearedPosOrders: null,
         notes: [],
       },
     })

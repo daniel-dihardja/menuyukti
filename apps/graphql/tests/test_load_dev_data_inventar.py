@@ -15,14 +15,23 @@ from graphql.data_sources import (
     Workspace,
     WorkspaceMembership,
 )
-from graphql.data_sources.models.menu import Menu, MenuCategory, MenuItem
+from graphql.data_sources.models.menu import (
+    Menu,
+    MenuCategory,
+    MenuItem,
+    MenuModifierGroup,
+    MenuModifierOption,
+)
 from graphql.scripts.dev_seed_inventar import reset_inventar, seed_inventar
 from graphql.scripts.dev_seed_kaffeestube_menu import KAFFEESTUBE_MENU_CATALOG
+from graphql.scripts.dev_seed_mido_menu import MIDO_CATEGORY_ORDER, MIDO_MENU_CATALOG
 from graphql.scripts.dev_seed_warung_menu import WARUNG_MENU_CATALOG
 from graphql.services.dev_data_seed import (
     DEV_ANALYTICS_LOCATION_NAME,
     DEV_INVENTAR_LOCATION_NAME,
+    DEV_MIDO_LOCATION_NAME,
     seed_kaffeestube_menu,
+    seed_mido_matcha_menu,
     seed_warung_sunda_menu,
 )
 
@@ -90,6 +99,24 @@ def inventar_seed_workspace():
         if menu_ids:
             # SQLite tests often run without PRAGMA foreign_keys, so deleting a
             # location/menu can leave orphan MenuItem rows that reattach on id reuse.
+            item_ids = [
+                row[0]
+                for row in session.query(MenuItem.id).filter(MenuItem.menu_id.in_(menu_ids)).all()
+            ]
+            if item_ids:
+                group_ids = [
+                    row[0]
+                    for row in session.query(MenuModifierGroup.id)
+                    .filter(MenuModifierGroup.menu_item_id.in_(item_ids))
+                    .all()
+                ]
+                if group_ids:
+                    session.query(MenuModifierOption).filter(
+                        MenuModifierOption.group_id.in_(group_ids)
+                    ).delete(synchronize_session=False)
+                    session.query(MenuModifierGroup).filter(
+                        MenuModifierGroup.id.in_(group_ids)
+                    ).delete(synchronize_session=False)
             session.query(MenuItem).filter(MenuItem.menu_id.in_(menu_ids)).delete(
                 synchronize_session=False
             )
@@ -272,12 +299,11 @@ def test_warung_sunda_menu_seed(inventar_seed_workspace):
         assert any(row.allergens for row in items)
         assert any("dairy_free" in (row.dietary_tags or []) for row in items)
 
-        # Simulate a POS ticket referencing a menu item (RESTRICT would block replace).
+        # Simulate a POS ticket referencing a menu item — seed must keep fiscal history.
         from graphql.data_sources.models.pos_order import PosOrder, PosOrderLine
-
-        sample_item = items[0]
         from graphql.services.pos_money import euros_to_cents
 
+        sample_item = items[0]
         cents = euros_to_cents(float(sample_item.price))
         order = PosOrder(
             location_id=inventar.id,
@@ -307,17 +333,19 @@ def test_warung_sunda_menu_seed(inventar_seed_workspace):
             )
         )
         session.commit()
+        order_id = order.id
 
-        # Reseed must clear POS tickets then replace menu without FK errors.
+        # Reseed replaces catalog in place; POS tickets stay immutable.
         second = seed_warung_sunda_menu(session, inventar)
         session.commit()
         assert second["categories"] == 2
         assert second["items"] == len(WARUNG_MENU_CATALOG)
-        assert second["cleared_pos_orders"] == 1
+        assert second["cleared_pos_orders"] == 0
         assert session.query(MenuItem).filter(MenuItem.menu_id == menu.id).count() == len(
             WARUNG_MENU_CATALOG
         )
-        assert session.query(PosOrder).filter(PosOrder.location_id == inventar.id).count() == 0
+        assert session.get(PosOrder, order_id) is not None
+        assert session.query(PosOrder).filter(PosOrder.location_id == inventar.id).count() == 1
     finally:
         session.close()
 
@@ -403,16 +431,162 @@ def test_kaffeestube_menu_seed(inventar_seed_workspace):
             )
         )
         session.commit()
+        order_id = order.id
 
         second = seed_kaffeestube_menu(session, analytics)
         session.commit()
         assert second["categories"] == 5
         assert second["items"] == len(KAFFEESTUBE_MENU_CATALOG)
-        assert second["cleared_pos_orders"] == 1
+        assert second["cleared_pos_orders"] == 0
         assert session.query(MenuItem).filter(MenuItem.menu_id == menu.id).count() == len(
             KAFFEESTUBE_MENU_CATALOG
         )
-        assert session.query(PosOrder).filter(PosOrder.location_id == analytics.id).count() == 0
+        assert session.get(PosOrder, order_id) is not None
+        assert session.query(PosOrder).filter(PosOrder.location_id == analytics.id).count() == 1
+    finally:
+        session.close()
+
+
+def test_mido_matcha_menu_seed(inventar_seed_workspace):
+    session = SessionLocal()
+    try:
+        mido = Location(
+            name=DEV_MIDO_LOCATION_NAME,
+            workspace_id=inventar_seed_workspace["workspace_id"],
+            clerk_user_id=SEED_USER,
+            currency="EUR",
+            city="Berlin",
+            country="DE",
+        )
+        session.add(mido)
+        session.commit()
+        session.refresh(mido)
+
+        first = seed_mido_matcha_menu(session, mido)
+        session.commit()
+
+        assert first["categories"] == len(MIDO_CATEGORY_ORDER)
+        assert first["items"] == len(MIDO_MENU_CATALOG)
+        assert first["cleared_pos_orders"] == 0
+
+        menu = session.query(Menu).filter(Menu.location_id == mido.id).one()
+        assert menu.title == DEV_MIDO_LOCATION_NAME
+        categories = (
+            session.query(MenuCategory)
+            .filter(MenuCategory.menu_id == menu.id)
+            .order_by(MenuCategory.sort_order)
+            .all()
+        )
+        assert [c.name for c in categories] == list(MIDO_CATEGORY_ORDER)
+
+        items = session.query(MenuItem).filter(MenuItem.menu_id == menu.id).all()
+        item_names = {row.name for row in items}
+        assert item_names == {item.name for item in MIDO_MENU_CATALOG}
+        by_name = {row.name: row for row in items}
+        for catalog_item in MIDO_MENU_CATALOG:
+            row = by_name[catalog_item.name]
+            assert set(row.dietary_tags or []) == set(catalog_item.dietary_tags)
+            assert set(row.allergens or []) == set(catalog_item.allergens)
+            assert float(row.price) == catalog_item.price
+
+        latte = by_name["Matcha Latte"]
+        latte_groups = (
+            session.query(MenuModifierGroup)
+            .filter(MenuModifierGroup.menu_item_id == latte.id)
+            .order_by(MenuModifierGroup.sort_order)
+            .all()
+        )
+        assert [g.name for g in latte_groups] == [
+            "Milk Choice",
+            "Drink Size",
+            "Temperature",
+            "Extra Toppings",
+        ]
+        milk = latte_groups[0]
+        assert milk.min_select == 1
+        assert milk.max_select == 1
+        assert [(o.name, float(o.price_delta)) for o in milk.options] == [
+            ("Whole milk", 0.0),
+            ("Oat milk", 0.4),
+            ("Coconut milk", 0.5),
+            ("Almond milk", 0.5),
+        ]
+        toppings = latte_groups[3]
+        assert toppings.min_select == 0
+        assert toppings.max_select == 6
+
+        mango = by_name["Mango Matcha"]
+        mango_milk = (
+            session.query(MenuModifierGroup)
+            .filter(
+                MenuModifierGroup.menu_item_id == mango.id,
+                MenuModifierGroup.name == "Milk Choice",
+            )
+            .one()
+        )
+        assert mango_milk.options[0].name == "Coconut milk"
+        assert float(mango_milk.options[0].price_delta) == 0.0
+
+        pure = by_name["Pure Matcha"]
+        assert (
+            session.query(MenuModifierGroup)
+            .filter(MenuModifierGroup.menu_item_id == pure.id)
+            .count()
+            == 0
+        )
+        combo = by_name["Matcha Break"]
+        assert (
+            session.query(MenuModifierGroup)
+            .filter(MenuModifierGroup.menu_item_id == combo.id)
+            .count()
+            == 0
+        )
+        assert float(combo.price) == 8.50
+
+        from graphql.data_sources.models.pos_order import PosOrder, PosOrderLine
+        from graphql.services.pos_money import euros_to_cents
+
+        cents = euros_to_cents(float(latte.price))
+        order = PosOrder(
+            location_id=mido.id,
+            bill_number="MIDO-20260701-00001",
+            status="paid",
+            opened_by_clerk_user_id=SEED_USER,
+            payment_method="cash",
+            discount_cents=0,
+        )
+        session.add(order)
+        session.flush()
+        session.add(
+            PosOrderLine(
+                pos_order_id=order.id,
+                menu_item_id=latte.id,
+                name_snapshot=latte.name,
+                menu_category_snapshot="Matcha Classics",
+                menu_category_detail_snapshot="",
+                qty=1,
+                unit_price_cents=cents,
+                tax_class_snapshot="standard",
+                tax_rate_bps_snapshot=1900,
+                net_cents=0,
+                tax_cents=0,
+                gross_cents=cents,
+                sort_order=0,
+            )
+        )
+        session.commit()
+        order_id = order.id
+
+        second = seed_mido_matcha_menu(session, mido)
+        session.commit()
+        assert second["categories"] == len(MIDO_CATEGORY_ORDER)
+        assert second["items"] == len(MIDO_MENU_CATALOG)
+        assert second["cleared_pos_orders"] == 0
+        assert session.query(MenuItem).filter(MenuItem.menu_id == menu.id).count() == len(
+            MIDO_MENU_CATALOG
+        )
+        assert session.get(PosOrder, order_id) is not None
+        assert session.query(PosOrder).filter(PosOrder.location_id == mido.id).count() == 1
     finally:
         session.close()
 

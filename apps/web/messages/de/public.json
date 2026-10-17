@@ -2,25 +2,40 @@
   "public": {
     "menu": {
       "order": {
+        "fulfillmentDelivery": "Lieferung",
+        "deliveryAddressLabel": "Lieferadresse",
+        "deliveryAddressPlaceholder": "Straße, Hausnummer, Ort",
+        "deliveryAddressRequired": "Gib eine Lieferadresse ein, um die Bestellung zu senden.",
+        "deliveryPhoneLabel": "Telefon",
+        "deliveryPhonePlaceholder": "Handynummer für die Lieferung",
+        "deliveryPhoneRequired": "Gib eine Telefonnummer an, damit wir dich für die Lieferung erreichen können.",
+        "deliveryNotesLabel": "Lieferhinweise (optional)",
+        "deliveryNotesPlaceholder": "z. B. Klingelcode, Etage, vor die Tür",
         "successTitleDineIn": "Bestellung unterwegs",
         "successBodyDineIn": "Bon {billNumber} — wir bereiten deine Bestellung zu und bringen sie an Tisch {tableLabel}.",
         "successTitlePickup": "Bestellung eingegangen",
         "successBodyPickup": "Bon {billNumber} — wir bereiten deine Bestellung zu. Hole sie ab, sobald sie fertig ist.",
+        "successTitleDelivery": "Bestellung eingegangen",
+        "successBodyDelivery": "Bon {billNumber} — wir bereiten deine Bestellung zu und liefern sie an deine Adresse.",
         "prepStatus": {
           "received": "Bestellung eingegangen — die Küche hat deinen Bon.",
           "preparing": "Wird gerade zubereitet.",
           "ready_dine_in": "Fertig — wir bringen sie an deinen Tisch.",
           "ready_pickup": "Fertig zur Abholung.",
+          "ready_delivery": "Fertig — unterwegs zu dir.",
           "served": "Serviert. Guten Appetit!",
-          "picked_up": "Abgeholt. Guten Appetit!"
+          "picked_up": "Abgeholt. Guten Appetit!",
+          "delivered": "Geliefert. Guten Appetit!"
         },
         "prepStatusShort": {
           "received": "Eingegangen",
           "preparing": "In Zubereitung",
           "ready_dine_in": "Fertig",
           "ready_pickup": "Fertig zur Abholung",
+          "ready_delivery": "Fertig zur Lieferung",
           "served": "Serviert",
-          "picked_up": "Abgeholt"
+          "picked_up": "Abgeholt",
+          "delivered": "Geliefert"
         },
         "myOrderStickyLabel": "Meine Bestellung",
         "myOrderStickyMeta": "Bon {billNumber}",
