@@ -37,7 +37,7 @@ export default async function PlaybooksPage() {
                   <CardTitle>{t(`items.${playbook.id}.title`)}</CardTitle>
                   <CardDescription>{t(`items.${playbook.id}.description`)}</CardDescription>
                 </CardHeader>
-                <CardFooter className="border-t py-4">
+                <CardFooter className="justify-end border-t py-4">
                   <Button asChild className="w-full sm:w-auto">
                     <Link href={routes.playbookDetail(playbook.slug)}>{t('start')}</Link>
                   </Button>
