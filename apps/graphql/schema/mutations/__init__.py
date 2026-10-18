@@ -14,7 +14,6 @@ from .create_prediction import CreatePredictionMutation
 from .create_style import CreateStyleMutation
 from .create_voting import CreateVotingMutation
 from .create_workspace import CreateWorkspaceMutation
-from .ensure_my_workspace import EnsureMyWorkspaceMutation
 from .delete_analytics_run import DeleteAnalyticsRunMutation
 from .delete_calendar_entry import DeleteCalendarEntryMutation
 from .delete_crm_app import DeleteCrmAppMutation
@@ -26,6 +25,7 @@ from .delete_post import DeletePostMutation
 from .delete_post_page import DeletePostPageMutation
 from .delete_post_page_media_version import DeletePostPageMediaVersionMutation
 from .delete_style import DeleteStyleMutation
+from .ensure_my_workspace import EnsureMyWorkspaceMutation
 from .food_profile import FoodProfileMutations
 from .import_pos_sales_report import ImportPosSalesReportMutation
 from .ingest_dev_data import IngestDevDataMutation
