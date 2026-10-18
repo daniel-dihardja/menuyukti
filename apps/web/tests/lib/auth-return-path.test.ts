@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import {
   AUTH_RETURN_TO_QUERY,
@@ -47,12 +47,21 @@ describe('buildAuthContinueUrl / buildLoginUrl', () => {
 })
 
 describe('toAbsoluteAppUrl', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
   it('leaves absolute URLs unchanged', () => {
     expect(toAbsoluteAppUrl('https://menuyukti.com/home')).toBe('https://menuyukti.com/home')
   })
 
+  it('returns relative paths unchanged when window is undefined (SSR)', () => {
+    expect(toAbsoluteAppUrl('/sso-callback')).toBe('/sso-callback')
+  })
+
   it('resolves relative paths against window.location.origin', () => {
-    expect(toAbsoluteAppUrl('/sso-callback')).toBe(`${window.location.origin}/sso-callback`)
-    expect(toAbsoluteAppUrl('/home')).toBe(`${window.location.origin}/home`)
+    vi.stubGlobal('window', { location: { origin: 'http://localhost:3000' } })
+    expect(toAbsoluteAppUrl('/sso-callback')).toBe('http://localhost:3000/sso-callback')
+    expect(toAbsoluteAppUrl('/home')).toBe('http://localhost:3000/home')
   })
 })
