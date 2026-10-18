@@ -160,3 +160,41 @@ export type UpdateLocationPublicSlugData = {
     publicSlug: string | null
   }
 }
+
+export type PublicLocationDirectoryItem = {
+  id: number
+  name: string
+  publicSlug: string
+  city: string | null
+  headerImageFilename: string | null
+  workspaceId: string | null
+  mediaOwnerClerkUserId: string | null
+  menuDishCount: number
+}
+
+export type PublicLocationDirectory = {
+  cities: string[]
+  locations: PublicLocationDirectoryItem[]
+}
+
+export const PUBLIC_LOCATIONS_QUERY = `
+  query PublicLocations($city: String, $query: String, $first: Int) {
+    publicLocations(city: $city, query: $query, first: $first) {
+      cities
+      locations {
+        id
+        name
+        publicSlug
+        city
+        headerImageFilename
+        workspaceId
+        mediaOwnerClerkUserId
+        menuDishCount
+      }
+    }
+  }
+`
+
+export type PublicLocationsData = {
+  publicLocations: PublicLocationDirectory
+}

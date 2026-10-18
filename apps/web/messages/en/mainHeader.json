@@ -4,13 +4,14 @@
     "brandAria": "Menuyukti home",
     "navAria": "Main navigation",
     "navAbout": "About",
+    "navExplore": "Explore",
     "navStudio": "IG Studio",
     "navChat": "Advisor",
     "navShop": "Print Shop",
     "landingNav": {
-      "services": "Services",
+      "services": "Workspace",
       "why": "Why Menuyukti",
-      "mobileDescription": "Agentic restaurant marketing—Chat campaigns, sales reports, and location insights built exclusively for hospitality."
+      "mobileDescription": "AI for restaurants — Advisor, analytics, POS, inventory, and a guest digital menu."
     },
     "mobileMenuTriggerAria": "Open main navigation menu",
     "mobileMenuTitle": "Navigation",

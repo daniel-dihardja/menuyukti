@@ -1,6 +1,7 @@
 'use client'
 
-import { useClerk, useSignIn } from '@clerk/nextjs'
+import { useClerk, useSignIn, useSignUp } from '@clerk/nextjs'
+import { isClerkAPIResponseError } from '@clerk/nextjs/errors'
 import { Button } from '@workspace/ui/components/button'
 import { Field, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
 import { Input } from '@workspace/ui/components/input'
@@ -13,10 +14,24 @@ import {
 import { GoogleMark } from '@/components/clerk/google-mark'
 import { isGoogleOauthAvailable } from '@/components/clerk/is-google-oauth-available'
 import { cn } from '@workspace/ui/lib/utils'
-import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useRef, useState } from 'react'
+
+function isSignUpIfMissingTransfer(error: unknown): boolean {
+  if (!error) return false
+  if (isClerkAPIResponseError(error)) {
+    return error.errors.some((e) => e.code === 'sign_up_if_missing_transfer')
+  }
+  if (typeof error === 'object' && error !== null && 'code' in error) {
+    return (error as { code?: string }).code === 'sign_up_if_missing_transfer'
+  }
+  if (typeof error === 'object' && error !== null && 'errors' in error) {
+    const errors = (error as { errors?: Array<{ code?: string }> }).errors
+    return Boolean(errors?.some((e) => e.code === 'sign_up_if_missing_transfer'))
+  }
+  return false
+}
 
 type Step = 'email' | 'code' | 'second_factor' | 'client_trust'
 
@@ -39,12 +54,12 @@ function getPrimarySecondFactor(signIn: {
 
 export function CustomLoginForm({ className }: { className?: string }) {
   const t = useTranslations('login')
-  const router = useRouter()
   const searchParams = useSearchParams()
   const returnTo = searchParams.get(AUTH_RETURN_TO_QUERY)
   const continueUrl = buildAuthContinueUrl(returnTo)
   const clerk = useClerk()
   const { signIn, errors, fetchStatus } = useSignIn()
+  const { signUp, fetchStatus: signUpFetchStatus } = useSignUp()
   const [step, setStep] = useState<Step>('email')
   const [busy, setBusy] = useState(false)
   const [mfaLoading, setMfaLoading] = useState(false)
@@ -52,6 +67,7 @@ export function CustomLoginForm({ className }: { className?: string }) {
   const [primarySecondFactor, setPrimarySecondFactor] = useState<string | null>(null)
   const [oauthError, setOauthError] = useState<string | null>(null)
   const [oauthBusy, setOauthBusy] = useState(false)
+  const [formError, setFormError] = useState<string | null>(null)
   const preparingSignInIdRef = useRef<string | null>(null)
   const preparedSignInIdRef = useRef<string | null>(null)
   const googleAvailable = isGoogleOauthAvailable(clerk)
@@ -60,22 +76,54 @@ export function CustomLoginForm({ className }: { className?: string }) {
     rememberAuthReturnPath(returnTo)
   }, [returnTo])
 
+  const navigateAfterAuth = useCallback(
+    async ({
+      session,
+      decorateUrl,
+    }: {
+      session: { currentTask?: unknown } | null | undefined
+      decorateUrl: (url: string) => string
+    }) => {
+      if (session?.currentTask) {
+        return
+      }
+      const url = decorateUrl(continueUrl)
+      if (url.startsWith('http')) {
+        window.location.href = url
+      } else {
+        // Hard navigation so the session cookie is visible to the Next.js proxy.
+        window.location.assign(url)
+      }
+    },
+    [continueUrl],
+  )
+
   const finalizeAndRedirect = useCallback(async () => {
     if (!signIn) return
-    await signIn.finalize({
-      navigate: async ({ session, decorateUrl }) => {
-        if (session?.currentTask) {
-          return
-        }
-        const url = decorateUrl(continueUrl)
-        if (url.startsWith('http')) {
-          window.location.href = url
-        } else {
-          router.push(url)
-        }
-      },
-    })
-  }, [continueUrl, router, signIn])
+    await signIn.finalize({ navigate: navigateAfterAuth })
+  }, [navigateAfterAuth, signIn])
+
+  const finalizeSignUpAndRedirect = useCallback(async () => {
+    if (!signUp) return
+    await signUp.finalize({ navigate: navigateAfterAuth })
+  }, [navigateAfterAuth, signUp])
+
+  const transferToSignUp = useCallback(async () => {
+    if (!signUp) return
+    const { error } = await signUp.create({ transfer: true })
+    if (error) {
+      setFormError(t('genericError'))
+      return
+    }
+    if (signUp.status === 'complete') {
+      await finalizeSignUpAndRedirect()
+      return
+    }
+    const missing = signUp.missingFields ?? []
+    setFormError(
+      missing.includes('password') ? t('signUpPasswordStillRequired') : t('genericError'),
+    )
+  }, [finalizeSignUpAndRedirect, signUp, t])
 
   const ensureVerificationCodeSent = useCallback(async () => {
     if (!signIn?.id) return
@@ -146,8 +194,13 @@ export function CustomLoginForm({ className }: { className?: string }) {
     const email = (form.elements.namedItem('email') as HTMLInputElement).value.trim()
 
     setBusy(true)
+    setFormError(null)
     try {
-      const { error: createError } = await signIn.create({ identifier: email })
+      // Combined sign-in-or-up: send a code whether or not the account exists.
+      const { error: createError } = await signIn.create({
+        identifier: email,
+        signUpIfMissing: true,
+      })
       if (createError) {
         return
       }
@@ -190,9 +243,14 @@ export function CustomLoginForm({ className }: { className?: string }) {
     const code = (form.elements.namedItem('verification-code') as HTMLInputElement).value.trim()
 
     setBusy(true)
+    setFormError(null)
     try {
       const { error } = await signIn.emailCode.verifyCode({ code })
       if (error) {
+        if (isSignUpIfMissingTransfer(error)) {
+          await transferToSignUp()
+          return
+        }
         return
       }
 
@@ -287,18 +345,27 @@ export function CustomLoginForm({ className }: { className?: string }) {
     setBusy(true)
     try {
       await signIn.reset()
+      if (signUp) {
+        await signUp.reset()
+      }
       preparingSignInIdRef.current = null
       preparedSignInIdRef.current = null
       setPrimarySecondFactor(null)
       setEmailAddress('')
       setOauthError(null)
+      setFormError(null)
       setStep('email')
     } finally {
       setBusy(false)
     }
   }
 
-  const loading = busy || fetchStatus === 'fetching' || mfaLoading || oauthBusy
+  const loading =
+    busy ||
+    fetchStatus === 'fetching' ||
+    signUpFetchStatus === 'fetching' ||
+    mfaLoading ||
+    oauthBusy
   const isSigningIn = loading
 
   const mfaHint =
@@ -310,7 +377,7 @@ export function CustomLoginForm({ className }: { className?: string }) {
           ? t('useBackupCode')
           : t('mfaHintTotp')
 
-  if (!signIn) {
+  if (!signIn || !signUp) {
     return (
       <div className={cn('text-sm text-muted-foreground', className)} aria-live="polite">
         {t('signingIn')}
@@ -507,6 +574,11 @@ export function CustomLoginForm({ className }: { className?: string }) {
             </Field>
           </FieldGroup>
         </form>
+        {formError ? (
+          <p className="text-sm text-destructive" role="alert">
+            {formError}
+          </p>
+        ) : null}
         <div className="flex flex-col gap-2 sm:flex-row sm:justify-between">
           <Button
             type="button"
@@ -602,16 +674,6 @@ export function CustomLoginForm({ className }: { className?: string }) {
           </Field>
         </FieldGroup>
       </form>
-
-      <p className="text-center text-sm text-muted-foreground">
-        {t('signupDescription')}{' '}
-        <Link
-          href={routes.signUp}
-          className="font-medium text-foreground underline-offset-4 hover:underline"
-        >
-          {t('signupLink')}
-        </Link>
-      </p>
 
       <div id="clerk-captcha" />
     </div>

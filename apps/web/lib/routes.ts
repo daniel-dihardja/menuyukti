@@ -41,6 +41,7 @@ export const PUBLIC_LOCATION_SURFACE_PREFIXES = ['/m', '/l'] as const
 /**
  * Auth-required paths that are not operator sidebar shell and not customer shell
  * (legacy `/agent` rewrite alias; admin-only print shop catalog).
+ * `/explore` is public marketing (guest venue directory).
  */
 export const CLERK_AUTH_EXTRA_PREFIXES = ['/agent', '/shop'] as const
 
@@ -119,6 +120,8 @@ export const routes = {
 
   /** Public marketing / legal (not behind app shell). */
   about: '/about',
+  /** Guest venue directory (published digital menus). */
+  explore: '/explore',
   privacy: '/privacy',
   terms: '/terms',
 
@@ -204,13 +207,13 @@ export const routes = {
   agentThread: (threadId: string) => `/advisor/${encodeURIComponent(threadId)}`,
   printOrders: '/print-orders',
   dashboard: '/dashboard',
-  /** Marketing / QR landing — free-plan post-auth default. */
+  /** Marketing / QR landing. */
   root: '/',
-  /** Free-plan customer home (customer shell; PWA guide). Pro redirects away. */
+  /** Shared authenticated home (customer shell; PWA guide). Free and pro both land here. */
   home: '/home',
   /**
-   * Post-auth landing: server resolves workspace plan and redirects to
-   * the plan home (`/` free, `/analytics/locations` pro).
+   * Legacy post-auth hop (feature-flag bounce / bookmarks). Redirects to `/home`
+   * immediately; prefer `routes.home` or `buildAuthContinueUrl` for new flows.
    */
   authContinue: '/continue',
   /** Menuyukti staff-only console (platform role `admin`). */
@@ -236,11 +239,11 @@ export const routes = {
   servicesVoting: '/services/voting',
   servicesVotingLocation: (locationId: string | number) =>
     `/services/voting/${encodeURIComponent(String(locationId))}`,
-  /** Custom profile overview (name, email, avatar). */
+  /** Shared profile (avatar + password) for every signed-in user. */
   profile: '/profile',
   /** Workspace team management (invite existing users) — operator shell. */
   team: '/team',
-  /** Clerk `<UserProfile />` host path (security, sessions, etc.); catch-all under `/profile/account/...`. */
+  /** Legacy alias; redirects to {@link routes.profile}. */
   profileAccount: '/profile/account',
 
   shop: '/shop',

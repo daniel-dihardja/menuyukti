@@ -4,13 +4,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from sqlalchemy import func, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from graphql.data_sources import Workspace
 from graphql.data_sources.models.location import Location
 from graphql.data_sources.models.menu import Menu, MenuItem
 from graphql.data_sources.models.prediction import PREDICTION_STATUS_OPEN, Prediction
+from graphql.data_sources.models.service_subscription import ServiceSubscription
 from graphql.data_sources.models.voting import VOTING_STATUS_OPEN, Voting
 from graphql.services.point_earn_rules import (
     ACTION_KEY_OPEN_MENU_QR,
@@ -21,8 +22,12 @@ from graphql.services.service_subscriptions import (
     SERVICE_KEY_PICK_AND_WIN,
     SERVICE_KEY_POINT_SYSTEM,
     SERVICE_KEY_VOTING,
+    SERVICE_STATUS_ACTIVE,
     is_active_subscription,
 )
+
+DIRECTORY_DEFAULT_LIMIT = 48
+DIRECTORY_MAX_LIMIT = 100
 
 HREF_SEGMENT_MENU = "menu"
 HREF_SEGMENT_PICK_AND_WIN = "pick-and-win"
@@ -67,6 +72,132 @@ class PublicLocationView:
     menu_open_points: int | None
     prediction_teaser: PublicLocationPredictionTeaserView | None
     voting_teaser: PublicLocationVotingTeaserView | None
+
+
+@dataclass(frozen=True, slots=True)
+class PublicLocationDirectoryItemView:
+    id: int
+    name: str
+    public_slug: str
+    city: str | None
+    header_image_filename: str | None
+    workspace_id: str | None
+    media_owner_clerk_user_id: str | None
+    menu_dish_count: int
+
+
+def clamp_directory_limit(first: int | None) -> int:
+    if first is None:
+        return DIRECTORY_DEFAULT_LIMIT
+    return max(1, min(int(first), DIRECTORY_MAX_LIMIT))
+
+
+def _discoverable_join():
+    """Location + published menu + active digital_menu subscription."""
+    return (
+        select(Location, Menu)
+        .join(Menu, Menu.location_id == Location.id)
+        .join(
+            ServiceSubscription,
+            and_(
+                ServiceSubscription.location_id == Location.id,
+                ServiceSubscription.service_key == SERVICE_KEY_DIGITAL_MENU,
+                ServiceSubscription.status == SERVICE_STATUS_ACTIVE,
+            ),
+        )
+        .where(
+            Location.public_slug.isnot(None),
+            Location.public_slug != "",
+            Menu.public_enabled.is_(True),
+        )
+    )
+
+
+def _directory_media_owner(session: Session, location: Location) -> tuple[str | None, str | None]:
+    workspace_id: str | None = None
+    media_owner: str | None = location.clerk_user_id
+    if location.workspace_id is not None:
+        workspace_id = str(location.workspace_id)
+        workspace = session.get(Workspace, location.workspace_id)
+        if workspace is not None:
+            media_owner = workspace.owner_clerk_user_id
+    return workspace_id, media_owner
+
+
+def list_discoverable_locations(
+    session: Session,
+    *,
+    city: str | None = None,
+    query: str | None = None,
+    limit: int = DIRECTORY_DEFAULT_LIMIT,
+) -> list[PublicLocationDirectoryItemView]:
+    capped = clamp_directory_limit(limit)
+    stmt = _discoverable_join()
+
+    city_cleaned = (city or "").strip()
+    if city_cleaned:
+        stmt = stmt.where(func.lower(func.trim(Location.city)) == city_cleaned.lower())
+
+    query_cleaned = (query or "").strip()
+    if query_cleaned:
+        pattern = f"%{query_cleaned}%"
+        stmt = stmt.where(
+            or_(
+                Location.name.ilike(pattern),
+                Location.city.ilike(pattern),
+            )
+        )
+
+    stmt = stmt.order_by(Location.name.asc(), Location.id.asc()).limit(capped)
+    rows = session.execute(stmt).all()
+
+    items: list[PublicLocationDirectoryItemView] = []
+    for location, menu in rows:
+        workspace_id, media_owner = _directory_media_owner(session, location)
+        city_value = (location.city or "").strip() or None
+        items.append(
+            PublicLocationDirectoryItemView(
+                id=int(location.id),
+                name=location.name,
+                public_slug=str(location.public_slug),
+                city=city_value,
+                header_image_filename=menu.header_image_filename,
+                workspace_id=workspace_id,
+                media_owner_clerk_user_id=media_owner,
+                menu_dish_count=_menu_dish_count(session, int(menu.id)),
+            )
+        )
+    return items
+
+
+def list_discoverable_cities(session: Session) -> list[str]:
+    # GROUP BY (not DISTINCT + ORDER BY lower): Postgres rejects ORDER BY
+    # expressions that are absent from a SELECT DISTINCT list. Sort in Python
+    # so case-insensitive order stays portable across SQLite and Postgres.
+    city_trimmed = func.trim(Location.city)
+    stmt = (
+        select(city_trimmed)
+        .select_from(Location)
+        .join(Menu, Menu.location_id == Location.id)
+        .join(
+            ServiceSubscription,
+            and_(
+                ServiceSubscription.location_id == Location.id,
+                ServiceSubscription.service_key == SERVICE_KEY_DIGITAL_MENU,
+                ServiceSubscription.status == SERVICE_STATUS_ACTIVE,
+            ),
+        )
+        .where(
+            Location.public_slug.isnot(None),
+            Location.public_slug != "",
+            Menu.public_enabled.is_(True),
+            Location.city.isnot(None),
+            city_trimmed != "",
+        )
+        .group_by(city_trimmed)
+    )
+    cities = [str(row) for row in session.scalars(stmt).all() if row]
+    return sorted(cities, key=str.casefold)
 
 
 def _menu_dish_count(session: Session, menu_id: int) -> int:

@@ -1,6 +1,7 @@
 import { Suspense } from 'react'
 import { getTranslations } from 'next-intl/server'
 import type { Metadata } from 'next'
+import { connection } from 'next/server'
 import { Button } from '@workspace/ui/components/button'
 import Link from 'next/link'
 import { routes } from '@/lib/routes'
@@ -15,9 +16,6 @@ import {
 import { Skeleton } from '@workspace/ui/components/skeleton'
 import { ANALYTICS_REPORT_SHELL_MAIN_CLASS, ANALYTICS_REPORT_SECTION_CLASS } from '@/lib/app-layout'
 import { cn } from '@workspace/ui/lib/utils'
-import { getWorkspacePlanForUser } from '@/lib/workspace-plan-server'
-import { isProPlan } from '@/lib/workspace-plan'
-
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('analytics.branches')
   const title = t('title')
@@ -87,9 +85,11 @@ async function LocationsPageData() {
 }
 
 export default async function Page() {
+  // Bind this route to the request before auth/plan. Clerk session checks can
+  // read the current time; without this, Cache Components treats Date.now() as
+  // a blocking prerender value on the page segment (layout connection() is not enough).
+  await connection()
   const t = await getTranslations('analytics.branches')
-  const { plan } = await getWorkspacePlanForUser()
-  const canCreateLocation = isProPlan(plan)
 
   return (
     <AnalyticsPageShell
@@ -100,15 +100,9 @@ export default async function Page() {
       <section className={cn('flex flex-col gap-4', ANALYTICS_REPORT_SECTION_CLASS)}>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <PageHeading title={t('title')} description={t('description')} />
-          {canCreateLocation ? (
-            <Button asChild className="w-full shrink-0 sm:w-auto" size="sm">
-              <Link href={routes.analytics.branchesCreate}>{t('create')}</Link>
-            </Button>
-          ) : (
-            <p className="text-muted-foreground text-sm sm:max-w-xs sm:text-right">
-              {t('freePlanLocationLimit')}
-            </p>
-          )}
+          <Button asChild className="w-full shrink-0 sm:w-auto" size="sm">
+            <Link href={routes.analytics.branchesCreate}>{t('create')}</Link>
+          </Button>
         </div>
         <Suspense fallback={<LocationsPageSkeleton />}>
           <LocationsPageData />

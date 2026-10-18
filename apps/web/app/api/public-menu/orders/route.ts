@@ -19,9 +19,20 @@ const submitPublicMenuOrderSchema = z.object({
     )
     .min(1)
     .max(50),
-  fulfillmentMode: z.enum(['dine_in', 'pickup']),
+  fulfillmentMode: z.enum(['dine_in', 'pickup', 'delivery']),
   tableLabel: z.string().trim().max(64).optional().nullable(),
+  deliveryAddress: z.string().trim().max(512).optional().nullable(),
+  deliveryPhone: z.string().trim().max(32).optional().nullable(),
+  deliveryNotes: z.string().trim().max(256).optional().nullable(),
 })
+
+function toGraphqlFulfillmentMode(
+  mode: 'dine_in' | 'pickup' | 'delivery',
+): 'DINE_IN' | 'PICKUP' | 'DELIVERY' {
+  if (mode === 'dine_in') return 'DINE_IN'
+  if (mode === 'delivery') return 'DELIVERY'
+  return 'PICKUP'
+}
 
 export async function POST(req: Request) {
   try {
@@ -34,7 +45,10 @@ export async function POST(req: Request) {
     const json = await req.json()
     const payload = submitPublicMenuOrderSchema.parse(json)
     const tableLabel = payload.tableLabel?.trim() || null
-    const fulfillmentMode = payload.fulfillmentMode === 'dine_in' ? 'DINE_IN' : 'PICKUP'
+    const deliveryAddress = payload.deliveryAddress?.trim() || null
+    const deliveryPhone = payload.deliveryPhone?.trim() || null
+    const deliveryNotes = payload.deliveryNotes?.trim() || null
+    const fulfillmentMode = toGraphqlFulfillmentMode(payload.fulfillmentMode)
 
     const data = await graphqlQuery<SubmitPublicMenuOrderData>(
       SUBMIT_PUBLIC_MENU_ORDER_MUTATION,
@@ -46,6 +60,9 @@ export async function POST(req: Request) {
         })),
         fulfillmentMode,
         tableLabel,
+        deliveryAddress,
+        deliveryPhone,
+        deliveryNotes,
       },
       userId,
       'SubmitPublicMenuOrder',
@@ -60,6 +77,9 @@ export async function POST(req: Request) {
         fulfillmentMode: order.fulfillmentMode,
         prepStatus: order.prepStatus,
         tableLabel: order.tableLabel,
+        deliveryAddress: order.deliveryAddress,
+        deliveryPhone: order.deliveryPhone,
+        deliveryNotes: order.deliveryNotes,
         lines: order.lines.map((line) => ({
           menuItemId: line.menuItemId,
           name: line.nameSnapshot,

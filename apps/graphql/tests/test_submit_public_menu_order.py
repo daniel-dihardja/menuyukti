@@ -32,12 +32,18 @@ mutation SubmitPublicMenuOrder(
   $lines: [PublicMenuOrderLineInput!]!
   $fulfillmentMode: PosFulfillmentMode!
   $tableLabel: String
+  $deliveryAddress: String
+  $deliveryPhone: String
+  $deliveryNotes: String
 ) {
   submitPublicMenuOrder(
     locationId: $locationId
     lines: $lines
     fulfillmentMode: $fulfillmentMode
     tableLabel: $tableLabel
+    deliveryAddress: $deliveryAddress
+    deliveryPhone: $deliveryPhone
+    deliveryNotes: $deliveryNotes
   ) {
     id
     locationId
@@ -47,6 +53,9 @@ mutation SubmitPublicMenuOrder(
     tableLabel
     fulfillmentMode
     prepStatus
+    deliveryAddress
+    deliveryPhone
+    deliveryNotes
     openedByClerkUserId
     lines {
       menuItemId
@@ -368,6 +377,99 @@ def test_submit_rejected_when_dine_in_disabled(published_menu_location):
     )
     assert result.errors
     assert "dine_in fulfillment is not enabled" in result.errors[0].message
+
+
+def _enable_delivery(location_id: int) -> None:
+    session = SessionLocal()
+    try:
+        menu = session.query(Menu).filter(Menu.location_id == location_id).one()
+        menu.allow_delivery = True
+        session.commit()
+    finally:
+        session.close()
+
+
+def test_guest_can_submit_delivery_public_menu_order(published_menu_location):
+    location_id, item_id, _ = published_menu_location
+    _enable_delivery(location_id)
+    result = asyncio.run(
+        schema.execute(
+            _SUBMIT,
+            variable_values={
+                "locationId": location_id,
+                "lines": [{"menuItemId": item_id, "qty": 1}],
+                "fulfillmentMode": "DELIVERY",
+                "tableLabel": "ignored-table",
+                "deliveryAddress": " Hauptstr. 1, Berlin ",
+                "deliveryPhone": " +49 170 1234567 ",
+                "deliveryNotes": "  2nd floor ",
+            },
+            context_value={"user_id": GUEST_USER_ID},
+        )
+    )
+    assert result.errors is None, result.errors
+    order = result.data["submitPublicMenuOrder"]
+    assert order["fulfillmentMode"] == "DELIVERY"
+    assert order["prepStatus"] == "RECEIVED"
+    assert order["tableLabel"] is None
+    assert order["deliveryAddress"] == "Hauptstr. 1, Berlin"
+    assert order["deliveryPhone"] == "+49 170 1234567"
+    assert order["deliveryNotes"] == "2nd floor"
+    assert order["note"] == PUBLIC_MENU_ORDER_NOTE
+
+
+def test_delivery_requires_address_and_phone(published_menu_location):
+    location_id, item_id, _ = published_menu_location
+    _enable_delivery(location_id)
+
+    missing_address = asyncio.run(
+        schema.execute(
+            _SUBMIT,
+            variable_values={
+                "locationId": location_id,
+                "lines": [{"menuItemId": item_id, "qty": 1}],
+                "fulfillmentMode": "DELIVERY",
+                "deliveryPhone": "+49170",
+            },
+            context_value={"user_id": GUEST_USER_ID},
+        )
+    )
+    assert missing_address.errors
+    assert "delivery_address" in missing_address.errors[0].message.lower()
+
+    missing_phone = asyncio.run(
+        schema.execute(
+            _SUBMIT,
+            variable_values={
+                "locationId": location_id,
+                "lines": [{"menuItemId": item_id, "qty": 1}],
+                "fulfillmentMode": "DELIVERY",
+                "deliveryAddress": "Main 1",
+            },
+            context_value={"user_id": GUEST_USER_ID},
+        )
+    )
+    assert missing_phone.errors
+    assert "delivery_phone" in missing_phone.errors[0].message.lower()
+
+
+def test_submit_rejected_when_delivery_disabled(published_menu_location):
+    location_id, item_id, _ = published_menu_location
+    result = asyncio.run(
+        schema.execute(
+            _SUBMIT,
+            variable_values={
+                "locationId": location_id,
+                "lines": [{"menuItemId": item_id, "qty": 1}],
+                "fulfillmentMode": "DELIVERY",
+                "deliveryAddress": "Main 1",
+                "deliveryPhone": "+49170",
+            },
+            context_value={"user_id": GUEST_USER_ID},
+        )
+    )
+    assert result.errors
+    assert "delivery fulfillment is not enabled" in result.errors[0].message
 
 
 _CLOSE = """

@@ -46,6 +46,8 @@ class DevDataSeedResultType:
     inventar_location_name: str | None = None
     analytics_location_id: strawberry.ID | None = None
     analytics_location_name: str | None = None
+    mido_location_id: strawberry.ID | None = None
+    mido_location_name: str | None = None
     inventar_catalog_items: int | None = None
     inventar_stock_rows: int | None = None
     inventar_movements: int | None = None
@@ -60,6 +62,9 @@ class DevDataSeedResultType:
     analytics_menu_categories: int | None = None
     analytics_menu_items: int | None = None
     analytics_cleared_pos_orders: int | None = None
+    mido_menu_categories: int | None = None
+    mido_menu_items: int | None = None
+    mido_cleared_pos_orders: int | None = None
     notes: list[str] = strawberry.field(default_factory=list)
 
 
@@ -82,6 +87,12 @@ def _to_gql(result: DevDataSeedResult) -> DevDataSeedResultType:
             else None
         ),
         analytics_location_name=result.analytics_location_name,
+        mido_location_id=(
+            strawberry.ID(str(result.mido_location_id))
+            if result.mido_location_id is not None
+            else None
+        ),
+        mido_location_name=result.mido_location_name,
         inventar_catalog_items=result.inventar_catalog_items,
         inventar_stock_rows=result.inventar_stock_rows,
         inventar_movements=result.inventar_movements,
@@ -100,6 +111,9 @@ def _to_gql(result: DevDataSeedResult) -> DevDataSeedResultType:
         analytics_menu_categories=result.analytics_menu_categories,
         analytics_menu_items=result.analytics_menu_items,
         analytics_cleared_pos_orders=result.analytics_cleared_pos_orders,
+        mido_menu_categories=result.mido_menu_categories,
+        mido_menu_items=result.mido_menu_items,
+        mido_cleared_pos_orders=result.mido_cleared_pos_orders,
         notes=list(result.notes),
     )
 

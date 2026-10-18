@@ -25,6 +25,7 @@ RESERVED_PUBLIC_SLUGS = frozenset(
         "content",
         "crm",
         "dashboard",
+        "explore",
         "home",
         "ig-studio",
         "inventar",

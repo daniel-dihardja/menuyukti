@@ -17,11 +17,9 @@ import {
 } from '@workspace/ui/components/dropdown-menu'
 import { cn } from '@workspace/ui/lib/utils'
 
-import { useOptionalWorkspacePlan } from '@/components/workspace-plan-provider'
 import { withProfileImageParams } from '@/lib/clerk-profile-image'
 import { getSafeAuthReturnPath } from '@/lib/auth-return-path'
 import { routes } from '@/lib/routes'
-import { isProPlan } from '@/lib/workspace-plan'
 
 const AVATAR_PX = 28
 
@@ -61,9 +59,6 @@ export function AccountMenu({ className }: AccountMenuProps) {
   const pathname = usePathname()
   const { user, isLoaded } = useUser()
   const { signOut } = useClerk()
-  const workspacePlan = useOptionalWorkspacePlan()
-  // Hide team outside the app shell / on free; only pro shows it.
-  const showTeam = workspacePlan != null && isProPlan(workspacePlan.plan)
   /** Stay on guest surfaces (landing or public menu) after sign-out; otherwise go to login. */
   const signOutRedirectUrl =
     pathname === routes.root ? routes.root : (getSafeAuthReturnPath(pathname) ?? routes.login)
@@ -115,11 +110,9 @@ export function AccountMenu({ className }: AccountMenuProps) {
         <DropdownMenuItem asChild>
           <Link href={routes.profile}>{t('profile')}</Link>
         </DropdownMenuItem>
-        {showTeam ? (
-          <DropdownMenuItem asChild>
-            <Link href={routes.team}>{t('team')}</Link>
-          </DropdownMenuItem>
-        ) : null}
+        <DropdownMenuItem asChild>
+          <Link href={routes.analytics.branches}>{t('workspace')}</Link>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           variant="destructive"

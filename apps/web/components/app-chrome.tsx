@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 
 import { MainHeader } from '@/components/main-header'
 import { isOperatorAppShellPath } from '@/lib/routes'
+import { cn } from '@workspace/ui/lib/utils'
 
 const HIDE_HEADER_PREFIXES = ['/sso-callback', '/privacy', '/terms']
 
@@ -29,21 +30,17 @@ function AppChromeInner({ children }: { children: React.ReactNode }) {
   /** Operator sidebar shell only — customer `/home` / `/profile` keep `MainHeader`. */
   const hideForAppShell = isOperatorAppShellPath(pathname)
   const hideHeader = hideForAuthOrLegal || hideForAppShell
-  const isLanding = pathname === '/'
+  /** Landing locks the viewport; keep the same DOM tree on other marketing routes so MainHeader does not remount (nav flash). */
+  const lockLandingViewport = !hideHeader && pathname === '/'
 
-  if (!hideHeader && isLanding) {
-    return (
-      <div className="flex h-dvh flex-col overflow-hidden">
-        <MainHeader />
-        <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
-      </div>
-    )
+  if (hideHeader) {
+    return <>{children}</>
   }
 
   return (
-    <>
-      {!hideHeader ? <MainHeader /> : null}
-      {children}
-    </>
+    <div className={cn(lockLandingViewport && 'flex h-dvh flex-col overflow-hidden')}>
+      <MainHeader />
+      <div className={cn(lockLandingViewport && 'min-h-0 flex-1 overflow-y-auto')}>{children}</div>
+    </div>
   )
 }

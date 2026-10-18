@@ -6,7 +6,6 @@ import {
   CalendarDays,
   ChevronRight,
   Contact,
-  Home,
   Image,
   LayoutDashboard,
   MapPin,
@@ -39,13 +38,12 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { usePathname } from 'next/navigation'
 import { useMenuyuktiRole } from '@/hooks/use-menuyukti-role'
-import { useWorkspacePlan } from '@/hooks/use-workspace-plan'
 import { isNavItemHiddenFromNonAdmin } from '@/lib/admin-only-features'
 import { partitionClientNav } from '@/lib/client-flat-nav'
 import { isNavKeyEnabled } from '@/lib/feature-flags'
 import { isMenuyuktiAdmin } from '@/lib/menuyukti-role'
 import { routes } from '@/lib/routes'
-import { getDefaultPathForPlan, isNavKeyAllowedForPlan } from '@/lib/workspace-plan'
+import { isNavKeyAllowedForPlan } from '@/lib/workspace-plan'
 import type { ReactNode } from 'react'
 
 type NavGroupId = 'overview' | 'create' | 'analytics' | 'operations' | 'account' | 'platform'
@@ -80,16 +78,15 @@ const NAV_GROUP_LABEL_KEYS: Record<NavGroupId, string> = {
 /**
  * Sidebar order follows daily product flow for platform admins:
  * overview → create/plan → measure → operations → account.
- * Non-admin clients get two labeled blocks: Workspace (Home → Inventory → Team)
- * then Services (paid cloud modules). Free guests see Home only.
- * Home href is plan-aware (resolved in {@link NavMain}).
+ * Non-admin clients get two labeled blocks: Workspace (Locations → Inventory → Team)
+ * then Services (paid cloud modules).
  */
 const NAV_WORKSPACE: NavItem[] = [
   {
     key: 'home',
     labelKey: 'home',
-    href: routes.home,
-    icon: <Home />,
+    href: routes.analytics.branches,
+    icon: <MapPin />,
     group: 'overview',
   },
   {
@@ -257,18 +254,14 @@ function NavMenuItems({ items, t, isActive }: NavMenuItemsProps) {
   })
 }
 
-/** Feature flag first, then admin-only role gate, then workspace plan. */
-function visibleNavItemsForRole(
-  items: NavItem[],
-  showAdminNav: boolean,
-  plan: string | null | undefined,
-): NavItem[] {
+/** Feature flag first, then admin-only role gate, then nav-key allowlist. */
+function visibleNavItemsForRole(items: NavItem[], showAdminNav: boolean): NavItem[] {
   return items.filter((item) => {
     if (!isNavKeyEnabled(item.key)) return false
     if (isNavItemHiddenFromNonAdmin(item.key) && !showAdminNav) return false
     // Platform admins keep admin-only items regardless of workspace free/pro plan.
     if (showAdminNav && isNavItemHiddenFromNonAdmin(item.key)) return true
-    return isNavKeyAllowedForPlan(item.key, plan)
+    return isNavKeyAllowedForPlan(item.key)
   })
 }
 
@@ -283,7 +276,6 @@ export function NavMain() {
   const t = useTranslations('sidebar')
   const pathname = usePathname()
   const { role, isLoaded } = useMenuyuktiRole()
-  const { plan } = useWorkspacePlan()
   const showAdminNav = isLoaded && isMenuyuktiAdmin(role)
 
   const isActive = (url?: string) => {
@@ -297,9 +289,7 @@ export function NavMain() {
     return pathname.startsWith(url)
   }
 
-  const visibleWorkspaceItems = visibleNavItemsForRole(NAV_WORKSPACE, showAdminNav, plan).map(
-    (item) => (item.key === 'home' ? { ...item, href: getDefaultPathForPlan(plan) } : item),
-  )
+  const visibleWorkspaceItems = visibleNavItemsForRole(NAV_WORKSPACE, showAdminNav)
 
   if (!showAdminNav) {
     const { core, services, other } = partitionClientNav(visibleWorkspaceItems)

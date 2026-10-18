@@ -22,6 +22,17 @@ mutation CreateWorkspace($name: String!) {
 }
 """
 
+ENSURE_MY_WORKSPACE = """
+mutation EnsureMyWorkspace {
+  ensureMyWorkspace {
+    id
+    name
+    plan
+    ownerClerkUserId
+  }
+}
+"""
+
 PROVISION_WORKSPACE = """
 mutation ProvisionWorkspace($ownerClerkUserId: String!, $name: String!, $plan: String) {
   provisionWorkspace(ownerClerkUserId: $ownerClerkUserId, name: $name, plan: $plan) {
@@ -88,7 +99,33 @@ def test_create_workspace_self_serve_blocked(clean_user_workspaces):
         )
     )
     assert result.errors is not None
-    assert any("staff-provisioned" in str(e).lower() for e in result.errors)
+    assert any("ensuremyworkspace" in str(e).lower() or "disabled" in str(e).lower() for e in result.errors)
+
+
+def test_ensure_my_workspace_creates_then_idempotent(clean_user_workspaces):
+    first = asyncio.run(
+        schema.execute(
+            ENSURE_MY_WORKSPACE,
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert first.errors is None
+    assert first.data is not None
+    ws = first.data["ensureMyWorkspace"]
+    assert ws["name"] == "My workspace"
+    assert ws["plan"] == WORKSPACE_PLAN_PRO
+    assert ws["ownerClerkUserId"] == GRAPHQL_TEST_USER_ID
+    first_id = ws["id"]
+
+    second = asyncio.run(
+        schema.execute(
+            ENSURE_MY_WORKSPACE,
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert second.errors is None
+    assert second.data is not None
+    assert second.data["ensureMyWorkspace"]["id"] == first_id
 
 
 def test_provision_workspace_defaults_to_pro(clean_user_workspaces):
@@ -127,7 +164,7 @@ def test_provision_workspace_respects_plan(clean_user_workspaces):
     assert result.data["provisionWorkspace"]["plan"] == WORKSPACE_PLAN_FREE
 
 
-def test_create_location_blocked_on_free(clean_user_workspaces):
+def test_create_location_ok_on_free(clean_user_workspaces):
     created = asyncio.run(
         schema.execute(
             PROVISION_WORKSPACE,
@@ -150,8 +187,9 @@ def test_create_location_blocked_on_free(clean_user_workspaces):
             context_value=graphql_auth_context(),
         )
     )
-    assert first.errors is not None
-    assert any("Free (guest) plan cannot create locations" in str(e) for e in first.errors)
+    assert first.errors is None
+    assert first.data is not None
+    assert first.data["createLocation"]["name"] == "One"
 
 
 def test_create_location_second_ok_on_pro(clean_user_workspaces):

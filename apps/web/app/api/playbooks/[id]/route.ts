@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 
-import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
+import { requireAuthenticatedApi } from '@/lib/authenticated-api'
 import { ZodError } from 'zod'
 
 import { graphqlQuery } from '@/lib/graphql/client'
@@ -46,7 +46,7 @@ function mapPlaybookWriteError(message: string): { status: number; message: stri
 
 export async function GET(_req: Request, context: RouteContext) {
   try {
-    const authz = await requireMenuyuktiAdminApi()
+    const authz = await requireAuthenticatedApi()
     if (!authz.ok) return authz.response
     const { userId } = authz
 
@@ -70,7 +70,7 @@ export async function GET(_req: Request, context: RouteContext) {
 
 export async function PATCH(req: Request, context: RouteContext) {
   try {
-    const authz = await requireMenuyuktiAdminApi()
+    const authz = await requireAuthenticatedApi()
     if (!authz.ok) return authz.response
     const { userId } = authz
 
@@ -115,7 +115,7 @@ export async function PATCH(req: Request, context: RouteContext) {
 
 export async function DELETE(_req: Request, context: RouteContext) {
   try {
-    const authz = await requireMenuyuktiAdminApi()
+    const authz = await requireAuthenticatedApi()
     if (!authz.ok) return authz.response
     const { userId } = authz
 

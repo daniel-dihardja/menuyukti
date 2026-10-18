@@ -30,13 +30,14 @@ export function getSafeAuthReturnPath(raw: string | null | undefined): string | 
   return pathname
 }
 
-/** Post-auth URL: public menu return path when safe, otherwise plan-aware `/continue`. */
+/** Post-auth URL: public menu return path when safe, otherwise shared `/home`. */
 export function buildAuthContinueUrl(returnTo?: string | null): string {
   const safe = getSafeAuthReturnPath(returnTo)
-  // Skip `/continue` for guest menus — that route is auth-gated and briefly
-  // redirects to `/login` when the session cookie is not visible yet (common on mobile).
+  // Guest menus skip intermediate hops — auth-gated `/continue` briefly bounced to
+  // `/login` when the session cookie was not visible yet (common on mobile).
+  // Default login lands on `/home` directly (avoids `/continue` → `/home` flash).
   if (safe) return safe
-  return routes.authContinue
+  return routes.home
 }
 
 /** `/login` or `/login?next=/{slug}/menu` for email sign-in from a guest surface. */

@@ -12,6 +12,7 @@ from graphql.services.dev_data_seed import (
     DEFAULT_EXCEL,
     DEV_ANALYTICS_LOCATION_NAME,
     DEV_INVENTAR_LOCATION_NAME,
+    DEV_MIDO_LOCATION_NAME,
     DEV_SEED_PREFIX,
     DEV_WORKSPACE_NAME,
     PRIMARY_LOCATION_NAME,
@@ -21,6 +22,7 @@ from graphql.services.dev_data_seed import (
     run_dev_data_seed,
     seed_analytics,
     seed_kaffeestube_menu,
+    seed_mido_matcha_menu,
     seed_warung_sunda_menu,
 )
 
@@ -29,6 +31,7 @@ __all__ = [
     "DEFAULT_EXCEL",
     "DEV_ANALYTICS_LOCATION_NAME",
     "DEV_INVENTAR_LOCATION_NAME",
+    "DEV_MIDO_LOCATION_NAME",
     "DEV_SEED_PREFIX",
     "DEV_WORKSPACE_NAME",
     "PRIMARY_LOCATION_NAME",
@@ -38,6 +41,7 @@ __all__ = [
     "main",
     "seed_analytics",
     "seed_kaffeestube_menu",
+    "seed_mido_matcha_menu",
     "seed_warung_sunda_menu",
 ]
 
@@ -109,6 +113,13 @@ def main(
                 f"Menu seed: location_id={result.analytics_location_id} "
                 f"categories={result.analytics_menu_categories} items={result.analytics_menu_items} "
                 f"cleared_pos_orders={result.analytics_cleared_pos_orders}"
+            )
+        if result.mido_menu_items is not None:
+            print(
+                f"MIDO menu seed: location_id={result.mido_location_id} "
+                f"location_name={result.mido_location_name!r} "
+                f"categories={result.mido_menu_categories} items={result.mido_menu_items} "
+                f"cleared_pos_orders={result.mido_cleared_pos_orders}"
             )
 
         print(

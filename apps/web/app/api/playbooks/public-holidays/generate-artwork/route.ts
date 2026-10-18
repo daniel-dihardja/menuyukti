@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { ZodError } from 'zod'
 
-import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
+import { requireAuthenticatedApi } from '@/lib/authenticated-api'
 import { runInstagramImageGeneration } from '@/lib/posts/run-instagram-image-generation'
 
 import { generateArtworkBodySchema, LEONARDO_PROMPT_MAX_CHARS } from './schema'
@@ -10,7 +10,7 @@ export const maxDuration = 180
 
 export async function POST(req: Request) {
   try {
-    const authz = await requireMenuyuktiAdminApi()
+    const authz = await requireAuthenticatedApi()
     if (!authz.ok) return authz.response
     const { userId } = authz
 

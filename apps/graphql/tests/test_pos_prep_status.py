@@ -17,6 +17,7 @@ from graphql.data_sources.models.menu import Menu, MenuCategory, MenuItem
 from graphql.data_sources.models.pos_order import PosOrder
 from graphql.schema import schema
 from graphql.services.pos_order_constants import (
+    PREP_DELIVERED,
     PREP_PICKED_UP,
     PREP_PREPARING,
     PREP_READY,
@@ -41,12 +42,16 @@ mutation SubmitPublicMenuOrder(
   $lines: [PublicMenuOrderLineInput!]!
   $fulfillmentMode: PosFulfillmentMode!
   $tableLabel: String
+  $deliveryAddress: String
+  $deliveryPhone: String
 ) {
   submitPublicMenuOrder(
     locationId: $locationId
     lines: $lines
     fulfillmentMode: $fulfillmentMode
     tableLabel: $tableLabel
+    deliveryAddress: $deliveryAddress
+    deliveryPhone: $deliveryPhone
   ) {
     id
     prepStatus
@@ -183,13 +188,24 @@ def test_next_prep_status_helpers():
     assert next_prep_status(PREP_PREPARING, "pickup") == PREP_READY
     assert next_prep_status(PREP_READY, "dine_in") == PREP_SERVED
     assert next_prep_status(PREP_READY, "pickup") == PREP_PICKED_UP
+    assert next_prep_status(PREP_READY, "delivery") == PREP_DELIVERED
     with pytest.raises(ValueError, match="terminal"):
         next_prep_status(PREP_SERVED, "dine_in")
+    with pytest.raises(ValueError, match="terminal"):
+        next_prep_status(PREP_DELIVERED, "delivery")
     with pytest.raises(ValueError, match="not set"):
         next_prep_status(None, "dine_in")
 
 
-def _submit(location_id: int, item_id: int, mode: str, table: str | None = None) -> int:
+def _submit(
+    location_id: int,
+    item_id: int,
+    mode: str,
+    table: str | None = None,
+    *,
+    delivery_address: str | None = None,
+    delivery_phone: str | None = None,
+) -> int:
     variables: dict = {
         "locationId": location_id,
         "lines": [{"menuItemId": item_id, "qty": 1}],
@@ -197,6 +213,10 @@ def _submit(location_id: int, item_id: int, mode: str, table: str | None = None)
     }
     if table is not None:
         variables["tableLabel"] = table
+    if delivery_address is not None:
+        variables["deliveryAddress"] = delivery_address
+    if delivery_phone is not None:
+        variables["deliveryPhone"] = delivery_phone
     result = asyncio.run(
         schema.execute(
             _SUBMIT,
@@ -239,6 +259,35 @@ def test_advance_pickup_through_picked_up(published_menu_location):
     location_id, item_id = published_menu_location
     order_id = _submit(location_id, item_id, "PICKUP")
     for status in ["PREPARING", "READY", "PICKED_UP"]:
+        result = asyncio.run(
+            schema.execute(
+                _ADVANCE,
+                variable_values={"orderId": order_id},
+                context_value=graphql_auth_context(),
+            )
+        )
+        assert result.errors is None, result.errors
+        assert result.data["advancePosOrderPrepStatus"]["prepStatus"] == status
+
+
+def test_advance_delivery_through_delivered(published_menu_location):
+    location_id, item_id = published_menu_location
+    session = SessionLocal()
+    try:
+        menu = session.query(Menu).filter(Menu.location_id == location_id).one()
+        menu.allow_delivery = True
+        session.commit()
+    finally:
+        session.close()
+
+    order_id = _submit(
+        location_id,
+        item_id,
+        "DELIVERY",
+        delivery_address="Home 1",
+        delivery_phone="+49170",
+    )
+    for status in ["PREPARING", "READY", "DELIVERED"]:
         result = asyncio.run(
             schema.execute(
                 _ADVANCE,

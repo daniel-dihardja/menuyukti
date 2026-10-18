@@ -7,16 +7,17 @@ import { apiError, apiErrorFromUnknown } from '@/lib/api/error-response'
 import { graphqlLocationsDataCacheTag, revalidateTagAfterMutation } from '@/lib/graphql/cache-tags'
 import {
   CREATE_LOCATION_MUTATION,
+  ENSURE_MY_WORKSPACE_MUTATION,
   LOCATIONS_LIST_QUERY,
   MY_WORKSPACE_QUERY,
   UPDATE_LOCATION_MUTATION,
   type CreateLocationData,
+  type EnsureMyWorkspaceData,
   type LocationsListData,
   type MyWorkspaceData,
   type UpdateLocationData,
 } from '@/lib/graphql/queries'
 import { openingHoursWeekToMutationInput } from './schema'
-import { isProPlan, normalizeWorkspacePlan } from '@/lib/workspace-plan'
 
 export async function GET() {
   try {
@@ -53,22 +54,23 @@ export async function POST(req: Request) {
       createLocationParsedSchema.parse(json)
 
     const wsData = await graphqlQuery<MyWorkspaceData>(MY_WORKSPACE_QUERY, {}, userId)
-    const workspace = wsData.myWorkspace
-    if (!workspace?.id) {
+    let workspaceId = wsData.myWorkspace?.id ?? null
+    if (!workspaceId) {
+      const ensured = await graphqlQuery<EnsureMyWorkspaceData>(
+        ENSURE_MY_WORKSPACE_MUTATION,
+        {},
+        userId,
+        'EnsureMyWorkspace',
+      )
+      workspaceId = ensured.ensureMyWorkspace?.id ?? null
+    }
+    if (!workspaceId) {
       return apiError(
         'FORBIDDEN',
         'No operator workspace. Contact Menuyukti staff to provision a workspace.',
         403,
       )
     }
-    if (!isProPlan(normalizeWorkspacePlan(workspace.plan))) {
-      return apiError(
-        'FORBIDDEN',
-        'Free (guest) plan cannot create locations. Upgrade to Pro for operator access.',
-        403,
-      )
-    }
-    const workspaceId = workspace.id
 
     const data = await graphqlQuery<CreateLocationData>(
       CREATE_LOCATION_MUTATION,

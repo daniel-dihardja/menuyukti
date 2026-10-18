@@ -26,6 +26,7 @@
     "/analytics": true,
     "/crm": true,
     "/shop": true,
+    "/explore": true,
     "/print-orders": true,
     "/inventar": true,
     "/services": true,
@@ -35,5 +36,5 @@
     "/usage": true,
     "/staff": true
   },
-  "defaultAuthenticatedPath": "/analytics/locations"
+  "defaultAuthenticatedPath": "/home"
 }

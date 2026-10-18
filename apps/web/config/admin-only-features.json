@@ -22,13 +22,6 @@
       "actionMenuKeys": []
     },
     {
-      "id": "playbooks",
-      "description": "Playbooks catalog and drafts.",
-      "routePrefixes": ["/playbooks"],
-      "navKeys": ["playbooks"],
-      "actionMenuKeys": []
-    },
-    {
       "id": "calendar",
       "description": "Content calendar.",
       "routePrefixes": ["/calendar"],

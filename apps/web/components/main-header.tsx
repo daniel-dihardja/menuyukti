@@ -18,7 +18,7 @@ import { cn } from '@workspace/ui/lib/utils'
 export function MainHeader() {
   const pathname = usePathname()
   const t = useTranslations('mainHeader')
-  const { isSignedIn } = useAuth()
+  const { isSignedIn, isLoaded: authLoaded } = useAuth()
   const planCtx = useOptionalWorkspacePlan()
   const { balance: guestPointBalance } = usePublicGuestPoints()
   const tPublic = useTranslations('public.locationHome')
@@ -26,6 +26,8 @@ export function MainHeader() {
   const isSignUp =
     pathname === routes.signUp || (pathname?.startsWith(`${routes.signUp}/`) ?? false)
   const isAbout = pathname === routes.about || (pathname?.startsWith(`${routes.about}/`) ?? false)
+  const isExplore =
+    pathname === routes.explore || (pathname?.startsWith(`${routes.explore}/`) ?? false)
   const isGuestLocation = isPublicLocationSurfacePath(pathname)
   const guestPointsToShow =
     isGuestLocation && isSignedIn && guestPointBalance != null && Number.isFinite(guestPointBalance)
@@ -36,11 +38,7 @@ export function MainHeader() {
   const [isScrolled, setIsScrolled] = React.useState(false)
 
   /** Signed-out → marketing `/`; signed-in → plan home (fallback `/home` outside provider). */
-  const brandHref = !isSignedIn
-    ? routes.root
-    : planCtx
-      ? getDefaultPathForPlan(planCtx.plan)
-      : routes.home
+  const brandHref = !isSignedIn ? routes.root : planCtx ? getDefaultPathForPlan() : routes.home
 
   React.useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 8)
@@ -73,6 +71,16 @@ export function MainHeader() {
           {!isGuestLocation ? (
             <nav aria-label={t('navAria')} className="hidden min-w-0 items-center gap-1 md:flex">
               <Link
+                href={routes.explore}
+                aria-current={isExplore ? 'page' : undefined}
+                className={cn(
+                  'rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors',
+                  isExplore ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
+                )}
+              >
+                {t('navExplore')}
+              </Link>
+              <Link
                 href={routes.about}
                 aria-current={isAbout ? 'page' : undefined}
                 className={cn(
@@ -96,10 +104,16 @@ export function MainHeader() {
               {tPublic('pointsBalance', { balance: guestPointsToShow })}
             </span>
           ) : null}
-          <Show when="signed-out">{showSignIn ? <GuestSignInMenu /> : null}</Show>
-          <Show when="signed-in">
-            <AccountMenu />
-          </Show>
+          {!authLoaded ? (
+            <div className="size-8 shrink-0 animate-pulse rounded-full bg-muted" aria-hidden />
+          ) : (
+            <>
+              <Show when="signed-out">{showSignIn ? <GuestSignInMenu /> : null}</Show>
+              <Show when="signed-in">
+                <AccountMenu />
+              </Show>
+            </>
+          )}
         </div>
       </div>
     </header>

@@ -71,6 +71,9 @@ class PosOrder(Base):
     table_label: Mapped[str | None] = mapped_column(String(64), nullable=True)
     fulfillment_mode: Mapped[str | None] = mapped_column(String(16), nullable=True)
     prep_status: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    delivery_address: Mapped[str | None] = mapped_column(Text, nullable=True)
+    delivery_phone: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    delivery_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     note: Mapped[str | None] = mapped_column(Text, nullable=True)
     refunded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(

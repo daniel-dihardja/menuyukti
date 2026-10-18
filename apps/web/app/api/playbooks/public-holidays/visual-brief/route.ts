@@ -3,7 +3,7 @@ import { ZodError } from 'zod'
 
 import { buildAgentsHeaders } from '@/lib/agents/headers'
 import { getPythonAgentsUrl } from '@/lib/config'
-import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
+import { requireAuthenticatedApi } from '@/lib/authenticated-api'
 
 import { visualBriefBodySchema, visualBriefResponseSchema } from './schema'
 
@@ -11,7 +11,7 @@ export const maxDuration = 180
 
 export async function POST(req: Request) {
   try {
-    const authz = await requireMenuyuktiAdminApi()
+    const authz = await requireAuthenticatedApi()
     if (!authz.ok) return authz.response
     const { userId } = authz
 

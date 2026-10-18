@@ -6,41 +6,34 @@ export const WORKSPACE_PLAN_PRO = 'pro' as const
 export type WorkspacePlan = typeof WORKSPACE_PLAN_FREE | typeof WORKSPACE_PLAN_PRO
 
 /**
- * Product tiers (Menuyukti = creative agency for restaurants, cafés, and bars):
+ * Product tiers (Menuyukti = AI platform for restaurant marketing & operations):
  *
- * - **free** / no workspace — guest / customer accounts (mainly PWA). Sign-up is
- *   Clerk-only until staff provisions a workspace. Post-auth default is the customer
- *   hub (`/home`); customer shell also includes `/profile` under `app/(customer)/`
- *   (no operator sidebar).
- * - **pro** — restaurant-owner clients; staff-provisioned via the staff console
- *   (`provisionWorkspace`). Operator surfaces for clients include Home (Locations),
- *   Inventar, Team, Dashboard (when flagged), AI chat (`/advisor`), media, and AI usage.
- *   Playbooks, calendar, CRM, and print shop remain platform-admin only
+ * Authenticated users share one product surface: post-auth home is `/home`, and
+ * plan is **not** used for capability gating (staff may still store free/pro on
+ * `workspace.plan` for provisioning metadata).
+ *
+ * - Sign-up is Clerk-only until staff provisions a workspace (`provisionWorkspace`).
+ * - Operator routes (Locations, Inventar, Team, Advisor, media, …) are available to
+ *   any signed-in user. Calendar, CRM, and print shop remain platform-admin only
  *   (see `config/admin-only-features.json`). Self-serve workspace creation is disabled.
  */
 
 /**
- * Sidebar `NavItem.key` values visible on the free plan when the operator shell
- * is somehow rendered. Free users normally never enter `(protected)` — Home lives
- * in the customer shell. Profile stays in the account menu.
+ * Legacy free-plan nav allowlist. Kept for tests/docs; {@link isNavKeyAllowedForPlan}
+ * no longer restricts by plan.
  */
 export const FREE_NAV_KEYS = new Set<string>(['home'])
 
 /**
- * Path prefixes allowed for free (guest) workspaces.
- * `/continue` is the plan-aware post-auth redirect; legacy `/profile/team` is blocked
- * separately (Team now lives at `/team` in the operator shell).
+ * Legacy free-plan route allowlist. Kept for tests/docs;
+ * {@link isPathnameAllowedForPlan} no longer restricts by plan.
  */
 export const FREE_ROUTE_PREFIXES = ['/home', '/continue', '/profile'] as const
 
-/** Legacy team URL under `/profile` — free workspaces must not access. */
-const FREE_PROFILE_BLOCKED_PREFIXES = ['/profile/team'] as const
-
 /**
- * Operator sidebar keys that pro plan unlocks vs free (contrast with free’s Home-only nav).
- * Kept for documentation and tests; {@link isNavKeyAllowedForPlan} allows `home` on both
- * plans and hides `branches` (Home replaces Locations in the sidebar). Admin-only keys
- * (playbooks, calendar, CRM, …) are filtered separately via `config/admin-only-features.json`.
+ * Operator sidebar keys (documentation / tests). {@link isNavKeyAllowedForPlan}
+ * allows all keys except `branches` (Locations is reached via Home / Workspace CTA).
+ * Admin-only keys are filtered separately via `config/admin-only-features.json`.
  */
 export const PRO_NAV_KEYS = new Set([
   'home',
@@ -69,55 +62,23 @@ export function isProPlan(plan: string | null | undefined): boolean {
   return normalizeWorkspacePlan(plan) === WORKSPACE_PLAN_PRO
 }
 
-export function isNavKeyAllowedForPlan(navKey: string, plan: string | null | undefined): boolean {
-  // Home is the plan-aware entry for everyone; Locations (`branches`) is reached via Home.
+export function isNavKeyAllowedForPlan(navKey: string): boolean {
+  // Locations (`branches`) is reached via Home / Workspace CTA, not the sidebar.
   if (navKey === 'branches') {
     return false
   }
-  if (navKey === 'home') {
-    return true
-  }
-  if (isProPlan(plan)) return true
-  return FREE_NAV_KEYS.has(navKey)
-}
-
-function normalizePathname(pathname: string): string {
-  const q = pathname.indexOf('?')
-  const base = q === -1 ? pathname : pathname.slice(0, q)
-  if (base === '' || base[0] !== '/') {
-    return `/${base.replace(/^\//, '')}`
-  }
-  return base
+  return true
 }
 
 /**
- * Free: customer home, post-auth continue, and profile (+ account settings).
- * Pro: unrestricted by plan — admin-only paths are gated separately via
+ * Plan no longer gates routes. Admin-only paths are gated separately via
  * `pathnameRequiresAdmin` / `config/admin-only-features.json`.
  */
-export function isPathnameAllowedForPlan(
-  pathname: string,
-  plan: string | null | undefined,
-): boolean {
-  if (isProPlan(plan)) return true
-  const path = normalizePathname(pathname)
-  for (const blocked of FREE_PROFILE_BLOCKED_PREFIXES) {
-    if (path === blocked || path.startsWith(`${blocked}/`)) {
-      return false
-    }
-  }
-  for (const prefix of FREE_ROUTE_PREFIXES) {
-    if (path === prefix || path.startsWith(`${prefix}/`)) {
-      return true
-    }
-  }
-  return false
+export function isPathnameAllowedForPlan(): boolean {
+  return true
 }
 
-/** Post-login / brand home: guests → customer hub (`/home`); restaurant clients → Locations. */
-export function getDefaultPathForPlan(plan: string | null | undefined): string {
-  if (isProPlan(plan)) {
-    return routes.analytics.branches
-  }
+/** Post-login / brand home: shared customer hub (`/home`) for all authenticated users. */
+export function getDefaultPathForPlan(): string {
   return routes.home
 }

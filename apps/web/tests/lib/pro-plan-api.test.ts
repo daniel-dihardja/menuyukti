@@ -12,10 +12,6 @@ vi.mock('next/server', async () => {
   }
 })
 
-vi.mock('@/lib/workspace-plan-server', () => ({
-  getWorkspacePlanForUser: vi.fn(),
-}))
-
 describe('requireProPlanApi', () => {
   afterEach(() => {
     vi.clearAllMocks()
@@ -37,47 +33,19 @@ describe('requireProPlanApi', () => {
     }
   })
 
-  it('returns 403 for free-plan users', async () => {
+  it('allows authenticated users regardless of workspace plan', async () => {
     const { auth } = await import('@clerk/nextjs/server')
-    const { getWorkspacePlanForUser } = await import('@/lib/workspace-plan-server')
     const { requireProPlanApi } = await import('@/lib/pro-plan-api')
 
     vi.mocked(auth).mockResolvedValue({
       isAuthenticated: true,
-      userId: 'user_free',
+      userId: 'user_any',
     } as Awaited<ReturnType<typeof auth>>)
-    vi.mocked(getWorkspacePlanForUser).mockResolvedValue({
-      plan: 'free',
-      hasWorkspace: true,
-      workspaceId: 'ws_1',
-    })
-
-    const result = await requireProPlanApi()
-    expect(result.ok).toBe(false)
-    if (!result.ok) {
-      expect(result.response.status).toBe(403)
-    }
-  })
-
-  it('allows pro-plan users', async () => {
-    const { auth } = await import('@clerk/nextjs/server')
-    const { getWorkspacePlanForUser } = await import('@/lib/workspace-plan-server')
-    const { requireProPlanApi } = await import('@/lib/pro-plan-api')
-
-    vi.mocked(auth).mockResolvedValue({
-      isAuthenticated: true,
-      userId: 'user_pro',
-    } as Awaited<ReturnType<typeof auth>>)
-    vi.mocked(getWorkspacePlanForUser).mockResolvedValue({
-      plan: 'pro',
-      hasWorkspace: true,
-      workspaceId: 'ws_2',
-    })
 
     const result = await requireProPlanApi()
     expect(result.ok).toBe(true)
     if (result.ok) {
-      expect(result.userId).toBe('user_pro')
+      expect(result.userId).toBe('user_any')
     }
   })
 })

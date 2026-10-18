@@ -2,7 +2,6 @@
 
 import { useClerk, useSignIn, useSignUp } from '@clerk/nextjs'
 import { isClerkAPIResponseError } from '@clerk/nextjs/errors'
-import { routes } from '@/lib/routes'
 import {
   buildAuthContinueUrl,
   buildLoginUrl,
@@ -66,10 +65,6 @@ export function SsoCallbackView() {
 
   const navigateToSignIn = () => {
     router.push(buildLoginUrl(peekAuthReturnPath()))
-  }
-
-  const navigateToSignUp = () => {
-    router.push(routes.signUp)
   }
 
   useEffect(() => {
@@ -139,7 +134,8 @@ export function SsoCallbackView() {
             })
             return
           }
-          navigateToSignUp()
+          // Incomplete transfer (e.g. Dashboard still requires password) — finish on /login.
+          navigateToSignIn()
           return
         }
 

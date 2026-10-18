@@ -35,6 +35,7 @@
     "predictionsYouWereIncorrect": "You were incorrect",
     "predictionsWinnerLabel": "Winner",
     "predictionsVoteCount": "{count, plural, one {# vote} other {# votes}}",
+    "workspaceCta": "Open workspace",
     "profileCta": "Open profile",
     "votingsTitle": "Voting",
     "votingsLead": "Share your preferences at venues you’ve visited. Earn points for casting a vote.",

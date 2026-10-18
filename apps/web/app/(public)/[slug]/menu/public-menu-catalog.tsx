@@ -14,6 +14,7 @@ import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useEffect, useMemo, useState } from 'react'
 
+import { usePublicGuestPoints } from '@/components/public-guest-points-context'
 import { buildLoginUrl, rememberAuthReturnPath } from '@/lib/auth-return-path'
 import { formatCurrency, getCurrencyLocale } from '@/lib/currency'
 import { POINT_EARN_ACTION_OPEN_MENU_QR } from '@/lib/graphql/queries/point-ledger'
@@ -81,6 +82,7 @@ type Props = {
   tableLabel: string | null
   allowDineIn: boolean
   allowPickup: boolean
+  allowDelivery: boolean
 }
 
 type CartLine = {
@@ -104,9 +106,34 @@ function guestPrepCopyKey(
   if (!prepStatus) return null
   const prefix = variant === 'short' ? 'order.prepStatusShort' : 'order.prepStatus'
   if (prepStatus === 'READY') {
-    return fulfillmentMode === 'pickup' ? `${prefix}.ready_pickup` : `${prefix}.ready_dine_in`
+    if (fulfillmentMode === 'pickup') return `${prefix}.ready_pickup`
+    if (fulfillmentMode === 'delivery') return `${prefix}.ready_delivery`
+    return `${prefix}.ready_dine_in`
   }
   return `${prefix}.${prepStatus.toLowerCase()}`
+}
+
+function defaultGuestChoice(input: {
+  allowDineIn: boolean
+  allowPickup: boolean
+  allowDelivery: boolean
+}): PublicMenuFulfillmentMode {
+  const { allowDineIn, allowPickup, allowDelivery } = input
+  const enabled = [allowPickup, allowDineIn, allowDelivery].filter(Boolean).length
+  if (enabled === 1) {
+    if (allowPickup) return 'pickup'
+    if (allowDineIn) return 'dine_in'
+    return 'delivery'
+  }
+  if (allowPickup) return 'pickup'
+  if (allowDineIn) return 'dine_in'
+  return 'delivery'
+}
+
+function fulfillmentLabelKey(mode: PublicMenuFulfillmentMode): string {
+  if (mode === 'dine_in') return 'order.fulfillmentDineIn'
+  if (mode === 'delivery') return 'order.fulfillmentDelivery'
+  return 'order.fulfillmentPickup'
 }
 
 function categorySectionId(category: PublicMenuCategoryView): string {
@@ -201,10 +228,12 @@ export function PublicMenuCatalog({
   tableLabel,
   allowDineIn,
   allowPickup,
+  allowDelivery,
 }: Props) {
   const t = useTranslations('public.menu')
   const pathname = usePathname()
   const { isSignedIn, isLoaded } = useAuth()
+  const { setBalance: setGuestPointBalance } = usePublicGuestPoints()
   const locale = getCurrencyLocale(currencyCode)
   const [dietaryInclude, setDietaryInclude] = useState<Set<string>>(() => new Set())
   const [allergenExclude, setAllergenExclude] = useState<Set<string>>(() => new Set())
@@ -221,14 +250,25 @@ export function PublicMenuCatalog({
   const [feedbackError, setFeedbackError] = useState<string | null>(null)
   const [feedbackSubmitting, setFeedbackSubmitting] = useState(false)
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false)
-  const bothModes = allowDineIn && allowPickup
-  const defaultGuestChoice: PublicMenuFulfillmentMode =
-    allowPickup && !allowDineIn ? 'pickup' : allowDineIn && !allowPickup ? 'dine_in' : 'pickup'
-  const [guestChoice, setGuestChoice] = useState<PublicMenuFulfillmentMode>(defaultGuestChoice)
+  const enabledModeCount = [allowDineIn, allowPickup, allowDelivery].filter(Boolean).length
+  const [guestChoice, setGuestChoice] = useState<PublicMenuFulfillmentMode>(() =>
+    defaultGuestChoice({ allowDineIn, allowPickup, allowDelivery }),
+  )
   const [guestTableInput, setGuestTableInput] = useState('')
-  const showModeToggle = bothModes && !tableLabel
+  const [deliveryAddress, setDeliveryAddress] = useState('')
+  const [deliveryPhone, setDeliveryPhone] = useState('')
+  const [deliveryNotes, setDeliveryNotes] = useState('')
+  const showModeToggle = enabledModeCount > 1 && !tableLabel
   const needsGuestTable =
-    !tableLabel && allowDineIn && (guestChoice === 'dine_in' || (allowDineIn && !allowPickup))
+    !tableLabel &&
+    allowDineIn &&
+    (guestChoice === 'dine_in' || (allowDineIn && !allowPickup && !allowDelivery))
+  const needsDeliveryFields =
+    !activeOrder &&
+    !tableLabel &&
+    allowDelivery &&
+    (guestChoice === 'delivery' || (!allowDineIn && !allowPickup && allowDelivery))
+  const anyFulfillmentEnabled = allowDineIn || allowPickup || allowDelivery
 
   const allItems = useMemo(() => categories.flatMap((category) => category.items), [categories])
   const itemsById = useMemo(() => new Map(allItems.map((item) => [item.id, item])), [allItems])
@@ -289,10 +329,18 @@ export function PublicMenuCatalog({
         locationId,
         actionKey: POINT_EARN_ACTION_OPEN_MENU_QR,
       }),
-    }).catch(() => {
-      // Menu UX must not depend on Point System availability.
     })
-  }, [isLoaded, isSignedIn, locationId])
+      .then(async (res) => {
+        if (!res.ok) return
+        const body = (await res.json().catch(() => null)) as { balance?: number } | null
+        if (typeof body?.balance === 'number' && Number.isFinite(body.balance)) {
+          setGuestPointBalance(body.balance)
+        }
+      })
+      .catch(() => {
+        // Menu UX must not depend on Point System availability.
+      })
+  }, [isLoaded, isSignedIn, locationId, setGuestPointBalance])
 
   // Restore active order: localStorage first, then server open ticket for this guest.
   useEffect(() => {
@@ -488,6 +536,9 @@ export function PublicMenuCatalog({
     const appendingTo = activeOrder
     let submitMode: PublicMenuFulfillmentMode
     let submitTableLabel: string | null
+    let submitDeliveryAddress: string | null = null
+    let submitDeliveryPhone: string | null = null
+    let submitDeliveryNotes: string | null = null
 
     if (appendingTo) {
       submitMode = appendingTo.fulfillmentMode
@@ -496,20 +547,31 @@ export function PublicMenuCatalog({
       const resolved = resolveGuestFulfillment({
         allowDineIn,
         allowPickup,
+        allowDelivery,
         lockedTableLabel: tableLabel,
         guestChoice,
         guestTableLabel: guestTableInput,
+        deliveryAddress,
+        deliveryPhone,
+        deliveryNotes,
       })
       if (!resolved.ok) {
-        setSubmitError(
+        const reasonKey =
           resolved.reason === 'table_required'
-            ? t('order.tableRequired')
-            : t('order.noFulfillmentModes'),
-        )
+            ? 'order.tableRequired'
+            : resolved.reason === 'delivery_address_required'
+              ? 'order.deliveryAddressRequired'
+              : resolved.reason === 'delivery_phone_required'
+                ? 'order.deliveryPhoneRequired'
+                : 'order.noFulfillmentModes'
+        setSubmitError(t(reasonKey))
         return
       }
       submitMode = resolved.mode
       submitTableLabel = resolved.tableLabel
+      submitDeliveryAddress = resolved.deliveryAddress
+      submitDeliveryPhone = resolved.deliveryPhone
+      submitDeliveryNotes = resolved.deliveryNotes
     }
 
     setSubmitting(true)
@@ -525,12 +587,15 @@ export function PublicMenuCatalog({
           })),
           fulfillmentMode: submitMode,
           tableLabel: submitTableLabel,
+          deliveryAddress: submitDeliveryAddress,
+          deliveryPhone: submitDeliveryPhone,
+          deliveryNotes: submitDeliveryNotes,
         }),
       })
       const body = (await res.json().catch(() => ({}))) as {
         orderId?: number
         billNumber?: string
-        fulfillmentMode?: 'DINE_IN' | 'PICKUP' | null
+        fulfillmentMode?: 'DINE_IN' | 'PICKUP' | 'DELIVERY' | null
         prepStatus?: PublicMenuPrepStatus | null
         status?: string | null
         tableLabel?: string | null
@@ -550,12 +615,7 @@ export function PublicMenuCatalog({
         setSubmitError(t('order.submitFailed'))
         return
       }
-      const successMode =
-        body.fulfillmentMode === 'DINE_IN'
-          ? 'dine_in'
-          : body.fulfillmentMode === 'PICKUP'
-            ? 'pickup'
-            : submitMode
+      const successMode = normalizeFulfillmentMode(body.fulfillmentMode) ?? submitMode
       const responseLines = Array.isArray(body.lines)
         ? body.lines.flatMap((line) =>
             typeof line?.menuItemId === 'number' && typeof line?.name === 'string'
@@ -583,6 +643,9 @@ export function PublicMenuCatalog({
       clearPublicMenuCart(locationId)
       setBasketOpen(false)
       setGuestTableInput('')
+      setDeliveryAddress('')
+      setDeliveryPhone('')
+      setDeliveryNotes('')
       const nextOrder: ActiveOrder = {
         orderId: body.orderId,
         billNumber: body.billNumber,
@@ -1082,15 +1145,19 @@ export function PublicMenuCatalog({
                   <p className="text-muted-foreground text-sm font-medium">
                     {activeOrder.fulfillmentMode === 'dine_in' && activeOrder.tableLabel
                       ? t('order.tableLabelReadOnly', { label: activeOrder.tableLabel })
-                      : t('order.fulfillmentPickup')}
+                      : t(fulfillmentLabelKey(activeOrder.fulfillmentMode))}
                   </p>
                 ) : tableLabel && allowDineIn ? (
                   <p className="text-muted-foreground text-sm font-medium">
                     {t('order.tableLabelReadOnly', { label: tableLabel })}
                   </p>
-                ) : !showModeToggle && allowPickup && !allowDineIn ? (
+                ) : !showModeToggle && enabledModeCount === 1 ? (
                   <p className="text-muted-foreground text-sm font-medium">
-                    {t('order.fulfillmentPickup')}
+                    {t(
+                      fulfillmentLabelKey(
+                        defaultGuestChoice({ allowDineIn, allowPickup, allowDelivery }),
+                      ),
+                    )}
                   </p>
                 ) : null}
               </div>
@@ -1103,26 +1170,38 @@ export function PublicMenuCatalog({
                     type="single"
                     value={guestChoice}
                     onValueChange={(value) => {
-                      if (value === 'dine_in' || value === 'pickup') {
+                      if (value === 'dine_in' || value === 'pickup' || value === 'delivery') {
                         setGuestChoice(value)
                         setSubmitError(null)
                       }
                     }}
-                    className="flex w-full justify-start gap-2"
+                    className="flex w-full flex-wrap justify-start gap-2"
                     aria-label={t('order.fulfillmentLabel')}
                   >
-                    <ToggleGroupItem
-                      value="pickup"
-                      className="h-11 min-h-11 flex-1 touch-manipulation sm:h-9 sm:min-h-9"
-                    >
-                      {t('order.fulfillmentPickup')}
-                    </ToggleGroupItem>
-                    <ToggleGroupItem
-                      value="dine_in"
-                      className="h-11 min-h-11 flex-1 touch-manipulation sm:h-9 sm:min-h-9"
-                    >
-                      {t('order.fulfillmentDineIn')}
-                    </ToggleGroupItem>
+                    {allowPickup ? (
+                      <ToggleGroupItem
+                        value="pickup"
+                        className="h-11 min-h-11 flex-1 touch-manipulation sm:h-9 sm:min-h-9"
+                      >
+                        {t('order.fulfillmentPickup')}
+                      </ToggleGroupItem>
+                    ) : null}
+                    {allowDineIn ? (
+                      <ToggleGroupItem
+                        value="dine_in"
+                        className="h-11 min-h-11 flex-1 touch-manipulation sm:h-9 sm:min-h-9"
+                      >
+                        {t('order.fulfillmentDineIn')}
+                      </ToggleGroupItem>
+                    ) : null}
+                    {allowDelivery ? (
+                      <ToggleGroupItem
+                        value="delivery"
+                        className="h-11 min-h-11 flex-1 touch-manipulation sm:h-9 sm:min-h-9"
+                      >
+                        {t('order.fulfillmentDelivery')}
+                      </ToggleGroupItem>
+                    ) : null}
                   </ToggleGroup>
                 </div>
               ) : null}
@@ -1147,6 +1226,58 @@ export function PublicMenuCatalog({
                   />
                 </div>
               ) : null}
+              {!activeOrder && needsDeliveryFields ? (
+                <div className="flex flex-col gap-3">
+                  <div className="flex flex-col gap-1.5">
+                    <label htmlFor="public-menu-delivery-address" className="text-sm font-medium">
+                      {t('order.deliveryAddressLabel')}
+                    </label>
+                    <Input
+                      id="public-menu-delivery-address"
+                      value={deliveryAddress}
+                      onChange={(e) => {
+                        setDeliveryAddress(e.target.value)
+                        setSubmitError(null)
+                      }}
+                      placeholder={t('order.deliveryAddressPlaceholder')}
+                      maxLength={512}
+                      autoComplete="street-address"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label htmlFor="public-menu-delivery-phone" className="text-sm font-medium">
+                      {t('order.deliveryPhoneLabel')}
+                    </label>
+                    <Input
+                      id="public-menu-delivery-phone"
+                      type="tel"
+                      value={deliveryPhone}
+                      onChange={(e) => {
+                        setDeliveryPhone(e.target.value)
+                        setSubmitError(null)
+                      }}
+                      placeholder={t('order.deliveryPhonePlaceholder')}
+                      maxLength={32}
+                      autoComplete="tel"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label htmlFor="public-menu-delivery-notes" className="text-sm font-medium">
+                      {t('order.deliveryNotesLabel')}
+                    </label>
+                    <Input
+                      id="public-menu-delivery-notes"
+                      value={deliveryNotes}
+                      onChange={(e) => {
+                        setDeliveryNotes(e.target.value)
+                        setSubmitError(null)
+                      }}
+                      placeholder={t('order.deliveryNotesPlaceholder')}
+                      maxLength={256}
+                    />
+                  </div>
+                </div>
+              ) : null}
               {submitError ? (
                 <Alert variant="destructive">
                   <AlertTitle>{t('order.submitFailedTitle')}</AlertTitle>
@@ -1156,7 +1287,7 @@ export function PublicMenuCatalog({
               <Button
                 type="button"
                 className="min-h-11 w-full touch-manipulation"
-                disabled={submitting || !isLoaded || !hasCart || (!allowDineIn && !allowPickup)}
+                disabled={submitting || !isLoaded || !hasCart || !anyFulfillmentEnabled}
                 onClick={() => void submitOrder()}
               >
                 {!isLoaded || submitting ? <Spinner /> : null}

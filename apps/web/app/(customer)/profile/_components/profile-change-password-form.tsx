@@ -14,7 +14,8 @@ import { useFieldIds } from '@/hooks/use-field-ids'
 import { buildProfilePasswordSchema } from './profile-password-schema'
 
 export type ProfileChangePasswordFormUser = {
-  updatePassword: (params: { currentPassword: string; newPassword: string }) => Promise<unknown>
+  passwordEnabled: boolean
+  updatePassword: (params: { currentPassword?: string; newPassword: string }) => Promise<unknown>
 }
 
 export type ProfileChangePasswordFormProps = {
@@ -23,7 +24,11 @@ export type ProfileChangePasswordFormProps = {
 
 export function ProfileChangePasswordForm({ user }: ProfileChangePasswordFormProps) {
   const t = useTranslations('profile')
-  const schema = useMemo(() => buildProfilePasswordSchema(t), [t])
+  const requireCurrentPassword = user.passwordEnabled
+  const schema = useMemo(
+    () => buildProfilePasswordSchema(t, { requireCurrentPassword }),
+    [requireCurrentPassword, t],
+  )
 
   const currentField = useFieldIds()
   const newField = useFieldIds()
@@ -37,7 +42,7 @@ export function ProfileChangePasswordForm({ user }: ProfileChangePasswordFormPro
   const [confirmPassword, setConfirmPassword] = useState('')
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [formError, setFormError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [focusErrorNonce, setFocusErrorNonce] = useState(0)
 
@@ -66,7 +71,7 @@ export function ProfileChangePasswordForm({ user }: ProfileChangePasswordFormPro
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setFormError(null)
-    setSuccess(false)
+    setSuccessMessage(null)
     setFieldErrors({})
 
     const parsed = schema.safeParse({ currentPassword, newPassword, confirmPassword })
@@ -85,12 +90,20 @@ export function ProfileChangePasswordForm({ user }: ProfileChangePasswordFormPro
 
     setSubmitting(true)
     try {
-      await user.updatePassword({
-        currentPassword: parsed.data.currentPassword,
-        newPassword: parsed.data.newPassword,
-      })
-      resetForm()
-      setSuccess(true)
+      if (requireCurrentPassword) {
+        await user.updatePassword({
+          currentPassword: parsed.data.currentPassword,
+          newPassword: parsed.data.newPassword,
+        })
+        resetForm()
+        setSuccessMessage(t('passwordChangeSuccess'))
+      } else {
+        await user.updatePassword({
+          newPassword: parsed.data.newPassword,
+        })
+        resetForm()
+        setSuccessMessage(t('passwordSetSuccess'))
+      }
     } catch (err) {
       if (isClerkAPIResponseError(err) && err.errors?.[0]?.message) {
         setFormError(err.errors[0].message)
@@ -108,12 +121,16 @@ export function ProfileChangePasswordForm({ user }: ProfileChangePasswordFormPro
     <section className="max-w-md space-y-4">
       <div className="space-y-1">
         <h2 className="text-base font-semibold tracking-tight">{t('passwordSectionTitle')}</h2>
-        <p className="text-muted-foreground text-sm">{t('passwordSectionDescription')}</p>
+        <p className="text-muted-foreground text-sm">
+          {requireCurrentPassword
+            ? t('passwordSectionDescription')
+            : t('passwordSetSectionDescription')}
+        </p>
       </div>
       <form id="profile-change-password" onSubmit={handleSubmit} className="space-y-4">
-        {success ? (
+        {successMessage ? (
           <Alert>
-            <AlertDescription>{t('passwordChangeSuccess')}</AlertDescription>
+            <AlertDescription>{successMessage}</AlertDescription>
           </Alert>
         ) : null}
         {formError ? (
@@ -122,27 +139,29 @@ export function ProfileChangePasswordForm({ user }: ProfileChangePasswordFormPro
           </Alert>
         ) : null}
         <FieldGroup className="gap-4">
-          <Field data-invalid={fieldErrors.currentPassword ? true : undefined}>
-            <FieldLabel htmlFor={currentField.id}>{t('passwordCurrentLabel')}</FieldLabel>
-            <Input
-              ref={currentRef}
-              id={currentField.id}
-              name="currentPassword"
-              type="password"
-              autoComplete="current-password"
-              value={currentPassword}
-              onChange={(ev) => {
-                setCurrentPassword(ev.target.value)
-                setSuccess(false)
-              }}
-              disabled={submitting}
-              aria-invalid={Boolean(fieldErrors.currentPassword)}
-              aria-describedby={currentField.describedBy(Boolean(fieldErrors.currentPassword))}
-            />
-            {fieldErrors.currentPassword ? (
-              <FieldError id={currentField.errorId}>{fieldErrors.currentPassword}</FieldError>
-            ) : null}
-          </Field>
+          {requireCurrentPassword ? (
+            <Field data-invalid={fieldErrors.currentPassword ? true : undefined}>
+              <FieldLabel htmlFor={currentField.id}>{t('passwordCurrentLabel')}</FieldLabel>
+              <Input
+                ref={currentRef}
+                id={currentField.id}
+                name="currentPassword"
+                type="password"
+                autoComplete="current-password"
+                value={currentPassword}
+                onChange={(ev) => {
+                  setCurrentPassword(ev.target.value)
+                  setSuccessMessage(null)
+                }}
+                disabled={submitting}
+                aria-invalid={Boolean(fieldErrors.currentPassword)}
+                aria-describedby={currentField.describedBy(Boolean(fieldErrors.currentPassword))}
+              />
+              {fieldErrors.currentPassword ? (
+                <FieldError id={currentField.errorId}>{fieldErrors.currentPassword}</FieldError>
+              ) : null}
+            </Field>
+          ) : null}
           <Field data-invalid={fieldErrors.newPassword ? true : undefined}>
             <FieldLabel htmlFor={newField.id}>{t('passwordNewLabel')}</FieldLabel>
             <Input
@@ -154,7 +173,7 @@ export function ProfileChangePasswordForm({ user }: ProfileChangePasswordFormPro
               value={newPassword}
               onChange={(ev) => {
                 setNewPassword(ev.target.value)
-                setSuccess(false)
+                setSuccessMessage(null)
               }}
               disabled={submitting}
               aria-invalid={Boolean(fieldErrors.newPassword)}
@@ -175,7 +194,7 @@ export function ProfileChangePasswordForm({ user }: ProfileChangePasswordFormPro
               value={confirmPassword}
               onChange={(ev) => {
                 setConfirmPassword(ev.target.value)
-                setSuccess(false)
+                setSuccessMessage(null)
               }}
               disabled={submitting}
               aria-invalid={Boolean(fieldErrors.confirmPassword)}
@@ -187,7 +206,11 @@ export function ProfileChangePasswordForm({ user }: ProfileChangePasswordFormPro
           </Field>
         </FieldGroup>
         <Button type="submit" disabled={submitting} className="w-full sm:w-auto">
-          {submitting ? t('passwordSubmitting') : t('passwordSubmit')}
+          {submitting
+            ? t('passwordSubmitting')
+            : requireCurrentPassword
+              ? t('passwordSubmit')
+              : t('passwordSetSubmit')}
         </Button>
       </form>
     </section>
