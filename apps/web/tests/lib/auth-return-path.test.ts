@@ -5,6 +5,7 @@ import {
   buildAuthContinueUrl,
   buildLoginUrl,
   getSafeAuthReturnPath,
+  toAbsoluteAppUrl,
 } from '@/lib/auth-return-path'
 
 describe('getSafeAuthReturnPath', () => {
@@ -42,5 +43,16 @@ describe('buildAuthContinueUrl / buildLoginUrl', () => {
   it('falls back to /home when no safe return path', () => {
     expect(buildAuthContinueUrl('/advisor')).toBe('/home')
     expect(buildLoginUrl(null)).toBe('/login')
+  })
+})
+
+describe('toAbsoluteAppUrl', () => {
+  it('leaves absolute URLs unchanged', () => {
+    expect(toAbsoluteAppUrl('https://menuyukti.com/home')).toBe('https://menuyukti.com/home')
+  })
+
+  it('resolves relative paths against window.location.origin', () => {
+    expect(toAbsoluteAppUrl('/sso-callback')).toBe(`${window.location.origin}/sso-callback`)
+    expect(toAbsoluteAppUrl('/home')).toBe(`${window.location.origin}/home`)
   })
 })

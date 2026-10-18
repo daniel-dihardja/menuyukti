@@ -25,6 +25,7 @@
     "mfaHintTotp": "Enter the code from your authenticator app.",
     "useBackupCode": "Use a backup code",
     "genericError": "Something went wrong. Please try again.",
+    "captchaError": "Verification failed. Disable blockers for this site, then try Google again.",
     "startOver": "Start over"
   }
 }

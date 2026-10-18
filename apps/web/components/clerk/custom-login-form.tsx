@@ -5,12 +5,13 @@ import { isClerkAPIResponseError } from '@clerk/nextjs/errors'
 import { Button } from '@workspace/ui/components/button'
 import { Field, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
 import { Input } from '@workspace/ui/components/input'
-import { routes } from '@/lib/routes'
 import {
   AUTH_RETURN_TO_QUERY,
   buildAuthContinueUrl,
   rememberAuthReturnPath,
 } from '@/lib/auth-return-path'
+import { isCaptchaOauthError, startGoogleOauthSignIn } from '@/lib/start-google-oauth'
+import { ClerkCaptcha } from '@/components/clerk/clerk-captcha'
 import { GoogleMark } from '@/components/clerk/google-mark'
 import { isGoogleOauthAvailable } from '@/components/clerk/is-google-oauth-available'
 import { cn } from '@workspace/ui/lib/utils'
@@ -410,20 +411,45 @@ export function CustomLoginForm({ className }: { className?: string }) {
   }
 
   const handleGoogleSignIn = async () => {
-    if (!signIn || busy || oauthBusy) return
+    if (busy || oauthBusy) return
+    if (clerk.session) {
+      window.location.assign(continueUrl)
+      return
+    }
+    if (!signIn) {
+      setOauthError(t('genericError'))
+      return
+    }
     setOauthBusy(true)
     setOauthError(null)
     try {
-      const { error } = await signIn.sso({
-        strategy: 'oauth_google',
+      const { error } = await startGoogleOauthSignIn({
+        signIn,
         redirectUrl: continueUrl,
-        redirectCallbackUrl: routes.ssoCallback,
       })
       if (error) {
-        setOauthError(t('genericError'))
+        if (clerkErrorHasCode(error, 'session_exists') || clerk.session) {
+          window.location.assign(continueUrl)
+          return
+        }
+        setOauthError(
+          isCaptchaOauthError(error)
+            ? t('captchaError')
+            : clerkErrorMessage(error) || t('genericError'),
+        )
+      } else if (clerk.session) {
+        window.location.assign(continueUrl)
       }
-    } catch {
-      setOauthError(t('genericError'))
+    } catch (error) {
+      if (clerkErrorHasCode(error, 'session_exists') || clerk.session) {
+        window.location.assign(continueUrl)
+        return
+      }
+      setOauthError(
+        isCaptchaOauthError(error)
+          ? t('captchaError')
+          : clerkErrorMessage(error) || t('genericError'),
+      )
     } finally {
       setOauthBusy(false)
     }
@@ -704,7 +730,7 @@ export function CustomLoginForm({ className }: { className?: string }) {
             {t('startOver')}
           </Button>
         </div>
-        <div id="clerk-captcha" />
+        <ClerkCaptcha />
       </div>
     )
   }
@@ -720,7 +746,9 @@ export function CustomLoginForm({ className }: { className?: string }) {
               size="lg"
               className="w-full"
               disabled={isSigningIn}
-              onClick={() => void handleGoogleSignIn()}
+              onClick={() => {
+                void handleGoogleSignIn()
+              }}
             >
               <GoogleMark />
               {oauthBusy ? t('signingInWithGoogle') : t('continueWithGoogle')}
@@ -783,7 +811,7 @@ export function CustomLoginForm({ className }: { className?: string }) {
         </FieldGroup>
       </form>
 
-      <div id="clerk-captcha" />
+      <ClerkCaptcha />
     </div>
   )
 }

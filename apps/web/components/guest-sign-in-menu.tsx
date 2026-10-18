@@ -8,10 +8,11 @@ import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
 
+import { ClerkCaptcha } from '@/components/clerk/clerk-captcha'
 import { GoogleMark } from '@/components/clerk/google-mark'
 import { isGoogleOauthAvailable } from '@/components/clerk/is-google-oauth-available'
 import { buildAuthContinueUrl, buildLoginUrl, rememberAuthReturnPath } from '@/lib/auth-return-path'
-import { routes } from '@/lib/routes'
+import { isCaptchaOauthError, startGoogleOauthSignIn } from '@/lib/start-google-oauth'
 import { Button } from '@workspace/ui/components/button'
 import {
   DropdownMenu,
@@ -65,28 +66,32 @@ export function GuestSignInMenu({ className }: GuestSignInMenuProps) {
       goAfterAuth()
       return
     }
-    if (!signIn) return
+    if (!signIn) {
+      setOauthError(tLogin('genericError'))
+      return
+    }
     setOauthBusy(true)
     setOauthError(null)
     try {
-      const { error } = await signIn.sso({
-        strategy: 'oauth_google',
+      const { error } = await startGoogleOauthSignIn({
+        signIn,
         redirectUrl: continueUrl,
-        redirectCallbackUrl: routes.ssoCallback,
       })
       if (error) {
         if (isSessionExistsError(error) || clerk.session) {
           goAfterAuth()
           return
         }
-        setOauthError(tLogin('genericError'))
+        setOauthError(isCaptchaOauthError(error) ? tLogin('captchaError') : tLogin('genericError'))
+      } else if (clerk.session) {
+        goAfterAuth()
       }
     } catch (error) {
       if (isSessionExistsError(error) || clerk.session) {
         goAfterAuth()
         return
       }
-      setOauthError(tLogin('genericError'))
+      setOauthError(isCaptchaOauthError(error) ? tLogin('captchaError') : tLogin('genericError'))
     } finally {
       setOauthBusy(false)
     }
@@ -114,6 +119,7 @@ export function GuestSignInMenu({ className }: GuestSignInMenuProps) {
             <DropdownMenuItem
               disabled={oauthBusy || !signIn}
               onSelect={(event) => {
+                // Keep the menu mounted so #clerk-captcha stays in the tree while SSO runs.
                 event.preventDefault()
                 void handleGoogleSignIn()
               }}
@@ -130,6 +136,8 @@ export function GuestSignInMenu({ className }: GuestSignInMenuProps) {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      {/* Bot protection mount — required for Google SSO from marketing chrome. */}
+      <ClerkCaptcha />
       {oauthError ? (
         <p className="text-destructive max-w-[14rem] text-right text-xs" role="alert">
           {oauthError}
