@@ -48,6 +48,16 @@ NEXT_PUBLIC_LANDING_SAMPLE_MENU_SLUG=your-published-slug
 
 The QR encodes `https://menuyukti.com/{slug}/menu`. If unset, the landing still renders (headline + menu preview) without QR or CTA.
 
+## Marketing Sign in and Explore
+
+Header Sign in and the Explore (discovery) directory are controlled by:
+
+```env
+NEXT_PUBLIC_SHOW_MARKETING_SIGN_IN=true
+```
+
+Any value other than `false` shows them (default for local/dev when unset). Production Docker / CI builds bake `false`, which hides the header control and Explore nav/footer links and returns 404 for `/explore`. The `/login` route remains available for testing.
+
 ## Google Analytics
 
 GA4 runs on public pages and the signed-in workspace when this is set:
