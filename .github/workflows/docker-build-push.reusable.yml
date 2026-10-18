@@ -7,6 +7,7 @@
 #   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY — required when service=web (baked into Next.js at build)
 #   NEXT_PUBLIC_GA_MEASUREMENT_ID — optional; GA4 Measurement ID G-xxx for print shop (baked at build)
 #   CLERK_SECRET_KEY   — required when service=web (Dockerfile build arg for Clerk)
+# Web build also sets NEXT_PUBLIC_SHOW_MARKETING_SIGN_IN=false (hides marketing Sign in + Explore; not a secret).
 #
 # Optional repository variable:
 #   DOCKER_IMAGE_PREFIX — image namespace (default johngoyason); should match image: names in docker-compose.yml.
@@ -151,6 +152,7 @@ jobs:
             ANALYTICS_API_URL=http://127.0.0.1:8000
             NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
             NEXT_PUBLIC_GA_MEASUREMENT_ID=${{ secrets.NEXT_PUBLIC_GA_MEASUREMENT_ID }}
+            NEXT_PUBLIC_SHOW_MARKETING_SIGN_IN=false
             CLERK_SECRET_KEY=${{ secrets.CLERK_SECRET_KEY }}
 
       - name: Build and push

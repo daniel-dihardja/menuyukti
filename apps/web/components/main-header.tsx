@@ -11,6 +11,7 @@ import { AccountMenu } from '@/components/account/account-menu'
 import { GuestSignInMenu } from '@/components/guest-sign-in-menu'
 import { usePublicGuestPoints } from '@/components/public-guest-points-context'
 import { useOptionalWorkspacePlan } from '@/components/workspace-plan-provider'
+import { isExploreDiscoveryEnabled, isMarketingSignInEnabled } from '@/lib/marketing-sign-in'
 import { isPublicLocationSurfacePath, routes } from '@/lib/routes'
 import { getDefaultPathForPlan } from '@/lib/workspace-plan'
 import { cn } from '@workspace/ui/lib/utils'
@@ -34,7 +35,8 @@ export function MainHeader() {
       ? guestPointBalance
       : null
   /** Hide sign-in chrome on auth pages (user is already signing in / up). */
-  const showSignIn = !isLogin && !isSignUp
+  const showSignIn = !isLogin && !isSignUp && isMarketingSignInEnabled()
+  const showExplore = isExploreDiscoveryEnabled()
   const [isScrolled, setIsScrolled] = React.useState(false)
 
   /** Signed-out → marketing `/`; signed-in → plan home (fallback `/home` outside provider). */
@@ -70,16 +72,18 @@ export function MainHeader() {
 
           {!isGuestLocation ? (
             <nav aria-label={t('navAria')} className="hidden min-w-0 items-center gap-1 md:flex">
-              <Link
-                href={routes.explore}
-                aria-current={isExplore ? 'page' : undefined}
-                className={cn(
-                  'rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors',
-                  isExplore ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
-                )}
-              >
-                {t('navExplore')}
-              </Link>
+              {showExplore ? (
+                <Link
+                  href={routes.explore}
+                  aria-current={isExplore ? 'page' : undefined}
+                  className={cn(
+                    'rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors',
+                    isExplore ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
+                  )}
+                >
+                  {t('navExplore')}
+                </Link>
+              ) : null}
               <Link
                 href={routes.about}
                 aria-current={isAbout ? 'page' : undefined}
