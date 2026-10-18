@@ -7,7 +7,6 @@ import { SiteFooter } from '@/components/site-footer'
 import { routes } from '@/lib/routes'
 
 const bodyClass = 'text-pretty text-base leading-7 text-foreground'
-const mutedBodyClass = 'text-pretty text-base leading-7 text-muted-foreground'
 const sectionTitleClass = 'text-xl font-semibold tracking-tight text-foreground md:text-[1.375rem]'
 const emphasisClass = 'text-pretty text-base font-medium leading-7 tracking-tight text-foreground'
 
@@ -137,7 +136,6 @@ export default async function AboutPage() {
                 t('visionGoal'),
               ]}
             />
-            <p className={mutedBodyClass}>{t('visionNote')}</p>
           </section>
 
           <section
