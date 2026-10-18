@@ -6,7 +6,7 @@ export const WORKSPACE_PLAN_PRO = 'pro' as const
 export type WorkspacePlan = typeof WORKSPACE_PLAN_FREE | typeof WORKSPACE_PLAN_PRO
 
 /**
- * Product tiers (Menuyukti = creative agency for restaurants, cafés, and bars):
+ * Product tiers (Menuyukti = AI platform for restaurant marketing & operations):
  *
  * Authenticated users share one product surface: post-auth home is `/home`, and
  * plan is **not** used for capability gating (staff may still store free/pro on

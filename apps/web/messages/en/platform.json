@@ -2,9 +2,9 @@
   "platform": {
     "dashboard": {
       "title": "Dashboard",
-      "description": "AI-powered restaurant marketing on the go.",
-      "headline": "Run campaigns from anywhere",
-      "lead": "AI turns your sales data into Instagram campaigns—built for busy floors, not just desks."
+      "description": "AI-powered restaurant marketing and operations on the go.",
+      "headline": "Run your restaurant from anywhere",
+      "lead": "AI turns your sales data into clear next steps—marketing, inventory, and the floor—built for busy service, not just desks."
     },
     "crm": {
       "title": "CRM",

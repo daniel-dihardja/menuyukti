@@ -2,7 +2,7 @@
   "analytics": {
     "branches": {
       "title": "Locations",
-      "description": "Power analytics and Instagram campaigns for each venue. Configure basics here, then upload POS sales reports.",
+      "description": "Power analytics, POS, and AI-assisted planning for each venue. Configure basics here, then upload POS sales reports.",
       "createDescription": "Create a new location to organize analytics, fixed costs, and sales reports by location.",
       "table": {
         "index": "#",
@@ -33,7 +33,7 @@
       },
       "empty": {
         "title": "Add your first location",
-        "description": "Locations unlock sales uploads, menu analytics, and AI-powered Instagram campaigns.",
+        "description": "Locations unlock sales uploads, menu analytics, POS, inventory, and AI-assisted planning.",
         "createCta": "Create New Location",
         "salesHint": "Then upload a POS sales report to start analytics.",
         "salesCta": "Go to Sales Reports"

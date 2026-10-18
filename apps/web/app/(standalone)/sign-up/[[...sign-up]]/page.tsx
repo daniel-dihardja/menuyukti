@@ -1,31 +1,28 @@
-import { MenuyuktiSignUp } from '@/components/clerk/menuyukti-sign-up'
 import { auth } from '@clerk/nextjs/server'
-import { getTranslations } from 'next-intl/server'
 import { redirect } from 'next/navigation'
+import { getSafeAuthReturnPath, buildLoginUrl } from '@/lib/auth-return-path'
 import { getAuthenticatedHomePath } from '@/lib/workspace-plan-server'
 
-export default async function SignUpPage() {
+type SignUpPageProps = {
+  searchParams: Promise<{ next?: string | string[] }>
+}
+
+function firstParam(value: string | string[] | undefined): string | null {
+  if (typeof value === 'string') return value
+  if (Array.isArray(value) && typeof value[0] === 'string') return value[0]
+  return null
+}
+
+/**
+ * Sign-up is folded into `/login` (passwordless email code via `signUpIfMissing`).
+ * Keep this route as a redirect so old links and Clerk `signUpUrl` keep working.
+ */
+export default async function SignUpPage({ searchParams }: SignUpPageProps) {
   const { isAuthenticated, sessionStatus } = await auth()
   if (isAuthenticated && sessionStatus !== 'pending') {
     redirect(await getAuthenticatedHomePath())
   }
 
-  const t = await getTranslations('login')
-
-  return (
-    <div className="relative flex min-h-[calc(100svh-3.5rem)] w-full flex-col items-center justify-center bg-background p-6">
-      <div className="pointer-events-none absolute inset-0 bg-grid-light" aria-hidden />
-      <div className="pointer-events-none absolute inset-0 landing-atmosphere" aria-hidden />
-      <div className="relative mx-auto w-full max-w-md space-y-8">
-        <header className="space-y-3 text-center sm:text-left">
-          <h1 className="text-3xl font-extrabold tracking-tight text-foreground md:text-4xl">
-            {t('signUpTitle')}
-          </h1>
-          <p className="landing-hero-subtitle text-lg md:text-xl">{t('slogan')}</p>
-          <p className="text-sm text-muted-foreground">{t('signUpDescription')}</p>
-        </header>
-        <MenuyuktiSignUp />
-      </div>
-    </div>
-  )
+  const params = await searchParams
+  redirect(buildLoginUrl(getSafeAuthReturnPath(firstParam(params.next))))
 }

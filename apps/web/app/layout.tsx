@@ -83,7 +83,7 @@ export default function RootLayout({
         <Suspense fallback={<RootIntlFallback />}>
           <ClerkProvider
             signInUrl={routes.login}
-            signUpUrl={routes.signUp}
+            signUpUrl={routes.login}
             afterSignOutUrl={routes.login}
           >
             <Suspense fallback={<RootIntlFallback />}>
