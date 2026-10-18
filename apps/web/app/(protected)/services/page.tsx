@@ -194,7 +194,7 @@ function CatalogCard({
           <p className="text-muted-foreground text-sm">{pricingComingSoon}</p>
         </CardHeader>
         {href && ctaLabel ? (
-          <CardFooter className="pb-5">
+          <CardFooter className="justify-end pb-5">
             <Button asChild variant="secondary" className="w-fit" tabIndex={-1}>
               <span>
                 {ctaLabel}
