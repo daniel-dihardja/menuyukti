@@ -18,22 +18,53 @@ import { useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-function isSignUpIfMissingTransfer(error: unknown): boolean {
+function clerkErrorHasCode(error: unknown, code: string): boolean {
   if (!error) return false
   if (isClerkAPIResponseError(error)) {
-    return error.errors.some((e) => e.code === 'sign_up_if_missing_transfer')
+    return error.errors.some((e) => e.code === code)
   }
   if (typeof error === 'object' && error !== null && 'code' in error) {
-    return (error as { code?: string }).code === 'sign_up_if_missing_transfer'
+    return (error as { code?: string }).code === code
   }
   if (typeof error === 'object' && error !== null && 'errors' in error) {
     const errors = (error as { errors?: Array<{ code?: string }> }).errors
-    return Boolean(errors?.some((e) => e.code === 'sign_up_if_missing_transfer'))
+    return Boolean(errors?.some((e) => e.code === code))
   }
   return false
 }
 
+function isSignUpIfMissingTransfer(error: unknown): boolean {
+  return clerkErrorHasCode(error, 'sign_up_if_missing_transfer')
+}
+
+function clerkErrorMessage(error: unknown): string {
+  if (!error) return ''
+  if (isClerkAPIResponseError(error)) {
+    return error.errors.map((e) => e.message).join(' ')
+  }
+  if (typeof error === 'object' && error !== null && 'message' in error) {
+    return String((error as { message?: unknown }).message ?? '')
+  }
+  if (typeof error === 'object' && error !== null && 'errors' in error) {
+    const errors = (error as { errors?: Array<{ message?: string }> }).errors
+    return (errors ?? []).map((e) => e.message ?? '').join(' ')
+  }
+  return ''
+}
+
+/** Sign-in create failed because no user exists — fall back to explicit sign-up. */
+function isIdentifierNotFound(error: unknown): boolean {
+  if (
+    clerkErrorHasCode(error, 'form_identifier_not_found') ||
+    clerkErrorHasCode(error, 'identifier_not_found')
+  ) {
+    return true
+  }
+  return /couldn'?t find your account/i.test(clerkErrorMessage(error))
+}
+
 type Step = 'email' | 'code' | 'second_factor' | 'client_trust'
+type AuthFlow = 'sign-in' | 'sign-up'
 
 /** Primary MFA strategy to drive send + verify (Clerk custom MFA flow). */
 function getPrimarySecondFactor(signIn: {
@@ -59,8 +90,9 @@ export function CustomLoginForm({ className }: { className?: string }) {
   const continueUrl = buildAuthContinueUrl(returnTo)
   const clerk = useClerk()
   const { signIn, errors, fetchStatus } = useSignIn()
-  const { signUp, fetchStatus: signUpFetchStatus } = useSignUp()
+  const { signUp, errors: signUpErrors, fetchStatus: signUpFetchStatus } = useSignUp()
   const [step, setStep] = useState<Step>('email')
+  const [flow, setFlow] = useState<AuthFlow>('sign-in')
   const [busy, setBusy] = useState(false)
   const [mfaLoading, setMfaLoading] = useState(false)
   const [emailAddress, setEmailAddress] = useState('')
@@ -125,6 +157,28 @@ export function CustomLoginForm({ className }: { className?: string }) {
     )
   }, [finalizeSignUpAndRedirect, signUp, t])
 
+  /** Explicit sign-up when sign-in reports no account (signUpIfMissing unavailable / Invite-only quirks). */
+  const startSignUpWithEmail = useCallback(
+    async (email: string): Promise<boolean> => {
+      if (!signUp) return false
+      const { error } = await signUp.create({ emailAddress: email })
+      if (error) {
+        setFormError(t('genericError'))
+        return false
+      }
+      const { error: sendError } = await signUp.verifications.sendEmailCode()
+      if (sendError) {
+        setFormError(t('genericError'))
+        return false
+      }
+      setFlow('sign-up')
+      setEmailAddress(email)
+      setStep('code')
+      return true
+    },
+    [signUp, t],
+  )
+
   const ensureVerificationCodeSent = useCallback(async () => {
     if (!signIn?.id) return
 
@@ -188,7 +242,7 @@ export function CustomLoginForm({ className }: { className?: string }) {
 
   const handleEmailSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    if (!signIn || busy) return
+    if (!signIn || !signUp || busy) return
 
     const form = e.currentTarget
     const email = (form.elements.namedItem('email') as HTMLInputElement).value.trim()
@@ -196,20 +250,29 @@ export function CustomLoginForm({ className }: { className?: string }) {
     setBusy(true)
     setFormError(null)
     try {
-      // Combined sign-in-or-up: send a code whether or not the account exists.
+      // Combined sign-in-or-up: prefer signUpIfMissing; fall back to explicit sign-up.
       const { error: createError } = await signIn.create({
         identifier: email,
         signUpIfMissing: true,
       })
       if (createError) {
+        if (isIdentifierNotFound(createError)) {
+          await startSignUpWithEmail(email)
+          return
+        }
         return
       }
 
       const { error: sendError } = await signIn.emailCode.sendCode({ emailAddress: email })
       if (sendError) {
+        if (isIdentifierNotFound(sendError)) {
+          await startSignUpWithEmail(email)
+          return
+        }
         return
       }
 
+      setFlow('sign-in')
       setEmailAddress(email)
 
       if (signIn.status === 'complete') {
@@ -237,7 +300,7 @@ export function CustomLoginForm({ className }: { className?: string }) {
 
   const handleCodeSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    if (!signIn || busy) return
+    if (busy) return
 
     const form = e.currentTarget
     const code = (form.elements.namedItem('verification-code') as HTMLInputElement).value.trim()
@@ -245,6 +308,24 @@ export function CustomLoginForm({ className }: { className?: string }) {
     setBusy(true)
     setFormError(null)
     try {
+      if (flow === 'sign-up') {
+        if (!signUp) return
+        const { error } = await signUp.verifications.verifyEmailCode({ code })
+        if (error) {
+          return
+        }
+        if (signUp.status === 'complete') {
+          await finalizeSignUpAndRedirect()
+          return
+        }
+        const missing = signUp.missingFields ?? []
+        setFormError(
+          missing.includes('password') ? t('signUpPasswordStillRequired') : t('genericError'),
+        )
+        return
+      }
+
+      if (!signIn) return
       const { error } = await signIn.emailCode.verifyCode({ code })
       if (error) {
         if (isSignUpIfMissingTransfer(error)) {
@@ -273,6 +354,14 @@ export function CustomLoginForm({ className }: { className?: string }) {
     } finally {
       setBusy(false)
     }
+  }
+
+  const handleResendCode = () => {
+    if (flow === 'sign-up') {
+      void signUp?.verifications.sendEmailCode()
+      return
+    }
+    void signIn?.emailCode.sendCode({ emailAddress })
   }
 
   const handleSecondFactorSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -354,11 +443,25 @@ export function CustomLoginForm({ className }: { className?: string }) {
       setEmailAddress('')
       setOauthError(null)
       setFormError(null)
+      setFlow('sign-in')
       setStep('email')
     } finally {
       setBusy(false)
     }
   }
+
+  const codeFieldError =
+    flow === 'sign-up' ? signUpErrors?.fields?.code?.message : errors?.fields?.code?.message
+  const identifierError = errors?.fields?.identifier
+  const identifierErrorCode =
+    identifierError && typeof identifierError === 'object' && 'code' in identifierError
+      ? (identifierError as { code?: string }).code
+      : undefined
+  const showIdentifierError =
+    Boolean(identifierError?.message) &&
+    identifierErrorCode !== 'form_identifier_not_found' &&
+    identifierErrorCode !== 'identifier_not_found' &&
+    !/couldn'?t find your account/i.test(identifierError?.message ?? '')
 
   const loading =
     busy ||
@@ -561,9 +664,9 @@ export function CustomLoginForm({ className }: { className?: string }) {
                 disabled={busy}
                 className="text-base py-2"
               />
-              {errors?.fields?.code?.message ? (
+              {codeFieldError ? (
                 <p className="text-sm text-destructive" role="alert">
-                  {errors.fields.code.message}
+                  {codeFieldError}
                 </p>
               ) : null}
             </Field>
@@ -586,7 +689,7 @@ export function CustomLoginForm({ className }: { className?: string }) {
             size="sm"
             className="text-muted-foreground"
             disabled={isSigningIn}
-            onClick={() => signIn.emailCode.sendCode({ emailAddress })}
+            onClick={handleResendCode}
           >
             {t('resendCode')}
           </Button>
@@ -660,9 +763,14 @@ export function CustomLoginForm({ className }: { className?: string }) {
               disabled={isSigningIn}
               className="text-base py-2"
             />
-            {errors?.fields?.identifier?.message ? (
+            {showIdentifierError ? (
               <p className="text-sm text-destructive" role="alert">
-                {errors.fields.identifier.message}
+                {identifierError?.message}
+              </p>
+            ) : null}
+            {formError && step === 'email' ? (
+              <p className="text-sm text-destructive" role="alert">
+                {formError}
               </p>
             ) : null}
           </Field>
