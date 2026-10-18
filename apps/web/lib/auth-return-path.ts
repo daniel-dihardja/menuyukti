@@ -40,6 +40,17 @@ export function buildAuthContinueUrl(returnTo?: string | null): string {
   return routes.home
 }
 
+/**
+ * Absolute app URL for Clerk OAuth redirects.
+ * Relative paths can resolve against the Clerk Frontend API host (e.g. clerk.menuyukti.com)
+ * instead of this Next app, so SSO appears to do nothing or lands on the wrong origin.
+ */
+export function toAbsoluteAppUrl(pathOrUrl: string): string {
+  if (/^https?:\/\//i.test(pathOrUrl)) return pathOrUrl
+  if (typeof window === 'undefined') return pathOrUrl
+  return new URL(pathOrUrl, window.location.origin).href
+}
+
 /** `/login` or `/login?next=/{slug}/menu` for email sign-in from a guest surface. */
 export function buildLoginUrl(returnTo?: string | null): string {
   const safe = getSafeAuthReturnPath(returnTo)

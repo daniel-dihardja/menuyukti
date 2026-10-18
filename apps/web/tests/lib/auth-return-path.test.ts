@@ -1,10 +1,11 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import {
   AUTH_RETURN_TO_QUERY,
   buildAuthContinueUrl,
   buildLoginUrl,
   getSafeAuthReturnPath,
+  toAbsoluteAppUrl,
 } from '@/lib/auth-return-path'
 
 describe('getSafeAuthReturnPath', () => {
@@ -42,5 +43,25 @@ describe('buildAuthContinueUrl / buildLoginUrl', () => {
   it('falls back to /home when no safe return path', () => {
     expect(buildAuthContinueUrl('/advisor')).toBe('/home')
     expect(buildLoginUrl(null)).toBe('/login')
+  })
+})
+
+describe('toAbsoluteAppUrl', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('leaves absolute URLs unchanged', () => {
+    expect(toAbsoluteAppUrl('https://menuyukti.com/home')).toBe('https://menuyukti.com/home')
+  })
+
+  it('returns relative paths unchanged when window is undefined (SSR)', () => {
+    expect(toAbsoluteAppUrl('/sso-callback')).toBe('/sso-callback')
+  })
+
+  it('resolves relative paths against window.location.origin', () => {
+    vi.stubGlobal('window', { location: { origin: 'http://localhost:3000' } })
+    expect(toAbsoluteAppUrl('/sso-callback')).toBe('http://localhost:3000/sso-callback')
+    expect(toAbsoluteAppUrl('/home')).toBe('http://localhost:3000/home')
   })
 })
