@@ -38,7 +38,6 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { usePathname } from 'next/navigation'
 import { useMenuyuktiRole } from '@/hooks/use-menuyukti-role'
-import { useWorkspacePlan } from '@/hooks/use-workspace-plan'
 import { isNavItemHiddenFromNonAdmin } from '@/lib/admin-only-features'
 import { partitionClientNav } from '@/lib/client-flat-nav'
 import { isNavKeyEnabled } from '@/lib/feature-flags'
@@ -255,18 +254,14 @@ function NavMenuItems({ items, t, isActive }: NavMenuItemsProps) {
   })
 }
 
-/** Feature flag first, then admin-only role gate, then workspace plan. */
-function visibleNavItemsForRole(
-  items: NavItem[],
-  showAdminNav: boolean,
-  plan: string | null | undefined,
-): NavItem[] {
+/** Feature flag first, then admin-only role gate, then nav-key allowlist. */
+function visibleNavItemsForRole(items: NavItem[], showAdminNav: boolean): NavItem[] {
   return items.filter((item) => {
     if (!isNavKeyEnabled(item.key)) return false
     if (isNavItemHiddenFromNonAdmin(item.key) && !showAdminNav) return false
     // Platform admins keep admin-only items regardless of workspace free/pro plan.
     if (showAdminNav && isNavItemHiddenFromNonAdmin(item.key)) return true
-    return isNavKeyAllowedForPlan(item.key, plan)
+    return isNavKeyAllowedForPlan(item.key)
   })
 }
 
@@ -281,7 +276,6 @@ export function NavMain() {
   const t = useTranslations('sidebar')
   const pathname = usePathname()
   const { role, isLoaded } = useMenuyuktiRole()
-  const { plan } = useWorkspacePlan()
   const showAdminNav = isLoaded && isMenuyuktiAdmin(role)
 
   const isActive = (url?: string) => {
@@ -295,7 +289,7 @@ export function NavMain() {
     return pathname.startsWith(url)
   }
 
-  const visibleWorkspaceItems = visibleNavItemsForRole(NAV_WORKSPACE, showAdminNav, plan)
+  const visibleWorkspaceItems = visibleNavItemsForRole(NAV_WORKSPACE, showAdminNav)
 
   if (!showAdminNav) {
     const { core, services, other } = partitionClientNav(visibleWorkspaceItems)

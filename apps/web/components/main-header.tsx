@@ -38,11 +38,7 @@ export function MainHeader() {
   const [isScrolled, setIsScrolled] = React.useState(false)
 
   /** Signed-out → marketing `/`; signed-in → plan home (fallback `/home` outside provider). */
-  const brandHref = !isSignedIn
-    ? routes.root
-    : planCtx
-      ? getDefaultPathForPlan(planCtx.plan)
-      : routes.home
+  const brandHref = !isSignedIn ? routes.root : planCtx ? getDefaultPathForPlan() : routes.home
 
   React.useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 8)

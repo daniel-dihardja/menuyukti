@@ -62,7 +62,7 @@ export function isProPlan(plan: string | null | undefined): boolean {
   return normalizeWorkspacePlan(plan) === WORKSPACE_PLAN_PRO
 }
 
-export function isNavKeyAllowedForPlan(navKey: string, _plan?: string | null): boolean {
+export function isNavKeyAllowedForPlan(navKey: string): boolean {
   // Locations (`branches`) is reached via Home / Workspace CTA, not the sidebar.
   if (navKey === 'branches') {
     return false
@@ -74,11 +74,11 @@ export function isNavKeyAllowedForPlan(navKey: string, _plan?: string | null): b
  * Plan no longer gates routes. Admin-only paths are gated separately via
  * `pathnameRequiresAdmin` / `config/admin-only-features.json`.
  */
-export function isPathnameAllowedForPlan(_pathname: string, _plan?: string | null): boolean {
+export function isPathnameAllowedForPlan(): boolean {
   return true
 }
 
 /** Post-login / brand home: shared customer hub (`/home`) for all authenticated users. */
-export function getDefaultPathForPlan(_plan?: string | null): string {
+export function getDefaultPathForPlan(): string {
   return routes.home
 }
