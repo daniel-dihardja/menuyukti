@@ -26,6 +26,7 @@
     "useBackupCode": "Use a backup code",
     "genericError": "Something went wrong. Please try again.",
     "captchaError": "Verification failed. Disable blockers for this site, then try Google again.",
+    "noSignInMethods": "Sign-in is temporarily unavailable. Please try again later.",
     "startOver": "Start over"
   }
 }

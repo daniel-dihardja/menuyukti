@@ -10,6 +10,7 @@ import {
   buildAuthContinueUrl,
   rememberAuthReturnPath,
 } from '@/lib/auth-return-path'
+import { isEmailSignInEnabled } from '@/lib/email-sign-in'
 import { isCaptchaOauthError, startGoogleOauthSignIn } from '@/lib/start-google-oauth'
 import { ClerkCaptcha } from '@/components/clerk/clerk-captcha'
 import { GoogleMark } from '@/components/clerk/google-mark'
@@ -104,6 +105,7 @@ export function CustomLoginForm({ className }: { className?: string }) {
   const preparingSignInIdRef = useRef<string | null>(null)
   const preparedSignInIdRef = useRef<string | null>(null)
   const googleAvailable = isGoogleOauthAvailable(clerk)
+  const emailSignInEnabled = isEmailSignInEnabled()
 
   useEffect(() => {
     rememberAuthReturnPath(returnTo)
@@ -738,78 +740,86 @@ export function CustomLoginForm({ className }: { className?: string }) {
   return (
     <div className={cn('space-y-6', className)}>
       {googleAvailable ? (
-        <>
-          <div className="space-y-3">
-            <Button
-              type="button"
-              variant="outline"
-              size="lg"
-              className="w-full"
-              disabled={isSigningIn}
-              onClick={() => {
-                void handleGoogleSignIn()
-              }}
-            >
-              <GoogleMark />
-              {oauthBusy ? t('signingInWithGoogle') : t('continueWithGoogle')}
-            </Button>
-            {oauthError ? (
-              <p className="text-sm text-destructive" role="alert">
-                {oauthError}
-              </p>
-            ) : null}
-          </div>
-
-          <div
-            className="relative flex items-center gap-3"
-            role="separator"
-            aria-label={t('orContinueWithEmail')}
+        <div className="space-y-3">
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            className="w-full"
+            disabled={isSigningIn}
+            onClick={() => {
+              void handleGoogleSignIn()
+            }}
           >
-            <div className="bg-border h-px flex-1" />
-            <span className="text-muted-foreground shrink-0 text-xs uppercase tracking-wide">
-              {t('orContinueWithEmail')}
-            </span>
-            <div className="bg-border h-px flex-1" />
-          </div>
-        </>
+            <GoogleMark />
+            {oauthBusy ? t('signingInWithGoogle') : t('continueWithGoogle')}
+          </Button>
+          {oauthError ? (
+            <p className="text-sm text-destructive" role="alert">
+              {oauthError}
+            </p>
+          ) : null}
+        </div>
       ) : null}
 
-      <form onSubmit={handleEmailSubmit} className="space-y-8">
-        <FieldGroup>
-          <Field>
-            <FieldLabel htmlFor="email" className="text-base font-medium text-foreground">
-              {t('emailLabel')}
-            </FieldLabel>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              spellCheck={false}
-              placeholder={t('emailPlaceholder')}
-              required
-              disabled={isSigningIn}
-              className="text-base py-2"
-            />
-            {showIdentifierError ? (
-              <p className="text-sm text-destructive" role="alert">
-                {identifierError?.message}
-              </p>
-            ) : null}
-            {formError && step === 'email' ? (
-              <p className="text-sm text-destructive" role="alert">
-                {formError}
-              </p>
-            ) : null}
-          </Field>
+      {googleAvailable && emailSignInEnabled ? (
+        <div
+          className="relative flex items-center gap-3"
+          role="separator"
+          aria-label={t('orContinueWithEmail')}
+        >
+          <div className="bg-border h-px flex-1" />
+          <span className="text-muted-foreground shrink-0 text-xs uppercase tracking-wide">
+            {t('orContinueWithEmail')}
+          </span>
+          <div className="bg-border h-px flex-1" />
+        </div>
+      ) : null}
 
-          <Field>
-            <Button type="submit" size="lg" className="w-full" disabled={isSigningIn}>
-              {busy ? t('sendingCode') : t('continueWithEmail')}
-            </Button>
-          </Field>
-        </FieldGroup>
-      </form>
+      {emailSignInEnabled ? (
+        <form onSubmit={handleEmailSubmit} className="space-y-8">
+          <FieldGroup>
+            <Field>
+              <FieldLabel htmlFor="email" className="text-base font-medium text-foreground">
+                {t('emailLabel')}
+              </FieldLabel>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                spellCheck={false}
+                placeholder={t('emailPlaceholder')}
+                required
+                disabled={isSigningIn}
+                className="text-base py-2"
+              />
+              {showIdentifierError ? (
+                <p className="text-sm text-destructive" role="alert">
+                  {identifierError?.message}
+                </p>
+              ) : null}
+              {formError && step === 'email' ? (
+                <p className="text-sm text-destructive" role="alert">
+                  {formError}
+                </p>
+              ) : null}
+            </Field>
+
+            <Field>
+              <Button type="submit" size="lg" className="w-full" disabled={isSigningIn}>
+                {busy ? t('sendingCode') : t('continueWithEmail')}
+              </Button>
+            </Field>
+          </FieldGroup>
+        </form>
+      ) : null}
+
+      {!googleAvailable && !emailSignInEnabled ? (
+        <p className="text-sm text-muted-foreground" role="status">
+          {t('noSignInMethods')}
+        </p>
+      ) : null}
 
       <ClerkCaptcha />
     </div>

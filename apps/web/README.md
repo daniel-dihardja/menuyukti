@@ -58,6 +58,14 @@ NEXT_PUBLIC_SHOW_MARKETING_SIGN_IN=true
 
 Any value other than `false` shows them (default for local/dev when unset). Production Docker / CI builds bake `false`, which hides the header control and Explore nav/footer links and returns 404 for `/explore`. The `/login` route remains available for testing.
 
+## Email sign-in (OTP)
+
+Email OTP on `/login` and in the guest Sign in menu is off by default (Clerk email delivery). Re-enable with:
+
+```env
+NEXT_PUBLIC_SHOW_EMAIL_SIGN_IN=true
+```
+
 ## Google Analytics
 
 GA4 runs on public pages and the signed-in workspace when this is set:
