@@ -83,13 +83,14 @@ Example query/service touchpoints (not exhaustive): [`menu_heatmaps.py`](../../.
 
 ## Related
 
-| Topic             | Skill                                                                            |
-| ----------------- | -------------------------------------------------------------------------------- |
-| Chat agents       | [`menuyukti-agents`](../menuyukti-agents/SKILL.md)                               |
-| Analytics package | [`menuyukti-analytics`](../menuyukti-analytics/SKILL.md)                         |
-| Web consumer      | [`menuyukti-web`](../menuyukti-web/SKILL.md)                                     |
-| Germany POS audit | [`menuyukti-germany-pos-readiness`](../menuyukti-germany-pos-readiness/SKILL.md) |
-| Monorepo map      | [`menuyukti-repo-orientation`](../menuyukti-repo-orientation/SKILL.md)           |
+| Topic                  | Skill                                                                              |
+| ---------------------- | ---------------------------------------------------------------------------------- |
+| Chat agents            | [`menuyukti-agents`](../menuyukti-agents/SKILL.md)                                 |
+| Analytics package      | [`menuyukti-analytics`](../menuyukti-analytics/SKILL.md)                           |
+| Web consumer           | [`menuyukti-web`](../menuyukti-web/SKILL.md)                                       |
+| Germany POS audit      | [`menuyukti-germany-pos-readiness`](../menuyukti-germany-pos-readiness/SKILL.md)   |
+| GraphQL security audit | [`menuyukti-graphql-security-audit`](../menuyukti-graphql-security-audit/SKILL.md) |
+| Monorepo map           | [`menuyukti-repo-orientation`](../menuyukti-repo-orientation/SKILL.md)             |
 
 ## Canonical docs
 
