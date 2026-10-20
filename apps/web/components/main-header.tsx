@@ -11,7 +11,7 @@ import { AccountMenu } from '@/components/account/account-menu'
 import { GuestSignInMenu } from '@/components/guest-sign-in-menu'
 import { usePublicGuestPoints } from '@/components/public-guest-points-context'
 import { useOptionalWorkspacePlan } from '@/components/workspace-plan-provider'
-import { isExploreDiscoveryEnabled, isMarketingSignInEnabled } from '@/lib/marketing-sign-in'
+import { isMarketingSignInEnabled } from '@/lib/marketing-sign-in'
 import { isPublicLocationSurfacePath, routes } from '@/lib/routes'
 import { getDefaultPathForPlan } from '@/lib/workspace-plan'
 import { cn } from '@workspace/ui/lib/utils'
@@ -36,7 +36,8 @@ export function MainHeader() {
       : null
   /** Hide sign-in chrome on auth pages (user is already signing in / up). */
   const showSignIn = !isLogin && !isSignUp && isMarketingSignInEnabled()
-  const showExplore = isExploreDiscoveryEnabled()
+  /** Explore is Clerk-protected — only tease the link for signed-in users. */
+  const showExplore = Boolean(isSignedIn)
   const [isScrolled, setIsScrolled] = React.useState(false)
 
   /** Signed-out → marketing `/`; signed-in → plan home (fallback `/home` outside provider). */

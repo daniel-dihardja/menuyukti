@@ -48,15 +48,19 @@ NEXT_PUBLIC_LANDING_SAMPLE_MENU_SLUG=your-published-slug
 
 The QR encodes `https://menuyukti.com/{slug}/menu`. If unset, the landing still renders (headline + menu preview) without QR or CTA.
 
-## Marketing Sign in and Explore
+## Marketing Sign in
 
-Header Sign in and the Explore (discovery) directory are controlled by:
+Header Sign in for signed-out visitors is controlled by:
 
 ```env
 NEXT_PUBLIC_SHOW_MARKETING_SIGN_IN=true
 ```
 
-Any value other than `false` shows them (default for local/dev when unset). Production Docker / CI builds bake `false`, which hides the header control and Explore nav/footer links and returns 404 for `/explore`. The `/login` route remains available for testing.
+Any value other than `false` shows it (default for local/dev when unset). Production Docker / CI builds bake `false`, which hides the header control. The `/login` route remains available for testing.
+
+## Explore (discovery)
+
+`/explore` is **auth-only** (Clerk). Guests are redirected to `/login` with `next=/explore`; signed-in users can open the page. Nav/footer Explore links appear only when authenticated. The page stays `noindex` until a public launch.
 
 ## Email sign-in (OTP)
 

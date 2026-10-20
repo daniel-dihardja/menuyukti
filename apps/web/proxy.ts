@@ -19,6 +19,7 @@ const isProtectedRoute = createRouteMatcher([
   '/agent(.*)',
   '/crm(.*)',
   '/shop(.*)',
+  '/explore(.*)',
   '/print-orders(.*)',
   '/dashboard(.*)',
   '/home(.*)',
@@ -51,7 +52,9 @@ export default clerkMiddleware(async (auth, req) => {
   // Session tasks (e.g. MFA): keep pending users on auth routes; block protected app until complete.
   if (shouldRedirectPendingSession(pathname, sessionStatus)) {
     const loginUrl = new URL(routes.login, req.url)
-    const returnTo = getSafeAuthReturnPath(req.nextUrl.searchParams.get(AUTH_RETURN_TO_QUERY))
+    const returnTo =
+      getSafeAuthReturnPath(req.nextUrl.searchParams.get(AUTH_RETURN_TO_QUERY)) ??
+      getSafeAuthReturnPath(pathname)
     if (returnTo) {
       loginUrl.searchParams.set(AUTH_RETURN_TO_QUERY, returnTo)
     }
@@ -68,7 +71,9 @@ export default clerkMiddleware(async (auth, req) => {
   }
 
   const signInUrl = new URL(routes.login, req.url)
-  const returnTo = getSafeAuthReturnPath(req.nextUrl.searchParams.get(AUTH_RETURN_TO_QUERY))
+  const returnTo =
+    getSafeAuthReturnPath(req.nextUrl.searchParams.get(AUTH_RETURN_TO_QUERY)) ??
+    getSafeAuthReturnPath(pathname)
   if (returnTo) {
     signInUrl.searchParams.set(AUTH_RETURN_TO_QUERY, returnTo)
   }

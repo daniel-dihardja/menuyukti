@@ -1,11 +1,9 @@
 import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
-import { notFound } from 'next/navigation'
 
 import { ExploreFilters } from '@/app/explore/_components/explore-filters'
 import { ExploreVenueGrid } from '@/app/explore/_components/explore-venue-grid'
 import { SiteFooter } from '@/components/site-footer'
-import { isExploreDiscoveryEnabled } from '@/lib/marketing-sign-in'
 import { loadPublicLocations } from '@/lib/public-location/load-public-locations'
 import { routes } from '@/lib/routes'
 import { cn } from '@workspace/ui/lib/utils'
@@ -27,9 +25,6 @@ function firstParam(value: string | string[] | undefined): string | null {
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  if (!isExploreDiscoveryEnabled()) {
-    return { title: 'Not Found', robots: { index: false, follow: false } }
-  }
   const t = await getTranslations('explore')
   const title = t('metaTitle')
   const description = t('metaDescription')
@@ -51,9 +46,6 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function ExplorePage({ searchParams }: PageProps) {
-  if (!isExploreDiscoveryEnabled()) {
-    notFound()
-  }
   const t = await getTranslations('explore')
   const params = await searchParams
   const city = firstParam(params.city)

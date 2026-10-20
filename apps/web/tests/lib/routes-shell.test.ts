@@ -34,7 +34,7 @@ describe('routes shell helpers', () => {
     expect(isClerkProtectedAppPath('/advisor')).toBe(true)
     expect(isClerkProtectedAppPath('/home')).toBe(true)
     expect(isClerkProtectedAppPath('/shop')).toBe(true)
-    expect(isClerkProtectedAppPath('/explore')).toBe(false)
+    expect(isClerkProtectedAppPath('/explore')).toBe(true)
     expect(isClerkProtectedAppPath('/services')).toBe(true)
     expect(isClerkProtectedAppPath('/services/digital-menu')).toBe(true)
     expect(isClerkProtectedAppPath('/team')).toBe(true)
