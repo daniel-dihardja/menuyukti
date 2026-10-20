@@ -42,6 +42,7 @@ from graphql.data_sources.models.menu import (
 )
 from graphql.data_sources.models.menu_item_feedback import MenuItemFeedback
 from graphql.data_sources.models.node import Node
+from graphql.data_sources.models.pickup_offer import PickupOffer
 from graphql.data_sources.models.playbook import Playbook
 from graphql.data_sources.models.point_earn_rule import PointEarnRule
 from graphql.data_sources.models.point_ledger_entry import PointLedgerEntry
@@ -50,7 +51,6 @@ from graphql.data_sources.models.pos_bill_sequence import PosBillSequence
 from graphql.data_sources.models.pos_fiscal_process import PosFiscalProcess
 from graphql.data_sources.models.pos_order import PosOrder, PosOrderLine, PosOrderLineModifier
 from graphql.data_sources.models.pos_register import PosRegister
-from graphql.data_sources.models.pickup_offer import PickupOffer
 from graphql.data_sources.models.prediction import (
     Prediction,
     PredictionOutcome,

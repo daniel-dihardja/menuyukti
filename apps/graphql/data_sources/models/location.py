@@ -19,12 +19,12 @@ if TYPE_CHECKING:
     from graphql.data_sources.models.location_opening_hour import LocationOpeningHour
     from graphql.data_sources.models.menu import Menu
     from graphql.data_sources.models.node import Node
+    from graphql.data_sources.models.pickup_offer import PickupOffer
     from graphql.data_sources.models.playbook import Playbook
     from graphql.data_sources.models.point_earn_rule import PointEarnRule
     from graphql.data_sources.models.point_ledger_entry import PointLedgerEntry
     from graphql.data_sources.models.pos_order import PosOrder
     from graphql.data_sources.models.pos_register import PosRegister
-    from graphql.data_sources.models.pickup_offer import PickupOffer
     from graphql.data_sources.models.prediction import Prediction
     from graphql.data_sources.models.service_subscription import ServiceSubscription
     from graphql.data_sources.models.voting import Voting

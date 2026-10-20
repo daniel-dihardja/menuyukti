@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from graphql.data_sources.models.location import Location
 from graphql.data_sources.models.menu import MenuCategory
+from graphql.data_sources.models.pickup_offer import PickupOffer
 from graphql.data_sources.models.point_earn_rule import PointEarnRule
 from graphql.data_sources.models.point_ledger_entry import PointLedgerEntry
 from graphql.data_sources.models.pos_fiscal_process import PosFiscalProcess
@@ -17,7 +18,6 @@ from graphql.data_sources.models.pos_order import (
     PosOrderLine,
     PosOrderLineModifier,
 )
-from graphql.data_sources.models.pickup_offer import PickupOffer
 from graphql.data_sources.models.prediction import (
     Prediction,
     PredictionOutcome,

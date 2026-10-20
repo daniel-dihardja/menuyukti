@@ -21,11 +21,11 @@ from .menu_item_feedback import MenuItemFeedbackQuery
 from .my_food_profile import MyFoodProfileQuery
 from .my_points import MyPointsQuery
 from .operating_profile import OperatingProfileQuery
+from .pickup_offers import PickupOffersQuery
 from .playbooks import PlaybooksQuery
 from .point_earn_rules import PointEarnRulesQuery
 from .pos_orders import PosOrdersQuery
 from .posts import PostsQuery
-from .pickup_offers import PickupOffersQuery
 from .predictions import PredictionsQuery
 from .promotion_menu_items import PromotionMenuItemsQuery
 from .public_holidays import PublicHolidaysQuery
