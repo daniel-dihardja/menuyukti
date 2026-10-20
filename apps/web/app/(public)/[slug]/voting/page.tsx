@@ -70,6 +70,7 @@ export default async function PublicLocationVotingPage({ params }: PageProps) {
           slug={location.publicSlug}
           locationName={location.name}
           hasHeaderImage={hasHeaderImage}
+          listingKind={location.listingKind}
         />
       </PublicGuestHeader>
 

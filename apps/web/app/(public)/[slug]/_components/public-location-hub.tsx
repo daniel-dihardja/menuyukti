@@ -17,6 +17,7 @@ const MAX_HUB_VOTE_ROWS = 3
 type HubCopy = {
   lead: string
   emptyLead: string
+  communityBadge: string
   menuTitle: string
   menuDishCount: (count: number) => string
   menuEarnPoints: string
@@ -136,14 +137,28 @@ export function PublicLocationHub({
       <PublicGuestPointsSync balance={pointBalance} />
 
       <PublicGuestHeader headerImageUrl={location.headerImageUrl}>
-        <h1
-          className={cn(
-            'public-hub-enter-title font-heading text-4xl leading-tight tracking-tight text-pretty sm:text-5xl',
-            hasHeaderImage ? 'text-white' : 'text-foreground',
-          )}
-        >
-          {location.name}
-        </h1>
+        <div className="flex flex-wrap items-center gap-3">
+          <h1
+            className={cn(
+              'public-hub-enter-title font-heading text-4xl leading-tight tracking-tight text-pretty sm:text-5xl',
+              hasHeaderImage ? 'text-white' : 'text-foreground',
+            )}
+          >
+            {location.name}
+          </h1>
+          {location.listingKind === 'community' ? (
+            <span
+              className={cn(
+                'rounded-md border px-2 py-1 text-xs font-medium tracking-wide uppercase',
+                hasHeaderImage
+                  ? 'border-white/40 bg-black/35 text-white'
+                  : 'border-border bg-muted text-muted-foreground',
+              )}
+            >
+              {copy.communityBadge}
+            </span>
+          ) : null}
+        </div>
         <p
           className={cn(
             'public-hub-enter-lead mt-3 max-w-md text-pretty text-base leading-relaxed sm:text-lg',

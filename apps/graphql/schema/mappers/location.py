@@ -5,6 +5,7 @@ from __future__ import annotations
 from graphql.data_sources import Location
 from graphql.data_sources.models.location_area import LocationArea
 from graphql.schema.types import LocationAreaType, LocationType, OpeningHourType
+from graphql.schema.types.location_listing_kind import listing_kind_to_gql
 
 
 def location_area_to_gql(row: LocationArea) -> LocationAreaType:
@@ -37,6 +38,7 @@ def location_to_gql(row: Location) -> LocationType:
         legal_name=row.legal_name,
         tax_number=row.tax_number,
         vat_id=row.vat_id,
+        listing_kind=listing_kind_to_gql(getattr(row, "listing_kind", None)),
         node_id=str(row.node_id) if row.node_id is not None else None,
         workspace_id=str(row.workspace_id) if row.workspace_id is not None else None,
         opening_hours=opening_hours,

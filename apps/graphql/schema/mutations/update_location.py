@@ -8,7 +8,9 @@ from graphql.data_sources import Location
 from graphql.schema.auth import require_location_owner, user_id_from_info
 from graphql.schema.mappers.location import location_to_gql
 from graphql.schema.mutations.public_slug import apply_location_public_slug
+from graphql.domain.location_listing_kind import normalize_listing_kind
 from graphql.schema.types import LocationType
+from graphql.schema.types.location_listing_kind import LocationListingKind
 from graphql.services.location import normalize_opening_hours, replace_opening_hours
 
 
@@ -35,6 +37,7 @@ class UpdateLocationMutation:
         tax_number: str | None = UNSET,
         vat_id: str | None = UNSET,
         public_slug: str | None = UNSET,
+        listing_kind: LocationListingKind | None = UNSET,
         opening_hours: list[OpeningHourInput] | None = UNSET,
     ) -> LocationType:
         user_id = user_id_from_info(info)
@@ -71,6 +74,10 @@ class UpdateLocationMutation:
                 row.vat_id = vat_id.strip() if vat_id else None
             if public_slug is not UNSET:
                 apply_location_public_slug(session, row, public_slug)
+            if listing_kind is not UNSET:
+                if listing_kind is None:
+                    raise ValueError("listing_kind cannot be null")
+                row.listing_kind = normalize_listing_kind(listing_kind.value)
 
             if opening_hours is not UNSET:
                 triples = [

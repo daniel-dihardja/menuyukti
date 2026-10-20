@@ -1,5 +1,6 @@
 from .location import LocationType, OpeningHourType
 from .location_area import LocationAreaType
+from .location_listing_kind import LocationListingKind
 from .location_menu_item_cogs import LocationMenuItemCogsType
 from .menu import MenuCategoryType, MenuItemType, MenuType
 from .menu_item_cogs import MenuItemCogsType
@@ -36,6 +37,7 @@ from .workspace_membership import WorkspaceMembershipType
 __all__ = [
     "LocationType",
     "LocationAreaType",
+    "LocationListingKind",
     "OpeningHourType",
     "LocationMenuItemCogsType",
     "MenuType",

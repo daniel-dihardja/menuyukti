@@ -131,6 +131,10 @@ function normalizeLocationGeo(value: { countryId?: string; country?: string; cur
   }
 }
 
+export const LOCATION_LISTING_KINDS = ['commercial', 'community'] as const
+export const locationListingKindSchema = z.enum(LOCATION_LISTING_KINDS)
+export type LocationListingKind = z.infer<typeof locationListingKindSchema>
+
 export const createLocationSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   street: z.string().optional().default(''),
@@ -139,6 +143,7 @@ export const createLocationSchema = z.object({
   country: optionalEmptyCountrySchema.optional().default(''),
   currency: optionalEmptyCurrencySchema.optional().default(''),
   publicSlug: z.string().max(128).optional().default(''),
+  listingKind: locationListingKindSchema.optional().default('commercial'),
   openingHours: openingHoursWeekSchema.optional(),
 })
 export const createLocationParsedSchema = createLocationSchema.transform((value) => {
@@ -164,6 +169,7 @@ export const updateLocationSchema = z.object({
   country: optionalEmptyCountrySchema.optional().default(''),
   currency: optionalEmptyCurrencySchema.optional().default(''),
   publicSlug: z.string().max(128).optional().default(''),
+  listingKind: locationListingKindSchema.optional().default('commercial'),
   openingHours: openingHoursWeekSchema,
   /** Owner brief hints; omit to leave unchanged, `{}` clears stored profile. */
   quickProfile: z.record(z.string(), z.unknown()).optional(),

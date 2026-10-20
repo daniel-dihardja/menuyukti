@@ -17,6 +17,7 @@ from graphql.services.point_earn_rules import (
     ACTION_KEY_OPEN_MENU_QR,
     list_rules_for_location,
 )
+from graphql.domain.location_listing_kind import normalize_listing_kind
 from graphql.services.service_subscriptions import (
     SERVICE_KEY_DIGITAL_MENU,
     SERVICE_KEY_PICK_AND_WIN,
@@ -64,6 +65,7 @@ class PublicLocationView:
     id: int
     name: str
     public_slug: str
+    listing_kind: str
     services: list[PublicLocationServiceView]
     header_image_filename: str | None
     workspace_id: str | None
@@ -80,6 +82,7 @@ class PublicLocationDirectoryItemView:
     name: str
     public_slug: str
     city: str | None
+    listing_kind: str
     header_image_filename: str | None
     workspace_id: str | None
     media_owner_clerk_user_id: str | None
@@ -129,6 +132,7 @@ def list_discoverable_locations(
     *,
     city: str | None = None,
     query: str | None = None,
+    listing_kind: str | None = None,
     limit: int = DIRECTORY_DEFAULT_LIMIT,
 ) -> list[PublicLocationDirectoryItemView]:
     capped = clamp_directory_limit(limit)
@@ -148,6 +152,11 @@ def list_discoverable_locations(
             )
         )
 
+    kind_cleaned = (listing_kind or "").strip().lower()
+    if kind_cleaned:
+        kind = normalize_listing_kind(kind_cleaned)
+        stmt = stmt.where(Location.listing_kind == kind)
+
     stmt = stmt.order_by(Location.name.asc(), Location.id.asc()).limit(capped)
     rows = session.execute(stmt).all()
 
@@ -161,6 +170,7 @@ def list_discoverable_locations(
                 name=location.name,
                 public_slug=str(location.public_slug),
                 city=city_value,
+                listing_kind=normalize_listing_kind(getattr(location, "listing_kind", None)),
                 header_image_filename=menu.header_image_filename,
                 workspace_id=workspace_id,
                 media_owner_clerk_user_id=media_owner,
@@ -322,6 +332,7 @@ def get_public_location(session: Session, slug: str) -> PublicLocationView | Non
         id=int(location.id),
         name=location.name,
         public_slug=str(location.public_slug),
+        listing_kind=normalize_listing_kind(getattr(location, "listing_kind", None)),
         services=[
             PublicLocationServiceView(
                 key=SERVICE_KEY_DIGITAL_MENU,

@@ -50,7 +50,7 @@ export async function POST(req: Request) {
     }
 
     const json = await req.json()
-    const { name, street, city, country, currency, publicSlug, openingHours } =
+    const { name, street, city, country, currency, publicSlug, listingKind, openingHours } =
       createLocationParsedSchema.parse(json)
 
     const wsData = await graphqlQuery<MyWorkspaceData>(MY_WORKSPACE_QUERY, {}, userId)
@@ -82,6 +82,7 @@ export async function POST(req: Request) {
         country: country || null,
         currency: currency || null,
         publicSlug: publicSlug || null,
+        listingKind,
       },
       userId,
     )

@@ -67,9 +67,16 @@ export async function ExploreVenueGrid({ locations, hasActiveFilters }: ExploreV
               )}
             </div>
             <div className="flex flex-1 flex-col gap-1 px-4 py-3">
-              <p className="text-base font-semibold tracking-tight text-foreground">
-                {location.name}
-              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-base font-semibold tracking-tight text-foreground">
+                  {location.name}
+                </p>
+                {location.listingKind === 'community' ? (
+                  <span className="rounded-md border border-border bg-muted px-1.5 py-0.5 text-[0.65rem] font-medium tracking-wide text-muted-foreground uppercase">
+                    {t('communityBadge')}
+                  </span>
+                ) : null}
+              </div>
               {location.city ? (
                 <p className="text-sm text-muted-foreground">{location.city}</p>
               ) : null}

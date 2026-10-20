@@ -87,6 +87,9 @@ export function LocationForm({
     if (initial) return initial
     return suggestMenuSlugFromName(initialValues?.name ?? '')
   })
+  const [listingKind, setListingKind] = useState(
+    () => initialValues?.listingKind ?? ('commercial' as const),
+  )
   const [countryId, setCountryId] = useState(() => {
     const initialCountryId = normalizeCountryId(initialValues?.countryId)
     if (initialCountryId) return initialCountryId
@@ -256,6 +259,7 @@ export function LocationForm({
         country,
         currency,
         publicSlug,
+        listingKind,
         openingHours,
       }
       const body =
@@ -331,6 +335,7 @@ export function LocationForm({
     countryId,
     currency,
     publicSlug,
+    listingKind,
     showCurrencyAutoHint,
     openingHours,
     hints,
@@ -373,6 +378,10 @@ export function LocationForm({
       markDirty()
       setSlugFollowsName(false)
       setPublicSlug(value)
+    },
+    setListingKind: (value) => {
+      markDirty()
+      setListingKind(value)
     },
     setRowClosed,
     updateOpeningHour,

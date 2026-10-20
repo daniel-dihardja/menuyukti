@@ -25,6 +25,10 @@ from graphql.data_sources import (
 )
 from graphql.data_sources.models.pos_fiscal_process import PosFiscalProcess
 from graphql.data_sources.models.pos_order import PosOrderLine, PosOrderLineModifier
+from graphql.domain.location_listing_kind import (
+    DEFAULT_LISTING_KIND,
+    normalize_listing_kind,
+)
 
 VALID_WEEKDAYS = ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
 
@@ -96,6 +100,7 @@ def create_location_row(
     country: str | None,
     currency: str | None = None,
     include_currency: bool = False,
+    listing_kind: str | None = None,
 ) -> Location:
     loc_kwargs: dict[str, object] = {
         "workspace_id": workspace_id,
@@ -104,6 +109,11 @@ def create_location_row(
         "city": city,
         "country": country,
         "clerk_user_id": clerk_user_id,
+        "listing_kind": (
+            normalize_listing_kind(listing_kind)
+            if listing_kind is not None
+            else DEFAULT_LISTING_KIND
+        ),
     }
     if include_currency:
         loc_kwargs["currency"] = currency

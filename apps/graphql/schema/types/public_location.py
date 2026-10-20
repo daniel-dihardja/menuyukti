@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import strawberry
 
+from graphql.schema.types.location_listing_kind import LocationListingKind
+
 
 @strawberry.type(description="One guest-facing service entry on a public location hub.")
 class PublicLocationServiceType:
@@ -43,6 +45,7 @@ class PublicLocationType:
     id: int
     name: str
     public_slug: str
+    listing_kind: LocationListingKind
     services: list[PublicLocationServiceType]
     header_image_filename: str | None
     workspace_id: strawberry.ID | None
@@ -61,6 +64,7 @@ class PublicLocationDirectoryItemType:
     name: str
     public_slug: str
     city: str | None
+    listing_kind: LocationListingKind
     header_image_filename: str | None
     workspace_id: strawberry.ID | None
     media_owner_clerk_user_id: str | None

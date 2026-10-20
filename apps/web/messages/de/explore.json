@@ -1,0 +1,10 @@
+{
+  "explore": {
+    "kindLabel": "Typ",
+    "kindAll": "Alle",
+    "kindCommercial": "Gewerblich",
+    "kindCommunity": "Community",
+    "communityBadge": "Community",
+    "emptyFiltersBody": "Probiere eine andere Stadt, einen anderen Typ oder eine andere Suche."
+  }
+}

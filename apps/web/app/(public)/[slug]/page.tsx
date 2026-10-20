@@ -99,6 +99,7 @@ export default async function PublicLocationHomePage({ params }: PageProps) {
       copy={{
         lead: greetingLead(t, new Date().getHours()),
         emptyLead: t('greetingEmpty'),
+        communityBadge: t('communityBadge'),
         menuTitle: t('menuTitle'),
         menuDishCount: (count) => t('menuDishCount', { count }),
         menuEarnPoints: t('menuEarnPoints'),

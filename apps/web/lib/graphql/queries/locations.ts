@@ -97,6 +97,8 @@ export type LocationsData = {
   }>
 }
 
+export type LocationListingKind = 'commercial' | 'community'
+
 export const LOCATION_QUERY = `
   query Location($id: ID!) {
     location(id: $id) {
@@ -110,6 +112,7 @@ export const LOCATION_QUERY = `
       legalName
       taxNumber
       vatId
+      listingKind
       nodeId
       openingHours {
         dayOfWeek
@@ -141,6 +144,7 @@ export type LocationData = {
     legalName: string | null
     taxNumber: string | null
     vatId: string | null
+    listingKind: LocationListingKind
     nodeId: string | null
     openingHours: Array<{
       dayOfWeek: string
@@ -246,6 +250,7 @@ export const CREATE_LOCATION_MUTATION = `
     $country: String
     $currency: String
     $publicSlug: String
+    $listingKind: LocationListingKind
   ) {
     createLocation(
       workspaceId: $workspaceId
@@ -255,10 +260,12 @@ export const CREATE_LOCATION_MUTATION = `
       country: $country
       currency: $currency
       publicSlug: $publicSlug
+      listingKind: $listingKind
     ) {
       id
       name
       publicSlug
+      listingKind
       nodeId
     }
   }
@@ -269,6 +276,7 @@ export type CreateLocationData = {
     id: string
     name: string
     publicSlug: string | null
+    listingKind: LocationListingKind
     nodeId: string | null
   }
 }
@@ -282,6 +290,7 @@ export const UPDATE_LOCATION_MUTATION = `
     $country: String
     $currency: String
     $publicSlug: String
+    $listingKind: LocationListingKind
     $openingHours: [OpeningHourInput!]
   ) {
     updateLocation(
@@ -292,6 +301,7 @@ export const UPDATE_LOCATION_MUTATION = `
       country: $country
       currency: $currency
       publicSlug: $publicSlug
+      listingKind: $listingKind
       openingHours: $openingHours
     ) {
       id
@@ -301,6 +311,7 @@ export const UPDATE_LOCATION_MUTATION = `
       country
       currency
       publicSlug
+      listingKind
       nodeId
       openingHours {
         dayOfWeek
@@ -320,6 +331,7 @@ export type UpdateLocationData = {
     country: string | null
     currency: string | null
     publicSlug: string | null
+    listingKind: LocationListingKind
     nodeId: string | null
     openingHours: Array<{
       dayOfWeek: string

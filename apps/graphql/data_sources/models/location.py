@@ -52,6 +52,12 @@ class Location(Base):
     legal_name: Mapped[str | None] = mapped_column(String(256), nullable=True)
     tax_number: Mapped[str | None] = mapped_column(String(64), nullable=True)
     vat_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    listing_kind: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False,
+        default="commercial",
+        server_default="commercial",
+    )
     workspace_id: Mapped[int | None] = mapped_column(
         Integer,
         ForeignKey("workspace.id"),

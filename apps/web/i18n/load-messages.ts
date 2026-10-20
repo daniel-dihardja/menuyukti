@@ -81,18 +81,23 @@ function deepMergeMessages(
 /**
  * Load next-intl message catalogs for a locale.
  * Catalogs live under `messages/<locale>/<namespace>.json` (one top-level key each).
- * For ``de``, English is the base; ``messages/de/pos.json`` and ``messages/de/public.json``
- * overlay those namespaces (deep-merged so partial public catalogs keep English keys).
+ * For ``de``, English is the base; ``messages/de/pos.json``, ``messages/de/public.json``,
+ * and ``messages/de/explore.json`` overlay those namespaces (deep-merged so partial
+ * catalogs keep English keys).
  * Touch this module when message JSON changes fail to hot-reload under Turbopack.
  */
 export async function loadMessages(locale: string): Promise<AbstractIntlMessages> {
   const base = await loadEnglishMessages()
   if (locale === 'de') {
-    const [dePos, dePublic] = await Promise.all([
+    const [dePos, dePublic, deExplore] = await Promise.all([
       import('../messages/de/pos.json'),
       import('../messages/de/public.json'),
+      import('../messages/de/explore.json'),
     ])
-    return deepMergeMessages(deepMergeMessages(base, dePos.default), dePublic.default)
+    return deepMergeMessages(
+      deepMergeMessages(deepMergeMessages(base, dePos.default), dePublic.default),
+      deExplore.default,
+    )
   }
   return base
 }

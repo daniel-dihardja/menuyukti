@@ -9,7 +9,11 @@ import { routes } from '@/lib/routes'
 import { cn } from '@workspace/ui/lib/utils'
 
 type PageProps = {
-  searchParams: Promise<{ city?: string | string[]; q?: string | string[] }>
+  searchParams: Promise<{
+    city?: string | string[]
+    q?: string | string[]
+    kind?: string | string[]
+  }>
 }
 
 function firstParam(value: string | string[] | undefined): string | null {
@@ -50,8 +54,13 @@ export default async function ExplorePage({ searchParams }: PageProps) {
   const params = await searchParams
   const city = firstParam(params.city)
   const query = firstParam(params.q)
-  const directory = await loadPublicLocations({ city, query })
-  const hasActiveFilters = Boolean(city || query)
+  const kindRaw = firstParam(params.kind)
+  const kind =
+    kindRaw === 'community' || kindRaw === 'commercial'
+      ? (kindRaw as 'community' | 'commercial')
+      : null
+  const directory = await loadPublicLocations({ city, query, listingKind: kind })
+  const hasActiveFilters = Boolean(city || query || kind)
 
   const horizontalPadding =
     'pl-[max(1.5rem,env(safe-area-inset-left,0px))] pr-[max(1.5rem,env(safe-area-inset-right,0px))]'
@@ -88,7 +97,7 @@ export default async function ExplorePage({ searchParams }: PageProps) {
             </p>
           </header>
 
-          <ExploreFilters cities={directory.cities} city={city} query={query} />
+          <ExploreFilters cities={directory.cities} city={city} query={query} kind={kind} />
 
           <ExploreVenueGrid locations={directory.locations} hasActiveFilters={hasActiveFilters} />
         </div>

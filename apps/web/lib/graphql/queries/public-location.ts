@@ -24,10 +24,13 @@ export type PublicLocationVotingTeaser = {
   pointsForVote: number
 }
 
+export type PublicLocationListingKind = 'commercial' | 'community'
+
 export type PublicLocation = {
   id: number
   name: string
   publicSlug: string
+  listingKind: PublicLocationListingKind
   services: PublicLocationService[]
   headerImageFilename: string | null
   workspaceId: string | null
@@ -44,6 +47,7 @@ export const PUBLIC_LOCATION_QUERY = `
       id
       name
       publicSlug
+      listingKind
       services {
         key
         hrefSegment
@@ -166,6 +170,7 @@ export type PublicLocationDirectoryItem = {
   name: string
   publicSlug: string
   city: string | null
+  listingKind: PublicLocationListingKind
   headerImageFilename: string | null
   workspaceId: string | null
   mediaOwnerClerkUserId: string | null
@@ -178,14 +183,20 @@ export type PublicLocationDirectory = {
 }
 
 export const PUBLIC_LOCATIONS_QUERY = `
-  query PublicLocations($city: String, $query: String, $first: Int) {
-    publicLocations(city: $city, query: $query, first: $first) {
+  query PublicLocations(
+    $city: String
+    $query: String
+    $listingKind: LocationListingKind
+    $first: Int
+  ) {
+    publicLocations(city: $city, query: $query, listingKind: $listingKind, first: $first) {
       cities
       locations {
         id
         name
         publicSlug
         city
+        listingKind
         headerImageFilename
         workspaceId
         mediaOwnerClerkUserId

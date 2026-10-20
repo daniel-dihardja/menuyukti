@@ -9,25 +9,35 @@ import { routes } from '@/lib/routes'
 import { Button } from '@workspace/ui/components/button'
 import { Input } from '@workspace/ui/components/input'
 import { ToggleGroup, ToggleGroupItem } from '@workspace/ui/components/toggle-group'
-import { cn } from '@workspace/ui/lib/utils'
+
+export type ExploreListingKindFilter = 'commercial' | 'community'
 
 type ExploreFiltersProps = {
   cities: string[]
   city: string | null
   query: string | null
+  kind: ExploreListingKindFilter | null
 }
 
 const CITY_ALL = '__all__'
+const KIND_ALL = '__all__'
+const KIND_COMMUNITY = 'community'
+const KIND_COMMERCIAL = 'commercial'
 
-function buildExploreHref(city: string | null, query: string | null): string {
+function buildExploreHref(
+  city: string | null,
+  query: string | null,
+  kind: ExploreListingKindFilter | null,
+): string {
   const params = new URLSearchParams()
   if (city) params.set('city', city)
   if (query) params.set('q', query)
+  if (kind === 'community' || kind === 'commercial') params.set('kind', kind)
   const qs = params.toString()
   return qs ? `${routes.explore}?${qs}` : routes.explore
 }
 
-export function ExploreFilters({ cities, city, query }: ExploreFiltersProps) {
+export function ExploreFilters({ cities, city, query, kind }: ExploreFiltersProps) {
   const t = useTranslations('explore')
   const router = useRouter()
   const [draftQuery, setDraftQuery] = React.useState(query ?? '')
@@ -37,19 +47,27 @@ export function ExploreFilters({ cities, city, query }: ExploreFiltersProps) {
   }, [query])
 
   const cityValue = city ?? CITY_ALL
+  const kindValue =
+    kind === 'community' ? KIND_COMMUNITY : kind === 'commercial' ? KIND_COMMERCIAL : KIND_ALL
 
-  function navigate(nextCity: string | null, nextQuery: string | null) {
-    router.push(buildExploreHref(nextCity, nextQuery))
+  function navigate(
+    nextCity: string | null,
+    nextQuery: string | null,
+    nextKind: ExploreListingKindFilter | null = kind,
+  ) {
+    router.push(buildExploreHref(nextCity, nextQuery, nextKind))
   }
 
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const cleaned = draftQuery.trim()
-    navigate(city, cleaned || null)
+    navigate(city, cleaned || null, kind)
   }
 
+  const chipClass = 'h-9 min-h-9 shrink-0 touch-manipulation rounded-full px-3 text-xs font-medium'
+
   return (
-    <div className="flex w-full flex-col gap-5">
+    <div className="flex w-full flex-col gap-4">
       <form onSubmit={onSubmit} className="flex w-full flex-col gap-2 sm:flex-row sm:items-center">
         <label htmlFor="explore-search" className="sr-only">
           {t('searchLabel')}
@@ -76,44 +94,65 @@ export function ExploreFilters({ cities, city, query }: ExploreFiltersProps) {
         </Button>
       </form>
 
-      {cities.length > 0 ? (
-        <div className="flex flex-col gap-2">
-          <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-            {t('citiesLabel')}
-          </p>
-          <ToggleGroup
-            type="single"
-            value={cityValue}
-            onValueChange={(value) => {
-              if (!value || value === CITY_ALL) {
-                navigate(null, query)
-                return
-              }
-              navigate(value, query)
-            }}
-            className="flex flex-wrap justify-start gap-2"
-            aria-label={t('citiesLabel')}
-          >
-            <ToggleGroupItem
-              value={CITY_ALL}
-              className={cn(
-                'h-11 min-h-11 touch-manipulation rounded-full px-3 text-xs font-medium sm:h-9 sm:min-h-9',
-              )}
+      <div className="flex w-full flex-nowrap items-center gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <ToggleGroup
+          type="single"
+          value={kindValue}
+          onValueChange={(value) => {
+            if (!value || value === KIND_ALL) {
+              navigate(city, query, null)
+              return
+            }
+            if (value === KIND_COMMUNITY) {
+              navigate(city, query, 'community')
+              return
+            }
+            if (value === KIND_COMMERCIAL) {
+              navigate(city, query, 'commercial')
+            }
+          }}
+          className="flex shrink-0 flex-nowrap justify-start gap-2"
+          aria-label={t('kindLabel')}
+        >
+          <ToggleGroupItem value={KIND_ALL} className={chipClass}>
+            {t('kindAll')}
+          </ToggleGroupItem>
+          <ToggleGroupItem value={KIND_COMMERCIAL} className={chipClass}>
+            {t('kindCommercial')}
+          </ToggleGroupItem>
+          <ToggleGroupItem value={KIND_COMMUNITY} className={chipClass}>
+            {t('kindCommunity')}
+          </ToggleGroupItem>
+        </ToggleGroup>
+
+        {cities.length > 0 ? (
+          <>
+            <span className="mx-1 h-5 w-px shrink-0 bg-border" aria-hidden />
+            <ToggleGroup
+              type="single"
+              value={cityValue}
+              onValueChange={(value) => {
+                if (!value || value === CITY_ALL) {
+                  navigate(null, query, kind)
+                  return
+                }
+                navigate(value, query, kind)
+              }}
+              className="flex min-w-0 flex-nowrap justify-start gap-2"
+              aria-label={t('citiesLabel')}
             >
-              {t('cityAll')}
-            </ToggleGroupItem>
-            {cities.map((name) => (
-              <ToggleGroupItem
-                key={name}
-                value={name}
-                className="h-11 min-h-11 touch-manipulation rounded-full px-3 text-xs font-medium sm:h-9 sm:min-h-9"
-              >
-                {name}
+              <ToggleGroupItem value={CITY_ALL} className={chipClass}>
+                {t('cityAll')}
               </ToggleGroupItem>
-            ))}
-          </ToggleGroup>
-        </div>
-      ) : null}
+              {cities.map((name) => (
+                <ToggleGroupItem key={name} value={name} className={chipClass}>
+                  {name}
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
+          </>
+        ) : null}
+      </div>
     </div>
   )
 }
