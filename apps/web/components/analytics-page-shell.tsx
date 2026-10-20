@@ -9,6 +9,9 @@ import {
 
 export type AnalyticsPageShellContentWidth = 'full' | 'container'
 
+/** `compact` = sidebar trigger + title only (no crumb trail). Use for full-bleed tools like POS. */
+export type AnalyticsPageShellChrome = 'default' | 'compact'
+
 type Breadcrumb = {
   label: string
   href?: string
@@ -20,6 +23,8 @@ type AnalyticsPageShellProps = {
   children: ReactNode
   /** Most admin pages: ~1440px centered. Use `full` for studio, campaign workspace, wide charts/tables. @default 'container' */
   contentWidth?: AnalyticsPageShellContentWidth
+  /** Header chrome. @default 'default' */
+  chrome?: AnalyticsPageShellChrome
   mainClassName?: string
   triggerWrapperClassName?: string
   beforeContent?: ReactNode
@@ -32,11 +37,13 @@ export function AnalyticsPageShell({
   breadcrumbs,
   children,
   contentWidth = 'container',
+  chrome = 'default',
   mainClassName,
   triggerWrapperClassName,
   beforeContent,
   breadcrumbCurrent,
 }: AnalyticsPageShellProps) {
+  const compact = chrome === 'compact'
   return (
     <>
       {beforeContent}
@@ -44,8 +51,10 @@ export function AnalyticsPageShell({
         <header className={cn('shrink-0', triggerWrapperClassName)}>
           <SidebarTriggerClient
             title={title}
-            breadcrumbs={breadcrumbs}
-            breadcrumbCurrent={breadcrumbCurrent}
+            breadcrumbs={compact ? undefined : breadcrumbs}
+            showBreadcrumb={!compact}
+            showTitle={compact}
+            breadcrumbCurrent={compact ? undefined : breadcrumbCurrent}
           />
         </header>
 

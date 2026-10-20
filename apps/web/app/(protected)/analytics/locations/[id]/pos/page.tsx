@@ -82,16 +82,17 @@ export default async function Page({ params }: PageProps) {
 
   return (
     <AnalyticsPageShell
-      title={t('title')}
+      title={`${location.name} · ${t('title')}`}
       breadcrumbs={[
         { label: tBranches('title'), href: routes.analytics.branches },
         { label: location.name, href: routes.analytics.branchesDetail(location.id) },
         { label: t('title') },
       ]}
+      chrome="compact"
       contentWidth="full"
-      mainClassName="gap-0 px-0 py-0 lg:min-h-0 lg:flex-1 lg:overflow-hidden"
+      mainClassName="gap-0 px-0 py-0 md:min-h-0 md:flex-1 md:overflow-hidden"
     >
-      <section className="flex min-h-0 flex-1 flex-col gap-3 p-3 lg:h-[calc(100dvh-4rem)] lg:max-h-[calc(100dvh-4rem)] lg:gap-3 lg:overflow-hidden lg:p-4">
+      <section className="flex min-h-0 flex-1 flex-col gap-3 p-3 md:h-[calc(100dvh-4rem)] md:max-h-[calc(100dvh-4rem)] md:gap-3 md:overflow-hidden md:p-4">
         <PosCashier
           locationId={locationId}
           locationName={location.name}

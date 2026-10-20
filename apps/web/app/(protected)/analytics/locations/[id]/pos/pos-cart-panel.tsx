@@ -20,10 +20,13 @@ import { formatCurrency } from '@/lib/currency'
 import type { DiscountMode } from './pos-utils'
 import { isDigitalMenuOrder, nextPrepStatus, statusBadgeVariant } from './pos-utils'
 
+const AMOUNT_DISCOUNT_CHIPS = [1, 2, 5] as const
+const PERCENT_DISCOUNT_CHIPS = [5, 10, 15] as const
+
 type PosCartPanelProps = {
   currentOrder: PosOrder | null
   currencyCode: string
-  pending: boolean
+  busyKey: string | null
   isEditable: boolean
   canShowReceipt: boolean
   canShowKitchen: boolean
@@ -53,6 +56,7 @@ type PosCartPanelProps = {
   onRemoveLine: (lineId: number) => void
   onSaveLineNote: (lineId: number) => void
   onApplyDiscount: () => void
+  onQuickDiscount: (mode: DiscountMode, value: number) => void
   onPayOpen: () => void
   onPayCancel: () => void
   onPay: (method: PosPaymentMethod) => void
@@ -67,7 +71,7 @@ type PosCartPanelProps = {
 export function PosCartPanel({
   currentOrder,
   currencyCode,
-  pending,
+  busyKey,
   isEditable,
   canShowReceipt,
   canShowKitchen,
@@ -97,6 +101,7 @@ export function PosCartPanel({
   onRemoveLine,
   onSaveLineNote,
   onApplyDiscount,
+  onQuickDiscount,
   onPayOpen,
   onPayCancel,
   onPay,
@@ -115,6 +120,18 @@ export function PosCartPanel({
       ? nextPrepStatus(currentOrder.prepStatus, currentOrder.fulfillmentMode)
       : null
 
+  const isBusy = (key: string) => busyKey === key
+  const lineBusy = (lineId: number) => busyKey === `line:${lineId}`
+  const noteBusy = (lineId: number) => busyKey === `note:${lineId}`
+  const payBusy = isBusy('pay')
+  const discountBusy = isBusy('discount')
+  const tableBusy = isBusy('table')
+  const ticketBusy = isBusy('newTicket')
+  const voidBusy = isBusy('void')
+  const refundBusy = isBusy('refund')
+  const prepBusy = isBusy('prep')
+  const anyBusy = busyKey != null
+
   const actions = (
     <div className="flex flex-col gap-2">
       {prepNext && onAdvancePrep ? (
@@ -122,10 +139,10 @@ export function PosCartPanel({
           type="button"
           size="lg"
           variant="secondary"
-          disabled={pending}
+          disabled={prepBusy}
           onClick={onAdvancePrep}
         >
-          {pending ? <Spinner data-icon="inline-start" /> : null}
+          {prepBusy ? <Spinner data-icon="inline-start" /> : null}
           {t(`prep.advanceTo.${prepNext.toLowerCase()}`)}
         </Button>
       ) : null}
@@ -135,10 +152,10 @@ export function PosCartPanel({
             <Button
               type="button"
               size="lg"
-              disabled={!currentOrder?.lines.length || pending}
+              disabled={!currentOrder?.lines.length || payBusy}
               onClick={onPayOpen}
             >
-              {pending ? <Spinner data-icon="inline-start" /> : null}
+              {payBusy ? <Spinner data-icon="inline-start" /> : null}
               {t('pay')}
             </Button>
           ) : (
@@ -149,10 +166,10 @@ export function PosCartPanel({
                     key={method}
                     type="button"
                     size="lg"
-                    disabled={pending}
+                    disabled={payBusy}
                     onClick={() => onPay(method)}
                   >
-                    {pending ? <Spinner data-icon="inline-start" /> : null}
+                    {payBusy ? <Spinner data-icon="inline-start" /> : null}
                     {t(`payment.${method.toLowerCase()}`)}
                   </Button>
                 ))}
@@ -161,7 +178,7 @@ export function PosCartPanel({
                 type="button"
                 size="lg"
                 variant="outline"
-                disabled={pending}
+                disabled={payBusy}
                 onClick={onPayCancel}
               >
                 {t('payCancel')}
@@ -173,7 +190,7 @@ export function PosCartPanel({
               type="button"
               size="lg"
               variant="outline"
-              disabled={pending}
+              disabled={anyBusy}
               onClick={onKitchen}
             >
               {t('kitchenPrint')}
@@ -183,16 +200,17 @@ export function PosCartPanel({
             type="button"
             size="lg"
             variant="destructive"
-            disabled={!currentOrder || pending}
+            disabled={!currentOrder || voidBusy}
             onClick={onVoid}
           >
+            {voidBusy ? <Spinner data-icon="inline-start" /> : null}
             {t('void')}
           </Button>
         </>
       ) : canShowReceipt || canShowKitchen ? (
         <>
           {canShowReceipt ? (
-            <Button type="button" size="lg" disabled={pending} onClick={onReceipt}>
+            <Button type="button" size="lg" disabled={anyBusy} onClick={onReceipt}>
               {t('receipt')}
             </Button>
           ) : null}
@@ -201,14 +219,21 @@ export function PosCartPanel({
               type="button"
               size="lg"
               variant="outline"
-              disabled={pending}
+              disabled={anyBusy}
               onClick={onKitchen}
             >
               {t('kitchenPrint')}
             </Button>
           ) : null}
           {canRefund ? (
-            <Button type="button" size="lg" variant="outline" disabled={pending} onClick={onRefund}>
+            <Button
+              type="button"
+              size="lg"
+              variant="outline"
+              disabled={refundBusy}
+              onClick={onRefund}
+            >
+              {refundBusy ? <Spinner data-icon="inline-start" /> : null}
               {t('refund')}
             </Button>
           ) : null}
@@ -223,7 +248,7 @@ export function PosCartPanel({
         'flex min-h-0 min-w-0 flex-col gap-3',
         stickyActions && 'h-full overflow-hidden',
       )}
-      aria-busy={pending}
+      aria-busy={anyBusy}
     >
       <div className="flex shrink-0 items-center justify-between gap-2">
         <div className="min-w-0">
@@ -264,10 +289,10 @@ export function PosCartPanel({
               type="button"
               size="lg"
               variant="secondary"
-              disabled={pending}
+              disabled={ticketBusy}
               onClick={onNewTicket}
             >
-              {pending ? <Spinner data-icon="inline-start" /> : null}
+              {ticketBusy ? <Spinner data-icon="inline-start" /> : null}
               {t('newTicket')}
             </Button>
           </div>
@@ -301,7 +326,18 @@ export function PosCartPanel({
               maxLength={64}
               value={tableLabelInput}
               onChange={(e) => onTableLabelInputChange(e.target.value)}
-              disabled={pending}
+              onBlur={() => {
+                const next = tableLabelInput.trim()
+                const current = (currentOrder.tableLabel ?? '').trim()
+                if (next !== current) onApplyTableLabel()
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  onApplyTableLabel()
+                }
+              }}
+              disabled={tableBusy}
               placeholder={t('tableLabelPlaceholder')}
               className="h-11 max-w-[10rem]"
             />
@@ -309,9 +345,10 @@ export function PosCartPanel({
               type="button"
               size="lg"
               variant="outline"
-              disabled={pending}
+              disabled={tableBusy}
               onClick={onApplyTableLabel}
             >
+              {tableBusy ? <Spinner data-icon="inline-start" /> : null}
               {t('applyTableLabel')}
             </Button>
             {currentOrder.tableLabel ? (
@@ -319,7 +356,7 @@ export function PosCartPanel({
                 type="button"
                 size="lg"
                 variant="ghost"
-                disabled={pending}
+                disabled={tableBusy}
                 onClick={onClearTableLabel}
               >
                 {t('clearTableLabel')}
@@ -347,119 +384,124 @@ export function PosCartPanel({
           </Empty>
         ) : (
           <ul className="flex flex-col gap-2 pr-3">
-            {lines.map((line) => (
-              <li key={line.id} className="flex flex-col gap-1 py-2">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">{line.nameSnapshot}</p>
-                    {(line.modifiers ?? []).length > 0 ? (
-                      <ul className="mt-0.5 flex flex-col gap-0.5 text-xs text-muted-foreground">
-                        {(line.modifiers ?? []).map((modifier) => (
-                          <li key={modifier.id}>+ {modifier.nameSnapshot}</li>
-                        ))}
-                      </ul>
-                    ) : null}
-                    {line.note && editingNoteLineId !== line.id ? (
-                      <p className="mt-0.5 text-xs italic text-muted-foreground">
-                        {t('lineNote')}: {line.note}
+            {lines.map((line) => {
+              const thisLineBusy = lineBusy(line.id)
+              const thisNoteBusy = noteBusy(line.id)
+              return (
+                <li key={line.id} className="flex flex-col gap-1 py-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">{line.nameSnapshot}</p>
+                      {(line.modifiers ?? []).length > 0 ? (
+                        <ul className="mt-0.5 flex flex-col gap-0.5 text-xs text-muted-foreground">
+                          {(line.modifiers ?? []).map((modifier) => (
+                            <li key={modifier.id}>+ {modifier.nameSnapshot}</li>
+                          ))}
+                        </ul>
+                      ) : null}
+                      {line.note && editingNoteLineId !== line.id ? (
+                        <p className="mt-0.5 text-xs italic text-muted-foreground">
+                          {t('lineNote')}: {line.note}
+                        </p>
+                      ) : null}
+                      <p className="text-xs text-muted-foreground">
+                        {formatCurrency(line.unitPrice, currencyCode)}
+                        {!isEditable ? ` × ${line.qty}` : null}
                       </p>
-                    ) : null}
-                    <p className="text-xs text-muted-foreground">
-                      {formatCurrency(line.unitPrice, currencyCode)}
-                      {!isEditable ? ` × ${line.qty}` : null}
-                    </p>
-                  </div>
-                  {isEditable ? (
-                    <div className="flex items-center gap-1">
-                      <Button
-                        type="button"
-                        size="icon-lg"
-                        variant="outline"
-                        disabled={pending || line.qty <= 1}
-                        onClick={() => onUpdateQty(line.id, line.qty - 1)}
-                        aria-label={t('decreaseQty')}
-                      >
-                        −
-                      </Button>
-                      <span className="w-8 text-center text-sm tabular-nums">{line.qty}</span>
-                      <Button
-                        type="button"
-                        size="icon-lg"
-                        variant="outline"
-                        disabled={pending}
-                        onClick={() => onUpdateQty(line.id, line.qty + 1)}
-                        aria-label={t('increaseQty')}
-                      >
-                        +
-                      </Button>
-                      <Button
-                        type="button"
-                        size="lg"
-                        variant="ghost"
-                        disabled={pending}
-                        onClick={() => onRemoveLine(line.id)}
-                      >
-                        {t('remove')}
-                      </Button>
                     </div>
-                  ) : (
-                    <span className="shrink-0 text-sm tabular-nums">
-                      {formatCurrency(line.lineTotal, currencyCode)}
-                    </span>
-                  )}
-                </div>
-                {isEditable ? (
-                  editingNoteLineId === line.id ? (
-                    <FieldGroup className="gap-2">
-                      <Field>
-                        <FieldLabel htmlFor={`pos-line-note-${line.id}`}>
-                          {t('lineNote')}
-                        </FieldLabel>
-                        <Textarea
-                          id={`pos-line-note-${line.id}`}
-                          value={editNoteDraft}
-                          onChange={(e) => onEditNoteDraftChange(e.target.value)}
-                          disabled={pending}
-                          rows={2}
-                          placeholder={t('lineNotePlaceholder')}
-                        />
-                      </Field>
-                      <div className="flex gap-2">
+                    {isEditable ? (
+                      <div className="flex items-center gap-1">
                         <Button
                           type="button"
-                          size="lg"
-                          disabled={pending}
-                          onClick={() => onSaveLineNote(line.id)}
+                          size="icon-lg"
+                          variant="outline"
+                          disabled={thisLineBusy || line.qty <= 1}
+                          onClick={() => onUpdateQty(line.id, line.qty - 1)}
+                          aria-label={t('decreaseQty')}
                         >
-                          {t('saveLineNote')}
+                          −
+                        </Button>
+                        <span className="w-8 text-center text-sm tabular-nums">{line.qty}</span>
+                        <Button
+                          type="button"
+                          size="icon-lg"
+                          variant="outline"
+                          disabled={thisLineBusy}
+                          onClick={() => onUpdateQty(line.id, line.qty + 1)}
+                          aria-label={t('increaseQty')}
+                        >
+                          +
                         </Button>
                         <Button
                           type="button"
                           size="lg"
                           variant="ghost"
-                          disabled={pending}
-                          onClick={onCancelEditNote}
+                          disabled={thisLineBusy}
+                          onClick={() => onRemoveLine(line.id)}
                         >
-                          {t('cancelLineNote')}
+                          {t('remove')}
                         </Button>
                       </div>
-                    </FieldGroup>
-                  ) : (
-                    <Button
-                      type="button"
-                      size="lg"
-                      variant="ghost"
-                      className="self-start px-3"
-                      disabled={pending}
-                      onClick={() => onStartEditNote(line.id, line.note)}
-                    >
-                      {line.note ? t('editLineNote') : t('addLineNote')}
-                    </Button>
-                  )
-                ) : null}
-                <Separator />
-              </li>
-            ))}
+                    ) : (
+                      <span className="shrink-0 text-sm tabular-nums">
+                        {formatCurrency(line.lineTotal, currencyCode)}
+                      </span>
+                    )}
+                  </div>
+                  {isEditable ? (
+                    editingNoteLineId === line.id ? (
+                      <FieldGroup className="gap-2">
+                        <Field>
+                          <FieldLabel htmlFor={`pos-line-note-${line.id}`}>
+                            {t('lineNote')}
+                          </FieldLabel>
+                          <Textarea
+                            id={`pos-line-note-${line.id}`}
+                            value={editNoteDraft}
+                            onChange={(e) => onEditNoteDraftChange(e.target.value)}
+                            disabled={thisNoteBusy}
+                            rows={2}
+                            placeholder={t('lineNotePlaceholder')}
+                          />
+                        </Field>
+                        <div className="flex gap-2">
+                          <Button
+                            type="button"
+                            size="lg"
+                            disabled={thisNoteBusy}
+                            onClick={() => onSaveLineNote(line.id)}
+                          >
+                            {thisNoteBusy ? <Spinner data-icon="inline-start" /> : null}
+                            {t('saveLineNote')}
+                          </Button>
+                          <Button
+                            type="button"
+                            size="lg"
+                            variant="ghost"
+                            disabled={thisNoteBusy}
+                            onClick={onCancelEditNote}
+                          >
+                            {t('cancelLineNote')}
+                          </Button>
+                        </div>
+                      </FieldGroup>
+                    ) : (
+                      <Button
+                        type="button"
+                        size="lg"
+                        variant="ghost"
+                        className="self-start px-3"
+                        disabled={thisNoteBusy}
+                        onClick={() => onStartEditNote(line.id, line.note)}
+                      >
+                        {line.note ? t('editLineNote') : t('addLineNote')}
+                      </Button>
+                    )
+                  ) : null}
+                  <Separator />
+                </li>
+              )
+            })}
           </ul>
         )}
       </ScrollArea>
@@ -490,14 +532,14 @@ export function PosCartPanel({
                 >
                   <ToggleGroupItem
                     value="amount"
-                    disabled={!currentOrder || pending}
+                    disabled={!currentOrder || discountBusy}
                     className="min-h-11 px-3"
                   >
                     {t('discountAmount')}
                   </ToggleGroupItem>
                   <ToggleGroupItem
                     value="percent"
-                    disabled={!currentOrder || pending}
+                    disabled={!currentOrder || discountBusy}
                     className="min-h-11 px-3"
                   >
                     {t('discountPercent')}
@@ -510,7 +552,7 @@ export function PosCartPanel({
                   step={discountMode === 'percent' ? '0.1' : '0.01'}
                   value={discountInput}
                   onChange={(e) => onDiscountInputChange(e.target.value)}
-                  disabled={!currentOrder || pending}
+                  disabled={!currentOrder || discountBusy}
                   aria-label={t('discount')}
                   className="h-11 w-24 text-right tabular-nums"
                 />
@@ -518,13 +560,37 @@ export function PosCartPanel({
                   type="button"
                   size="lg"
                   variant="outline"
-                  disabled={!currentOrder || pending}
+                  disabled={!currentOrder || discountBusy}
                   onClick={onApplyDiscount}
                 >
+                  {discountBusy ? <Spinner data-icon="inline-start" /> : null}
                   {t('applyDiscount')}
                 </Button>
               </div>
             </div>
+            {currentOrder ? (
+              <div className="flex flex-wrap gap-2">
+                {(discountMode === 'percent' ? PERCENT_DISCOUNT_CHIPS : AMOUNT_DISCOUNT_CHIPS).map(
+                  (value) => (
+                    <Button
+                      key={`${discountMode}-${value}`}
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      className="min-h-9"
+                      disabled={discountBusy}
+                      onClick={() => onQuickDiscount(discountMode, value)}
+                    >
+                      {discountMode === 'percent'
+                        ? t('discountChipPercent', { value })
+                        : t('discountChipAmount', {
+                            amount: formatCurrency(value, currencyCode),
+                          })}
+                    </Button>
+                  ),
+                )}
+              </div>
+            ) : null}
             {discountMode === 'percent' && percentPreviewAmount != null ? (
               <p className="text-right text-xs text-muted-foreground">
                 {t('discountPercentHint', {

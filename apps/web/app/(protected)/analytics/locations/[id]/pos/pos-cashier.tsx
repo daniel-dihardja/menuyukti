@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 
@@ -43,6 +43,7 @@ import { PosCollapseSidebar } from './pos-collapse-sidebar'
 import { PosCustomizeDialog } from './pos-customize-dialog'
 import { PosKitchenTicket } from './pos-kitchen-ticket'
 import { PosMenuGrid } from './pos-menu-grid'
+import { PosOpenTicketStrip } from './pos-open-ticket-strip'
 import { PosOpsSheet } from './pos-ops-sheet'
 import { PosReceipt, type PosReceiptSeller } from './pos-receipt'
 import {
@@ -99,7 +100,8 @@ export function PosCashier({
   initialDayCloseDate,
 }: PosCashierProps) {
   const t = useTranslations('pos')
-  const [pending, startTransition] = useTransition()
+  const [busyKey, setBusyKey] = useState<string | null>(null)
+  const busyKeyRef = useRef<string | null>(null)
   const [currentOrder, setCurrentOrder] = useState<PosOrder | null>(null)
   const [todayOrders, setTodayOrders] = useState<PosOrder[]>(initialOrders)
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | 'all'>('all')
@@ -146,6 +148,7 @@ export function PosCashier({
     todayFilter === 'all'
       ? todayOrders
       : todayOrders.filter((order) => order.status === todayFilter)
+  const openOrders = todayOrders.filter((order) => order.status === 'OPEN')
 
   const subtotal = currentOrder?.lines.reduce((sum, line) => sum + line.lineTotal, 0) ?? 0
   const discount = currentOrder?.discountAmount ?? 0
@@ -161,6 +164,16 @@ export function PosCashier({
       : null
 
   const customizeGroups = customizeItem ? availableModifierGroups(customizeItem) : []
+  const busyItemId =
+    busyKey?.startsWith('add:') && Number.isFinite(Number(busyKey.slice(4)))
+      ? Number(busyKey.slice(4))
+      : null
+  const customizeBusy = busyKey?.startsWith('add:') ?? false
+  const payBusy = busyKey === 'pay'
+  const voidBusy = busyKey === 'void'
+  const refundBusy = busyKey === 'refund'
+  const ticketBusy = busyKey === 'newTicket'
+  const daySummaryBusy = busyKey === 'daySummary'
 
   const showOrder = (order: PosOrder | null) => {
     setCurrentOrder(order)
@@ -200,16 +213,23 @@ export function PosCashier({
     }
   }
 
-  const run = (fn: () => Promise<void>) => {
-    startTransition(() => {
-      void (async () => {
-        try {
-          await fn()
-        } catch (err) {
-          toast.error(err instanceof Error ? err.message : t('errors.generic'))
+  const run = (key: string, fn: () => Promise<void>) => {
+    // Serialize mutations for order integrity; only the matching control shows busy UI.
+    if (busyKeyRef.current != null) return
+    busyKeyRef.current = key
+    setBusyKey(key)
+    void (async () => {
+      try {
+        await fn()
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : t('errors.generic'))
+      } finally {
+        if (busyKeyRef.current === key) {
+          busyKeyRef.current = null
+          setBusyKey(null)
         }
-      })()
-    })
+      }
+    })()
   }
 
   const ensureOpenOrder = async (): Promise<PosOrder> => {
@@ -239,7 +259,7 @@ export function PosCashier({
       openCustomizeDialog(item)
       return
     }
-    run(async () => {
+    run(`add:${item.id}`, async () => {
       const order = await ensureOpenOrder()
       const updated = await posAction(locationId, {
         action: 'addLine',
@@ -295,7 +315,7 @@ export function PosCashier({
     const note = lineNoteDraft.trim()
     const itemId = customizeItem.id
     setCustomizeItem(null)
-    run(async () => {
+    run(`add:${itemId}`, async () => {
       const order = await ensureOpenOrder()
       const updated = await posAction(locationId, {
         action: 'addLine',
@@ -312,7 +332,7 @@ export function PosCashier({
 
   const handleUpdateQty = (lineId: number, qty: number) => {
     if (qty < 1 || !isEditable) return
-    run(async () => {
+    run(`line:${lineId}`, async () => {
       const updated = await posAction(locationId, {
         action: 'updateLine',
         lineId,
@@ -325,7 +345,7 @@ export function PosCashier({
 
   const handleRemoveLine = (lineId: number) => {
     if (!isEditable) return
-    run(async () => {
+    run(`line:${lineId}`, async () => {
       const updated = await posAction(locationId, {
         action: 'removeLine',
         lineId,
@@ -338,7 +358,7 @@ export function PosCashier({
   const handleSaveLineNote = (lineId: number) => {
     if (!isEditable) return
     const note = editNoteDraft.trim()
-    run(async () => {
+    run(`note:${lineId}`, async () => {
       const updated = await posAction(locationId, {
         action: 'setLineNote',
         lineId,
@@ -346,6 +366,19 @@ export function PosCashier({
       })
       setEditingNoteLineId(null)
       setEditNoteDraft('')
+      showOrder(updated)
+      await refreshToday(updated.id)
+    })
+  }
+
+  const applyDiscountAmount = (amount: number) => {
+    if (!currentOrder || !isEditable) return
+    run('discount', async () => {
+      const updated = await posAction(locationId, {
+        action: 'setDiscount',
+        orderId: currentOrder.id,
+        amount,
+      })
       showOrder(updated)
       await refreshToday(updated.id)
     })
@@ -370,20 +403,20 @@ export function PosCashier({
       }
       amount = roundMoney((subtotal * raw) / 100)
     }
-    run(async () => {
-      const updated = await posAction(locationId, {
-        action: 'setDiscount',
-        orderId: currentOrder.id,
-        amount,
-      })
-      showOrder(updated)
-      await refreshToday(updated.id)
-    })
+    applyDiscountAmount(amount)
+  }
+
+  const handleQuickDiscount = (mode: DiscountMode, value: number) => {
+    if (!currentOrder || !isEditable) return
+    setDiscountMode(mode)
+    setDiscountInput(String(value))
+    const amount = mode === 'percent' ? roundMoney((subtotal * value) / 100) : roundMoney(value)
+    applyDiscountAmount(amount)
   }
 
   const handleApplyTableLabel = () => {
     if (!currentOrder || !isEditable) return
-    run(async () => {
+    run('table', async () => {
       const updated = await posAction(locationId, {
         action: 'setTableLabel',
         orderId: currentOrder.id,
@@ -396,7 +429,7 @@ export function PosCashier({
 
   const handleClearTableLabel = () => {
     if (!currentOrder || !isEditable) return
-    run(async () => {
+    run('table', async () => {
       const updated = await posAction(locationId, {
         action: 'setTableLabel',
         orderId: currentOrder.id,
@@ -409,7 +442,7 @@ export function PosCashier({
 
   const handlePay = (paymentMethod: PosPaymentMethod) => {
     if (!currentOrder || !isEditable) return
-    run(async () => {
+    run('pay', async () => {
       const paid = await posAction(locationId, {
         action: 'close',
         orderId: currentOrder.id,
@@ -425,7 +458,7 @@ export function PosCashier({
 
   const handleVoid = () => {
     if (!currentOrder || !isEditable) return
-    run(async () => {
+    run('void', async () => {
       const voided = await posAction(locationId, {
         action: 'void',
         orderId: currentOrder.id,
@@ -439,7 +472,7 @@ export function PosCashier({
 
   const handleAdvancePrep = () => {
     if (!currentOrder) return
-    run(async () => {
+    run('prep', async () => {
       const updated = await posAction(locationId, {
         action: 'advancePrep',
         orderId: currentOrder.id,
@@ -451,7 +484,7 @@ export function PosCashier({
 
   const handleRefund = () => {
     if (!currentOrder || !canRefund) return
-    run(async () => {
+    run('refund', async () => {
       const refunded = await posAction(locationId, {
         action: 'refund',
         orderId: currentOrder.id,
@@ -464,7 +497,7 @@ export function PosCashier({
   }
 
   const handleNewTicket = () => {
-    run(async () => {
+    run('newTicket', async () => {
       const order = await posAction(locationId, { action: 'open' })
       showOrder(order)
       await refreshToday(order.id)
@@ -472,7 +505,7 @@ export function PosCashier({
   }
 
   const handleLoadDaySummary = () => {
-    run(async () => {
+    run('daySummary', async () => {
       const summary = await fetchDaySummary(locationId, dayCloseDate)
       setDaySummary(summary)
     })
@@ -481,7 +514,7 @@ export function PosCashier({
   const cartPanelProps = {
     currentOrder,
     currencyCode,
-    pending,
+    busyKey,
     isEditable,
     canShowReceipt,
     canShowKitchen,
@@ -515,6 +548,7 @@ export function PosCashier({
     onRemoveLine: handleRemoveLine,
     onSaveLineNote: handleSaveLineNote,
     onApplyDiscount: handleApplyDiscount,
+    onQuickDiscount: handleQuickDiscount,
     onPayOpen: () => setPayOpen(true),
     onPayCancel: () => setPayOpen(false),
     onPay: handlePay,
@@ -539,31 +573,40 @@ export function PosCashier({
     onOps: () => setOpsSheetOpen(true),
   } as const
 
+  const openTicketStrip = (
+    <PosOpenTicketStrip
+      openOrders={openOrders}
+      currentOrderId={currentOrder?.id ?? null}
+      onSelectTicket={showOrder}
+    />
+  )
+
   return (
     <>
       <PosCollapseSidebar />
       {/* Fill viewport below the shell header (h-16); keep ticket actions pinned. */}
-      <div className="flex min-h-0 flex-1 flex-col lg:h-full lg:overflow-hidden">
-        <div className="grid min-h-0 gap-4 pb-24 lg:h-full lg:grid-cols-[minmax(0,1.4fr)_minmax(22rem,0.9fr)] lg:gap-4 lg:overflow-hidden lg:pb-0">
+      <div className="flex min-h-0 flex-1 flex-col md:h-full md:overflow-hidden">
+        <div className="grid min-h-0 gap-4 pb-24 md:h-full md:grid-cols-[minmax(0,1.4fr)_minmax(18rem,0.85fr)] md:gap-4 md:overflow-hidden md:pb-0">
           <PosMenuGrid
             categories={categories}
             filteredItems={filteredItems}
             selectedCategoryId={selectedCategoryId}
             onCategoryChange={setSelectedCategoryId}
             currencyCode={currencyCode}
-            pending={pending}
+            busyItemId={busyItemId}
             itemImageUrls={itemImageUrls}
             onAddItem={handleAddItem}
+            openTicketStrip={openTicketStrip}
           />
 
-          <aside className="hidden min-h-0 min-w-0 flex-col overflow-hidden rounded-lg border bg-background p-4 lg:flex lg:h-full">
+          <aside className="hidden min-h-0 min-w-0 flex-col overflow-hidden rounded-lg border bg-background p-4 md:flex md:h-full">
             <PosCartPanel {...cartPanelProps} stickyActions />
           </aside>
         </div>
       </div>
 
-      {/* Mobile sticky checkout strip */}
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t bg-background px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:hidden">
+      {/* Phone sticky checkout strip (< md); tablets get persistent cart pane */}
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t bg-background px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:hidden">
         <div className="mx-auto flex max-w-3xl flex-col gap-2">
           {isEditable && payOpen ? (
             <div className="flex flex-col gap-2">
@@ -573,10 +616,10 @@ export function PosCashier({
                     key={method}
                     type="button"
                     size="lg"
-                    disabled={pending || !lineCount}
+                    disabled={payBusy || !lineCount}
                     onClick={() => handlePay(method)}
                   >
-                    {pending ? <Spinner data-icon="inline-start" /> : null}
+                    {payBusy ? <Spinner data-icon="inline-start" /> : null}
                     {t(`payment.${method.toLowerCase()}`)}
                   </Button>
                 ))}
@@ -585,7 +628,7 @@ export function PosCashier({
                 type="button"
                 size="lg"
                 variant="outline"
-                disabled={pending}
+                disabled={payBusy}
                 onClick={() => setPayOpen(false)}
               >
                 {t('payCancel')}
@@ -610,10 +653,10 @@ export function PosCashier({
                   type="button"
                   size="lg"
                   className="shrink-0"
-                  disabled={!lineCount || pending}
+                  disabled={!lineCount || payBusy}
                   onClick={() => setPayOpen(true)}
                 >
-                  {pending ? <Spinner data-icon="inline-start" /> : null}
+                  {payBusy ? <Spinner data-icon="inline-start" /> : null}
                   {t('pay')}
                 </Button>
               ) : canShowReceipt ? (
@@ -621,7 +664,6 @@ export function PosCashier({
                   type="button"
                   size="lg"
                   className="shrink-0"
-                  disabled={pending}
                   onClick={() => {
                     setCartSheetOpen(false)
                     setReceiptOpen(true)
@@ -635,37 +677,13 @@ export function PosCashier({
                   size="lg"
                   variant="secondary"
                   className="shrink-0"
-                  disabled={pending}
+                  disabled={ticketBusy}
                   onClick={handleNewTicket}
                 >
-                  {pending ? <Spinner data-icon="inline-start" /> : null}
+                  {ticketBusy ? <Spinner data-icon="inline-start" /> : null}
                   {t('newTicket')}
                 </Button>
               )}
-              {canShowKitchen ? (
-                <Button
-                  type="button"
-                  size="lg"
-                  variant="outline"
-                  className="shrink-0"
-                  disabled={pending}
-                  onClick={() => {
-                    setCartSheetOpen(false)
-                    setKitchenOpen(true)
-                  }}
-                >
-                  {t('kitchenPrintShort')}
-                </Button>
-              ) : null}
-              <Button
-                type="button"
-                size="lg"
-                variant="outline"
-                className="shrink-0"
-                onClick={() => setOpsSheetOpen(true)}
-              >
-                {t('opsSheetTrigger')}
-              </Button>
             </div>
           )}
         </div>
@@ -691,7 +709,7 @@ export function PosCashier({
         todayFilter={todayFilter}
         onTodayFilterChange={setTodayFilter}
         currentOrderId={currentOrder?.id ?? null}
-        pending={pending}
+        pending={daySummaryBusy}
         currencyCode={currencyCode}
         dayCloseDate={dayCloseDate}
         daySummary={daySummary}
@@ -706,7 +724,7 @@ export function PosCashier({
         selectedOptionIds={selectedOptionIds}
         lineNoteDraft={lineNoteDraft}
         currencyCode={currencyCode}
-        pending={pending}
+        pending={customizeBusy}
         onOpenChange={(open) => {
           if (!open) setCustomizeItem(null)
         }}
@@ -767,16 +785,16 @@ export function PosCashier({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel type="button" disabled={pending}>
+            <AlertDialogCancel type="button" disabled={voidBusy}>
               {t('voidCancel')}
             </AlertDialogCancel>
             <Button
               type="button"
               variant="destructive"
-              disabled={pending || !isEditable}
+              disabled={voidBusy || !isEditable}
               onClick={handleVoid}
             >
-              {pending ? <Spinner data-icon="inline-start" /> : null}
+              {voidBusy ? <Spinner data-icon="inline-start" /> : null}
               {t('voidConfirm')}
             </Button>
           </AlertDialogFooter>
@@ -794,16 +812,16 @@ export function PosCashier({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel type="button" disabled={pending}>
+            <AlertDialogCancel type="button" disabled={refundBusy}>
               {t('refundCancel')}
             </AlertDialogCancel>
             <Button
               type="button"
               variant="destructive"
-              disabled={pending || !canRefund}
+              disabled={refundBusy || !canRefund}
               onClick={handleRefund}
             >
-              {pending ? <Spinner data-icon="inline-start" /> : null}
+              {refundBusy ? <Spinner data-icon="inline-start" /> : null}
               {t('refundConfirm')}
             </Button>
           </AlertDialogFooter>
