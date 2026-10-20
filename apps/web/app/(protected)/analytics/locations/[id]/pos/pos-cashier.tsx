@@ -49,6 +49,8 @@ import { PosReceipt, type PosReceiptSeller } from './pos-receipt'
 import {
   availableModifierGroups,
   type DiscountMode,
+  orderPayableTotal,
+  orderPreDiscountSubtotal,
   roundMoney,
   type TodayFilter,
 } from './pos-utils'
@@ -150,9 +152,10 @@ export function PosCashier({
       : todayOrders.filter((order) => order.status === todayFilter)
   const openOrders = todayOrders.filter((order) => order.status === 'OPEN')
 
-  const subtotal = currentOrder?.lines.reduce((sum, line) => sum + line.lineTotal, 0) ?? 0
+  // lineTotal is post-discount gross — use unit×qty for subtotal or discount is applied twice.
+  const subtotal = currentOrder ? orderPreDiscountSubtotal(currentOrder.lines) : 0
   const discount = currentOrder?.discountAmount ?? 0
-  const total = Math.max(0, subtotal - discount)
+  const total = currentOrder ? orderPayableTotal(currentOrder) : 0
   const lineCount = currentOrder?.lines?.length ?? 0
   const discountInputValue = Number(discountInput)
   const percentPreviewAmount =

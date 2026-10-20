@@ -18,7 +18,12 @@ import type { PosOrder, PosPaymentMethod } from '@/lib/graphql/queries/pos-order
 import { formatCurrency } from '@/lib/currency'
 
 import type { DiscountMode } from './pos-utils'
-import { isDigitalMenuOrder, nextPrepStatus, statusBadgeVariant } from './pos-utils'
+import {
+  isDigitalMenuOrder,
+  linePreDiscountTotal,
+  nextPrepStatus,
+  statusBadgeVariant,
+} from './pos-utils'
 
 const AMOUNT_DISCOUNT_CHIPS = [1, 2, 5] as const
 const PERCENT_DISCOUNT_CHIPS = [5, 10, 15] as const
@@ -444,7 +449,7 @@ export function PosCartPanel({
                       </div>
                     ) : (
                       <span className="shrink-0 text-sm tabular-nums">
-                        {formatCurrency(line.lineTotal, currencyCode)}
+                        {formatCurrency(linePreDiscountTotal(line), currencyCode)}
                       </span>
                     )}
                   </div>
