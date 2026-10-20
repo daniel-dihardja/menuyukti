@@ -43,6 +43,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             {t('title')}
           </h1>
           <p className="landing-hero-subtitle text-lg md:text-xl">{t('slogan')}</p>
+          <p className="text-sm leading-relaxed text-muted-foreground">{t('betaNote')}</p>
         </header>
         <div>
           <Suspense fallback={null}>
