@@ -13,11 +13,11 @@ from graphql.data_sources.models.menu import Menu, MenuItem
 from graphql.data_sources.models.prediction import PREDICTION_STATUS_OPEN, Prediction
 from graphql.data_sources.models.service_subscription import ServiceSubscription
 from graphql.data_sources.models.voting import VOTING_STATUS_OPEN, Voting
+from graphql.domain.location_listing_kind import normalize_listing_kind
 from graphql.services.point_earn_rules import (
     ACTION_KEY_OPEN_MENU_QR,
     list_rules_for_location,
 )
-from graphql.domain.location_listing_kind import normalize_listing_kind
 from graphql.services.service_subscriptions import (
     SERVICE_KEY_DIGITAL_MENU,
     SERVICE_KEY_PICK_AND_WIN,

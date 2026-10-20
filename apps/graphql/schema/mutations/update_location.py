@@ -5,10 +5,10 @@ from strawberry import UNSET
 
 from graphql.context import request_session_scope
 from graphql.data_sources import Location
+from graphql.domain.location_listing_kind import normalize_listing_kind
 from graphql.schema.auth import require_location_owner, user_id_from_info
 from graphql.schema.mappers.location import location_to_gql
 from graphql.schema.mutations.public_slug import apply_location_public_slug
-from graphql.domain.location_listing_kind import normalize_listing_kind
 from graphql.schema.types import LocationType
 from graphql.schema.types.location_listing_kind import LocationListingKind
 from graphql.services.location import normalize_opening_hours, replace_opening_hours

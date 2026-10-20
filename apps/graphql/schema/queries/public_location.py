@@ -13,8 +13,8 @@ from graphql.data_sources import Location
 from graphql.schema.auth import user_id_from_info
 from graphql.schema.queries.predictions import prediction_to_gql
 from graphql.schema.queries.votings import voting_to_gql
-from graphql.schema.types.prediction import PredictionType
 from graphql.schema.types.location_listing_kind import LocationListingKind, listing_kind_to_gql
+from graphql.schema.types.prediction import PredictionType
 from graphql.schema.types.public_location import (
     PublicLocationDirectoryItemType,
     PublicLocationDirectoryType,
