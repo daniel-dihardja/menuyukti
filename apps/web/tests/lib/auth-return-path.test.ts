@@ -20,6 +20,11 @@ describe('getSafeAuthReturnPath', () => {
     expect(getSafeAuthReturnPath('/l/venue')).toBe('/l/venue')
   })
 
+  it('allows auth-only Explore directory', () => {
+    expect(getSafeAuthReturnPath('/explore')).toBe('/explore')
+    expect(getSafeAuthReturnPath('/explore/')).toBe('/explore/')
+  })
+
   it('rejects open redirects and non-guest paths', () => {
     expect(getSafeAuthReturnPath('https://evil.example/m/x')).toBeNull()
     expect(getSafeAuthReturnPath('//evil.example')).toBeNull()
@@ -34,10 +39,12 @@ describe('buildAuthContinueUrl / buildLoginUrl', () => {
     expect(buildAuthContinueUrl('/cafe/menu')).toBe('/cafe/menu')
     expect(buildAuthContinueUrl('/cafe/menu/t/12')).toBe('/cafe/menu/t/12')
     expect(buildAuthContinueUrl('/cafe/pick-and-win')).toBe('/cafe/pick-and-win')
+    expect(buildAuthContinueUrl('/explore')).toBe('/explore')
     expect(buildLoginUrl('/cafe/menu')).toBe(`/login?${AUTH_RETURN_TO_QUERY}=%2Fcafe%2Fmenu`)
     expect(buildLoginUrl('/cafe/menu/t/12')).toBe(
       `/login?${AUTH_RETURN_TO_QUERY}=${encodeURIComponent('/cafe/menu/t/12')}`,
     )
+    expect(buildLoginUrl('/explore')).toBe(`/login?${AUTH_RETURN_TO_QUERY}=%2Fexplore`)
   })
 
   it('falls back to /home when no safe return path', () => {

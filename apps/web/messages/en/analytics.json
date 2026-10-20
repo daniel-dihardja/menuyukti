@@ -35,7 +35,6 @@
         "title": "Add your first location",
         "description": "Locations unlock sales uploads, menu analytics, POS, inventory, and AI-assisted planning.",
         "createCta": "Create New Location",
-        "salesHint": "Then upload a POS sales report to start analytics.",
         "salesCta": "Go to Sales Reports"
       },
       "create": "Create New Location",

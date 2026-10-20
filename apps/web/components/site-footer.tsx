@@ -1,7 +1,7 @@
+import { auth } from '@clerk/nextjs/server'
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 
-import { isExploreDiscoveryEnabled } from '@/lib/marketing-sign-in'
 import { routes } from '@/lib/routes'
 
 const COPYRIGHT_YEAR = 2026
@@ -11,7 +11,9 @@ const linkClassName =
 
 export async function SiteFooter() {
   const t = await getTranslations('siteFooter')
-  const showExplore = isExploreDiscoveryEnabled()
+  const { isAuthenticated } = await auth()
+  /** Explore is Clerk-protected — only show the link for signed-in users. */
+  const showExplore = isAuthenticated
 
   return (
     <footer className="mt-auto bg-surface text-foreground">

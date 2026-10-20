@@ -140,7 +140,6 @@ function LocationsEmptyState({ createHref }: { createHref: string }) {
         <Button asChild>
           <Link href={createHref}>{t('createCta')}</Link>
         </Button>
-        <p className="text-sm text-muted-foreground">{t('salesHint')}</p>
       </EmptyContent>
     </Empty>
   )

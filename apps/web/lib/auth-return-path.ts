@@ -8,7 +8,8 @@ export const AUTH_RETURN_TO_STORAGE_KEY = 'menuyukti:authReturnTo'
 
 /**
  * Only allow same-app relative paths on public location surfaces
- * (`/{slug}`, `/{slug}/menu…`, `/{slug}/pick-and-win`, `/{slug}/voting`, legacy `/m/*`, `/l/*`).
+ * (`/{slug}`, `/{slug}/menu…`, `/{slug}/pick-and-win`, `/{slug}/voting`, legacy `/m/*`, `/l/*`)
+ * or the auth-only Explore directory (`/explore`).
  * Rejects open redirects (`//…`, absolute URLs, other app routes).
  */
 export function getSafeAuthReturnPath(raw: string | null | undefined): string | null {
@@ -26,6 +27,9 @@ export function getSafeAuthReturnPath(raw: string | null | undefined): string | 
     return null
   }
 
+  if (pathname === routes.explore || pathname.startsWith(`${routes.explore}/`)) {
+    return pathname
+  }
   if (!isPublicLocationSurfacePath(pathname)) return null
   return pathname
 }

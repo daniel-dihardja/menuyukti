@@ -5,7 +5,7 @@
 #
 # Runtime: pass DATABASE_URL, ANALYTICS_API_URL, CLERK_SECRET_KEY, and Clerk publishable key
 # (`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` at build; docker-compose may also map `CLERK_PUBLISHABLE_KEY` for the shell).
-# `NEXT_PUBLIC_SHOW_MARKETING_SIGN_IN` defaults to false (hides header Sign in + Explore on prod images).
+# `NEXT_PUBLIC_SHOW_MARKETING_SIGN_IN` defaults to false (hides header Sign in on prod images).
 
 FROM node:20-bookworm-slim AS builder
 

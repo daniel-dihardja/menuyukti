@@ -33,14 +33,15 @@ flowchart LR
 
 ## Domain skills (go deeper)
 
-| Skill                                                                            | When to open it                                                                                      |
-| -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| [`menuyukti-agents`](../menuyukti-agents/SKILL.md)                               | `apps/agents`: FastAPI, LangGraph chat (general + image_assistant + inventar), GraphQL clients.      |
-| [`menuyukti-graphql`](../menuyukti-graphql/SKILL.md)                             | `apps/graphql`: Strawberry, Alembic, POS/fiscalization, inventory, CRM, resolvers for web/agents.    |
-| [`menuyukti-web`](../menuyukti-web/SKILL.md)                                     | `apps/web`: Next.js, Clerk, next-intl, `/advisor`, PWA, native POS UI, GraphQL from the browser/BFF. |
-| [`menuyukti-mobile`](../menuyukti-mobile/SKILL.md)                               | Legacy Expo app only — **deprecated / inactive**; prefer web PWA.                                    |
-| [`menuyukti-analytics`](../menuyukti-analytics/SKILL.md)                         | `packages/menuyukti`: pandas pipelines, Instagram signals, GraphQL `transform` integration.          |
-| [`menuyukti-germany-pos-readiness`](../menuyukti-germany-pos-readiness/SKILL.md) | Evidence-based Germany POS engineering readiness audits (fiscal, VAT, payments, GDPR, reliability).  |
+| Skill                                                                              | When to open it                                                                                      |
+| ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| [`menuyukti-agents`](../menuyukti-agents/SKILL.md)                                 | `apps/agents`: FastAPI, LangGraph chat (general + image_assistant + inventar), GraphQL clients.      |
+| [`menuyukti-graphql`](../menuyukti-graphql/SKILL.md)                               | `apps/graphql`: Strawberry, Alembic, POS/fiscalization, inventory, CRM, resolvers for web/agents.    |
+| [`menuyukti-web`](../menuyukti-web/SKILL.md)                                       | `apps/web`: Next.js, Clerk, next-intl, `/advisor`, PWA, native POS UI, GraphQL from the browser/BFF. |
+| [`menuyukti-mobile`](../menuyukti-mobile/SKILL.md)                                 | Legacy Expo app only — **deprecated / inactive**; prefer web PWA.                                    |
+| [`menuyukti-analytics`](../menuyukti-analytics/SKILL.md)                           | `packages/menuyukti`: pandas pipelines, Instagram signals, GraphQL `transform` integration.          |
+| [`menuyukti-germany-pos-readiness`](../menuyukti-germany-pos-readiness/SKILL.md)   | Evidence-based Germany POS engineering readiness audits (fiscal, VAT, payments, GDPR, reliability).  |
+| [`menuyukti-graphql-security-audit`](../menuyukti-graphql-security-audit/SKILL.md) | Evidence-based GraphQL API security audits (identity, IDOR/authz, abuse controls, BFF trust).        |
 
 ## Cross-app flow: chat
 
