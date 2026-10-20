@@ -17,27 +17,32 @@ type ExploreFiltersProps = {
   city: string | null
   query: string | null
   kind: ExploreListingKindFilter | null
+  pickup: boolean
 }
 
 const CITY_ALL = '__all__'
 const KIND_ALL = '__all__'
 const KIND_COMMUNITY = 'community'
 const KIND_COMMERCIAL = 'commercial'
+const PICKUP_OFF = '__off__'
+const PICKUP_ON = 'pickup'
 
 function buildExploreHref(
   city: string | null,
   query: string | null,
   kind: ExploreListingKindFilter | null,
+  pickup: boolean,
 ): string {
   const params = new URLSearchParams()
   if (city) params.set('city', city)
   if (query) params.set('q', query)
   if (kind === 'community' || kind === 'commercial') params.set('kind', kind)
+  if (pickup) params.set('pickup', '1')
   const qs = params.toString()
   return qs ? `${routes.explore}?${qs}` : routes.explore
 }
 
-export function ExploreFilters({ cities, city, query, kind }: ExploreFiltersProps) {
+export function ExploreFilters({ cities, city, query, kind, pickup }: ExploreFiltersProps) {
   const t = useTranslations('explore')
   const router = useRouter()
   const [draftQuery, setDraftQuery] = React.useState(query ?? '')
@@ -49,19 +54,21 @@ export function ExploreFilters({ cities, city, query, kind }: ExploreFiltersProp
   const cityValue = city ?? CITY_ALL
   const kindValue =
     kind === 'community' ? KIND_COMMUNITY : kind === 'commercial' ? KIND_COMMERCIAL : KIND_ALL
+  const pickupValue = pickup ? PICKUP_ON : PICKUP_OFF
 
   function navigate(
     nextCity: string | null,
     nextQuery: string | null,
     nextKind: ExploreListingKindFilter | null = kind,
+    nextPickup: boolean = pickup,
   ) {
-    router.push(buildExploreHref(nextCity, nextQuery, nextKind))
+    router.push(buildExploreHref(nextCity, nextQuery, nextKind, nextPickup))
   }
 
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const cleaned = draftQuery.trim()
-    navigate(city, cleaned || null, kind)
+    navigate(city, cleaned || null, kind, pickup)
   }
 
   const chipClass = 'h-9 min-h-9 shrink-0 touch-manipulation rounded-full px-3 text-xs font-medium'
@@ -100,15 +107,15 @@ export function ExploreFilters({ cities, city, query, kind }: ExploreFiltersProp
           value={kindValue}
           onValueChange={(value) => {
             if (!value || value === KIND_ALL) {
-              navigate(city, query, null)
+              navigate(city, query, null, pickup)
               return
             }
             if (value === KIND_COMMUNITY) {
-              navigate(city, query, 'community')
+              navigate(city, query, 'community', pickup)
               return
             }
             if (value === KIND_COMMERCIAL) {
-              navigate(city, query, 'commercial')
+              navigate(city, query, 'commercial', pickup)
             }
           }}
           className="flex shrink-0 flex-nowrap justify-start gap-2"
@@ -125,6 +132,30 @@ export function ExploreFilters({ cities, city, query, kind }: ExploreFiltersProp
           </ToggleGroupItem>
         </ToggleGroup>
 
+        <span className="mx-1 h-5 w-px shrink-0 bg-border" aria-hidden />
+        <ToggleGroup
+          type="single"
+          value={pickupValue}
+          onValueChange={(value) => {
+            if (!value || value === PICKUP_OFF) {
+              navigate(city, query, kind, false)
+              return
+            }
+            if (value === PICKUP_ON) {
+              navigate(city, query, kind, true)
+            }
+          }}
+          className="flex shrink-0 flex-nowrap justify-start gap-2"
+          aria-label={t('pickupLabel')}
+        >
+          <ToggleGroupItem value={PICKUP_OFF} className={chipClass}>
+            {t('pickupAll')}
+          </ToggleGroupItem>
+          <ToggleGroupItem value={PICKUP_ON} className={chipClass}>
+            {t('pickupAvailable')}
+          </ToggleGroupItem>
+        </ToggleGroup>
+
         {cities.length > 0 ? (
           <>
             <span className="mx-1 h-5 w-px shrink-0 bg-border" aria-hidden />
@@ -133,10 +164,10 @@ export function ExploreFilters({ cities, city, query, kind }: ExploreFiltersProp
               value={cityValue}
               onValueChange={(value) => {
                 if (!value || value === CITY_ALL) {
-                  navigate(null, query, kind)
+                  navigate(null, query, kind, pickup)
                   return
                 }
-                navigate(value, query, kind)
+                navigate(value, query, kind, pickup)
               }}
               className="flex min-w-0 flex-nowrap justify-start gap-2"
               aria-label={t('citiesLabel')}

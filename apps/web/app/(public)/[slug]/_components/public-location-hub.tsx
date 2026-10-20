@@ -36,6 +36,12 @@ type HubCopy = {
   votingCta: string
   votingCtaDone: string
   votingSeeAll: string
+  pickupOfferTitle: string
+  pickupOfferDescription: string
+  pickupOfferUntil: (until: string) => string
+  pickupOfferPrice: (amount: number) => string
+  pickupOfferPriceFree: string
+  pickupOfferCta: string
   rewardsTitle: string
   rewardsLead: string
   rewardsCta: string
@@ -73,8 +79,11 @@ export function PublicLocationHub({
   const menuAvailable = serviceAvailable(location, 'digital_menu')
   const predictionAvailable = serviceAvailable(location, 'pick_and_win')
   const votingAvailable = serviceAvailable(location, 'voting')
+  const pickupOfferAvailable = serviceAvailable(location, 'pickup_offer')
   const pointSystemAvailable = serviceAvailable(location, 'point_system')
-  const hasServices = menuAvailable || predictionAvailable || votingAvailable
+  const livePickupTeaser = location.pickupOfferTeaser
+  const showPickupOffer = pickupOfferAvailable && livePickupTeaser != null
+  const hasServices = menuAvailable || predictionAvailable || votingAvailable || showPickupOffer
   const hasHeaderImage = Boolean(location.headerImageUrl)
   const openVotings = votings.filter((v) => v.status === 'open')
   const hubVoteRows = openVotings.slice(0, MAX_HUB_VOTE_ROWS)
@@ -85,6 +94,7 @@ export function PublicLocationHub({
   const menuHref = routes.public.locationMenu(location.publicSlug)
   const predictionHref = routes.public.locationPickAndWin(location.publicSlug)
   const votingHref = routes.public.locationVoting(location.publicSlug)
+  const pickupOfferHref = routes.public.locationPickupOffer(location.publicSlug)
   const rewardsHref = isSignedIn
     ? routes.home
     : buildLoginUrl(routes.public.locationHome(location.publicSlug))
@@ -196,6 +206,23 @@ export function PublicLocationHub({
               </span>
             ) : null}
           </Link>
+        ) : null}
+
+        {showPickupOffer && livePickupTeaser ? (
+          <PublicHubServiceCard
+            href={pickupOfferHref}
+            title={copy.pickupOfferTitle}
+            description={truncateTeaser(livePickupTeaser.title) || copy.pickupOfferDescription}
+            pointsLabel={
+              livePickupTeaser.price != null
+                ? copy.pickupOfferPrice(livePickupTeaser.price)
+                : copy.pickupOfferPriceFree
+            }
+            ctaLabel={copy.pickupOfferCta}
+            completed={false}
+            icon={Gift}
+            iconWrapClassName="tone-creative text-foreground"
+          />
         ) : null}
 
         {hasInteractive ? (

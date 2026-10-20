@@ -25,6 +25,7 @@ from .playbooks import PlaybooksQuery
 from .point_earn_rules import PointEarnRulesQuery
 from .pos_orders import PosOrdersQuery
 from .posts import PostsQuery
+from .pickup_offers import PickupOffersQuery
 from .predictions import PredictionsQuery
 from .promotion_menu_items import PromotionMenuItemsQuery
 from .public_holidays import PublicHolidaysQuery
@@ -66,6 +67,7 @@ __all__ = [
     "MyFoodProfileQuery",
     "MyPointsQuery",
     "PointEarnRulesQuery",
+    "PickupOffersQuery",
     "PredictionsQuery",
     "VotingsQuery",
     "ServiceSubscriptionsQuery",

@@ -1,5 +1,6 @@
 from .award_crm_cashback import AwardCrmCashbackMutation
 from .clear_workspace_service_data import ClearWorkspaceServiceDataMutation
+from .close_pickup_offer import ClosePickupOfferMutation
 from .close_prediction import ClosePredictionMutation
 from .close_voting import CloseVotingMutation
 from .create_calendar_entry import CreateCalendarEntryMutation
@@ -10,6 +11,7 @@ from .create_media_collection import CreateMediaCollectionMutation
 from .create_playbook import CreatePlaybookMutation
 from .create_post import CreatePostMutation
 from .create_post_page import CreatePostPageMutation
+from .create_pickup_offer import CreatePickupOfferMutation
 from .create_prediction import CreatePredictionMutation
 from .create_style import CreateStyleMutation
 from .create_voting import CreateVotingMutation
@@ -78,8 +80,10 @@ __all__ = [
     "ActivateServiceSubscriptionMutation",
     "FoodProfileMutations",
     "ClearWorkspaceServiceDataMutation",
+    "ClosePickupOfferMutation",
     "ClosePredictionMutation",
     "CloseVotingMutation",
+    "CreatePickupOfferMutation",
     "CreatePredictionMutation",
     "CreateVotingMutation",
     "ResolvePredictionMutation",

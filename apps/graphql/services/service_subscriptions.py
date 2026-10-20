@@ -16,6 +16,7 @@ SERVICE_KEY_STAMP_CARD = "stamp_card"
 SERVICE_KEY_CASHBACK = "cashback"
 SERVICE_KEY_PICK_AND_WIN = "pick_and_win"
 SERVICE_KEY_VOTING = "voting"
+SERVICE_KEY_PICKUP_OFFER = "pickup_offer"
 
 KNOWN_SERVICE_KEYS = frozenset(
     {
@@ -25,6 +26,7 @@ KNOWN_SERVICE_KEYS = frozenset(
         SERVICE_KEY_CASHBACK,
         SERVICE_KEY_PICK_AND_WIN,
         SERVICE_KEY_VOTING,
+        SERVICE_KEY_PICKUP_OFFER,
     }
 )
 
@@ -88,6 +90,11 @@ def activate_subscription(
     ):
         raise ValueError("point_system subscription is required before enabling voting")
 
+    if key == SERVICE_KEY_PICKUP_OFFER and not is_active_subscription(
+        session, location.id, SERVICE_KEY_DIGITAL_MENU
+    ):
+        raise ValueError("digital_menu subscription is required before enabling pickup_offer")
+
     row = get_subscription(session, location.id, key)
     if row is None:
         row = ServiceSubscription(
@@ -139,6 +146,11 @@ def cancel_subscription(
 
     if key == SERVICE_KEY_DIGITAL_MENU:
         _unpublish_digital_menu(session, location.id)
+
+    if key == SERVICE_KEY_PICKUP_OFFER:
+        from graphql.services.pickup_offers import close_open_offers_for_location
+
+        close_open_offers_for_location(session, location.id)
 
     session.flush()
     return row

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import datetime
+
 import strawberry
 
 from graphql.schema.types.location_listing_kind import LocationListingKind
@@ -36,6 +38,15 @@ class PublicLocationVotingTeaserType:
 
 
 @strawberry.type(
+    description="Teaser for a live pickup offer shown on the public location hub.",
+)
+class PublicLocationPickupOfferTeaserType:
+    title: str
+    available_until: datetime
+    price: float | None
+
+
+@strawberry.type(
     description=(
         "Public location hub by slug. Returned when the slug exists; "
         "services may all be unavailable (greeting-only home)."
@@ -54,6 +65,7 @@ class PublicLocationType:
     menu_open_points: int | None
     prediction_teaser: PublicLocationPredictionTeaserType | None
     voting_teaser: PublicLocationVotingTeaserType | None
+    pickup_offer_teaser: PublicLocationPickupOfferTeaserType | None
 
 
 @strawberry.type(
@@ -69,6 +81,10 @@ class PublicLocationDirectoryItemType:
     workspace_id: strawberry.ID | None
     media_owner_clerk_user_id: str | None
     menu_dish_count: int
+    has_pickup_offer: bool
+    pickup_offer_title: str | None
+    pickup_offer_available_until: datetime | None
+    pickup_offer_price: float | None
 
 
 @strawberry.type(

@@ -17,6 +17,7 @@ from graphql.data_sources.models.pos_order import (
     PosOrderLine,
     PosOrderLineModifier,
 )
+from graphql.data_sources.models.pickup_offer import PickupOffer
 from graphql.data_sources.models.prediction import (
     Prediction,
     PredictionOutcome,
@@ -39,6 +40,7 @@ from graphql.services.service_subscriptions import (
     SERVICE_KEY_CASHBACK,
     SERVICE_KEY_DIGITAL_MENU,
     SERVICE_KEY_PICK_AND_WIN,
+    SERVICE_KEY_PICKUP_OFFER,
     SERVICE_KEY_POINT_SYSTEM,
     SERVICE_KEY_STAMP_CARD,
     SERVICE_KEY_VOTING,
@@ -74,6 +76,7 @@ class ClearServiceDataResult:
     location_ids: list[int] = field(default_factory=list)
     predictions_deleted: int = 0
     votings_deleted: int = 0
+    pickup_offers_deleted: int = 0
     ledger_entries_deleted: int = 0
     earn_rules_deleted: int = 0
     pos_orders_deleted: int = 0
@@ -298,6 +301,19 @@ def _clear_stamp_card(
     result.notes.append("stamp_card has no domain data yet; nothing cleared")
 
 
+def _clear_pickup_offer(
+    session: Session, location_ids: list[int], result: ClearServiceDataResult
+) -> None:
+    if not location_ids:
+        return
+    deleted = (
+        session.query(PickupOffer)
+        .filter(PickupOffer.location_id.in_(location_ids))
+        .delete(synchronize_session=False)
+    )
+    result.pickup_offers_deleted += int(deleted or 0)
+
+
 def _clear_cashback(
     session: Session, location_ids: list[int], result: ClearServiceDataResult
 ) -> None:
@@ -315,6 +331,7 @@ _CLEAR_HANDLERS: dict[str, Callable[[Session, list[int], ClearServiceDataResult]
     SERVICE_KEY_DIGITAL_MENU: _clear_digital_menu,
     SERVICE_KEY_STAMP_CARD: _clear_stamp_card,
     SERVICE_KEY_CASHBACK: _clear_cashback,
+    SERVICE_KEY_PICKUP_OFFER: _clear_pickup_offer,
 }
 
 

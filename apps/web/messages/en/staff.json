@@ -76,7 +76,8 @@
         "stamp_card": "Stamp Card",
         "cashback": "Cashback",
         "pick_and_win": "Pick & Win",
-        "voting": "Voting"
+        "voting": "Voting",
+        "pickup_offer": "Pickup Offer"
       },
       "confirm": "Clear all “{service}” data for this user’s workspace? This cannot be undone.",
       "save": "Clear service data",

@@ -35,10 +35,27 @@
       "votingCta": "Vote",
       "votingCtaDone": "Voted",
       "votingSeeAll": "See all votes",
+      "pickupOfferTitle": "Pickup offer",
+      "pickupOfferDescription": "Leftovers ready for pickup before closing.",
+      "pickupOfferUntil": "Until {until}",
+      "pickupOfferPrice": "{amount}",
+      "pickupOfferPriceFree": "Ask at the counter",
+      "pickupOfferCta": "See offer",
       "rewardsTitle": "Your rewards",
       "rewardsLead": "Collect points through interactions and discover what you can redeem.",
       "rewardsCta": "Explore rewards",
       "rewardsCtaSignIn": "Sign in to track rewards"
+    },
+    "pickupOffer": {
+      "title": "Pickup offer",
+      "lead": "What’s left tonight — pick it up at the venue during the window below.",
+      "empty": "No live pickup offer right now. Check back near closing time.",
+      "notFoundTitle": "Pickup offer not found",
+      "metaTitle": "Pickup · {name}",
+      "metaDescription": "Pickup leftover offer at {name}.",
+      "price": "{amount}",
+      "priceFree": "Price at the counter",
+      "pickupHint": "Come to the venue during the window and ask staff for this offer."
     },
     "prediction": {
       "title": "Pick & Win",

@@ -5,6 +5,10 @@
     "kindCommercial": "Gewerblich",
     "kindCommunity": "Community",
     "communityBadge": "Community",
+    "pickupLabel": "Abholung",
+    "pickupAll": "Alle",
+    "pickupAvailable": "Jetzt abholen",
+    "pickupBadge": "Abholung",
     "emptyFiltersBody": "Probiere eine andere Stadt, einen anderen Typ oder eine andere Suche."
   }
 }

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { connection } from 'next/server'
 import { getTranslations } from 'next-intl/server'
 
 import { ExploreFilters } from '@/app/explore/_components/explore-filters'
@@ -13,6 +14,7 @@ type PageProps = {
     city?: string | string[]
     q?: string | string[]
     kind?: string | string[]
+    pickup?: string | string[]
   }>
 }
 
@@ -50,6 +52,9 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function ExplorePage({ searchParams }: PageProps) {
+  // SiteFooter → Clerk auth() reads Date.now(); without this, Cache Components
+  // treats that as an unstable value during prerender of this page segment.
+  await connection()
   const t = await getTranslations('explore')
   const params = await searchParams
   const city = firstParam(params.city)
@@ -59,8 +64,15 @@ export default async function ExplorePage({ searchParams }: PageProps) {
     kindRaw === 'community' || kindRaw === 'commercial'
       ? (kindRaw as 'community' | 'commercial')
       : null
-  const directory = await loadPublicLocations({ city, query, listingKind: kind })
-  const hasActiveFilters = Boolean(city || query || kind)
+  const pickupRaw = firstParam(params.pickup)
+  const pickup = pickupRaw === '1' || pickupRaw === 'true'
+  const directory = await loadPublicLocations({
+    city,
+    query,
+    listingKind: kind,
+    hasPickupOffer: pickup ? true : null,
+  })
+  const hasActiveFilters = Boolean(city || query || kind || pickup)
 
   const horizontalPadding =
     'pl-[max(1.5rem,env(safe-area-inset-left,0px))] pr-[max(1.5rem,env(safe-area-inset-right,0px))]'
@@ -97,7 +109,13 @@ export default async function ExplorePage({ searchParams }: PageProps) {
             </p>
           </header>
 
-          <ExploreFilters cities={directory.cities} city={city} query={query} kind={kind} />
+          <ExploreFilters
+            cities={directory.cities}
+            city={city}
+            query={query}
+            kind={kind}
+            pickup={pickup}
+          />
 
           <ExploreVenueGrid locations={directory.locations} hasActiveFilters={hasActiveFilters} />
         </div>

@@ -50,6 +50,7 @@ from graphql.data_sources.models.pos_bill_sequence import PosBillSequence
 from graphql.data_sources.models.pos_fiscal_process import PosFiscalProcess
 from graphql.data_sources.models.pos_order import PosOrder, PosOrderLine, PosOrderLineModifier
 from graphql.data_sources.models.pos_register import PosRegister
+from graphql.data_sources.models.pickup_offer import PickupOffer
 from graphql.data_sources.models.prediction import (
     Prediction,
     PredictionOutcome,
@@ -112,6 +113,7 @@ __all__ = [
     "PosOrderLine",
     "PosOrderLineModifier",
     "PosRegister",
+    "PickupOffer",
     "Prediction",
     "PredictionOutcome",
     "PredictionVote",

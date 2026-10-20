@@ -76,9 +76,17 @@ export async function ExploreVenueGrid({ locations, hasActiveFilters }: ExploreV
                     {t('communityBadge')}
                   </span>
                 ) : null}
+                {location.hasPickupOffer ? (
+                  <span className="rounded-md border border-border bg-muted px-1.5 py-0.5 text-[0.65rem] font-medium tracking-wide text-muted-foreground uppercase">
+                    {t('pickupBadge')}
+                  </span>
+                ) : null}
               </div>
               {location.city ? (
                 <p className="text-sm text-muted-foreground">{location.city}</p>
+              ) : null}
+              {location.hasPickupOffer && location.pickupOfferTitle ? (
+                <p className="text-sm text-foreground">{location.pickupOfferTitle}</p>
               ) : null}
               <p className="mt-auto pt-2 text-xs text-muted-foreground">
                 {t('dishCount', { count: location.menuDishCount })}
