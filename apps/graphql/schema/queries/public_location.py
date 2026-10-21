@@ -1,22 +1,26 @@
-"""Public (unauthenticated) location hub, venue predictions, and votings."""
+"""Public (unauthenticated) location hub, venue predictions, votings, and pickup offers."""
 
 from __future__ import annotations
 
 import strawberry
 from sqlalchemy import select
 
+import graphql.services.pickup_offers as offer_svc
 import graphql.services.predictions as pred_svc
 import graphql.services.public_location as hub_svc
 import graphql.services.votings as voting_svc
 from graphql.context import request_session_scope
 from graphql.data_sources import Location
 from graphql.schema.auth import user_id_from_info
+from graphql.schema.queries.pickup_offers import pickup_offer_to_gql
 from graphql.schema.queries.predictions import prediction_to_gql
 from graphql.schema.queries.votings import voting_to_gql
+from graphql.schema.types.pickup_offer import PickupOfferType
 from graphql.schema.types.prediction import PredictionType
 from graphql.schema.types.public_location import (
     PublicLocationDirectoryItemType,
     PublicLocationDirectoryType,
+    PublicLocationPickupOfferTeaserType,
     PublicLocationPredictionTeaserType,
     PublicLocationServiceType,
     PublicLocationType,
@@ -43,6 +47,13 @@ def _hub_to_gql(view: hub_svc.PublicLocationView) -> PublicLocationType:
             reward_mode=view.voting_teaser.reward_mode,
             points_for_vote=view.voting_teaser.points_for_vote,
         )
+    pickup_offer_teaser = None
+    if view.pickup_offer_teaser is not None:
+        pickup_offer_teaser = PublicLocationPickupOfferTeaserType(
+            title=view.pickup_offer_teaser.title,
+            available_until=view.pickup_offer_teaser.available_until,
+            price=view.pickup_offer_teaser.price,
+        )
     return PublicLocationType(
         id=view.id,
         name=view.name,
@@ -62,6 +73,7 @@ def _hub_to_gql(view: hub_svc.PublicLocationView) -> PublicLocationType:
         menu_open_points=view.menu_open_points,
         prediction_teaser=teaser,
         voting_teaser=voting_teaser,
+        pickup_offer_teaser=pickup_offer_teaser,
     )
 
 
@@ -77,8 +89,11 @@ def _directory_item_to_gql(
         workspace_id=strawberry.ID(view.workspace_id) if view.workspace_id else None,
         media_owner_clerk_user_id=view.media_owner_clerk_user_id,
         menu_dish_count=view.menu_dish_count,
+        has_pickup_offer=view.has_pickup_offer,
+        pickup_offer_title=view.pickup_offer_title,
+        pickup_offer_available_until=view.pickup_offer_available_until,
+        pickup_offer_price=view.pickup_offer_price,
     )
-
 
 @strawberry.type
 class PublicLocationQuery:
@@ -111,6 +126,7 @@ class PublicLocationQuery:
         info: strawberry.Info,
         city: str | None = None,
         query: str | None = None,
+        has_pickup_offer: bool | None = None,
         first: int | None = None,
     ) -> PublicLocationDirectoryType:
         limit = hub_svc.clamp_directory_limit(first)
@@ -120,6 +136,7 @@ class PublicLocationQuery:
                 session,
                 city=city,
                 query=query,
+                has_pickup_offer=has_pickup_offer,
                 limit=limit,
             )
             return PublicLocationDirectoryType(
@@ -190,3 +207,28 @@ class PublicLocationQuery:
                     clerk_user_id=user_id,
                 )
             ]
+
+    @strawberry.field(
+        description=(
+            "Live pickup offer for a public location slug when pickup_offer is active "
+            "and the offer window is open. Null when unknown, inactive, or no live offer."
+        )
+    )
+    def public_location_pickup_offer(
+        self,
+        info: strawberry.Info,
+        slug: str,
+    ) -> PickupOfferType | None:
+        cleaned = (slug or "").strip().lower()
+        if not cleaned:
+            return None
+        with request_session_scope(info) as session:
+            location = session.scalars(
+                select(Location).where(Location.public_slug == cleaned)
+            ).one_or_none()
+            if location is None:
+                return None
+            view = offer_svc.get_live_pickup_offer_for_location(session, int(location.id))
+            if view is None:
+                return None
+            return pickup_offer_to_gql(view)

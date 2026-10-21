@@ -3,7 +3,6 @@
 import { useTranslations } from 'next-intl'
 
 import { Button } from '@workspace/ui/components/button'
-import { Checkbox } from '@workspace/ui/components/checkbox'
 import {
   Dialog,
   DialogContent,
@@ -50,7 +49,7 @@ export function PosCustomizeDialog({
 
   return (
     <Dialog open={item != null} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md md:max-w-lg">
         <DialogHeader>
           <DialogTitle>
             {item ? t('customizeTitle', { name: item.name }) : t('customizeTitleFallback')}
@@ -69,56 +68,29 @@ export function PosCustomizeDialog({
                 {group.options.map((option) => {
                   const selected = (selectedOptionIds[group.id] ?? []).includes(option.id)
                   const inputId = `mod-${group.id}-${option.id}`
-                  if (group.maxSelect <= 1) {
-                    return (
-                      <button
-                        key={option.id}
-                        type="button"
-                        id={inputId}
-                        disabled={pending}
-                        aria-pressed={selected}
-                        onClick={() => onToggleOption(group, option.id)}
-                        className={cn(
-                          'flex min-h-11 w-full items-center justify-between gap-2 rounded-md border px-3 py-2 text-left text-sm transition-colors',
-                          'hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                          selected && 'border-primary bg-primary/5',
-                          'disabled:opacity-50',
-                        )}
-                      >
-                        <span>{option.name}</span>
-                        {option.priceDelta !== 0 ? (
-                          <span className="tabular-nums text-muted-foreground">
-                            {option.priceDelta > 0 ? '+' : ''}
-                            {formatCurrency(option.priceDelta, currencyCode)}
-                          </span>
-                        ) : null}
-                      </button>
-                    )
-                  }
                   return (
-                    <div
+                    <button
                       key={option.id}
-                      className="flex min-h-11 items-center gap-3 rounded-md border px-3"
+                      type="button"
+                      id={inputId}
+                      disabled={pending}
+                      aria-pressed={selected}
+                      onClick={() => onToggleOption(group, option.id)}
+                      className={cn(
+                        'flex min-h-11 w-full items-center justify-between gap-2 rounded-md border px-3 py-2 text-left text-sm transition-colors',
+                        'hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                        selected && 'border-primary bg-primary/5',
+                        'disabled:opacity-50',
+                      )}
                     >
-                      <Checkbox
-                        id={inputId}
-                        checked={selected}
-                        disabled={pending}
-                        onCheckedChange={() => onToggleOption(group, option.id)}
-                      />
-                      <label
-                        htmlFor={inputId}
-                        className="flex flex-1 cursor-pointer justify-between gap-2 py-2 text-sm"
-                      >
-                        <span>{option.name}</span>
-                        {option.priceDelta !== 0 ? (
-                          <span className="tabular-nums text-muted-foreground">
-                            {option.priceDelta > 0 ? '+' : ''}
-                            {formatCurrency(option.priceDelta, currencyCode)}
-                          </span>
-                        ) : null}
-                      </label>
-                    </div>
+                      <span>{option.name}</span>
+                      {option.priceDelta !== 0 ? (
+                        <span className="tabular-nums text-muted-foreground">
+                          {option.priceDelta > 0 ? '+' : ''}
+                          {formatCurrency(option.priceDelta, currencyCode)}
+                        </span>
+                      ) : null}
+                    </button>
                   )
                 })}
               </div>

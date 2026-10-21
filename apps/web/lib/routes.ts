@@ -66,7 +66,8 @@ export function isOperatorAppShellPath(pathname: string | null): boolean {
 
 /**
  * Guest location surfaces — MainHeader uses guest sign-in instead of product chrome.
- * Includes `/{slug}`, `/{slug}/menu…`, `/{slug}/pick-and-win`, `/{slug}/voting`, plus legacy `/m` and `/l`.
+ * Includes `/{slug}`, `/{slug}/menu…`, `/{slug}/pick-and-win`, `/{slug}/voting`,
+ * `/{slug}/pickup-offer`, plus legacy `/m` and `/l`.
  */
 export function isPublicLocationSurfacePath(pathname: string | null): boolean {
   if (pathname == null) return false
@@ -89,7 +90,8 @@ export function isPublicLocationSurfacePath(pathname: string | null): boolean {
     (segments[1] === 'menu' ||
       segments[1] === 'pick-and-win' ||
       segments[1] === 'prediction' ||
-      segments[1] === 'voting')
+      segments[1] === 'voting' ||
+      segments[1] === 'pickup-offer')
   ) {
     return true
   }
@@ -238,6 +240,9 @@ export const routes = {
   servicesVoting: '/services/voting',
   servicesVotingLocation: (locationId: string | number) =>
     `/services/voting/${encodeURIComponent(String(locationId))}`,
+  servicesPickupOffer: '/services/pickup-offer',
+  servicesPickupOfferLocation: (locationId: string | number) =>
+    `/services/pickup-offer/${encodeURIComponent(String(locationId))}`,
   /** Shared profile (avatar + password) for every signed-in user. */
   profile: '/profile',
   /** Workspace team management (invite existing users) — operator shell. */
@@ -258,6 +263,7 @@ export const routes = {
       `/${encodeURIComponent(slug)}/menu/t/${encodeURIComponent(tableLabel)}`,
     locationPickAndWin: (slug: string) => `/${encodeURIComponent(slug)}/pick-and-win`,
     locationVoting: (slug: string) => `/${encodeURIComponent(slug)}/voting`,
+    locationPickupOffer: (slug: string) => `/${encodeURIComponent(slug)}/pickup-offer`,
     /** @deprecated Use `locationMenu`; `/l/` redirects to `/{slug}/menu`. */
     locationWall: (slug: string) => `/l/${encodeURIComponent(slug)}`,
   },

@@ -30,21 +30,23 @@ export function PublicVenueHomeLink({
 
   return (
     <div className={cn('space-y-1', className)}>
-      <h1
-        className={cn(
-          'font-heading text-4xl leading-tight tracking-tight text-pretty sm:text-5xl',
-          hasHeaderImage ? 'text-white' : 'text-foreground',
-          titleClassName,
-        )}
-      >
-        <Link
-          href={routes.public.locationHome(slug)}
-          aria-label={t('homeLinkAria', { name: locationName })}
-          className="underline-offset-4 transition-opacity hover:opacity-90 hover:underline"
+      <div className="flex flex-wrap items-center gap-3">
+        <h1
+          className={cn(
+            'font-heading text-4xl leading-tight tracking-tight text-pretty sm:text-5xl',
+            hasHeaderImage ? 'text-white' : 'text-foreground',
+            titleClassName,
+          )}
         >
-          {locationName}
-        </Link>
-      </h1>
+          <Link
+            href={routes.public.locationHome(slug)}
+            aria-label={t('homeLinkAria', { name: locationName })}
+            className="underline-offset-4 transition-opacity hover:opacity-90 hover:underline"
+          >
+            {locationName}
+          </Link>
+        </h1>
+      </div>
       <p className={cn('text-sm', hasHeaderImage ? 'text-white/75' : 'text-muted-foreground')}>
         {t('homeCue')}
       </p>

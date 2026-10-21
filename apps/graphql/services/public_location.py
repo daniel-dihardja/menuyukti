@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime
 
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session, selectinload
@@ -13,6 +14,10 @@ from graphql.data_sources.models.menu import Menu, MenuItem
 from graphql.data_sources.models.prediction import PREDICTION_STATUS_OPEN, Prediction
 from graphql.data_sources.models.service_subscription import ServiceSubscription
 from graphql.data_sources.models.voting import VOTING_STATUS_OPEN, Voting
+from graphql.services.pickup_offers import (
+    get_live_pickup_offer_for_location,
+    location_ids_with_live_pickup_offers,
+)
 from graphql.services.point_earn_rules import (
     ACTION_KEY_OPEN_MENU_QR,
     list_rules_for_location,
@@ -20,6 +25,7 @@ from graphql.services.point_earn_rules import (
 from graphql.services.service_subscriptions import (
     SERVICE_KEY_DIGITAL_MENU,
     SERVICE_KEY_PICK_AND_WIN,
+    SERVICE_KEY_PICKUP_OFFER,
     SERVICE_KEY_POINT_SYSTEM,
     SERVICE_KEY_VOTING,
     SERVICE_STATUS_ACTIVE,
@@ -32,6 +38,7 @@ DIRECTORY_MAX_LIMIT = 100
 HREF_SEGMENT_MENU = "menu"
 HREF_SEGMENT_PICK_AND_WIN = "pick-and-win"
 HREF_SEGMENT_VOTING = "voting"
+HREF_SEGMENT_PICKUP_OFFER = "pickup-offer"
 HREF_SEGMENT_POINT_SYSTEM = ""
 
 
@@ -60,6 +67,13 @@ class PublicLocationVotingTeaserView:
 
 
 @dataclass(frozen=True, slots=True)
+class PublicLocationPickupOfferTeaserView:
+    title: str
+    available_until: datetime
+    price: float | None
+
+
+@dataclass(frozen=True, slots=True)
 class PublicLocationView:
     id: int
     name: str
@@ -72,6 +86,7 @@ class PublicLocationView:
     menu_open_points: int | None
     prediction_teaser: PublicLocationPredictionTeaserView | None
     voting_teaser: PublicLocationVotingTeaserView | None
+    pickup_offer_teaser: PublicLocationPickupOfferTeaserView | None
 
 
 @dataclass(frozen=True, slots=True)
@@ -84,6 +99,10 @@ class PublicLocationDirectoryItemView:
     workspace_id: str | None
     media_owner_clerk_user_id: str | None
     menu_dish_count: int
+    has_pickup_offer: bool
+    pickup_offer_title: str | None
+    pickup_offer_available_until: datetime | None
+    pickup_offer_price: float | None
 
 
 def clamp_directory_limit(first: int | None) -> int:
@@ -129,6 +148,7 @@ def list_discoverable_locations(
     *,
     city: str | None = None,
     query: str | None = None,
+    has_pickup_offer: bool | None = None,
     limit: int = DIRECTORY_DEFAULT_LIMIT,
 ) -> list[PublicLocationDirectoryItemView]:
     capped = clamp_directory_limit(limit)
@@ -148,16 +168,38 @@ def list_discoverable_locations(
             )
         )
 
-    stmt = stmt.order_by(Location.name.asc(), Location.id.asc()).limit(capped)
+    # Over-fetch when filtering by live pickup so we can apply time-window checks in Python.
+    fetch_limit = capped * 3 if has_pickup_offer is True else capped
+    stmt = stmt.order_by(Location.name.asc(), Location.id.asc()).limit(fetch_limit)
     rows = session.execute(stmt).all()
+
+    location_ids = [int(location.id) for location, _menu in rows]
+    live_ids = location_ids_with_live_pickup_offers(session, location_ids)
 
     items: list[PublicLocationDirectoryItemView] = []
     for location, menu in rows:
+        lid = int(location.id)
+        has_live = lid in live_ids
+        if has_pickup_offer is True and not has_live:
+            continue
+        if has_pickup_offer is False and has_live:
+            continue
+
+        teaser_title: str | None = None
+        teaser_until: datetime | None = None
+        teaser_price: float | None = None
+        if has_live:
+            live = get_live_pickup_offer_for_location(session, lid)
+            if live is not None:
+                teaser_title = live.title
+                teaser_until = live.available_until
+                teaser_price = live.price
+
         workspace_id, media_owner = _directory_media_owner(session, location)
         city_value = (location.city or "").strip() or None
         items.append(
             PublicLocationDirectoryItemView(
-                id=int(location.id),
+                id=lid,
                 name=location.name,
                 public_slug=str(location.public_slug),
                 city=city_value,
@@ -165,8 +207,14 @@ def list_discoverable_locations(
                 workspace_id=workspace_id,
                 media_owner_clerk_user_id=media_owner,
                 menu_dish_count=_menu_dish_count(session, int(menu.id)),
+                has_pickup_offer=has_live,
+                pickup_offer_title=teaser_title,
+                pickup_offer_available_until=teaser_until,
+                pickup_offer_price=teaser_price,
             )
         )
+        if len(items) >= capped:
+            break
     return items
 
 
@@ -289,6 +337,9 @@ def get_public_location(session: Session, slug: str) -> PublicLocationView | Non
         session, int(location.id), SERVICE_KEY_PICK_AND_WIN
     )
     voting_available = is_active_subscription(session, int(location.id), SERVICE_KEY_VOTING)
+    pickup_offer_available = is_active_subscription(
+        session, int(location.id), SERVICE_KEY_PICKUP_OFFER
+    )
     point_system_available = is_active_subscription(
         session, int(location.id), SERVICE_KEY_POINT_SYSTEM
     )
@@ -316,6 +367,16 @@ def get_public_location(session: Session, slug: str) -> PublicLocationView | Non
     if voting_available:
         voting_teaser = _voting_teaser(session, int(location.id))
 
+    pickup_offer_teaser: PublicLocationPickupOfferTeaserView | None = None
+    if pickup_offer_available:
+        live = get_live_pickup_offer_for_location(session, int(location.id))
+        if live is not None:
+            pickup_offer_teaser = PublicLocationPickupOfferTeaserView(
+                title=live.title,
+                available_until=live.available_until,
+                price=live.price,
+            )
+
     menu_open_points = _menu_open_points(session, int(location.id), point_system_available)
 
     return PublicLocationView(
@@ -339,6 +400,11 @@ def get_public_location(session: Session, slug: str) -> PublicLocationView | Non
                 available=voting_available,
             ),
             PublicLocationServiceView(
+                key=SERVICE_KEY_PICKUP_OFFER,
+                href_segment=HREF_SEGMENT_PICKUP_OFFER,
+                available=pickup_offer_available,
+            ),
+            PublicLocationServiceView(
                 key=SERVICE_KEY_POINT_SYSTEM,
                 href_segment=HREF_SEGMENT_POINT_SYSTEM,
                 available=point_system_available,
@@ -351,4 +417,5 @@ def get_public_location(session: Session, slug: str) -> PublicLocationView | Non
         menu_open_points=menu_open_points,
         prediction_teaser=prediction_teaser,
         voting_teaser=voting_teaser,
+        pickup_offer_teaser=pickup_offer_teaser,
     )

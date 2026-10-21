@@ -19,6 +19,7 @@ if TYPE_CHECKING:
     from graphql.data_sources.models.location_opening_hour import LocationOpeningHour
     from graphql.data_sources.models.menu import Menu
     from graphql.data_sources.models.node import Node
+    from graphql.data_sources.models.pickup_offer import PickupOffer
     from graphql.data_sources.models.playbook import Playbook
     from graphql.data_sources.models.point_earn_rule import PointEarnRule
     from graphql.data_sources.models.point_ledger_entry import PointLedgerEntry
@@ -165,4 +166,10 @@ class Location(Base):
         back_populates="location",
         cascade="all, delete-orphan",
         order_by="Voting.created_at.desc()",
+    )
+    pickup_offers: Mapped[list[PickupOffer]] = relationship(
+        "PickupOffer",
+        back_populates="location",
+        cascade="all, delete-orphan",
+        order_by="PickupOffer.created_at.desc()",
     )

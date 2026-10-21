@@ -9,25 +9,28 @@ import { routes } from '@/lib/routes'
 import { Button } from '@workspace/ui/components/button'
 import { Input } from '@workspace/ui/components/input'
 import { ToggleGroup, ToggleGroupItem } from '@workspace/ui/components/toggle-group'
-import { cn } from '@workspace/ui/lib/utils'
 
 type ExploreFiltersProps = {
   cities: string[]
   city: string | null
   query: string | null
+  pickup: boolean
 }
 
 const CITY_ALL = '__all__'
+const PICKUP_OFF = '__off__'
+const PICKUP_ON = 'pickup'
 
-function buildExploreHref(city: string | null, query: string | null): string {
+function buildExploreHref(city: string | null, query: string | null, pickup: boolean): string {
   const params = new URLSearchParams()
   if (city) params.set('city', city)
   if (query) params.set('q', query)
+  if (pickup) params.set('pickup', '1')
   const qs = params.toString()
   return qs ? `${routes.explore}?${qs}` : routes.explore
 }
 
-export function ExploreFilters({ cities, city, query }: ExploreFiltersProps) {
+export function ExploreFilters({ cities, city, query, pickup }: ExploreFiltersProps) {
   const t = useTranslations('explore')
   const router = useRouter()
   const [draftQuery, setDraftQuery] = React.useState(query ?? '')
@@ -37,19 +40,26 @@ export function ExploreFilters({ cities, city, query }: ExploreFiltersProps) {
   }, [query])
 
   const cityValue = city ?? CITY_ALL
+  const pickupValue = pickup ? PICKUP_ON : PICKUP_OFF
 
-  function navigate(nextCity: string | null, nextQuery: string | null) {
-    router.push(buildExploreHref(nextCity, nextQuery))
+  function navigate(
+    nextCity: string | null,
+    nextQuery: string | null,
+    nextPickup: boolean = pickup,
+  ) {
+    router.push(buildExploreHref(nextCity, nextQuery, nextPickup))
   }
 
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const cleaned = draftQuery.trim()
-    navigate(city, cleaned || null)
+    navigate(city, cleaned || null, pickup)
   }
 
+  const chipClass = 'h-9 min-h-9 shrink-0 touch-manipulation rounded-full px-3 text-xs font-medium'
+
   return (
-    <div className="flex w-full flex-col gap-5">
+    <div className="flex w-full flex-col gap-4">
       <form onSubmit={onSubmit} className="flex w-full flex-col gap-2 sm:flex-row sm:items-center">
         <label htmlFor="explore-search" className="sr-only">
           {t('searchLabel')}
@@ -76,44 +86,58 @@ export function ExploreFilters({ cities, city, query }: ExploreFiltersProps) {
         </Button>
       </form>
 
-      {cities.length > 0 ? (
-        <div className="flex flex-col gap-2">
-          <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-            {t('citiesLabel')}
-          </p>
-          <ToggleGroup
-            type="single"
-            value={cityValue}
-            onValueChange={(value) => {
-              if (!value || value === CITY_ALL) {
-                navigate(null, query)
-                return
-              }
-              navigate(value, query)
-            }}
-            className="flex flex-wrap justify-start gap-2"
-            aria-label={t('citiesLabel')}
-          >
-            <ToggleGroupItem
-              value={CITY_ALL}
-              className={cn(
-                'h-11 min-h-11 touch-manipulation rounded-full px-3 text-xs font-medium sm:h-9 sm:min-h-9',
-              )}
+      <div className="flex w-full flex-nowrap items-center gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <ToggleGroup
+          type="single"
+          value={pickupValue}
+          onValueChange={(value) => {
+            if (!value || value === PICKUP_OFF) {
+              navigate(city, query, false)
+              return
+            }
+            if (value === PICKUP_ON) {
+              navigate(city, query, true)
+            }
+          }}
+          className="flex shrink-0 flex-nowrap justify-start gap-2"
+          aria-label={t('pickupLabel')}
+        >
+          <ToggleGroupItem value={PICKUP_OFF} className={chipClass}>
+            {t('pickupAll')}
+          </ToggleGroupItem>
+          <ToggleGroupItem value={PICKUP_ON} className={chipClass}>
+            {t('pickupAvailable')}
+          </ToggleGroupItem>
+        </ToggleGroup>
+
+        {cities.length > 0 ? (
+          <>
+            <span className="mx-1 h-5 w-px shrink-0 bg-border" aria-hidden />
+            <ToggleGroup
+              type="single"
+              value={cityValue}
+              onValueChange={(value) => {
+                if (!value || value === CITY_ALL) {
+                  navigate(null, query, pickup)
+                  return
+                }
+                navigate(value, query, pickup)
+              }}
+              className="flex min-w-0 flex-nowrap justify-start gap-2"
+              aria-label={t('citiesLabel')}
             >
-              {t('cityAll')}
-            </ToggleGroupItem>
-            {cities.map((name) => (
-              <ToggleGroupItem
-                key={name}
-                value={name}
-                className="h-11 min-h-11 touch-manipulation rounded-full px-3 text-xs font-medium sm:h-9 sm:min-h-9"
-              >
-                {name}
+              <ToggleGroupItem value={CITY_ALL} className={chipClass}>
+                {t('cityAll')}
               </ToggleGroupItem>
-            ))}
-          </ToggleGroup>
-        </div>
-      ) : null}
+              {cities.map((name) => (
+                <ToggleGroupItem key={name} value={name} className={chipClass}>
+                  {name}
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
+          </>
+        ) : null}
+      </div>
     </div>
   )
 }

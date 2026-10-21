@@ -30,17 +30,19 @@ interface SidebarTriggerClientProps {
   title: string
   breadcrumbs?: Array<{ label: string; href?: string }>
   showBreadcrumb?: boolean
+  /** When true, show `title` as page heading (used with compact chrome / no crumbs). */
+  showTitle?: boolean
   /** When set, renders as the current (last) crumb; `breadcrumbs` are ancestors only. */
   breadcrumbCurrent?: ReactNode
 }
 
 export function SidebarTriggerClient({
-  title: _title,
+  title,
   breadcrumbs,
   showBreadcrumb,
+  showTitle = false,
   breadcrumbCurrent,
 }: SidebarTriggerClientProps) {
-  void _title
   const t = useTranslations('appShell')
   const [mounted, setMounted] = useState(false)
   useEffect(() => {
@@ -64,7 +66,9 @@ export function SidebarTriggerClient({
 
       <Separator orientation="vertical" className="mr-2 shrink-0 data-[orientation=vertical]:h-4" />
 
-      {shouldShowBreadcrumb && hasTrail ? (
+      {showTitle ? (
+        <h1 className="min-w-0 flex-1 truncate text-base font-semibold tracking-tight">{title}</h1>
+      ) : shouldShowBreadcrumb && hasTrail ? (
         <div className="flex min-w-0 flex-1 items-center">
           <Breadcrumb className="hidden min-w-0 lg:block">
             <BreadcrumbList>

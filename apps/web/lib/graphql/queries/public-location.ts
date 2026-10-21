@@ -24,6 +24,12 @@ export type PublicLocationVotingTeaser = {
   pointsForVote: number
 }
 
+export type PublicLocationPickupOfferTeaser = {
+  title: string
+  availableUntil: string
+  price: number | null
+}
+
 export type PublicLocation = {
   id: number
   name: string
@@ -36,6 +42,7 @@ export type PublicLocation = {
   menuOpenPoints: number | null
   predictionTeaser: PublicLocationPredictionTeaser | null
   votingTeaser: PublicLocationVotingTeaser | null
+  pickupOfferTeaser: PublicLocationPickupOfferTeaser | null
 }
 
 export const PUBLIC_LOCATION_QUERY = `
@@ -66,6 +73,11 @@ export const PUBLIC_LOCATION_QUERY = `
         openCount
         rewardMode
         pointsForVote
+      }
+      pickupOfferTeaser {
+        title
+        availableUntil
+        price
       }
     }
   }
@@ -170,6 +182,10 @@ export type PublicLocationDirectoryItem = {
   workspaceId: string | null
   mediaOwnerClerkUserId: string | null
   menuDishCount: number
+  hasPickupOffer: boolean
+  pickupOfferTitle: string | null
+  pickupOfferAvailableUntil: string | null
+  pickupOfferPrice: number | null
 }
 
 export type PublicLocationDirectory = {
@@ -178,8 +194,18 @@ export type PublicLocationDirectory = {
 }
 
 export const PUBLIC_LOCATIONS_QUERY = `
-  query PublicLocations($city: String, $query: String, $first: Int) {
-    publicLocations(city: $city, query: $query, first: $first) {
+  query PublicLocations(
+    $city: String
+    $query: String
+    $hasPickupOffer: Boolean
+    $first: Int
+  ) {
+    publicLocations(
+      city: $city
+      query: $query
+      hasPickupOffer: $hasPickupOffer
+      first: $first
+    ) {
       cities
       locations {
         id
@@ -190,6 +216,10 @@ export const PUBLIC_LOCATIONS_QUERY = `
         workspaceId
         mediaOwnerClerkUserId
         menuDishCount
+        hasPickupOffer
+        pickupOfferTitle
+        pickupOfferAvailableUntil
+        pickupOfferPrice
       }
     }
   }

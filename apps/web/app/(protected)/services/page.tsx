@@ -26,6 +26,7 @@ import {
   SERVICE_KEY_DIGITAL_MENU,
   SERVICE_KEY_POINT_SYSTEM,
   SERVICE_KEY_PICK_AND_WIN,
+  SERVICE_KEY_PICKUP_OFFER,
   SERVICE_KEY_VOTING,
   SERVICE_STATUS_ACTIVE,
   type MyServiceSubscriptionsData,
@@ -69,6 +70,17 @@ function DigitalMenuPreview() {
         <div className="bg-muted h-2 w-1/2 rounded" />
         <div className="bg-muted mt-auto h-2 w-full rounded" />
       </div>
+    </div>
+  )
+}
+
+function PickupOfferPreview() {
+  return (
+    <div className="border-border bg-background flex w-44 flex-col gap-2 rounded-xl border p-4 shadow-sm">
+      <div className="bg-muted h-2 w-2/3 rounded" />
+      <div className="bg-muted h-2 w-full rounded" />
+      <div className="bg-muted h-2 w-4/5 rounded" />
+      <div className="bg-primary/20 mt-1 h-6 w-full rounded-md" />
     </div>
   )
 }
@@ -260,6 +272,10 @@ export default async function ServicesPage() {
     (row) => row.serviceKey === SERVICE_KEY_VOTING,
   ).length
 
+  const pickupOfferSubCount = activeSubscriptions.filter(
+    (row) => row.serviceKey === SERVICE_KEY_PICKUP_OFFER,
+  ).length
+
   const overviewRows = activeSubscriptions.flatMap((row) => {
     const locationId = Number(row.locationId)
     if (!Number.isInteger(locationId) || locationId < 1) return []
@@ -341,6 +357,22 @@ export default async function ServicesPage() {
         pricingComingSoon={pricingComingSoon}
         preview={<DigitalMenuPreview />}
         href={routes.servicesDigitalMenu}
+        ctaLabel={tCatalog('viewCta')}
+      />,
+      <CatalogCard
+        key="pickup_offer"
+        title={tCatalog('pickupOffer.title')}
+        benefit={tCatalog('pickupOffer.benefit')}
+        status={
+          <Badge variant="secondary">
+            {pickupOfferSubCount > 0
+              ? tCatalog('pickupOffer.statusOn', { count: pickupOfferSubCount })
+              : tCatalog('pickupOffer.statusAvailable')}
+          </Badge>
+        }
+        pricingComingSoon={pricingComingSoon}
+        preview={<PickupOfferPreview />}
+        href={routes.servicesPickupOffer}
         ctaLabel={tCatalog('viewCta')}
       />,
     ],

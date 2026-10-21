@@ -36,6 +36,34 @@ export function roundMoney(value: number): number {
   return Math.round(value * 100) / 100
 }
 
+/**
+ * Pre-discount line amount. GraphQL `lineTotal` maps to post-discount `gross_cents`
+ * after bill discount allocation — do not sum those for subtotal.
+ */
+export function linePreDiscountTotal(line: { unitPrice: number; qty: number }): number {
+  return roundMoney(line.unitPrice * line.qty)
+}
+
+/** Sum of unit×qty before bill discount (matches backend allocate_discount_and_tax). */
+export function orderPreDiscountSubtotal(
+  lines: ReadonlyArray<{ unitPrice: number; qty: number }>,
+): number {
+  return roundMoney(lines.reduce((sum, line) => sum + line.unitPrice * line.qty, 0))
+}
+
+/** Payable total after bill discount; prefer server `gross` when present. */
+export function orderPayableTotal(order: {
+  lines: ReadonlyArray<{ unitPrice: number; qty: number }>
+  discountAmount?: number | null
+  gross?: number | null
+}): number {
+  if (order.gross != null && Number.isFinite(order.gross)) {
+    return order.gross
+  }
+  const discount = order.discountAmount ?? 0
+  return Math.max(0, roundMoney(orderPreDiscountSubtotal(order.lines) - discount))
+}
+
 export function todayIsoDate(): string {
   const now = new Date()
   const y = now.getFullYear()

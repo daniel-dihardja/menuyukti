@@ -42,6 +42,7 @@ from graphql.data_sources.models.menu import (
 )
 from graphql.data_sources.models.menu_item_feedback import MenuItemFeedback
 from graphql.data_sources.models.node import Node
+from graphql.data_sources.models.pickup_offer import PickupOffer
 from graphql.data_sources.models.playbook import Playbook
 from graphql.data_sources.models.point_earn_rule import PointEarnRule
 from graphql.data_sources.models.point_ledger_entry import PointLedgerEntry
@@ -112,6 +113,7 @@ __all__ = [
     "PosOrderLine",
     "PosOrderLineModifier",
     "PosRegister",
+    "PickupOffer",
     "Prediction",
     "PredictionOutcome",
     "PredictionVote",

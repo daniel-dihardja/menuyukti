@@ -6,6 +6,8 @@ import { useLocale, useTranslations } from 'next-intl'
 import type { PosOrder } from '@/lib/graphql/queries/pos-orders'
 import { formatCurrency } from '@/lib/currency'
 
+import { linePreDiscountTotal, orderPayableTotal, orderPreDiscountSubtotal } from './pos-utils'
+
 export type PosReceiptSeller = {
   legalName: string | null
   street: string | null
@@ -45,9 +47,10 @@ function formatTaxRate(bps: number): string {
 export function PosReceipt({ order, locationName, currencyCode, seller }: PosReceiptProps) {
   const t = useTranslations('pos')
   const locale = useLocale()
-  const subtotal = order.lines.reduce((sum, line) => sum + line.lineTotal, 0)
+  // lineTotal is post-discount allocated gross; receipt subtotal must be pre-discount.
+  const subtotal = orderPreDiscountSubtotal(order.lines)
   const discount = order.discountAmount ?? 0
-  const total = order.gross ?? Math.max(0, subtotal - discount)
+  const total = orderPayableTotal(order)
   const isRefunded = order.status === 'REFUNDED'
   const displayName = seller?.legalName?.trim() || locationName
   const addressLine = [seller?.street, seller?.city, seller?.country]
@@ -131,7 +134,7 @@ export function PosReceipt({ order, locationName, currencyCode, seller }: PosRec
               </p>
             </div>
             <span className="shrink-0 tabular-nums">
-              {formatCurrency(line.lineTotal, currencyCode)}
+              {formatCurrency(linePreDiscountTotal(line), currencyCode)}
             </span>
           </li>
         ))}

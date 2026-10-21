@@ -52,6 +52,11 @@ query Hub($slug: String!) {
       rewardMode
       pointsForVote
     }
+    pickupOfferTeaser {
+      title
+      availableUntil
+      price
+    }
   }
 }
 """
@@ -99,8 +104,18 @@ mutation SetSlug($locationId: Int!, $publicSlug: String) {
 """
 
 DIRECTORY = """
-query Directory($city: String, $query: String, $first: Int) {
-  publicLocations(city: $city, query: $query, first: $first) {
+query Directory(
+  $city: String
+  $query: String
+  $hasPickupOffer: Boolean
+  $first: Int
+) {
+  publicLocations(
+    city: $city
+    query: $query
+    hasPickupOffer: $hasPickupOffer
+    first: $first
+  ) {
     cities
     locations {
       id
@@ -111,6 +126,10 @@ query Directory($city: String, $query: String, $first: Int) {
       workspaceId
       mediaOwnerClerkUserId
       menuDishCount
+      hasPickupOffer
+      pickupOfferTitle
+      pickupOfferAvailableUntil
+      pickupOfferPrice
     }
   }
 }
@@ -118,6 +137,7 @@ query Directory($city: String, $query: String, $first: Int) {
 
 
 def _clear(session) -> None:
+    from graphql.data_sources.models.pickup_offer import PickupOffer
     from graphql.tests.pos_cleanup import clear_workspaces_for_owners
 
     session.query(Prediction).update(
@@ -126,6 +146,7 @@ def _clear(session) -> None:
     )
     session.query(PredictionOutcome).delete(synchronize_session=False)
     session.query(Prediction).delete(synchronize_session=False)
+    session.query(PickupOffer).delete(synchronize_session=False)
     clear_workspaces_for_owners(session, [GRAPHQL_TEST_USER_ID])
     session.commit()
 

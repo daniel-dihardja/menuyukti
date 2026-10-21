@@ -8,7 +8,8 @@ export const AUTH_RETURN_TO_STORAGE_KEY = 'menuyukti:authReturnTo'
 
 /**
  * Only allow same-app relative paths on public location surfaces
- * (`/{slug}`, `/{slug}/menu…`, `/{slug}/pick-and-win`, `/{slug}/voting`, legacy `/m/*`, `/l/*`)
+ * (`/{slug}`, `/{slug}/menu…`, `/{slug}/pick-and-win`, `/{slug}/voting`,
+ * `/{slug}/pickup-offer`, legacy `/m/*`, `/l/*`)
  * or the auth-only Explore directory (`/explore`).
  * Rejects open redirects (`//…`, absolute URLs, other app routes).
  */
