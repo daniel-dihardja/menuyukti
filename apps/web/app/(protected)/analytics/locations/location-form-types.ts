@@ -14,8 +14,6 @@ export type OpeningHourRow = {
   closeTime: string
 }
 
-export type LocationListingKind = 'commercial' | 'community'
-
 export type LocationFormValues = {
   name: string
   street: string
@@ -25,8 +23,6 @@ export type LocationFormValues = {
   currency: string
   /** Guest URL slug (`/{slug}`); empty means unset. */
   publicSlug: string
-  /** Guest-facing listing classification. Defaults to commercial when omitted. */
-  listingKind?: LocationListingKind
   openingHours: OpeningHourRow[]
 }
 

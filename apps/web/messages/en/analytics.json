@@ -50,8 +50,6 @@
         "publicSlugLabel": "Public URL slug",
         "publicSlugPlaceholder": "berlin-mitte",
         "publicSlugHint": "Guest home, menu, and Pick & Win use this as the first URL path segment. Lowercase letters, numbers, and hyphens.",
-        "listingKindCommunityLabel": "Community listing",
-        "listingKindCommunityHint": "Mark this place as a non-commercial or community kitchen (e.g. weekend pop-up). Guests see a Community badge on Explore.",
         "streetLabel": "Street address",
         "streetPlaceholder": "Rosenthaler Str. 1",
         "cityLabel": "City",

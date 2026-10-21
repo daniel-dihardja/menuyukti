@@ -10,11 +10,6 @@
     "searchSubmit": "Search",
     "citiesLabel": "City",
     "cityAll": "All",
-    "kindLabel": "Type",
-    "kindAll": "All",
-    "kindCommercial": "Commercial",
-    "kindCommunity": "Community",
-    "communityBadge": "Community",
     "pickupLabel": "Pickup",
     "pickupAll": "Any",
     "pickupAvailable": "Pickup now",
@@ -24,7 +19,7 @@
     "emptyCatalogTitle": "No venues yet",
     "emptyCatalogBody": "Published digital menus will appear here when restaurants join Menuyukti.",
     "emptyFiltersTitle": "No matches",
-    "emptyFiltersBody": "Try another city, type, or a different search.",
+    "emptyFiltersBody": "Try another city or a different search.",
     "clearFilters": "Clear filters",
     "imageAlt": "{name}"
   }

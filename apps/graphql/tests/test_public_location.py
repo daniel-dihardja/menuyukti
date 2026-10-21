@@ -33,7 +33,6 @@ query Hub($slug: String!) {
     id
     name
     publicSlug
-    listingKind
     services { key hrefSegment available }
     headerImageFilename
     workspaceId
@@ -108,14 +107,12 @@ DIRECTORY = """
 query Directory(
   $city: String
   $query: String
-  $listingKind: LocationListingKind
   $hasPickupOffer: Boolean
   $first: Int
 ) {
   publicLocations(
     city: $city
     query: $query
-    listingKind: $listingKind
     hasPickupOffer: $hasPickupOffer
     first: $first
   ) {
@@ -125,7 +122,6 @@ query Directory(
       name
       publicSlug
       city
-      listingKind
       headerImageFilename
       workspaceId
       mediaOwnerClerkUserId
@@ -135,15 +131,6 @@ query Directory(
       pickupOfferAvailableUntil
       pickupOfferPrice
     }
-  }
-}
-"""
-
-UPDATE_LISTING_KIND = """
-mutation UpdateListingKind($id: ID!, $listingKind: LocationListingKind!) {
-  updateLocation(id: $id, listingKind: $listingKind) {
-    id
-    listingKind
   }
 }
 """
@@ -698,82 +685,9 @@ def test_public_locations_excludes_unpublished_and_unsubscribed(hub_venue):
     assert item["publicSlug"] == "hub-cafe"
     assert item["city"] == "Berlin"
     assert item["name"] == "Hub Cafe"
-    assert item["listingKind"] == "commercial"
     assert item["workspaceId"] == str(wid)
     assert item["mediaOwnerClerkUserId"] == GRAPHQL_TEST_USER_ID
     assert item["menuDishCount"] == 0
-
-
-def test_public_locations_listing_kind_filter_and_hub(hub_venue):
-    lid = hub_venue["location_id"]
-    wid = hub_venue["workspace_id"]
-    session = SessionLocal()
-    try:
-        loc = session.get(Location, lid)
-        assert loc is not None
-        loc.city = "Berlin"
-        _publish_digital_menu(session, workspace_id=wid, location_id=lid)
-
-        community = Location(
-            name="Weekend Kitchen",
-            clerk_user_id=GRAPHQL_TEST_USER_ID,
-            workspace_id=wid,
-            currency="EUR",
-            public_slug="weekend-kitchen",
-            city="Berlin",
-            listing_kind="community",
-        )
-        session.add(community)
-        session.flush()
-        _publish_digital_menu(session, workspace_id=wid, location_id=community.id)
-        session.commit()
-    finally:
-        session.close()
-
-    hub = asyncio.run(schema.execute(HUB, variable_values={"slug": "hub-cafe"}))
-    assert hub.errors is None, hub.errors
-    assert hub.data["publicLocation"]["listingKind"] == "commercial"
-
-    updated = asyncio.run(
-        schema.execute(
-            UPDATE_LISTING_KIND,
-            variable_values={"id": str(lid), "listingKind": "community"},
-            context_value=graphql_auth_context(),
-        )
-    )
-    assert updated.errors is None, updated.errors
-    assert updated.data["updateLocation"]["listingKind"] == "community"
-
-    hub_after = asyncio.run(schema.execute(HUB, variable_values={"slug": "hub-cafe"}))
-    assert hub_after.errors is None, hub_after.errors
-    assert hub_after.data["publicLocation"]["listingKind"] == "community"
-
-    community_only = asyncio.run(
-        schema.execute(DIRECTORY, variable_values={"listingKind": "community"})
-    )
-    assert community_only.errors is None, community_only.errors
-    slugs = {
-        row["publicSlug"] for row in community_only.data["publicLocations"]["locations"]
-    }
-    assert slugs == {"hub-cafe", "weekend-kitchen"}
-    assert all(
-        row["listingKind"] == "community"
-        for row in community_only.data["publicLocations"]["locations"]
-    )
-
-    commercial_only = asyncio.run(
-        schema.execute(DIRECTORY, variable_values={"listingKind": "commercial"})
-    )
-    assert commercial_only.errors is None, commercial_only.errors
-    commercial_slugs = {
-        row["publicSlug"] for row in commercial_only.data["publicLocations"]["locations"]
-    }
-    assert "hub-cafe" not in commercial_slugs
-    assert "weekend-kitchen" not in commercial_slugs
-    assert all(
-        row["listingKind"] == "commercial"
-        for row in commercial_only.data["publicLocations"]["locations"]
-    )
 
 
 def test_public_locations_city_and_query_filters(hub_venue):

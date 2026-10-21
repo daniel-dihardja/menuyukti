@@ -30,13 +30,10 @@ export type PublicLocationPickupOfferTeaser = {
   price: number | null
 }
 
-export type PublicLocationListingKind = 'commercial' | 'community'
-
 export type PublicLocation = {
   id: number
   name: string
   publicSlug: string
-  listingKind: PublicLocationListingKind
   services: PublicLocationService[]
   headerImageFilename: string | null
   workspaceId: string | null
@@ -54,7 +51,6 @@ export const PUBLIC_LOCATION_QUERY = `
       id
       name
       publicSlug
-      listingKind
       services {
         key
         hrefSegment
@@ -182,7 +178,6 @@ export type PublicLocationDirectoryItem = {
   name: string
   publicSlug: string
   city: string | null
-  listingKind: PublicLocationListingKind
   headerImageFilename: string | null
   workspaceId: string | null
   mediaOwnerClerkUserId: string | null
@@ -202,14 +197,12 @@ export const PUBLIC_LOCATIONS_QUERY = `
   query PublicLocations(
     $city: String
     $query: String
-    $listingKind: LocationListingKind
     $hasPickupOffer: Boolean
     $first: Int
   ) {
     publicLocations(
       city: $city
       query: $query
-      listingKind: $listingKind
       hasPickupOffer: $hasPickupOffer
       first: $first
     ) {
@@ -219,7 +212,6 @@ export const PUBLIC_LOCATIONS_QUERY = `
         name
         publicSlug
         city
-        listingKind
         headerImageFilename
         workspaceId
         mediaOwnerClerkUserId

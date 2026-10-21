@@ -16,7 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@workspace/ui/components/select'
-import { Switch } from '@workspace/ui/components/switch'
 import { TabsContent } from '@workspace/ui/components/tabs'
 
 import { useLocationFormActions, useLocationFormState } from './location-form-context'
@@ -25,18 +24,9 @@ const EMPTY_SELECT_VALUE = '__none__'
 
 export function LocationBasicsSection() {
   const t = useTranslations('analytics.branches.form')
-  const {
-    loading,
-    name,
-    street,
-    city,
-    countryId,
-    currency,
-    publicSlug,
-    listingKind,
-    showCurrencyAutoHint,
-  } = useLocationFormState()
-  const { setName, setStreet, setCity, setCountryId, setCurrency, setPublicSlug, setListingKind } =
+  const { loading, name, street, city, countryId, currency, publicSlug, showCurrencyAutoHint } =
+    useLocationFormState()
+  const { setName, setStreet, setCity, setCountryId, setCurrency, setPublicSlug } =
     useLocationFormActions()
 
   return (
@@ -71,24 +61,6 @@ export function LocationBasicsSection() {
             spellCheck={false}
           />
           <FieldDescription>{t('publicSlugHint')}</FieldDescription>
-        </Field>
-
-        <Field
-          orientation="horizontal"
-          className="sm:col-span-2 items-center justify-between gap-4"
-        >
-          <div className="min-w-0 space-y-1">
-            <FieldLabel htmlFor="listing-kind-community">
-              {t('listingKindCommunityLabel')}
-            </FieldLabel>
-            <FieldDescription>{t('listingKindCommunityHint')}</FieldDescription>
-          </div>
-          <Switch
-            id="listing-kind-community"
-            checked={listingKind === 'community'}
-            disabled={loading}
-            onCheckedChange={(checked) => setListingKind(checked ? 'community' : 'commercial')}
-          />
         </Field>
 
         <Field className="sm:col-span-2">

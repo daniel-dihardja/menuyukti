@@ -4,7 +4,7 @@ import { createContext, use, type FormEvent, type ReactNode, type RefObject } fr
 
 import type { BriefHintsState } from '@/lib/location-quick-profile'
 
-import type { LocationListingKind, OpeningHourRow, Weekday } from './location-form-types'
+import type { OpeningHourRow, Weekday } from './location-form-types'
 
 export type LocationFormState = {
   mode: 'create' | 'edit'
@@ -17,7 +17,6 @@ export type LocationFormState = {
   countryId: string
   currency: string
   publicSlug: string
-  listingKind: LocationListingKind
   showCurrencyAutoHint: boolean
   openingHours: OpeningHourRow[]
   hints: BriefHintsState
@@ -35,7 +34,6 @@ export type LocationFormActions = {
   setCountryId: (countryId: string) => void
   setCurrency: (currency: string, hasManualOverride: boolean) => void
   setPublicSlug: (value: string) => void
-  setListingKind: (value: LocationListingKind) => void
   setRowClosed: (dayOfWeek: Weekday, closed: boolean) => void
   updateOpeningHour: (dayOfWeek: Weekday, field: 'openTime' | 'closeTime', value: string) => void
   presetWeekdaysOnly: () => void

@@ -43,7 +43,6 @@ export async function PATCH(req: Request, context: RouteContext) {
         country: payload.country || null,
         currency: payload.currency || null,
         publicSlug: payload.publicSlug || null,
-        listingKind: payload.listingKind,
         openingHours,
       },
       userId,

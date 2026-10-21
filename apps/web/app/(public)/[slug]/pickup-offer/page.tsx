@@ -69,7 +69,6 @@ export default async function PublicLocationPickupOfferPage({ params }: PageProp
           slug={location.publicSlug}
           locationName={location.name}
           hasHeaderImage={hasHeaderImage}
-          listingKind={location.listingKind}
         />
       </PublicGuestHeader>
 

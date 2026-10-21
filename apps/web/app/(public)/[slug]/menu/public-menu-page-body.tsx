@@ -84,7 +84,6 @@ export async function PublicLocationMenuBody({ slug, tableLabel }: PublicLocatio
           slug={menu.publicSlug}
           locationName={menu.name}
           hasHeaderImage={hasHeaderImage}
-          listingKind={location?.listingKind ?? null}
         />
       </PublicGuestHeader>
 

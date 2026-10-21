@@ -6,7 +6,6 @@ from graphql.schema.auth import is_workspace_member, user_id_from_info
 from graphql.schema.mappers.location import location_to_gql
 from graphql.schema.mutations.public_slug import apply_location_public_slug
 from graphql.schema.types import LocationType
-from graphql.schema.types.location_listing_kind import LocationListingKind
 from graphql.services.location import create_location_row
 from graphql.services.workspace_plan import assert_can_create_location
 
@@ -24,7 +23,6 @@ class CreateLocationMutation:
         country: str | None = None,
         currency: str | None = UNSET,
         public_slug: str | None = UNSET,
-        listing_kind: LocationListingKind | None = UNSET,
     ) -> LocationType:
         user_id = user_id_from_info(info)
         if not user_id:
@@ -44,7 +42,6 @@ class CreateLocationMutation:
                 country=country,
                 currency=currency if currency is not UNSET else None,
                 include_currency=currency is not UNSET,
-                listing_kind=listing_kind.value if listing_kind is not UNSET and listing_kind else None,
             )
             if public_slug is not UNSET:
                 apply_location_public_slug(session, loc, public_slug)

@@ -13,7 +13,6 @@ type PageProps = {
   searchParams: Promise<{
     city?: string | string[]
     q?: string | string[]
-    kind?: string | string[]
     pickup?: string | string[]
   }>
 }
@@ -59,20 +58,14 @@ export default async function ExplorePage({ searchParams }: PageProps) {
   const params = await searchParams
   const city = firstParam(params.city)
   const query = firstParam(params.q)
-  const kindRaw = firstParam(params.kind)
-  const kind =
-    kindRaw === 'community' || kindRaw === 'commercial'
-      ? (kindRaw as 'community' | 'commercial')
-      : null
   const pickupRaw = firstParam(params.pickup)
   const pickup = pickupRaw === '1' || pickupRaw === 'true'
   const directory = await loadPublicLocations({
     city,
     query,
-    listingKind: kind,
     hasPickupOffer: pickup ? true : null,
   })
-  const hasActiveFilters = Boolean(city || query || kind || pickup)
+  const hasActiveFilters = Boolean(city || query || pickup)
 
   const horizontalPadding =
     'pl-[max(1.5rem,env(safe-area-inset-left,0px))] pr-[max(1.5rem,env(safe-area-inset-right,0px))]'
@@ -109,13 +102,7 @@ export default async function ExplorePage({ searchParams }: PageProps) {
             </p>
           </header>
 
-          <ExploreFilters
-            cities={directory.cities}
-            city={city}
-            query={query}
-            kind={kind}
-            pickup={pickup}
-          />
+          <ExploreFilters cities={directory.cities} city={city} query={query} pickup={pickup} />
 
           <ExploreVenueGrid locations={directory.locations} hasActiveFilters={hasActiveFilters} />
         </div>

@@ -18,8 +18,6 @@ export type PublicLocationsView = {
 export type LoadPublicLocationsParams = {
   city?: string | null
   query?: string | null
-  /** When set, only that listing kind. Omit / null for all. */
-  listingKind?: 'commercial' | 'community' | null
   /** When true, only venues with a live pickup offer. */
   hasPickupOffer?: boolean | null
   first?: number
@@ -78,17 +76,12 @@ export async function loadPublicLocations(
 ): Promise<PublicLocationsView> {
   const city = params.city?.trim() || null
   const query = params.query?.trim() || null
-  const listingKind =
-    params.listingKind === 'community' || params.listingKind === 'commercial'
-      ? params.listingKind
-      : null
   const hasPickupOffer = params.hasPickupOffer === true ? true : null
   const data = await graphqlQuery<PublicLocationsData>(
     PUBLIC_LOCATIONS_QUERY,
     {
       city,
       query,
-      listingKind,
       hasPickupOffer,
       first: params.first ?? 48,
     },

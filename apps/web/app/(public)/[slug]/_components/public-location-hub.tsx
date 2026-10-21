@@ -17,7 +17,6 @@ const MAX_HUB_VOTE_ROWS = 3
 type HubCopy = {
   lead: string
   emptyLead: string
-  communityBadge: string
   menuTitle: string
   menuDishCount: (count: number) => string
   menuEarnPoints: string
@@ -156,18 +155,6 @@ export function PublicLocationHub({
           >
             {location.name}
           </h1>
-          {location.listingKind === 'community' ? (
-            <span
-              className={cn(
-                'rounded-md border px-2 py-1 text-xs font-medium tracking-wide uppercase',
-                hasHeaderImage
-                  ? 'border-white/40 bg-black/35 text-white'
-                  : 'border-border bg-muted text-muted-foreground',
-              )}
-            >
-              {copy.communityBadge}
-            </span>
-          ) : null}
         </div>
         <p
           className={cn(

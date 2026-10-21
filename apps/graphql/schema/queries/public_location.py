@@ -15,7 +15,6 @@ from graphql.schema.auth import user_id_from_info
 from graphql.schema.queries.pickup_offers import pickup_offer_to_gql
 from graphql.schema.queries.predictions import prediction_to_gql
 from graphql.schema.queries.votings import voting_to_gql
-from graphql.schema.types.location_listing_kind import LocationListingKind, listing_kind_to_gql
 from graphql.schema.types.pickup_offer import PickupOfferType
 from graphql.schema.types.prediction import PredictionType
 from graphql.schema.types.public_location import (
@@ -59,7 +58,6 @@ def _hub_to_gql(view: hub_svc.PublicLocationView) -> PublicLocationType:
         id=view.id,
         name=view.name,
         public_slug=view.public_slug,
-        listing_kind=listing_kind_to_gql(view.listing_kind),
         services=[
             PublicLocationServiceType(
                 key=s.key,
@@ -87,7 +85,6 @@ def _directory_item_to_gql(
         name=view.name,
         public_slug=view.public_slug,
         city=view.city,
-        listing_kind=listing_kind_to_gql(view.listing_kind),
         header_image_filename=view.header_image_filename,
         workspace_id=strawberry.ID(view.workspace_id) if view.workspace_id else None,
         media_owner_clerk_user_id=view.media_owner_clerk_user_id,
@@ -129,7 +126,6 @@ class PublicLocationQuery:
         info: strawberry.Info,
         city: str | None = None,
         query: str | None = None,
-        listing_kind: LocationListingKind | None = None,
         has_pickup_offer: bool | None = None,
         first: int | None = None,
     ) -> PublicLocationDirectoryType:
@@ -140,7 +136,6 @@ class PublicLocationQuery:
                 session,
                 city=city,
                 query=query,
-                listing_kind=listing_kind.value if listing_kind is not None else None,
                 has_pickup_offer=has_pickup_offer,
                 limit=limit,
             )

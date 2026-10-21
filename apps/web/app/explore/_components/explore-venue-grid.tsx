@@ -71,11 +71,6 @@ export async function ExploreVenueGrid({ locations, hasActiveFilters }: ExploreV
                 <p className="text-base font-semibold tracking-tight text-foreground">
                   {location.name}
                 </p>
-                {location.listingKind === 'community' ? (
-                  <span className="rounded-md border border-border bg-muted px-1.5 py-0.5 text-[0.65rem] font-medium tracking-wide text-muted-foreground uppercase">
-                    {t('communityBadge')}
-                  </span>
-                ) : null}
                 {location.hasPickupOffer ? (
                   <span className="rounded-md border border-border bg-muted px-1.5 py-0.5 text-[0.65rem] font-medium tracking-wide text-muted-foreground uppercase">
                     {t('pickupBadge')}

@@ -14,7 +14,6 @@ from graphql.data_sources.models.menu import Menu, MenuItem
 from graphql.data_sources.models.prediction import PREDICTION_STATUS_OPEN, Prediction
 from graphql.data_sources.models.service_subscription import ServiceSubscription
 from graphql.data_sources.models.voting import VOTING_STATUS_OPEN, Voting
-from graphql.domain.location_listing_kind import normalize_listing_kind
 from graphql.services.pickup_offers import (
     get_live_pickup_offer_for_location,
     location_ids_with_live_pickup_offers,
@@ -79,7 +78,6 @@ class PublicLocationView:
     id: int
     name: str
     public_slug: str
-    listing_kind: str
     services: list[PublicLocationServiceView]
     header_image_filename: str | None
     workspace_id: str | None
@@ -97,7 +95,6 @@ class PublicLocationDirectoryItemView:
     name: str
     public_slug: str
     city: str | None
-    listing_kind: str
     header_image_filename: str | None
     workspace_id: str | None
     media_owner_clerk_user_id: str | None
@@ -151,7 +148,6 @@ def list_discoverable_locations(
     *,
     city: str | None = None,
     query: str | None = None,
-    listing_kind: str | None = None,
     has_pickup_offer: bool | None = None,
     limit: int = DIRECTORY_DEFAULT_LIMIT,
 ) -> list[PublicLocationDirectoryItemView]:
@@ -171,11 +167,6 @@ def list_discoverable_locations(
                 Location.city.ilike(pattern),
             )
         )
-
-    kind_cleaned = (listing_kind or "").strip().lower()
-    if kind_cleaned:
-        kind = normalize_listing_kind(kind_cleaned)
-        stmt = stmt.where(Location.listing_kind == kind)
 
     # Over-fetch when filtering by live pickup so we can apply time-window checks in Python.
     fetch_limit = capped * 3 if has_pickup_offer is True else capped
@@ -212,7 +203,6 @@ def list_discoverable_locations(
                 name=location.name,
                 public_slug=str(location.public_slug),
                 city=city_value,
-                listing_kind=normalize_listing_kind(getattr(location, "listing_kind", None)),
                 header_image_filename=menu.header_image_filename,
                 workspace_id=workspace_id,
                 media_owner_clerk_user_id=media_owner,
@@ -393,7 +383,6 @@ def get_public_location(session: Session, slug: str) -> PublicLocationView | Non
         id=int(location.id),
         name=location.name,
         public_slug=str(location.public_slug),
-        listing_kind=normalize_listing_kind(getattr(location, "listing_kind", None)),
         services=[
             PublicLocationServiceView(
                 key=SERVICE_KEY_DIGITAL_MENU,

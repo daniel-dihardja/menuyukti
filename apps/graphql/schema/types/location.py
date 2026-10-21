@@ -3,7 +3,6 @@ import strawberry
 from graphql.context import get_manual_brief_cache, request_session_scope
 from graphql.schema.auth import is_location_owner, user_id_from_info
 from graphql.schema.types.location_area import LocationAreaType
-from graphql.schema.types.location_listing_kind import LocationListingKind
 from graphql.schema.types.location_manual_brief_input import LocationManualBriefInputType
 
 
@@ -28,7 +27,6 @@ class LocationType:
     legal_name: str | None
     tax_number: str | None
     vat_id: str | None
-    listing_kind: LocationListingKind
     node_id: strawberry.ID | None
     workspace_id: strawberry.ID | None
     opening_hours: list[OpeningHourType]
