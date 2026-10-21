@@ -1,3 +1,4 @@
+import { loadLowEndForChat } from '@/lib/analytics/load-low-end-for-chat'
 import { loadMenuHeatmapsForChat } from '@/lib/analytics/load-menu-heatmaps-for-chat'
 import { loadPairLiftMatrixForChat } from '@/lib/analytics/load-pair-lift-matrix-for-chat'
 import { loadSlotDemandProfileForChat } from '@/lib/analytics/load-slot-demand-profile'
@@ -17,6 +18,7 @@ export const CHAT_VISUALIZATION_TITLES: Record<ChatVisualizationId, string> = {
   venue_slot_strength_heatmap: 'Venue slot strength',
   menu_item_heatmap: 'Menu item heatmap',
   pair_lift_matrix_heatmap: 'Pair lift matrix',
+  low_end_review: 'Low End review',
 }
 
 /**
@@ -85,6 +87,22 @@ export async function loadReferencedVisualizationForChat(
           totalOrders: result.totalOrders,
           multiItemOrderCount: result.multiItemOrderCount,
           scope: result.scope,
+          analyticsRunId: result.analyticsRunId,
+        },
+        usedFallbackRun: result.usedFallbackRun,
+      }
+    }
+    case 'low_end_review': {
+      const result = await loadLowEndForChat(loaderOptions)
+      return {
+        ok: true,
+        title,
+        visualizationId: referencedVisualizationId,
+        payload: {
+          items: result.items,
+          distribution: result.distribution,
+          periodStart: result.periodStart,
+          periodEnd: result.periodEnd,
           analyticsRunId: result.analyticsRunId,
         },
         usedFallbackRun: result.usedFallbackRun,

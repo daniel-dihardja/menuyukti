@@ -964,6 +964,7 @@
       "links": {
         "heatmap": "View heatmap",
         "menuCombos": "View menu combos",
+        "lowEnd": "Review Low End",
         "cogs": "COGS setup"
       },
       "chart": {
@@ -1102,6 +1103,64 @@
         "captionQuantity": "Bubble size represents quantity sold. Color indicates menu category.",
         "captionRevenue": "Bubble size represents total revenue. Color indicates menu category.",
         "empty": "No menu items available for the selected category."
+      }
+    },
+    "lowEnd": {
+      "reportTitle": "Low End Review",
+      "pageLoadingTitle": "Loading Low End…",
+      "breadcrumb": "Low End",
+      "heading": "Low End items",
+      "description": "Review low-popularity, low-margin items and decide which to reprice, improve, or remove from the menu.",
+      "reportPeriod": "Report period",
+      "reportPos": "POS",
+      "empty": {
+        "title": "Low End review not ready",
+        "description": "Menu engineering data is not available yet for this analytics file. Update COGS first to classify Low End items.",
+        "cta": "Go to COGS setup",
+        "noItems": "No Low End items in this run. Every classified item sits outside the Low End quadrant."
+      },
+      "links": {
+        "matrix": "Full menu engineering matrix",
+        "cogs": "COGS setup"
+      },
+      "kpi": {
+        "itemCount": "Low End items",
+        "itemCountHint": "{count} of {total} menu items ({share})",
+        "itemShare": "Share of menu",
+        "itemShareHint": "Low End SKUs as a share of all classified items",
+        "marginShare": "Margin from Low End",
+        "marginShareHint": "Share of portfolio contribution margin from Low End items",
+        "marginAmount": "Low End margin",
+        "marginAmountHint": "Total contribution margin from Low End items in this period"
+      },
+      "avgQtyUnavailable": "Period dates missing — avg qty/day unavailable",
+      "impact": {
+        "title": "Removal impact preview",
+        "description": "Highlight the weakest Low End items (lowest margin share first) up to a share of total portfolio margin. Use this to estimate the cost of retiring a band of items.",
+        "sliderLabel": "Cumulative margin share threshold",
+        "sliderAriaLabel": "Highlight bottom margin share up to {value}% of total margin",
+        "sliderValue": "{value}% of total margin",
+        "summary": "If removed: {count, plural, one {# item} other {# items}}, {share} of portfolio margin ({amount})",
+        "summaryEmpty": "Move the slider to preview a removal band.",
+        "rowIncludedInBand": "Within cumulative margin-share threshold.",
+        "shareCellDescription": "{percent}% of total margin, within cumulative margin-share threshold band."
+      },
+      "table": {
+        "menu": "Menu",
+        "avgQtyPerDay": "Avg qty/day",
+        "avgQtyPerDayUnavailable": "—",
+        "periodQty": "Period qty",
+        "margin": "Margin",
+        "shareOfTotalMargin": "% of total margin",
+        "action": "Action",
+        "caption": "Low End menu items: Menu, Avg qty/day, Period qty, Margin, Share of total margin, Action.",
+        "empty": "No Low End items to review.",
+        "actions": {
+          "remove": "REMOVE",
+          "reprice": "REPRICE",
+          "promote": "PROMOTE",
+          "keep": "KEEP"
+        }
       }
     }
   }

@@ -146,6 +146,7 @@ export const routes = {
     salesLegacy: '/analytics/sales',
 
     matrix: (analyticsId: string | number) => `/analytics/${analyticsId}/matrix`,
+    lowEnd: (analyticsId: string | number) => `/analytics/${analyticsId}/low-end`,
     attribution: (analyticsId: string | number) => `/analytics/${analyticsId}/attribution`,
 
     finance: (analyticsId: string | number) => `/analytics/${analyticsId}/finance`,

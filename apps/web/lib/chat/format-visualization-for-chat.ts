@@ -1,6 +1,8 @@
+import { adaptLowEndPage } from '@/lib/analytics/low-end-page-adapter'
 import { buildLiftMatrixRows } from '@/lib/analytics/menu-combos-page-adapter'
 import type { SlotDemandCell } from '@/lib/graphql/queries/analytics'
 import type { MenuHeatmapsData } from '@/lib/graphql/queries/analytics'
+import type { MenuEngineeringMatrixData } from '@/lib/graphql/queries/analytics'
 import type { ChatVisualizationId } from '@/lib/chat/visualization-ids'
 
 /** Max menu items included in chat summaries (raw hourly arrays are omitted). */
@@ -42,6 +44,53 @@ type PairLiftChatPayload = {
   multiItemOrderCount?: number
   scope?: string
   analyticsRunId?: string | null
+}
+
+type LowEndChatPayload = {
+  items: NonNullable<MenuEngineeringMatrixData['menuEngineeringMatrix']>['items']
+  distribution: NonNullable<MenuEngineeringMatrixData['menuEngineeringMatrix']>['distribution']
+  periodStart?: string | null
+  periodEnd?: string | null
+  analyticsRunId?: string | null
+}
+
+function formatLowEndReview(payload: LowEndChatPayload): string {
+  const model = adaptLowEndPage(
+    payload.items,
+    payload.distribution,
+    payload.periodStart ?? null,
+    payload.periodEnd ?? null,
+  )
+
+  if (model.rows.length === 0) {
+    return '(no Low End items)'
+  }
+
+  const lines: string[] = [
+    `- **Low End items:** ${model.stats.itemCount} of ${model.stats.totalMenuItems} (${(model.stats.itemShare * 100).toFixed(1)}% of menu)`,
+    `- **Margin share:** ${(model.stats.marginShare * 100).toFixed(1)}% of portfolio margin`,
+    `- **Low End margin:** ${model.stats.marginAmount.toFixed(2)}`,
+  ]
+  if (model.stats.periodDays != null) {
+    lines.push(`- **Period days:** ${model.stats.periodDays}`)
+  }
+
+  lines.push('', '### Items (weakest margin share first)')
+  const sorted = [...model.rows].sort(
+    (a, b) => a.contributionMarginShare - b.contributionMarginShare,
+  )
+  for (const row of sorted.slice(0, 25)) {
+    const sharePct = (row.contributionMarginShare * 100).toFixed(2)
+    const avg = row.avgQtyPerDay != null ? `, avg/day ${row.avgQtyPerDay.toFixed(2)}` : ''
+    const action = row.action ?? '—'
+    lines.push(
+      `- **${row.menuItem}** — qty ${row.unitsSold}${avg}, margin ${row.contributionMargin.toFixed(2)} (${sharePct}%), action ${action}`,
+    )
+  }
+  if (sorted.length > 25) {
+    lines.push(`- *(Showing 25 of ${sorted.length} Low End items.)*`)
+  }
+  return lines.join('\n')
 }
 
 function formatSlotDemandProfile(cells: SlotDemandCell[]): string {
@@ -219,6 +268,8 @@ function formatVisualizationPayload(
       return formatPairLiftMatrix(payload as PairLiftChatPayload)
     case 'menu_item_heatmap':
       return formatMenuHeatmapSummary(payload as MenuHeatmapChatPayload)
+    case 'low_end_review':
+      return formatLowEndReview(payload as LowEndChatPayload)
     default: {
       const _exhaustive: never = visualizationId
       return _exhaustive
