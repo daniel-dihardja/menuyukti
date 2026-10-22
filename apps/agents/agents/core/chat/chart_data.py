@@ -856,13 +856,15 @@ async def load_chart_data_markdown(
         )
         if matrix is None:
             return None
-        items = matrix.get("items")
-        distribution = matrix.get("distribution")
+        raw_items = matrix.get("items")
+        raw_distribution = matrix.get("distribution")
         return {
-            "items": [i for i in items if isinstance(i, dict)] if isinstance(items, list) else [],
+            "items": (
+                [i for i in raw_items if isinstance(i, dict)] if isinstance(raw_items, list) else []
+            ),
             "distribution": (
-                [d for d in distribution if isinstance(d, dict)]
-                if isinstance(distribution, list)
+                [d for d in raw_distribution if isinstance(d, dict)]
+                if isinstance(raw_distribution, list)
                 else []
             ),
         }
