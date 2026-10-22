@@ -1,4 +1,9 @@
-"""Load and format analytics visualization chart data for chat tools."""
+"""Load and format analytics visualization chart data for chat tools.
+
+Chart IDs and shared chat constants must stay in sync with the web contract:
+``apps/web/lib/chat/visualization-contract.ts`` and
+``apps/web/lib/chat/visualization-ids.ts`` (see ``test_chat_chart_catalog_parity``).
+"""
 
 from __future__ import annotations
 

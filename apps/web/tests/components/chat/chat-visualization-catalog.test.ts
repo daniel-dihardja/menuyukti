@@ -9,7 +9,12 @@ import {
   parseStoredVisualizationIds,
   removeVisualizationId,
 } from '@/components/chat/visualizations/chat-visualization-catalog'
-import { CHAT_VISUALIZATION_ID_VALUES } from '@/lib/chat/visualization-ids'
+import {
+  CHAT_VISUALIZATION_ID_VALUES,
+  CHAT_VISUALIZATION_TITLES,
+  HEATMAP_MATRIX_CHAT_CATEGORIES,
+  MENU_HEATMAP_CHAT_TOP_N,
+} from '@/lib/chat/visualization-contract'
 
 describe('chat-visualization-catalog', () => {
   it('includes venue slot strength, menu item heatmap, pair lift matrix, and low end review in the catalog', () => {
@@ -93,5 +98,16 @@ describe('chat-visualization-catalog', () => {
     expect(CHAT_VISUALIZATION_CATALOG.map((entry) => entry.id)).toEqual([
       ...CHAT_VISUALIZATION_ID_VALUES,
     ])
+  })
+
+  it('exposes visualization contract constants for LLM chat summaries', () => {
+    expect(MENU_HEATMAP_CHAT_TOP_N).toBe(25)
+    expect([...HEATMAP_MATRIX_CHAT_CATEGORIES].sort()).toEqual(['plow_horse', 'puzzle', 'star'])
+    expect(Object.keys(CHAT_VISUALIZATION_TITLES).sort()).toEqual(
+      [...CHAT_VISUALIZATION_ID_VALUES].sort(),
+    )
+    for (const id of CHAT_VISUALIZATION_ID_VALUES) {
+      expect(CHAT_VISUALIZATION_TITLES[id].length).toBeGreaterThan(0)
+    }
   })
 })

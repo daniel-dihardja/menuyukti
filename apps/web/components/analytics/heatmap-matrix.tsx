@@ -21,6 +21,7 @@ import {
   computeScaleBounds,
   findPeakColumnIndex,
 } from '@/lib/analytics/heatmap-insights'
+import type { HeatmapMatrixRow } from '@/lib/analytics/heatmap-matrix-types'
 import { sortHeatmapRows, useHeatmapSort, type HeatmapSortKey } from '@/lib/analytics/heatmap-sort'
 import {
   heatmapCellBackground,
@@ -29,11 +30,7 @@ import {
   venueDemandCellBackground,
 } from '@/lib/analytics/heatmap-scale'
 
-export type HeatmapMatrixRow = {
-  key: string
-  label: string
-  values: number[]
-}
+export type { HeatmapMatrixRow }
 
 export type HeatmapMatrixLabels = {
   menuColumnLabel: string

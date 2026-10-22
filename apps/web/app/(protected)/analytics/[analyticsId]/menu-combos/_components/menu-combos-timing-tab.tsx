@@ -27,7 +27,7 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@workspace/ui/
 import { MenuCombosTimingPairSelector } from './menu-combos-timing-pair-selector'
 import { MenuCombosSlotStrategyHero } from './menu-combos-slot-strategy-hero'
 import { MenuCombosSlotDayExplorer } from './menu-combos-slot-day-explorer'
-import { MenuCombosVenueDemandHeatmap } from './menu-combos-venue-demand-heatmap'
+import { VenueDemandHeatmap } from '@/components/analytics/venue-demand-heatmap'
 
 type MenuCombosTimingTabProps = {
   pairs: MenuComboPair[]
@@ -147,7 +147,7 @@ export function MenuCombosTimingTab({
             onSelectedValueChange={setSelectedValue}
           />
 
-          <MenuCombosVenueDemandHeatmap
+          <VenueDemandHeatmap
             slotDemandProfile={slotDemandProfile}
             locale={locale}
             highlightCell={venuePeakHighlight}

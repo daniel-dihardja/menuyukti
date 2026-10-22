@@ -4,7 +4,7 @@ import { useMemo } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import useSWR from 'swr'
 
-import { HeatmapMatrixEmbeddedPlain } from '@/app/(protected)/analytics/[analyticsId]/heatmap/heatmap-matrix'
+import { HeatmapMatrixEmbeddedPlain } from '@/components/analytics/heatmap-matrix'
 import { buildLiftMatrixRows, formatLift } from '@/lib/analytics/menu-combos-page-adapter'
 import { Alert, AlertDescription, AlertTitle } from '@workspace/ui/components/alert'
 import { Button } from '@workspace/ui/components/button'

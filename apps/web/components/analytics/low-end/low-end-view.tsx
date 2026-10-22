@@ -8,9 +8,9 @@ import { adaptLowEndPage, type LowEndDisplayRow } from '@/lib/analytics/low-end-
 import type { MenuEngineeringMatrixData } from '@/lib/graphql/queries'
 import { Alert, AlertDescription } from '@workspace/ui/components/alert'
 
-import { LowEndImpactPanel } from './low-end-impact-panel'
-import { LowEndKpis } from './low-end-kpis'
-import { LowEndTable } from './low-end-table'
+import { LowEndImpactPanel } from '@/components/analytics/low-end/low-end-impact-panel'
+import { LowEndKpis } from '@/components/analytics/low-end/low-end-kpis'
+import { LowEndTable } from '@/components/analytics/low-end/low-end-table'
 
 type MatrixItem = NonNullable<MenuEngineeringMatrixData['menuEngineeringMatrix']>['items'][number]
 type DistributionItem = NonNullable<

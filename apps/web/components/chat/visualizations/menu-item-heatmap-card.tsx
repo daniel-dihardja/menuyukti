@@ -3,7 +3,7 @@
 import { useLocale, useTranslations } from 'next-intl'
 import useSWR from 'swr'
 
-import { MenuHeatmapContent } from '@/app/(protected)/analytics/[analyticsId]/heatmap/menu-heatmap-content'
+import { MenuHeatmapContent } from '@/components/analytics/menu-heatmap-content'
 import type { MenuEngineeringMatrixData, MenuHeatmapsData } from '@/lib/graphql/queries/analytics'
 import { Alert, AlertDescription, AlertTitle } from '@workspace/ui/components/alert'
 import { Button } from '@workspace/ui/components/button'

@@ -4,7 +4,7 @@ import { useMemo } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
-import { HeatmapMatrixEmbeddedExplained } from '../../heatmap/heatmap-matrix'
+import { HeatmapMatrixEmbeddedExplained } from '@/components/analytics/heatmap-matrix'
 import {
   adaptSlotDemandHeatmap,
   COMBO_MEAL_PERIODS,
@@ -22,7 +22,7 @@ import {
 } from '@workspace/ui/components/collapsible'
 import { cn } from '@workspace/ui/lib/utils'
 
-type MenuCombosVenueDemandHeatmapProps = {
+export type VenueDemandHeatmapProps = {
   slotDemandProfile: SlotDemandCell[]
   locale: string
   highlightCell: PeakSlotHighlight | null
@@ -56,7 +56,7 @@ function VenueHeatmapContent({
   translationNamespace = 'analytics.menuCombos',
   translationPrefix = 'timing.strategy.venueHeatmap',
   gaugePrefix = 'timing.strategy.gauge',
-}: MenuCombosVenueDemandHeatmapProps) {
+}: VenueDemandHeatmapProps) {
   const t = useTranslations(translationNamespace)
 
   const heatmap = useMemo(() => adaptSlotDemandHeatmap(slotDemandProfile), [slotDemandProfile])
@@ -127,13 +127,13 @@ function VenueHeatmapContent({
   )
 }
 
-export function MenuCombosVenueDemandHeatmap({
+export function VenueDemandHeatmap({
   translationNamespace = 'analytics.menuCombos',
   translationPrefix = 'timing.strategy.venueHeatmap',
   gaugePrefix = 'timing.strategy.gauge',
   collapsibleOnMobile = true,
   ...props
-}: MenuCombosVenueDemandHeatmapProps) {
+}: VenueDemandHeatmapProps) {
   const t = useTranslations(translationNamespace)
   const contentProps = {
     ...props,

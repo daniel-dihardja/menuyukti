@@ -24,7 +24,7 @@ import {
 import { Skeleton } from '@workspace/ui/components/skeleton'
 import { cn } from '@workspace/ui/lib/utils'
 import { Suspense } from 'react'
-import { LowEndView } from './low-end-view'
+import { LowEndView } from '@/components/analytics/low-end/low-end-view'
 
 type PageProps = {
   params: Promise<{ analyticsId?: string }>

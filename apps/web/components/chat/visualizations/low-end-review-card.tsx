@@ -3,7 +3,7 @@
 import { useLocale, useTranslations } from 'next-intl'
 import useSWR from 'swr'
 
-import { LowEndView } from '@/app/(protected)/analytics/[analyticsId]/low-end/low-end-view'
+import { LowEndView } from '@/components/analytics/low-end/low-end-view'
 import { getAppCurrencyCode } from '@/lib/app-currency'
 import type { MenuEngineeringMatrixData } from '@/lib/graphql/queries/analytics'
 import { Alert, AlertDescription, AlertTitle } from '@workspace/ui/components/alert'

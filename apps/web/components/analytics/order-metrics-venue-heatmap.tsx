@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 
-import { MenuCombosVenueDemandHeatmap } from '../../menu-combos/_components/menu-combos-venue-demand-heatmap'
+import { VenueDemandHeatmap } from '@/components/analytics/venue-demand-heatmap'
 import type { SlotDemandCell } from '@/lib/graphql/queries/analytics'
 
 type OrderMetricsVenueHeatmapProps = {
@@ -17,7 +17,7 @@ export function OrderMetricsVenueHeatmap({
   const tDays = useTranslations('analytics.shared.orderMetrics.days')
 
   return (
-    <MenuCombosVenueDemandHeatmap
+    <VenueDemandHeatmap
       slotDemandProfile={slotDemandProfile}
       locale={locale}
       highlightCell={null}

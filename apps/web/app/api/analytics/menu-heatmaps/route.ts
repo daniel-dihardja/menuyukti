@@ -1,19 +1,7 @@
-import { NextResponse, connection } from 'next/server'
-import { auth } from '@clerk/nextjs/server'
+import { NextResponse } from 'next/server'
 
+import { prepareChatAnalyticsGet } from '@/lib/analytics/chat-analytics-route'
 import { loadMenuHeatmapsForChat } from '@/lib/analytics/load-menu-heatmaps-for-chat'
-
-function isPrerenderInterrupt(error: unknown): boolean {
-  if (!(error instanceof Error)) return false
-  const digest = (error as Error & { digest?: string }).digest
-  return digest === 'NEXT_PRERENDER_INTERRUPTED' || digest === 'HANGING_PROMISE_REJECTION'
-}
-
-function parsePositiveInt(value: string | null): number | null {
-  if (!value || !/^\d+$/.test(value)) return null
-  const parsed = Number(value)
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : null
-}
 
 /**
  * GET /api/analytics/menu-heatmaps?analyticsRunId=...&locationId=...
@@ -22,38 +10,13 @@ function parsePositiveInt(value: string | null): number | null {
  */
 export async function GET(req: Request) {
   try {
-    await connection()
-    let isAuthenticated = false
-    let userId: string | null = null
-    try {
-      const authResult = await auth()
-      isAuthenticated = authResult.isAuthenticated
-      userId = authResult.userId
-    } catch (error) {
-      if (isPrerenderInterrupt(error)) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-      }
-      throw error
-    }
-    if (!isAuthenticated || !userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const { searchParams } = new URL(req.url)
-    const analyticsRunId = parsePositiveInt(searchParams.get('analyticsRunId'))
-    const locationId = parsePositiveInt(searchParams.get('locationId'))
-
-    if (analyticsRunId === null && locationId === null) {
-      return NextResponse.json(
-        { error: 'analyticsRunId or locationId is required' },
-        { status: 400 },
-      )
-    }
+    const prepared = await prepareChatAnalyticsGet(req)
+    if (!prepared.ok) return prepared.response
 
     const result = await loadMenuHeatmapsForChat({
-      userId,
-      analyticsRunId,
-      locationId,
+      userId: prepared.userId,
+      analyticsRunId: prepared.analyticsRunId,
+      locationId: prepared.locationId,
     })
 
     return NextResponse.json(

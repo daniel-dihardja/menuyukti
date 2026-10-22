@@ -1,8 +1,11 @@
 import { loadLowEndForChat } from '@/lib/analytics/load-low-end-for-chat'
 import { loadMenuHeatmapsForChat } from '@/lib/analytics/load-menu-heatmaps-for-chat'
 import { loadPairLiftMatrixForChat } from '@/lib/analytics/load-pair-lift-matrix-for-chat'
-import { loadSlotDemandProfileForChat } from '@/lib/analytics/load-slot-demand-profile'
-import type { ChatVisualizationId } from '@/lib/chat/visualization-ids'
+import { loadSlotDemandProfileForChat } from '@/lib/analytics/load-slot-demand-profile-for-chat'
+import {
+  CHAT_VISUALIZATION_TITLES,
+  type ChatVisualizationId,
+} from '@/lib/chat/visualization-contract'
 
 export type ReferencedVisualizationLoadResult =
   | {
@@ -14,12 +17,7 @@ export type ReferencedVisualizationLoadResult =
     }
   | { ok: false; status: 400 | 404; message: string }
 
-export const CHAT_VISUALIZATION_TITLES: Record<ChatVisualizationId, string> = {
-  venue_slot_strength_heatmap: 'Venue slot strength',
-  menu_item_heatmap: 'Menu item heatmap',
-  pair_lift_matrix_heatmap: 'Pair lift matrix',
-  low_end_review: 'Low End review',
-}
+export { CHAT_VISUALIZATION_TITLES }
 
 /**
  * Load attached visualization analytics for chat @-references (location-scoped).

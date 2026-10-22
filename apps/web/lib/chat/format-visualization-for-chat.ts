@@ -3,17 +3,13 @@ import { buildLiftMatrixRows } from '@/lib/analytics/menu-combos-page-adapter'
 import type { SlotDemandCell } from '@/lib/graphql/queries/analytics'
 import type { MenuHeatmapsData } from '@/lib/graphql/queries/analytics'
 import type { MenuEngineeringMatrixData } from '@/lib/graphql/queries/analytics'
-import type { ChatVisualizationId } from '@/lib/chat/visualization-ids'
+import {
+  HEATMAP_MATRIX_CHAT_CATEGORIES,
+  MENU_HEATMAP_CHAT_TOP_N,
+  type ChatVisualizationId,
+} from '@/lib/chat/visualization-contract'
 
-/** Max menu items included in chat summaries (raw hourly arrays are omitted). */
-export const MENU_HEATMAP_CHAT_TOP_N = 25
-
-/** When matrix data exists, chat heatmaps keep only these BCG roles (excludes low_end). */
-export const HEATMAP_MATRIX_CHAT_CATEGORIES: ReadonlySet<string> = new Set([
-  'star',
-  'plow_horse',
-  'puzzle',
-])
+export { HEATMAP_MATRIX_CHAT_CATEGORIES, MENU_HEATMAP_CHAT_TOP_N }
 
 type HeatmapMatrixChatCategory = 'star' | 'plow_horse' | 'puzzle' | 'low_end'
 

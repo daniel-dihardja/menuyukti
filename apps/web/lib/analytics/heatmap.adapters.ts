@@ -1,3 +1,7 @@
+import type { HeatmapMatrixResult, HeatmapMatrixRow } from '@/lib/analytics/heatmap-matrix-types'
+
+export type { HeatmapMatrixResult, HeatmapMatrixRow }
+
 /* ==================================================
  * Backend input types (JSON shape)
  * ================================================== */
@@ -16,21 +20,6 @@ export type WeeklyHeatmapInput = {
   menu_category?: string | null
   weeklyHeatmap?: { day: string; quantity: number }[]
   weekly_heatmap?: { day: string; quantity: number }[]
-}
-
-/* ==================================================
- * Shared matrix output types
- * ================================================== */
-
-export type HeatmapMatrixRow = {
-  key: string
-  label: string
-  values: number[]
-}
-
-export type HeatmapMatrixResult = {
-  rows: HeatmapMatrixRow[]
-  columnLabels: string[]
 }
 
 /* ==================================================
