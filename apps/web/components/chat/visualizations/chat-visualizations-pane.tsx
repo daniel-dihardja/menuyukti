@@ -29,6 +29,10 @@ const VenueSlotStrengthCard = dynamic(
   () => import('./venue-slot-strength-card').then((m) => m.VenueSlotStrengthCard),
   { ssr: false },
 )
+const LowEndReviewCard = dynamic(
+  () => import('./low-end-review-card').then((m) => m.LowEndReviewCard),
+  { ssr: false },
+)
 
 function VisualizationCardBody({
   id,
@@ -46,6 +50,8 @@ function VisualizationCardBody({
       return <MenuItemHeatmapCard analyticsRunId={analyticsRunId} locationId={locationId} />
     case 'pair_lift_matrix_heatmap':
       return <PairLiftMatrixCard analyticsRunId={analyticsRunId} locationId={locationId} />
+    case 'low_end_review':
+      return <LowEndReviewCard analyticsRunId={analyticsRunId} locationId={locationId} />
     default:
       return null
   }

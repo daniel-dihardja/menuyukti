@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from '@workspace/ui/components/card'
 
-import { OrderMetricsVenueHeatmap } from './order-metrics-venue-heatmap'
+import { OrderMetricsVenueHeatmap } from '@/components/analytics/order-metrics-venue-heatmap'
 
 type OrderMetricsViewProps = {
   avgOrderSize: number

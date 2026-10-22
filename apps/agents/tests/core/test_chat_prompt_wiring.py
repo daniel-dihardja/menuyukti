@@ -40,4 +40,5 @@ def test_chat_prompt_injects_chart_catalog_when_analytics_run_present() -> None:
 
     assert "## Workflow chart catalog" in content
     assert "pair_lift_matrix_heatmap" in content
+    assert "low_end_review" in content
     assert "No sales report is attached" not in content

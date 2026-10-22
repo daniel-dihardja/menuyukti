@@ -33,8 +33,8 @@ import {
 } from '@/lib/analytics/heatmap-insights'
 import type { MenuEngineeringMatrixData, MenuHeatmapsData } from '@/lib/graphql/queries/analytics'
 import { cn } from '@workspace/ui/lib/utils'
-import { HeatmapMatrixCard, HeatmapMatrixEmbedded } from './heatmap-matrix'
-import { adaptDailyHeatmapMatrix, adaptWeeklyHeatmapMatrix } from './heatmap.adapters'
+import { HeatmapMatrixCard, HeatmapMatrixEmbedded } from '@/components/analytics/heatmap-matrix'
+import { adaptDailyHeatmapMatrix, adaptWeeklyHeatmapMatrix } from '@/lib/analytics/heatmap.adapters'
 
 type MatrixItem = NonNullable<MenuEngineeringMatrixData['menuEngineeringMatrix']>['items'][number]
 

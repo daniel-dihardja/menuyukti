@@ -2,7 +2,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest'
 
 import { loadReferencedVisualizationForChat } from '@/lib/chat/referenced-visualization-for-chat'
 
-vi.mock('@/lib/analytics/load-slot-demand-profile', () => ({
+vi.mock('@/lib/analytics/load-slot-demand-profile-for-chat', () => ({
   loadSlotDemandProfileForChat: vi.fn(),
 }))
 
@@ -14,7 +14,7 @@ vi.mock('@/lib/analytics/load-pair-lift-matrix-for-chat', () => ({
   loadPairLiftMatrixForChat: vi.fn(),
 }))
 
-import { loadSlotDemandProfileForChat } from '@/lib/analytics/load-slot-demand-profile'
+import { loadSlotDemandProfileForChat } from '@/lib/analytics/load-slot-demand-profile-for-chat'
 
 describe('loadReferencedVisualizationForChat', () => {
   beforeEach(() => {

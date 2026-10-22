@@ -8,7 +8,7 @@ import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
 import type { MenuEngineeringMatrixData, MenuHeatmapsData } from '@/lib/graphql/queries/analytics'
 import { routes } from '@/lib/routes'
-import { MenuHeatmapContent } from './menu-heatmap-content'
+import { MenuHeatmapContent } from '@/components/analytics/menu-heatmap-content'
 
 type MatrixItem = NonNullable<MenuEngineeringMatrixData['menuEngineeringMatrix']>['items'][number]
 

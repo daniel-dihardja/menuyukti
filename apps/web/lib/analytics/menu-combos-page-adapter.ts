@@ -1,4 +1,4 @@
-import type { HeatmapMatrixRow } from '@/app/(protected)/analytics/[analyticsId]/heatmap/heatmap-matrix'
+import type { HeatmapMatrixRow } from '@/lib/analytics/heatmap-matrix-types'
 import type {
   ComboPairTimingCell,
   MenuComboPair,

@@ -9,15 +9,21 @@ import {
   parseStoredVisualizationIds,
   removeVisualizationId,
 } from '@/components/chat/visualizations/chat-visualization-catalog'
-import { CHAT_VISUALIZATION_ID_VALUES } from '@/lib/chat/visualization-ids'
+import {
+  CHAT_VISUALIZATION_ID_VALUES,
+  CHAT_VISUALIZATION_TITLES,
+  HEATMAP_MATRIX_CHAT_CATEGORIES,
+  MENU_HEATMAP_CHAT_TOP_N,
+} from '@/lib/chat/visualization-contract'
 
 describe('chat-visualization-catalog', () => {
-  it('includes venue slot strength, menu item heatmap, and pair lift matrix in the catalog', () => {
+  it('includes venue slot strength, menu item heatmap, pair lift matrix, and low end review in the catalog', () => {
     expect(CHAT_VISUALIZATION_CATALOG).toEqual(
       expect.arrayContaining([
         { id: 'venue_slot_strength_heatmap' },
         { id: 'menu_item_heatmap' },
         { id: 'pair_lift_matrix_heatmap' },
+        { id: 'low_end_review' },
       ]),
     )
   })
@@ -44,11 +50,17 @@ describe('chat-visualization-catalog', () => {
           'venue_slot_strength_heatmap',
           'menu_item_heatmap',
           'pair_lift_matrix_heatmap',
+          'low_end_review',
           'unknown_chart',
           42,
         ]),
       ),
-    ).toEqual(['venue_slot_strength_heatmap', 'menu_item_heatmap', 'pair_lift_matrix_heatmap'])
+    ).toEqual([
+      'venue_slot_strength_heatmap',
+      'menu_item_heatmap',
+      'pair_lift_matrix_heatmap',
+      'low_end_review',
+    ])
   })
 
   it('parseStoredVisualizationIds returns empty array for invalid json', () => {
@@ -61,12 +73,14 @@ describe('chat-visualization-catalog', () => {
     expect(getAvailableCatalogEntries(['venue_slot_strength_heatmap'])).toEqual([
       { id: 'menu_item_heatmap' },
       { id: 'pair_lift_matrix_heatmap' },
+      { id: 'low_end_review' },
     ])
     expect(
       getAvailableCatalogEntries([
         'venue_slot_strength_heatmap',
         'menu_item_heatmap',
         'pair_lift_matrix_heatmap',
+        'low_end_review',
       ]),
     ).toEqual([])
   })
@@ -75,6 +89,7 @@ describe('chat-visualization-catalog', () => {
     expect(isChatVisualizationId('venue_slot_strength_heatmap')).toBe(true)
     expect(isChatVisualizationId('menu_item_heatmap')).toBe(true)
     expect(isChatVisualizationId('pair_lift_matrix_heatmap')).toBe(true)
+    expect(isChatVisualizationId('low_end_review')).toBe(true)
     expect(isChatVisualizationId('other')).toBe(false)
   })
 
@@ -83,5 +98,16 @@ describe('chat-visualization-catalog', () => {
     expect(CHAT_VISUALIZATION_CATALOG.map((entry) => entry.id)).toEqual([
       ...CHAT_VISUALIZATION_ID_VALUES,
     ])
+  })
+
+  it('exposes visualization contract constants for LLM chat summaries', () => {
+    expect(MENU_HEATMAP_CHAT_TOP_N).toBe(25)
+    expect([...HEATMAP_MATRIX_CHAT_CATEGORIES].sort()).toEqual(['plow_horse', 'puzzle', 'star'])
+    expect(Object.keys(CHAT_VISUALIZATION_TITLES).sort()).toEqual(
+      [...CHAT_VISUALIZATION_ID_VALUES].sort(),
+    )
+    for (const id of CHAT_VISUALIZATION_ID_VALUES) {
+      expect(CHAT_VISUALIZATION_TITLES[id].length).toBeGreaterThan(0)
+    }
   })
 })

@@ -8,6 +8,7 @@ import { Button } from '@workspace/ui/components/button'
 import { Field, FieldLabel } from '@workspace/ui/components/field'
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@workspace/ui/components/hover-card'
 import { Slider } from '@workspace/ui/components/slider'
+import { buildCumulativeMarginBand } from '@/lib/analytics/cumulative-margin-band'
 import { formatCurrencyWithCode } from '@/lib/currency'
 import { SortableTable, useSortableColumns } from '@/components/sortable-table'
 import { TableCell, TableRow } from '@workspace/ui/components/table'
@@ -61,22 +62,8 @@ export function MatrixCategoryTable({ category, items, portfolioStats, locale, c
 
   const highlightedRows = useMemo<Set<MatrixDisplayRow>>(() => {
     if (category !== 'low_end' || sliderValue <= 0) return new Set()
-    const threshold = sliderValue / 100
-    const sorted = [...items].sort((a, b) => {
-      const diff = a.contributionMarginShare - b.contributionMarginShare
-      return diff !== 0 ? diff : a.menuItem.localeCompare(b.menuItem, locale)
-    })
-    const highlighted = new Set<MatrixDisplayRow>()
-    let sum = 0
-    for (const row of sorted) {
-      if (sum + row.contributionMarginShare <= threshold + 1e-9) {
-        highlighted.add(row)
-        sum += row.contributionMarginShare
-      } else {
-        break
-      }
-    }
-    return highlighted
+    const band = buildCumulativeMarginBand(items, sliderValue, locale)
+    return new Set(band.selected)
   }, [category, items, sliderValue, locale])
 
   const sortedItems = useMemo(() => {

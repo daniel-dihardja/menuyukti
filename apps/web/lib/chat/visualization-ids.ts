@@ -2,6 +2,7 @@ export const CHAT_VISUALIZATION_ID_VALUES = [
   'venue_slot_strength_heatmap',
   'menu_item_heatmap',
   'pair_lift_matrix_heatmap',
+  'low_end_review',
 ] as const
 
 export type ChatVisualizationId = (typeof CHAT_VISUALIZATION_ID_VALUES)[number]

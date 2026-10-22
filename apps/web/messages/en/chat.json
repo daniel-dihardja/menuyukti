@@ -158,6 +158,7 @@
       "emptyDataDescription": "No slot demand data is available for this sales report.",
       "emptyMenuHeatmapDescription": "No menu heatmap data is available for this sales report.",
       "emptyPairLiftMatrixDescription": "At least two focus menu items are required to show the lift matrix.",
+      "emptyLowEndDescription": "No Low End items are available for this sales report. Update COGS if the matrix is missing.",
       "fallbackRunHint": "Showing data from a newer sales report for this location because the workflow's linked report has no slot demand data.",
       "catalog": {
         "venue_slot_strength_heatmap": {
@@ -171,6 +172,10 @@
         "pair_lift_matrix_heatmap": {
           "title": "Pair lift matrix",
           "description": "How strongly menu items are ordered together vs. chance alone."
+        },
+        "low_end_review": {
+          "title": "Low End review",
+          "description": "Low-popularity, low-margin items to reprice, improve, or remove."
         }
       }
     }

@@ -19,6 +19,8 @@ puzzle). Use \
 limited-availability or single-day favorites (even if BCG low_end).
 - `pair_lift_matrix_heatmap` — **Pair lift matrix**: co-purchase lift between focus \
 menu items. Primary source for interesting menu combos.
+- `low_end_review` — **Low End review**: low-popularity, low-margin items to reprice, \
+improve, or remove from the menu.
 """
 
 IG_STUDIO_BLOCK = """\
@@ -66,7 +68,7 @@ Call these when the user asks what media or collections exist. Do not invent fil
 CHART_ANALYTICS_SECTION = """\
 ## Chart analytics
 
-The three analytics charts are your main data sources for the location situation and for
+The analytics charts are your main data sources for the location situation and for
 planning. When chart tools are available, call `get_chart_data` with a catalog chart_id.
 Do not invent chart ids. Use chart data privately to describe the as-is and to decide
 timing and content; do not dump full chart payloads into the user reply.
@@ -83,9 +85,13 @@ timing and content; do not dump full chart payloads into the user reply.
 - **Pair lift matrix** (`pair_lift_matrix_heatmap`): interesting menu combos / co-purchase
   pairings. Call it for situation briefs and when suggesting combos, multi-item captions,
   or pairing angles.
+- **Low End review** (`low_end_review`): low-popularity, low-margin items. Call it when
+  discussing menu cuts, repricing, or retiring weak dishes.
 
 Load the relevant chart(s) before guessing from general knowledge. For a default as-is
-read of the location, load all three when they are available.
+read of the location, load the core three (venue slot, menu heatmap, pair lift) when
+they are available; add Low End review when the question is about weak items or menu
+trimming.
 
 When the current user message includes a **Visualization data** section (from an `@`
 chart mention in the composer), use that attached chart as the primary source for this

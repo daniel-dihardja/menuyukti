@@ -3,7 +3,7 @@
 import { useLocale, useTranslations } from 'next-intl'
 import useSWR from 'swr'
 
-import { OrderMetricsVenueHeatmap } from '@/app/(protected)/analytics/[analyticsId]/order-metrics/_components/order-metrics-venue-heatmap'
+import { OrderMetricsVenueHeatmap } from '@/components/analytics/order-metrics-venue-heatmap'
 import type { SlotDemandCell } from '@/lib/graphql/queries/analytics'
 import { Alert, AlertDescription, AlertTitle } from '@workspace/ui/components/alert'
 import { Button } from '@workspace/ui/components/button'

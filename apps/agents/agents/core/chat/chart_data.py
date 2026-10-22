@@ -1,4 +1,9 @@
-"""Load and format analytics visualization chart data for chat tools."""
+"""Load and format analytics visualization chart data for chat tools.
+
+Chart IDs and shared chat constants must stay in sync with the web contract:
+``apps/web/lib/chat/visualization-contract.ts`` and
+``apps/web/lib/chat/visualization-ids.ts`` (see ``test_chat_chart_catalog_parity``).
+"""
 
 from __future__ import annotations
 
@@ -19,18 +24,21 @@ ChartId = Literal[
     "venue_slot_strength_heatmap",
     "menu_item_heatmap",
     "pair_lift_matrix_heatmap",
+    "low_end_review",
 ]
 
 CHART_IDS: tuple[ChartId, ...] = (
     "venue_slot_strength_heatmap",
     "menu_item_heatmap",
     "pair_lift_matrix_heatmap",
+    "low_end_review",
 )
 
 CHART_TITLES: dict[ChartId, str] = {
     "venue_slot_strength_heatmap": "Venue slot strength",
     "menu_item_heatmap": "Menu item heatmap",
     "pair_lift_matrix_heatmap": "Pair lift matrix",
+    "low_end_review": "Low End review",
 }
 
 MENU_HEATMAP_CHAT_TOP_N = 25
@@ -509,9 +517,79 @@ def format_chart_markdown_section(
                 all_heatmaps_for_daily_highlights=all_items,
             )
         )
-    else:
+    elif chart_id == "pair_lift_matrix_heatmap":
         lines.append(format_pair_lift_matrix(payload))
+    else:
+        lines.append(format_low_end_review(payload))
 
+    return "\n".join(lines)
+
+
+def format_low_end_review(payload: dict[str, Any]) -> str:
+    """Summarize Low End (BCG) items for chat / tool markdown."""
+    items_raw = payload.get("items")
+    items = [i for i in items_raw if isinstance(i, dict)] if isinstance(items_raw, list) else []
+    distribution_raw = payload.get("distribution")
+    distribution = (
+        [d for d in distribution_raw if isinstance(d, dict)]
+        if isinstance(distribution_raw, list)
+        else []
+    )
+
+    low_end = [
+        i
+        for i in items
+        if str(i.get("category") or "").strip().lower() == "low_end"
+    ]
+    if not low_end:
+        return "(no Low End items)"
+
+    total_items = len(items)
+    low_end_dist = next(
+        (
+            d
+            for d in distribution
+            if str(d.get("category") or "").strip().lower() == "low_end"
+        ),
+        None,
+    )
+    item_share = (
+        _as_float(low_end_dist.get("itemShare"))
+        if low_end_dist is not None
+        else (len(low_end) / total_items if total_items > 0 else 0.0)
+    )
+    margin_share = (
+        _as_float(low_end_dist.get("marginShare")) if low_end_dist is not None else 0.0
+    )
+    margin_amount = sum(_as_float(i.get("contributionMargin")) for i in low_end)
+
+    lines = [
+        f"- **Low End items:** {len(low_end)} of {total_items} "
+        f"({item_share * 100:.1f}% of menu)",
+        f"- **Margin share:** {margin_share * 100:.1f}% of portfolio margin",
+        f"- **Low End margin:** {margin_amount:.2f}",
+        "",
+        "### Items (weakest margin share first)",
+    ]
+
+    sorted_items = sorted(
+        low_end,
+        key=lambda i: (
+            _as_float(i.get("contributionMarginPercentage")),
+            str(i.get("menu") or ""),
+        ),
+    )
+    for item in sorted_items[:25]:
+        menu = str(item.get("menu") or "Unknown").strip() or "Unknown"
+        qty = _as_int(item.get("quantity")) or 0
+        share = _as_float(item.get("contributionMarginPercentage")) * 100
+        margin = _as_float(item.get("contributionMargin"))
+        action = str(item.get("action") or "—")
+        lines.append(
+            f"- **{menu}** — qty {qty}, margin {margin:.2f} ({share:.2f}%), action {action}"
+        )
+    if len(sorted_items) > 25:
+        lines.append(f"- *(Showing 25 of {len(sorted_items)} Low End items.)*")
     return "\n".join(lines)
 
 
@@ -618,13 +696,13 @@ async def _fetch_menu_heatmaps(
     return [h for h in heatmaps if isinstance(h, dict)]
 
 
-async def _fetch_menu_engineering_matrix_items(
+async def _fetch_menu_engineering_matrix(
     client: httpx.AsyncClient,
     *,
     analytics_run_id: str,
     location_id: int,
     user_id: str,
-) -> list[dict[str, Any]] | None:
+) -> dict[str, Any] | None:
     data = await graphql_post(
         client,
         MENU_ENGINEERING_MATRIX_QUERY,
@@ -636,6 +714,27 @@ async def _fetch_menu_engineering_matrix_items(
     )
     matrix = data.get("menuEngineeringMatrix")
     if not isinstance(matrix, dict):
+        return None
+    items = matrix.get("items")
+    if not isinstance(items, list) or len(items) == 0:
+        return None
+    return matrix
+
+
+async def _fetch_menu_engineering_matrix_items(
+    client: httpx.AsyncClient,
+    *,
+    analytics_run_id: str,
+    location_id: int,
+    user_id: str,
+) -> list[dict[str, Any]] | None:
+    matrix = await _fetch_menu_engineering_matrix(
+        client,
+        analytics_run_id=analytics_run_id,
+        location_id=location_id,
+        user_id=user_id,
+    )
+    if matrix is None:
         return None
     items = matrix.get("items")
     if not isinstance(items, list) or len(items) == 0:
@@ -738,16 +837,37 @@ async def load_chart_data_markdown(
                 "matrixCategoryByMenu": category_map,
                 "matrixFilterApplied": applied,
             }
-        lift = await _fetch_pair_lift(
+        if chart_id == "pair_lift_matrix_heatmap":
+            lift = await _fetch_pair_lift(
+                client,
+                analytics_run_id=run_id,
+                location_id=location_id,
+                user_id=user_id,
+            )
+            if not _has_lift_matrix_data(lift):
+                return None
+            assert lift is not None
+            return lift
+        matrix = await _fetch_menu_engineering_matrix(
             client,
             analytics_run_id=run_id,
             location_id=location_id,
             user_id=user_id,
         )
-        if not _has_lift_matrix_data(lift):
+        if matrix is None:
             return None
-        assert lift is not None
-        return lift
+        raw_items = matrix.get("items")
+        raw_distribution = matrix.get("distribution")
+        return {
+            "items": (
+                [i for i in raw_items if isinstance(i, dict)] if isinstance(raw_items, list) else []
+            ),
+            "distribution": (
+                [d for d in raw_distribution if isinstance(d, dict)]
+                if isinstance(raw_distribution, list)
+                else []
+            ),
+        }
 
     used_fallback = False
     payload: dict[str, Any] | None = None
@@ -771,8 +891,10 @@ async def load_chart_data_markdown(
             empty = {"slotDemandProfile": []}
         elif chart_id == "menu_item_heatmap":
             empty = {"menuHeatmaps": []}
-        else:
+        elif chart_id == "pair_lift_matrix_heatmap":
             empty = {"focusMenus": [], "matrixLift": []}
+        else:
+            empty = {"items": [], "distribution": []}
         return format_chart_markdown_section(
             chart_id=chart_id,
             payload=empty,
