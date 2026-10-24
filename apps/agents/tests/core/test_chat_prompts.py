@@ -27,8 +27,13 @@ def test_system_prompt_template_has_complete_structure() -> None:
     assert "list_media" in MEDIA_LIBRARY_BLOCK
     assert "get_milestone" not in SYSTEM_PROMPT_TEMPLATE
     assert "get_location_data" in SYSTEM_PROMPT_TEMPLATE
-    assert "venue_slot_strength_heatmap" in CHART_ANALYTICS_SECTION
-    assert "posting frequency" in CHART_ANALYTICS_SECTION
+    assert "## Weak items" in SYSTEM_PROMPT_TEMPLATE
+    assert "venue_slot_strength_heatmap" in CHART_CATALOG_BLOCK
+    assert "low_end_review" in CHART_CATALOG_BLOCK
+    assert "poor dogs" in CHART_CATALOG_BLOCK
+    assert "core three" in CHART_ANALYTICS_SECTION
+    assert "low_end_review" in CHART_ANALYTICS_SECTION
+    assert "reprice / improve / remove" in CHART_ANALYTICS_SECTION
     assert "Visualization data" in CHART_ANALYTICS_SECTION
     assert "No sales report is attached" in NO_SALES_REPORT_SECTION
 
@@ -41,6 +46,7 @@ def test_build_system_prompt_without_optional_blocks() -> None:
     assert "## Demand" in out
     assert "## Menu" in out
     assert "## Combos" in out
+    assert "## Weak items" in out
     assert "## Hours" in out
     assert "## Next" in out
     assert "present_weekly_instagram_schedule" in out
@@ -69,15 +75,25 @@ def test_build_system_prompt_with_chart_catalog() -> None:
     assert "## Workflow chart catalog" in out
     assert "## Chart analytics" in out
     assert "venue_slot_strength_heatmap" in out
-    assert "posting frequency and best timing" in out
+    assert "posting frequency" in out
+    assert "best timing" in out
     assert "interesting menu combos" in out
     assert "Daily highlights" in out
     assert "Day specialties" in out
+    assert "low_end_review" in out
+    assert "poor dogs" in out
+    assert "BCG dogs" in out
+    assert "reprice, improve, or remove" in out
     assert "get_chart_data" in out
-    assert "typically all three" in out
+    assert "core three" in out
+    assert "typically the core three" in out
     assert "Visualization data" in out
+    assert "Do not load all four on every" in out
     assert "No sales report is attached" not in out
     assert "Do **not** call `present_weekly_instagram_schedule` for this default job" in out
+    # Analytics section is usage rules only — per-chart blurbs live in the catalog.
+    assert CHART_ANALYTICS_SECTION.count("venue_slot_strength_heatmap") == 0
+    assert "Daily highlights" not in CHART_ANALYTICS_SECTION
 
 
 def test_build_system_prompt_with_leonardo_image_generation() -> None:

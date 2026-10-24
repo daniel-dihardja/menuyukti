@@ -19,8 +19,8 @@ puzzle). Use \
 limited-availability or single-day favorites (even if BCG low_end).
 - `pair_lift_matrix_heatmap` — **Pair lift matrix**: co-purchase lift between focus \
 menu items. Primary source for interesting menu combos.
-- `low_end_review` — **Low End review**: low-popularity, low-margin items to reprice, \
-improve, or remove from the menu.
+- `low_end_review` — **Low End review** (BCG dogs / “poor dogs”): low-popularity, \
+low-margin items to **reprice, improve, or remove** from the menu.
 """
 
 IG_STUDIO_BLOCK = """\
@@ -68,30 +68,20 @@ Call these when the user asks what media or collections exist. Do not invent fil
 CHART_ANALYTICS_SECTION = """\
 ## Chart analytics
 
-The analytics charts are your main data sources for the location situation and for
-planning. When chart tools are available, call `get_chart_data` with a catalog chart_id.
-Do not invent chart ids. Use chart data privately to describe the as-is and to decide
-timing and content; do not dump full chart payloads into the user reply.
+When chart tools are available, call `get_chart_data` with a catalog chart_id (see the
+chart catalog). Do not invent chart ids. Use chart data privately to describe the as-is
+and to decide timing, content, or menu actions; do not dump full chart payloads into the
+user reply. Load the relevant chart(s) before guessing from general knowledge.
 
-- **Venue slot strength** (`venue_slot_strength_heatmap`): when demand is strong or weak
-  (day × meal-period). Also posting frequency and best timing. Call it for situation
-  briefs, schedules, how often to post, or which slots are strong or weak.
-- **Menu item heatmap** (`menu_item_heatmap`): which menus to feature and when they sell.
-  Call it for situation briefs and when choosing dishes; combine with venue slot strength
-  and pair lift as needed. Use the main ranked list for evergreen portfolio items
-  (star / plow horse / puzzle). Use **Daily highlights** for strong same-day volume. Use
-  **Day specialties** for limited-availability or single-day favorites (even if BCG
-  low_end).
-- **Pair lift matrix** (`pair_lift_matrix_heatmap`): interesting menu combos / co-purchase
-  pairings. Call it for situation briefs and when suggesting combos, multi-item captions,
-  or pairing angles.
-- **Low End review** (`low_end_review`): low-popularity, low-margin items. Call it when
-  discussing menu cuts, repricing, or retiring weak dishes.
+**Default as-is load:** the core three — venue slot strength, menu item heatmap, and pair
+lift — when available. Also load `low_end_review` when the user asks about weak items,
+Low End, menu cuts, repricing, retiring dishes, BCG dogs, or “poor dogs”, or when a
+**Visualization data** section for Low End is attached. Do not load all four on every
+vague opener.
 
-Load the relevant chart(s) before guessing from general knowledge. For a default as-is
-read of the location, load the core three (venue slot, menu heatmap, pair lift) when
-they are available; add Low End review when the question is about weak items or menu
-trimming.
+**Low End / dogs:** synonym for `low_end_review` — low popularity + low margin. For those
+questions, ground advice in reprice / improve / remove from the loaded or attached
+summary. Do **not** pivot to an Instagram schedule for that question.
 
 When the current user message includes a **Visualization data** section (from an `@`
 chart mention in the composer), use that attached chart as the primary source for this
