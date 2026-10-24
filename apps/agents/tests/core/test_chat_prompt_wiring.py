@@ -39,6 +39,9 @@ def test_chat_prompt_injects_chart_catalog_when_analytics_run_present() -> None:
         content = chat_system_prompt_from_config()
 
     assert "## Workflow chart catalog" in content
+    assert "## Chart analytics" in content
     assert "pair_lift_matrix_heatmap" in content
     assert "low_end_review" in content
+    assert "poor dogs" in content
+    assert "core three" in content
     assert "No sales report is attached" not in content
