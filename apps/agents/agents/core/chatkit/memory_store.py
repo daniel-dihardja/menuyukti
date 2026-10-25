@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from agents_app.agents.core.chatkit.context import ChatKitRequestContext
@@ -39,7 +39,7 @@ class MemoryChatKitStore(Store[ChatKitRequestContext]):
         if thread_id.strip() == context.agent_thread_id.strip():
             created = ThreadMetadata(
                 id=thread_id,
-                created_at=datetime.now(timezone.utc),
+                created_at=datetime.now(UTC),
                 metadata={
                     "agent_thread_id": context.agent_thread_id,
                     "user_id": context.user_id,

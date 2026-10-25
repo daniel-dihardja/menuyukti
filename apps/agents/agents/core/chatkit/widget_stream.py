@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import AsyncIterator, Callable
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from chatkit.types import (
     ThreadItemDoneEvent,
@@ -15,7 +15,7 @@ from chatkit.widgets import Card
 
 
 def _utcnow() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 async def emit_widget_done(

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import AsyncIterator
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from agents_app.agents.core.chat.chat_run_config import (
@@ -35,7 +35,7 @@ _SERVER_CLS: type | None = None
 
 
 def _utcnow() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _menuyukti_chatkit_server_cls() -> type:

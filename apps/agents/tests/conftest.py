@@ -12,7 +12,7 @@ sys.path[:] = [
     if Path(p or ".").resolve() != _app_root
 ]
 
-import pytest
+import pytest  # noqa: E402  # after sys.path fix for openai-agents vs local agents/
 
 # Chat graph compiles at app lifespan and instantiates ChatOpenAI; avoid requiring a real key in CI.
 os.environ.setdefault("AI_GATEWAY_API_KEY", "test-key-agents-ci-not-for-production")

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import AsyncIterator, Callable
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import httpx
 from agents_app.agents.core.chat.http_context import chat_http_client_var
@@ -37,7 +37,7 @@ from langgraph.graph.state import CompiledStateGraph
 
 
 def _utcnow() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _image_url_from_tool_output(output: object) -> str | None:

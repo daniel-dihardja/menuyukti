@@ -1,9 +1,13 @@
 """HTTP tests for streaming chat."""
 
+from datetime import UTC, datetime
 from unittest.mock import MagicMock
 
+import anyio
 import pytest
+from agents_app.agents.core.chatkit.context import ChatKitRequestContext
 from agents_app.server import app
+from chatkit.types import ThreadMetadata
 from fastapi.testclient import TestClient
 from langchain_core.messages import AIMessage, AIMessageChunk, HumanMessage, ToolMessage
 
@@ -675,28 +679,22 @@ def test_delete_chat_history_removes_agent_thread(client: TestClient) -> None:
 
 def test_delete_chat_history_also_clears_chatkit_store(client: TestClient) -> None:
     """Advisor clear/rotate dual-deletes LangGraph checkpoints and ChatKit transcript."""
-    from datetime import datetime, timezone
-
-    from agents_app.agents.core.chatkit.context import ChatKitRequestContext
-    from chatkit.types import ThreadMetadata
-    from chatkit.store import NotFoundError
-
     store = client.app.state.chatkit_store
     assert store is not None
     ctx = ChatKitRequestContext(user_id="user-1", agent_thread_id=AGENT_THREAD_ID)
-    import anyio
 
     async def _seed() -> None:
         await store.save_thread(
             ThreadMetadata(
                 id=AGENT_THREAD_ID,
-                created_at=datetime.now(timezone.utc),
+                created_at=datetime.now(UTC),
                 metadata={"agent_thread_id": AGENT_THREAD_ID},
             ),
             ctx,
         )
 
     anyio.run(_seed)
+    assert AGENT_THREAD_ID in store._threads  # noqa: SLF001 — MemoryChatKitStore
     cp = client.app.state.chat_checkpointer
     lg_id = f"user-1:agent:{AGENT_THREAD_ID}"
     cp.storage[lg_id] = {}
@@ -708,9 +706,5 @@ def test_delete_chat_history_also_clears_chatkit_store(client: TestClient) -> No
     )
     assert response.status_code == 200
     assert lg_id not in cp.storage
-
-    async def _load() -> None:
-        await store.load_thread(AGENT_THREAD_ID, ctx)
-
-    with pytest.raises(NotFoundError):
-        anyio.run(_load)
+    # load_thread autocreates empty agent threads; assert delete removed the row itself.
+    assert AGENT_THREAD_ID not in store._threads  # noqa: SLF001

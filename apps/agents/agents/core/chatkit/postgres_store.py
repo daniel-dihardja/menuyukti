@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from agents_app.agents.core.chatkit.context import ChatKitRequestContext
@@ -87,7 +87,7 @@ class PostgresChatKitStore(Store[ChatKitRequestContext]):
         if thread_id.strip() == context.agent_thread_id.strip():
             created = ThreadMetadata(
                 id=thread_id,
-                created_at=datetime.now(timezone.utc),
+                created_at=datetime.now(UTC),
                 metadata={
                     "agent_thread_id": context.agent_thread_id,
                     "user_id": context.user_id,
@@ -231,7 +231,7 @@ class PostgresChatKitStore(Store[ChatKitRequestContext]):
             await self.load_thread(thread_id, context)
         except NotFoundError:
             await self.save_thread(
-                ThreadMetadata(id=thread_id, created_at=datetime.now(timezone.utc)),
+                ThreadMetadata(id=thread_id, created_at=datetime.now(UTC)),
                 context,
             )
         payload = _THREAD_ITEM_ADAPTER.dump_python(item, mode="json")
