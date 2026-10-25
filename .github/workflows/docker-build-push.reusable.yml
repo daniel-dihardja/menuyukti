@@ -5,6 +5,7 @@
 #   DOCKERHUB_PASSWORD — Docker Hub password or access token
 #   DATABASE_URL       — required when service=web (Next/Prisma build)
 #   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY — required when service=web (baked into Next.js at build)
+#   NEXT_PUBLIC_CHATKIT_DOMAIN_KEY — optional; OpenAI ChatKit domain_pk_… (baked into Next.js at build)
 #   NEXT_PUBLIC_GA_MEASUREMENT_ID — optional; GA4 Measurement ID G-xxx for print shop (baked at build)
 #   CLERK_SECRET_KEY   — required when service=web (Dockerfile build arg for Clerk)
 # Web build also sets NEXT_PUBLIC_SHOW_MARKETING_SIGN_IN=false (hides marketing Sign in; not a secret).
@@ -151,6 +152,7 @@ jobs:
             DATABASE_URL=${{ secrets.DATABASE_URL }}
             ANALYTICS_API_URL=http://127.0.0.1:8000
             NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+            NEXT_PUBLIC_CHATKIT_DOMAIN_KEY=${{ secrets.NEXT_PUBLIC_CHATKIT_DOMAIN_KEY }}
             NEXT_PUBLIC_GA_MEASUREMENT_ID=${{ secrets.NEXT_PUBLIC_GA_MEASUREMENT_ID }}
             NEXT_PUBLIC_SHOW_MARKETING_SIGN_IN=false
             CLERK_SECRET_KEY=${{ secrets.CLERK_SECRET_KEY }}

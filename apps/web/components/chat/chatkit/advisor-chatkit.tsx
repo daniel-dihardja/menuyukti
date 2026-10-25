@@ -3,6 +3,7 @@
 import { ChatKit, useChatKit, type SupportedLocale } from '@openai/chatkit-react'
 import { useLocale, useTranslations } from 'next-intl'
 import { useCallback, useMemo, useRef } from 'react'
+import { toast } from 'sonner'
 
 import { useAdvisorChatKitShell } from '@/components/chat/chatkit/advisor-chatkit-shell-context'
 import { AdvisorChatKitToolbar } from '@/components/chat/chatkit/advisor-chatkit-toolbar'
@@ -12,6 +13,7 @@ import {
   removeAgentThread,
   touchAgentThread,
 } from '@/lib/chat/agent-thread-registry'
+import { runChatKitScheduleWidgetAction } from '@/lib/chat/chatkit-schedule-widget-actions'
 import { searchAdvisorChatKitEntities } from '@/lib/chat/chatkit-entity-search'
 import { apiFetch } from '@/lib/api/client-fetch'
 
@@ -73,11 +75,35 @@ export function AdvisorChatKit() {
   const t = useTranslations('chat')
   const tMention = useTranslations('chat.mentionMenu')
   const tViz = useTranslations('chat.visualizations')
+  const tSchedule = useTranslations('chatTools.presentWeeklyInstagramSchedule')
   const locale = useLocale()
   const shell = useAdvisorChatKitShell()
   const { addedIds } = useChatVisualizationsState()
   const shellRef = useRef(shell)
   shellRef.current = shell
+
+  const scheduleActionLabels = useMemo(
+    () => ({
+      weekdays: {
+        monday: tSchedule('weekdays.monday'),
+        tuesday: tSchedule('weekdays.tuesday'),
+        wednesday: tSchedule('weekdays.wednesday'),
+        thursday: tSchedule('weekdays.thursday'),
+        friday: tSchedule('weekdays.friday'),
+        saturday: tSchedule('weekdays.saturday'),
+        sunday: tSchedule('weekdays.sunday'),
+      },
+      formats: {
+        story: tSchedule('formats.story'),
+        post: tSchedule('formats.post'),
+        carousel: tSchedule('formats.carousel'),
+        reel: tSchedule('formats.reel'),
+      },
+      captionLabel: tSchedule('captionLabel'),
+      whyLabel: tSchedule('whyLabel'),
+    }),
+    [tSchedule],
+  )
 
   const visualizationTitles = useMemo(() => {
     const titles: Record<string, string> = {}
@@ -130,7 +156,10 @@ export function AdvisorChatKit() {
   const { control, setThreadId } = useChatKit({
     api: {
       url: '/api/chatkit',
-      domainKey: 'local-dev',
+      // From OpenAI Platform → Settings → Security → Domain allowlist
+      domainKey:
+        process.env.NEXT_PUBLIC_CHATKIT_DOMAIN_KEY?.trim() ||
+        'domain_pk_6ade1b2fa4608195ae346b59b3cd6d820fb12f8ebd660945',
       fetch: chatkitFetch,
     },
     locale: locale as SupportedLocale,
@@ -217,6 +246,30 @@ export function AdvisorChatKit() {
           mediaGroupLabel: tMention('mediaGroup'),
           chartsGroupLabel: tMention('visualizationsGroup'),
         }),
+    },
+    widgets: {
+      onAction: async (action) => {
+        const result = await runChatKitScheduleWidgetAction(
+          {
+            type: action.type,
+            payload:
+              action.payload && typeof action.payload === 'object'
+                ? (action.payload as Record<string, unknown>)
+                : undefined,
+          },
+          scheduleActionLabels,
+        )
+        if (result.kind === 'ignored' || result.kind === 'cancelled') return
+        if (!result.ok) {
+          toast.error(
+            action.type === 'schedule.share' ? tSchedule('shareError') : tSchedule('exportError'),
+          )
+          return
+        }
+        if (result.kind === 'exported') toast.success(tSchedule('exportSuccess'))
+        if (result.kind === 'shared') toast.success(tSchedule('shareShared'))
+        if (result.kind === 'copied') toast.success(tSchedule('shareCopied'))
+      },
     },
     // null → ChatKit new-thread view (greeting + preset prompts).
     // After the first turn we reopen the agent UUID so history hydrates.

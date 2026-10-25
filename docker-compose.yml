@@ -8,6 +8,8 @@
 #   CLERK_SECRET_KEY — Clerk secret key (also passed into the web container via `environment:`)
 #   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY — Clerk publishable key (pk_…); used at `next build` and, for the web
 #       container, mapped to env var CLERK_PUBLISHABLE_KEY at runtime (see `web` service `environment:`)
+#   NEXT_PUBLIC_CHATKIT_DOMAIN_KEY — OpenAI ChatKit domain key (domain_pk_…); baked into the web
+#       client at `next build` (build-arg). Runtime-only env is not enough for NEXT_PUBLIC_*.
 #   GRAPHQL_INTERNAL_API_KEY — optional shared secret; when set, web and agents send it as
 #       X-Internal-Api-Key to GraphQL (same value as apps/graphql INTERNAL_API_KEY).
 #   AGENTS_API_KEY — optional; when set, web must send it to the agents service for protected routes.
@@ -75,6 +77,7 @@ services:
         DATABASE_URL: ${DATABASE_URL}
         ANALYTICS_API_URL: http://graphql:8000
         NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+        NEXT_PUBLIC_CHATKIT_DOMAIN_KEY: ${NEXT_PUBLIC_CHATKIT_DOMAIN_KEY:-}
         CLERK_SECRET_KEY: ${CLERK_SECRET_KEY}
     environment:
       DATABASE_URL: ${DATABASE_URL}
