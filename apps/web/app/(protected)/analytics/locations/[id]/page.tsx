@@ -68,13 +68,13 @@ async function LocationDetailContent({ params }: { params: Promise<{ id: string 
             <Link href={routes.analytics.branchesReports(location.id)}>{t('manageReports')}</Link>
           </Button>
           <Button asChild variant="outline">
+            <Link href={routes.analytics.branchesCogs(location.id)}>{t('manageCogs')}</Link>
+          </Button>
+          <Button asChild variant="outline">
             <Link href={routes.analytics.branchesMenu(location.id)}>{t('manageMenu')}</Link>
           </Button>
           <Button asChild variant="outline">
             <Link href={routes.analytics.branchesPos(location.id)}>{t('managePos')}</Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link href={routes.analytics.branchesCogs(location.id)}>{t('manageCogs')}</Link>
           </Button>
         </div>
       </div>

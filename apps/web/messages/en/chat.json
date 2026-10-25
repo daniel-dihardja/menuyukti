@@ -174,7 +174,7 @@
           "description": "How strongly menu items are ordered together vs. chance alone."
         },
         "low_end_review": {
-          "title": "Low End review",
+          "title": "Weak items review",
           "description": "Low-popularity, low-margin items to reprice, improve, or remove."
         }
       }

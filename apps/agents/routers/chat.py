@@ -251,6 +251,23 @@ async def delete_chat_history(
     if checkpointer is None:
         raise HTTPException(status_code=503, detail="Chat checkpointer is not initialized")
 
-    thread_id = f"{user_id}:agent:{agent_thread_id.strip()}"
+    agent_tid = agent_thread_id.strip()
+    thread_id = f"{user_id}:agent:{agent_tid}"
     await checkpointer.adelete_thread(thread_id)
+
+    # Dual cleanup: ChatKit UI transcript for the same advisor thread id.
+    store = getattr(request.app.state, "chatkit_store", None)
+    if store is not None:
+        from agents_app.agents.core.chatkit.context import ChatKitRequestContext
+        from chatkit.store import NotFoundError
+
+        ctx = ChatKitRequestContext(user_id=user_id, agent_thread_id=agent_tid)
+        try:
+            await store.delete_thread(agent_tid, ctx)
+        except NotFoundError:
+            pass
+        except Exception:
+            # Best-effort: checkpoint delete already succeeded.
+            pass
+
     return JSONResponse({"deleted_thread_ids": [thread_id], "count": 1})

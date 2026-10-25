@@ -19,7 +19,7 @@ puzzle). Use \
 limited-availability or single-day favorites (even if BCG low_end).
 - `pair_lift_matrix_heatmap` — **Pair lift matrix**: co-purchase lift between focus \
 menu items. Primary source for interesting menu combos.
-- `low_end_review` — **Low End review** (BCG dogs / “poor dogs”): low-popularity, \
+- `low_end_review` — **Weak items review** (BCG dogs / “poor dogs” / Low End): low-popularity, \
 low-margin items to **reprice, improve, or remove** from the menu.
 """
 

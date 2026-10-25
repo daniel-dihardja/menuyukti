@@ -1,9 +1,13 @@
 """HTTP tests for streaming chat."""
 
+from datetime import UTC, datetime
 from unittest.mock import MagicMock
 
+import anyio
 import pytest
+from agents_app.agents.core.chatkit.context import ChatKitRequestContext
 from agents_app.server import app
+from chatkit.types import ThreadMetadata
 from fastapi.testclient import TestClient
 from langchain_core.messages import AIMessage, AIMessageChunk, HumanMessage, ToolMessage
 
@@ -671,3 +675,36 @@ def test_delete_chat_history_removes_agent_thread(client: TestClient) -> None:
     assert body["deleted_thread_ids"] == [thread_id]
     assert thread_id not in cp.storage
     assert other in cp.storage
+
+
+def test_delete_chat_history_also_clears_chatkit_store(client: TestClient) -> None:
+    """Advisor clear/rotate dual-deletes LangGraph checkpoints and ChatKit transcript."""
+    store = client.app.state.chatkit_store
+    assert store is not None
+    ctx = ChatKitRequestContext(user_id="user-1", agent_thread_id=AGENT_THREAD_ID)
+
+    async def _seed() -> None:
+        await store.save_thread(
+            ThreadMetadata(
+                id=AGENT_THREAD_ID,
+                created_at=datetime.now(UTC),
+                metadata={"agent_thread_id": AGENT_THREAD_ID},
+            ),
+            ctx,
+        )
+
+    anyio.run(_seed)
+    assert AGENT_THREAD_ID in store._threads  # noqa: SLF001 — MemoryChatKitStore
+    cp = client.app.state.chat_checkpointer
+    lg_id = f"user-1:agent:{AGENT_THREAD_ID}"
+    cp.storage[lg_id] = {}
+
+    response = client.delete(
+        "/chat/history",
+        headers={"X-Menuyukti-User-Id": "user-1"},
+        params={"agent_thread_id": AGENT_THREAD_ID},
+    )
+    assert response.status_code == 200
+    assert lg_id not in cp.storage
+    # load_thread autocreates empty agent threads; assert delete removed the row itself.
+    assert AGENT_THREAD_ID not in store._threads  # noqa: SLF001

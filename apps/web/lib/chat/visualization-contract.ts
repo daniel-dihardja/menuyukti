@@ -27,5 +27,5 @@ export const CHAT_VISUALIZATION_TITLES: Record<ChatVisualizationId, string> = {
   venue_slot_strength_heatmap: 'Venue slot strength',
   menu_item_heatmap: 'Menu item heatmap',
   pair_lift_matrix_heatmap: 'Pair lift matrix',
-  low_end_review: 'Low End review',
+  low_end_review: 'Weak items review',
 }

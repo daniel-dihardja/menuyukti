@@ -20,6 +20,7 @@ dependencies = [
     # Binary wheels so local/dev hosts without system libpq can still import psycopg.
     "psycopg[binary]>=3.2.13",
     "langchain-tavily>=0.2.18",
+    "openai-chatkit>=1.6.5",
 ]
 
 [dependency-groups]
@@ -41,6 +42,7 @@ packages = [
     "agents_app.agents",
     "agents_app.agents.core",
     "agents_app.agents.core.chat",
+    "agents_app.agents.core.chatkit",
     "agents_app.agents.core.format_markdown",
     "agents_app.agents.core.holiday_relevance",
     "agents_app.agents.core.style_spec",
@@ -78,3 +80,6 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
+# Avoid prepending apps/agents cwd onto sys.path (shadows openai-agents as ``agents``).
+addopts = "--import-mode=importlib"
+pythonpath = ["../.."]
