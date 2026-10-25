@@ -13,7 +13,12 @@ from agents_app.agents.core.chat.sse_stream import (
     tool_events_from_update,
 )
 from agents_app.agents.core.chatkit.widget_stream import emit_widget_done
-from agents_app.agents.core.chatkit.widgets import story_confirm_widget, weekly_schedule_widget
+from agents_app.agents.core.chatkit.widgets import (
+    generated_image_widget,
+    story_confirm_widget,
+    tool_status_widget,
+    weekly_schedule_widget,
+)
 from agents_app.agents.errors import structured_error_payload
 from chatkit.types import (
     AssistantMessageContent,
@@ -31,13 +36,38 @@ from chatkit.types import (
     ThreadMetadata,
     ThreadStreamEvent,
 )
+from chatkit.widgets import Card
 from langchain_core.messages import AIMessage, AIMessageChunk, BaseMessage
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph.state import CompiledStateGraph
 
+_COMPACT_STATUS_TOOLS = frozenset(
+    {
+        "get_chart_data",
+        "search_web",
+        "save_story_asset",
+        "clear_story_assets",
+    }
+)
+
 
 def _utcnow() -> datetime:
     return datetime.now(UTC)
+
+
+def _parse_json_object(output: object) -> dict[str, object] | None:
+    if isinstance(output, dict):
+        return output  # type: ignore[return-value]
+    if isinstance(output, str):
+        text = output.strip()
+        if not text:
+            return None
+        try:
+            parsed = json.loads(text)
+        except json.JSONDecodeError:
+            return None
+        return parsed if isinstance(parsed, dict) else None
+    return None
 
 
 def _image_url_from_tool_output(output: object) -> str | None:
@@ -46,16 +76,83 @@ def _image_url_from_tool_output(output: object) -> str | None:
         text = output.strip()
         if text.startswith("http://") or text.startswith("https://"):
             return text
-        try:
-            parsed = json.loads(text)
-        except json.JSONDecodeError:
-            return None
-        if isinstance(parsed, dict):
-            url = parsed.get("url")
-            return url.strip() if isinstance(url, str) and url.strip() else None
-    if isinstance(output, dict):
-        url = output.get("url")
-        return url.strip() if isinstance(url, str) and url.strip() else None
+    obj = _parse_json_object(output)
+    if obj is None:
+        return None
+    url = obj.get("url")
+    return url.strip() if isinstance(url, str) and url.strip() else None
+
+
+def _is_rejected_story_asset_save(output: object) -> bool:
+    """Match web `isRejectedStoryAssetSaveOutput` — hide speculative failed saves."""
+    obj = _parse_json_object(output)
+    if obj is None:
+        return False
+    return obj.get("ok") is False and obj.get("action") == "save"
+
+
+def _tool_output_looks_like_error(output: object) -> bool:
+    if output is None:
+        return False
+    if isinstance(output, str):
+        lower = output.strip().lower()
+        return lower.startswith("error:") or lower.startswith("error ")
+    obj = _parse_json_object(output)
+    if obj is None:
+        return False
+    if obj.get("ok") is False:
+        return True
+    err = obj.get("error")
+    return isinstance(err, str) and bool(err.strip())
+
+
+def _chart_status_detail(tool_input: object, output: object) -> tuple[str, str | None]:
+    chart_id = None
+    if isinstance(tool_input, dict):
+        raw = tool_input.get("chart_id") or tool_input.get("chartId")
+        if isinstance(raw, str) and raw.strip():
+            chart_id = raw.strip()
+    titles = {
+        "venue_slot_strength_heatmap": "Venue slot strength",
+        "menu_item_heatmap": "Menu item heatmap",
+        "pair_lift_matrix_heatmap": "Pair lift matrix",
+        "low_end_review": "Weak items review",
+    }
+    if _tool_output_looks_like_error(output):
+        return ("Could not load chart", chart_id)
+    if chart_id and chart_id in titles:
+        return (f"Loaded {titles[chart_id]}", chart_id)
+    return ("Chart data ready", chart_id)
+
+
+def _compact_status_for_tool(
+    tool_name: str,
+    *,
+    output: object,
+    tool_input: object,
+) -> Card | None:
+    if tool_name == "save_story_asset" and _is_rejected_story_asset_save(output):
+        return None
+    is_err = _tool_output_looks_like_error(output)
+    tone = "error" if is_err else "ok"
+    if tool_name == "get_chart_data":
+        title, detail = _chart_status_detail(tool_input, output)
+        return tool_status_widget(title=title, detail=detail, tone=tone)
+    if tool_name == "search_web":
+        return tool_status_widget(
+            title="Web search failed" if is_err else "Web search complete",
+            tone=tone,
+        )
+    if tool_name == "save_story_asset":
+        return tool_status_widget(
+            title="Could not save asset" if is_err else "Story asset saved",
+            tone=tone,
+        )
+    if tool_name == "clear_story_assets":
+        return tool_status_widget(
+            title="Could not clear assets" if is_err else "Story assets cleared",
+            tone=tone,
+        )
     return None
 
 
@@ -162,6 +259,35 @@ async def stream_langgraph_as_chatkit(
                                     name="story_image_ready",
                                     data={"url": image_url},
                                 )
+                                async for widget_event in emit_widget_done(
+                                    thread,
+                                    generated_image_widget(url=image_url),
+                                    generate_id=_gen_id,
+                                ):
+                                    yield widget_event
+                            elif _tool_output_looks_like_error(output):
+                                async for widget_event in emit_widget_done(
+                                    thread,
+                                    tool_status_widget(
+                                        title="Image generation failed",
+                                        tone="error",
+                                    ),
+                                    generate_id=_gen_id,
+                                ):
+                                    yield widget_event
+                        elif tool_name in _COMPACT_STATUS_TOOLS:
+                            status_widget = _compact_status_for_tool(
+                                tool_name,
+                                output=output,
+                                tool_input=tool_input,
+                            )
+                            if status_widget is not None:
+                                async for widget_event in emit_widget_done(
+                                    thread,
+                                    status_widget,
+                                    generate_id=_gen_id,
+                                ):
+                                    yield widget_event
 
         full_text = "".join(text_parts)
         if message_started:

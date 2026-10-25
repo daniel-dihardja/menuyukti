@@ -21,7 +21,6 @@ from chatkit.store import Store
 from chatkit.types import (
     Action,
     InferenceOptions,
-    NoticeEvent,
     ThreadMetadata,
     ThreadStreamEvent,
     UserMessageItem,
@@ -136,14 +135,7 @@ def _menuyukti_chatkit_server_cls() -> type:
                 async for event in self.respond(thread, fake, context):
                     yield event
                 return
-            if action_type == "schedule.export_ics":
-                yield NoticeEvent(
-                    level="info",
-                    message=(
-                        "Open the schedule card actions to export ICS from the advisor shell."
-                    ),
-                )
-                return
+            # schedule.export_ics / schedule.share are client-handled (handler="client").
             _logger.info("Unhandled ChatKit action type=%s", action_type)
 
     _SERVER_CLS = MenuyuktiChatKitServer
