@@ -156,7 +156,10 @@ export function AdvisorChatKit() {
   const { control, setThreadId } = useChatKit({
     api: {
       url: '/api/chatkit',
-      domainKey: 'local-dev',
+      // From OpenAI Platform → Settings → Security → Domain allowlist
+      domainKey:
+        process.env.NEXT_PUBLIC_CHATKIT_DOMAIN_KEY?.trim() ||
+        'domain_pk_6ade1b2fa4608195ae346b59b3cd6d820fb12f8ebd660945',
       fetch: chatkitFetch,
     },
     locale: locale as SupportedLocale,
