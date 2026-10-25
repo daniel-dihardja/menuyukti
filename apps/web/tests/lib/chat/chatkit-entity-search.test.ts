@@ -16,7 +16,7 @@ describe('searchAdvisorChatKitEntities', () => {
       attachedVisualizationIds: ['menu_item_heatmap', 'low_end_review'],
       visualizationTitles: {
         menu_item_heatmap: 'Menu item heatmap',
-        low_end_review: 'Low End review',
+        low_end_review: 'Weak items review',
       },
       mediaGroupLabel: 'Media',
       chartsGroupLabel: 'Charts',

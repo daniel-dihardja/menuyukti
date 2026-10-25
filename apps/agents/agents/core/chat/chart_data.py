@@ -38,7 +38,7 @@ CHART_TITLES: dict[ChartId, str] = {
     "venue_slot_strength_heatmap": "Venue slot strength",
     "menu_item_heatmap": "Menu item heatmap",
     "pair_lift_matrix_heatmap": "Pair lift matrix",
-    "low_end_review": "Low End review",
+    "low_end_review": "Weak items review",
 }
 
 MENU_HEATMAP_CHAT_TOP_N = 25
