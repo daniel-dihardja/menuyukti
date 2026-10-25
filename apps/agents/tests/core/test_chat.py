@@ -671,3 +671,46 @@ def test_delete_chat_history_removes_agent_thread(client: TestClient) -> None:
     assert body["deleted_thread_ids"] == [thread_id]
     assert thread_id not in cp.storage
     assert other in cp.storage
+
+
+def test_delete_chat_history_also_clears_chatkit_store(client: TestClient) -> None:
+    """Advisor clear/rotate dual-deletes LangGraph checkpoints and ChatKit transcript."""
+    from datetime import datetime, timezone
+
+    from agents_app.agents.core.chatkit.context import ChatKitRequestContext
+    from chatkit.types import ThreadMetadata
+    from chatkit.store import NotFoundError
+
+    store = client.app.state.chatkit_store
+    assert store is not None
+    ctx = ChatKitRequestContext(user_id="user-1", agent_thread_id=AGENT_THREAD_ID)
+    import anyio
+
+    async def _seed() -> None:
+        await store.save_thread(
+            ThreadMetadata(
+                id=AGENT_THREAD_ID,
+                created_at=datetime.now(timezone.utc),
+                metadata={"agent_thread_id": AGENT_THREAD_ID},
+            ),
+            ctx,
+        )
+
+    anyio.run(_seed)
+    cp = client.app.state.chat_checkpointer
+    lg_id = f"user-1:agent:{AGENT_THREAD_ID}"
+    cp.storage[lg_id] = {}
+
+    response = client.delete(
+        "/chat/history",
+        headers={"X-Menuyukti-User-Id": "user-1"},
+        params={"agent_thread_id": AGENT_THREAD_ID},
+    )
+    assert response.status_code == 200
+    assert lg_id not in cp.storage
+
+    async def _load() -> None:
+        await store.load_thread(AGENT_THREAD_ID, ctx)
+
+    with pytest.raises(NotFoundError):
+        anyio.run(_load)

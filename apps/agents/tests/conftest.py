@@ -1,6 +1,16 @@
 """Pytest fixtures and env defaults for agents tests."""
 
 import os
+import sys
+from pathlib import Path
+
+# Keep openai-agents importable when cwd is apps/agents (ChatKit dependency).
+_app_root = Path(__file__).resolve().parents[1]
+sys.path[:] = [
+    p
+    for p in sys.path
+    if Path(p or ".").resolve() != _app_root
+]
 
 import pytest
 

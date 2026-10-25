@@ -156,6 +156,9 @@ importers:
       '@next/third-parties':
         specifier: ^16.3.8
         version: 16.3.8(next@16.3.8(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
+      '@openai/chatkit-react':
+        specifier: ^1.6.1
+        version: 1.6.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@serwist/next':
         specifier: ^9.5.10
         version: 9.5.10(next@16.3.8(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)(typescript@5.9.3)
@@ -2476,6 +2479,15 @@ packages:
   '@nolyfill/is-core-module@1.0.39':
     resolution: {integrity: sha512-nn5ozdjYQpUCZlWGuxcJY/KpxkWQs4DcbMCmKojjyrYDEAGy4Ce19NN4v5MduafTwJlbKc99UA8YhSVqq9yPZA==}
     engines: {node: '>=12.4.0'}
+
+  '@openai/chatkit-react@1.6.1':
+    resolution: {integrity: sha512-NraG0KJMouWG4uuXS5mAlcU8DNvu8lNp4YfpJiA4yzR6S9hnPsiPwbwhGXnMk8JxBQEitmSB1lMivJn/I2wopg==}
+    peerDependencies:
+      react: '>=18'
+      react-dom: '>=18'
+
+  '@openai/chatkit@1.9.0':
+    resolution: {integrity: sha512-AbqNYaCkQfOauFIk/xL3LFmZ/zIBJuvV71EMUK1o1Tu3/qCG5qRjuDnTUVLkkX9Al2ZYQ6yB1oyWN0jNhoBRMQ==}
 
   '@opentelemetry/api@1.9.0':
     resolution: {integrity: sha512-3giAOQvZiH5F9bMlMiv8+GSPMeqg0dbaeo58/0SlA9sxSqZhnUtxzX9/2FzyhS9sWQf5S0GJE0AKBrFqjpeYcg==}
@@ -12074,6 +12086,14 @@ snapshots:
       fastq: 1.19.1
 
   '@nolyfill/is-core-module@1.0.39': {}
+
+  '@openai/chatkit-react@1.6.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
+    dependencies:
+      '@openai/chatkit': 1.9.0
+      react: 19.2.3
+      react-dom: 19.2.3(react@19.2.3)
+
+  '@openai/chatkit@1.9.0': {}
 
   '@opentelemetry/api@1.9.0': {}
 

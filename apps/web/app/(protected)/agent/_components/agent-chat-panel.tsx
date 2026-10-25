@@ -6,24 +6,17 @@ import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
 
-import { useChatComposerState } from '@/components/chat/chat-context'
+import { AdvisorChatKit } from '@/components/chat/chatkit/advisor-chatkit'
+import { AdvisorChatKitPreview } from '@/components/chat/chatkit/advisor-chatkit-preview'
+import {
+  AdvisorChatKitShellProvider,
+  useAdvisorChatKitShell,
+} from '@/components/chat/chatkit/advisor-chatkit-shell-context'
 import { ChatWithMobileArtifactLayout, ChatWithPreviewLayout } from '@/components/chat/chat-layout'
-import { ChatMentionProvider } from '@/components/chat/chat-mention-context'
-import { ChatSidePanel } from '@/components/chat/chat-side-panel'
 import { ChatVisualizationsProvider } from '@/components/chat/visualizations/chat-visualizations-context'
 import { ChatPreviewPanelSkeleton } from '@/components/chat/chat-workspace-skeleton'
 import { useDesktopLayout } from '@/hooks/use-desktop-layout'
 import { routes } from '@/lib/routes'
-
-import { AgentChatHost } from './agent-chat-host'
-
-const ChatPreviewPanelBodyLazy = dynamic(
-  () => import('@/components/chat/chat-preview-panel-body').then((m) => m.ChatPreviewPanelBody),
-  {
-    ssr: false,
-    loading: () => <ChatPreviewPanelSkeleton className="h-full w-full" />,
-  },
-)
 
 const ChatVisualizationsPaneLazy = dynamic(
   () =>
@@ -63,7 +56,7 @@ export function AgentChatPanel({
   )
 
   return (
-    <AgentChatHost
+    <AdvisorChatKitShellProvider
       agentThreadId={agentThreadId}
       analyticsRunId={analyticsRunId}
       locationId={locationId}
@@ -75,20 +68,18 @@ export function AgentChatPanel({
         locationId={locationId}
         storageKeyId={agentThreadId}
       >
-        <ChatMentionProvider>
-          <AgentChatPanelLayout
-            chartsArtifactDescription={tViz('artifactDescription')}
-            chartsArtifactHint={tViz('artifactHint')}
-            chartsArtifactTitle={tViz('artifactTitle')}
-            mobileArtifactOpen={mobileArtifactOpen}
-            onMobileArtifactOpenChange={setMobileArtifactOpen}
-            previewPanelRef={previewPanelRef}
-            storyArtifactHint={t('storyArtifact.ariaLabel')}
-            storyArtifactTitle={t('storyArtifact.ariaLabel')}
-          />
-        </ChatMentionProvider>
+        <AgentChatPanelLayout
+          chartsArtifactDescription={tViz('artifactDescription')}
+          chartsArtifactHint={tViz('artifactHint')}
+          chartsArtifactTitle={tViz('artifactTitle')}
+          mobileArtifactOpen={mobileArtifactOpen}
+          onMobileArtifactOpenChange={setMobileArtifactOpen}
+          previewPanelRef={previewPanelRef}
+          storyArtifactHint={t('storyArtifact.ariaLabel')}
+          storyArtifactTitle={t('storyArtifact.ariaLabel')}
+        />
       </ChatVisualizationsProvider>
-    </AgentChatHost>
+    </AdvisorChatKitShellProvider>
   )
 }
 
@@ -112,7 +103,7 @@ function ModeDesktopLayout({
 }) {
   return (
     <ChatWithPreviewLayout
-      chatPane={<ChatSidePanel />}
+      chatPane={<AdvisorChatKit />}
       previewPane={previewPane}
       previewPanelRef={previewPanelRef}
     />
@@ -136,7 +127,7 @@ function ModeMobileLayout({
 }) {
   return (
     <ChatWithMobileArtifactLayout
-      chatPane={<ChatSidePanel />}
+      chatPane={<AdvisorChatKit />}
       mobileArtifactDescription={artifactDescription}
       mobileArtifactHint={artifactHint}
       mobileArtifactOpen={mobileArtifactOpen}
@@ -157,20 +148,15 @@ function AgentChatPanelLayout({
   storyArtifactHint,
   storyArtifactTitle,
 }: AgentChatPanelLayoutProps) {
-  const { chatMode } = useChatComposerState()
+  const { chatMode } = useAdvisorChatKitShell()
   const isDesktop = useDesktopLayout()
 
-  // Close mobile artifact when switching modes.
   useEffect(() => {
     onMobileArtifactOpenChange(false)
   }, [chatMode, onMobileArtifactOpenChange])
 
   const isImageAssistant = chatMode === 'image_assistant'
-  const previewPane = isImageAssistant ? (
-    <ChatPreviewPanelBodyLazy />
-  ) : (
-    <ChatVisualizationsPaneLazy />
-  )
+  const previewPane = isImageAssistant ? <AdvisorChatKitPreview /> : <ChatVisualizationsPaneLazy />
   const artifactHint = isImageAssistant ? storyArtifactHint : chartsArtifactHint
   const artifactTitle = isImageAssistant ? storyArtifactTitle : chartsArtifactTitle
   const artifactDescription = isImageAssistant ? null : chartsArtifactDescription

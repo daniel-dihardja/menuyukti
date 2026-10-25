@@ -8,7 +8,9 @@ from typing import Any
 
 import httpx
 from agents_app.agents.core.chat.graph import compile_chat_graph
+from agents_app.agents.core.chatkit.memory_store import MemoryChatKitStore
 from agents_app.routers.chat import router as chat_router
+from agents_app.routers.chatkit import router as chatkit_router
 from agents_app.routers.format_markdown import router as format_markdown_router
 from agents_app.routers.holiday_relevance import router as holiday_relevance_router
 from agents_app.routers.holiday_story_draft import router as holiday_story_draft_router
@@ -102,15 +104,41 @@ class InternalApiKeyMiddleware(BaseHTTPMiddleware):
 
 
 @asynccontextmanager
-async def _chat_runtime(app: FastAPI, checkpointer: BaseCheckpointSaver) -> Any:
+async def _chat_runtime(
+    app: FastAPI,
+    checkpointer: BaseCheckpointSaver,
+    *,
+    chatkit_db_url: str | None = None,
+) -> Any:
     app.state.chat_checkpointer = checkpointer
     app.state.chat_graph = compile_chat_graph(checkpointer)
-    async with httpx.AsyncClient(
-        limits=httpx.Limits(max_connections=20, max_keepalive_connections=10),
-        timeout=httpx.Timeout(60.0),
-    ) as http_client:
-        app.state.http_client = http_client
-        yield
+    chatkit_pool = None
+    from agents_app.agents.core.chatkit.server import build_chatkit_server
+
+    if chatkit_db_url:
+        from agents_app.agents.core.chatkit.postgres_store import open_chatkit_postgres_store
+
+        store, chatkit_pool = await open_chatkit_postgres_store(chatkit_db_url)
+        app.state.chatkit_store = store
+        app.state.chatkit_server = build_chatkit_server(store)
+    else:
+        store = MemoryChatKitStore()
+        app.state.chatkit_store = store
+        app.state.chatkit_server = build_chatkit_server(store)
+        _logger.warning(
+            "ChatKit using MemoryChatKitStore — transcript is lost on restart "
+            "(set LANGGRAPH_CHECKPOINT_DATABASE_URL for durable ChatKit rows)"
+        )
+    try:
+        async with httpx.AsyncClient(
+            limits=httpx.Limits(max_connections=20, max_keepalive_connections=10),
+            timeout=httpx.Timeout(60.0),
+        ) as http_client:
+            app.state.http_client = http_client
+            yield
+    finally:
+        if chatkit_pool is not None:
+            await chatkit_pool.close()
 
 
 @asynccontextmanager
@@ -169,7 +197,7 @@ async def lifespan(app: FastAPI) -> Any:
     if db_url:
         async with (
             _postgres_checkpointer(db_url) as checkpointer,
-            _chat_runtime(app, checkpointer),
+            _chat_runtime(app, checkpointer, chatkit_db_url=db_url),
         ):
             yield
     else:
@@ -184,6 +212,7 @@ app = FastAPI(
 )
 app.add_middleware(InternalApiKeyMiddleware)
 app.include_router(chat_router, tags=["chat"])
+app.include_router(chatkit_router, tags=["chatkit"])
 app.include_router(format_markdown_router, tags=["core", "format-markdown"])
 app.include_router(holiday_relevance_router, tags=["playbooks", "holiday-relevance"])
 app.include_router(holiday_story_draft_router, tags=["playbooks", "holiday-story-draft"])

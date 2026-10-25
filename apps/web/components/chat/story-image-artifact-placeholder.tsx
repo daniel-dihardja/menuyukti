@@ -15,10 +15,12 @@ import {
 } from '@/lib/posts/leonardo-post-dimensions'
 
 import { StoryArtifactPlaceholderImage } from '@/components/chat/story-artifact-placeholder-image'
-import { useChatActions, useChatComposerState, useChatMeta } from '@/components/chat/chat-context'
 
 type StoryImageArtifactProps = {
   imageUrl?: string | null
+  selectedImageFormat: ChatImageAssistantFormatId
+  onSelectedImageFormatChange: (format: ChatImageAssistantFormatId) => void
+  formatDisabled?: boolean
 }
 
 function FormatPreviewFrame({ format }: { format: ChatImageAssistantFormatId }) {
@@ -31,12 +33,14 @@ function FormatPreviewFrame({ format }: { format: ChatImageAssistantFormatId }) 
   )
 }
 
-export function StoryImageArtifact({ imageUrl }: StoryImageArtifactProps) {
+export function StoryImageArtifact({
+  imageUrl,
+  selectedImageFormat,
+  onSelectedImageFormatChange,
+  formatDisabled = false,
+}: StoryImageArtifactProps) {
   const t = useTranslations('chat.storyArtifact')
   const tFormat = useTranslations('postCreator.prompt.format')
-  const { selectedImageFormat } = useChatComposerState()
-  const { setSelectedImageFormat } = useChatActions()
-  const { isChatBusy } = useChatMeta()
   const formatFieldId = useId()
   const hasImage = typeof imageUrl === 'string' && imageUrl.length > 0
   const aspectCss = formatAspectCss(selectedImageFormat)
@@ -54,9 +58,9 @@ export function StoryImageArtifact({ imageUrl }: StoryImageArtifactProps) {
           value={selectedImageFormat}
           onValueChange={(value) => {
             if (!value) return
-            setSelectedImageFormat(value as ChatImageAssistantFormatId)
+            onSelectedImageFormatChange(value as ChatImageAssistantFormatId)
           }}
-          disabled={isChatBusy}
+          disabled={formatDisabled}
           className="flex flex-wrap justify-center gap-2.5"
           aria-label={t('formatAriaLabel')}
         >
