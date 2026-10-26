@@ -128,3 +128,24 @@ export function briefHintsHasAnySelection(state: BriefHintsState): boolean {
     return typeof value === 'string' && value.trim().length > 0
   })
 }
+
+/** Guest-facing priority order for “next suggested” coach copy. */
+const BRIEF_NEXT_SUGGESTED_ORDER: (keyof BriefHintsState)[] = [
+  'phone',
+  'instagramHandle',
+  'websiteUrl',
+  'neighborhood',
+  'contactEmail',
+  'notes',
+  'reservationUrl',
+  'onlineOrderUrl',
+  'menuUrl',
+  'googleMapsUrl',
+]
+
+export function nextSuggestedBriefField(state: BriefHintsState): keyof BriefHintsState | null {
+  for (const key of BRIEF_NEXT_SUGGESTED_ORDER) {
+    if (!state[key].trim()) return key
+  }
+  return null
+}

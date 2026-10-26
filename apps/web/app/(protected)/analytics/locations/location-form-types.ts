@@ -47,3 +47,55 @@ export function defaultLocationOpeningHours(): OpeningHourRow[] {
     closeTime: '',
   }))
 }
+
+export function openingHoursAreAllClosed(rows: OpeningHourRow[]): boolean {
+  return rows.every((row) => row.closed || !row.openTime || !row.closeTime)
+}
+
+export type OpeningHoursSummaryKind = 'closedAll' | 'weekdays' | 'everyDay' | 'custom'
+
+export function classifyOpeningHoursSummary(rows: OpeningHourRow[]): {
+  kind: OpeningHoursSummaryKind
+  openTime?: string
+  closeTime?: string
+} {
+  if (openingHoursAreAllClosed(rows)) {
+    return { kind: 'closedAll' }
+  }
+
+  const byDay = new Map(rows.map((row) => [row.dayOfWeek, row]))
+  const weekdays: Weekday[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday']
+  const weekend: Weekday[] = ['saturday', 'sunday']
+
+  const weekdayRows = weekdays.map((day) => byDay.get(day)).filter(Boolean) as OpeningHourRow[]
+  const weekendRows = weekend.map((day) => byDay.get(day)).filter(Boolean) as OpeningHourRow[]
+
+  const sameSlot = (a: OpeningHourRow, b: OpeningHourRow) =>
+    a.closed === b.closed && a.openTime === b.openTime && a.closeTime === b.closeTime
+
+  const weekdaysUniform =
+    weekdayRows.length === 5 &&
+    weekdayRows.every((row) => !row.closed && row.openTime && row.closeTime) &&
+    weekdayRows.every((row) => sameSlot(row, weekdayRows[0]!))
+
+  const weekendClosed = weekendRows.every((row) => row.closed || !row.openTime || !row.closeTime)
+
+  if (weekdaysUniform && weekendClosed) {
+    return {
+      kind: 'weekdays',
+      openTime: weekdayRows[0]!.openTime,
+      closeTime: weekdayRows[0]!.closeTime,
+    }
+  }
+
+  const openRows = rows.filter((row) => !row.closed && row.openTime && row.closeTime)
+  if (openRows.length === 7 && openRows.every((row) => sameSlot(row, openRows[0]!))) {
+    return {
+      kind: 'everyDay',
+      openTime: openRows[0]!.openTime,
+      closeTime: openRows[0]!.closeTime,
+    }
+  }
+
+  return { kind: 'custom' }
+}

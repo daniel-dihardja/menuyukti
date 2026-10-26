@@ -38,9 +38,8 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { usePathname } from 'next/navigation'
 import { useMenuyuktiRole } from '@/hooks/use-menuyukti-role'
-import { isNavItemHiddenFromNonAdmin } from '@/lib/admin-only-features'
-import { partitionClientNav } from '@/lib/client-flat-nav'
-import { isNavKeyEnabled } from '@/lib/feature-flags'
+import { orderClientFlatNav, splitClientNavAtAi } from '@/lib/client-flat-nav'
+import { isNavItemHiddenFromNonAdmin, isNavKeyEnabled } from '@/lib/feature-flags'
 import { isMenuyuktiAdmin } from '@/lib/menuyukti-role'
 import { routes } from '@/lib/routes'
 import { isNavKeyAllowedForPlan } from '@/lib/workspace-plan'
@@ -76,10 +75,9 @@ const NAV_GROUP_LABEL_KEYS: Record<NavGroupId, string> = {
 }
 
 /**
- * Sidebar order follows daily product flow for platform admins:
- * overview → create/plan → measure → operations → account.
- * Non-admin clients get two labeled blocks: Workspace (Locations → Inventory → Team)
- * then Services (paid cloud modules).
+ * Sidebar catalog. Restaurant clients (non-admin) see a flat MVP list via
+ * feature flags + {@link orderClientFlatNav}: Locations → Services.
+ * Platform admins keep grouped overview → create → … → platform.
  */
 const NAV_WORKSPACE: NavItem[] = [
   {
@@ -292,37 +290,43 @@ export function NavMain() {
   const visibleWorkspaceItems = visibleNavItemsForRole(NAV_WORKSPACE, showAdminNav)
 
   if (!showAdminNav) {
-    const { core, services, other } = partitionClientNav(visibleWorkspaceItems)
+    const clientItems = orderClientFlatNav(visibleWorkspaceItems)
+    if (clientItems.length === 0) return null
+    const { primary, ai, usage } = splitClientNavAtAi(clientItems)
     return (
       <>
-        {core.length > 0 ? (
+        {primary.length > 0 ? (
           <SidebarGroup>
-            <SidebarGroupLabel>{t('groupWorkspace')}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                <NavMenuItems items={core} t={t} isActive={isActive} />
+                <NavMenuItems items={primary} t={t} isActive={isActive} />
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
         ) : null}
-        {services.length > 0 ? (
-          <SidebarGroup>
-            <SidebarGroupLabel>{t('groupServices')}</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <NavMenuItems items={services} t={t} isActive={isActive} />
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
+        {ai.length > 0 ? (
+          <>
+            <SidebarSeparator className="my-2" />
+            <SidebarGroup>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <NavMenuItems items={ai} t={t} isActive={isActive} />
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </>
         ) : null}
-        {other.length > 0 ? (
-          <SidebarGroup>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <NavMenuItems items={other} t={t} isActive={isActive} />
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
+        {usage.length > 0 ? (
+          <>
+            <SidebarSeparator className="my-2" />
+            <SidebarGroup>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <NavMenuItems items={usage} t={t} isActive={isActive} />
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </>
         ) : null}
       </>
     )

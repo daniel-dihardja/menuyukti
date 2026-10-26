@@ -14,23 +14,19 @@ type ExploreFiltersProps = {
   cities: string[]
   city: string | null
   query: string | null
-  pickup: boolean
 }
 
 const CITY_ALL = '__all__'
-const PICKUP_OFF = '__off__'
-const PICKUP_ON = 'pickup'
 
-function buildExploreHref(city: string | null, query: string | null, pickup: boolean): string {
+function buildExploreHref(city: string | null, query: string | null): string {
   const params = new URLSearchParams()
   if (city) params.set('city', city)
   if (query) params.set('q', query)
-  if (pickup) params.set('pickup', '1')
   const qs = params.toString()
   return qs ? `${routes.explore}?${qs}` : routes.explore
 }
 
-export function ExploreFilters({ cities, city, query, pickup }: ExploreFiltersProps) {
+export function ExploreFilters({ cities, city, query }: ExploreFiltersProps) {
   const t = useTranslations('explore')
   const router = useRouter()
   const [draftQuery, setDraftQuery] = React.useState(query ?? '')
@@ -40,20 +36,15 @@ export function ExploreFilters({ cities, city, query, pickup }: ExploreFiltersPr
   }, [query])
 
   const cityValue = city ?? CITY_ALL
-  const pickupValue = pickup ? PICKUP_ON : PICKUP_OFF
 
-  function navigate(
-    nextCity: string | null,
-    nextQuery: string | null,
-    nextPickup: boolean = pickup,
-  ) {
-    router.push(buildExploreHref(nextCity, nextQuery, nextPickup))
+  function navigate(nextCity: string | null, nextQuery: string | null) {
+    router.push(buildExploreHref(nextCity, nextQuery))
   }
 
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const cleaned = draftQuery.trim()
-    navigate(city, cleaned || null, pickup)
+    navigate(city, cleaned || null)
   }
 
   const chipClass = 'h-9 min-h-9 shrink-0 touch-manipulation rounded-full px-3 text-xs font-medium'
@@ -86,58 +77,32 @@ export function ExploreFilters({ cities, city, query, pickup }: ExploreFiltersPr
         </Button>
       </form>
 
-      <div className="flex w-full flex-nowrap items-center gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <ToggleGroup
-          type="single"
-          value={pickupValue}
-          onValueChange={(value) => {
-            if (!value || value === PICKUP_OFF) {
-              navigate(city, query, false)
-              return
-            }
-            if (value === PICKUP_ON) {
-              navigate(city, query, true)
-            }
-          }}
-          className="flex shrink-0 flex-nowrap justify-start gap-2"
-          aria-label={t('pickupLabel')}
-        >
-          <ToggleGroupItem value={PICKUP_OFF} className={chipClass}>
-            {t('pickupAll')}
-          </ToggleGroupItem>
-          <ToggleGroupItem value={PICKUP_ON} className={chipClass}>
-            {t('pickupAvailable')}
-          </ToggleGroupItem>
-        </ToggleGroup>
-
-        {cities.length > 0 ? (
-          <>
-            <span className="mx-1 h-5 w-px shrink-0 bg-border" aria-hidden />
-            <ToggleGroup
-              type="single"
-              value={cityValue}
-              onValueChange={(value) => {
-                if (!value || value === CITY_ALL) {
-                  navigate(null, query, pickup)
-                  return
-                }
-                navigate(value, query, pickup)
-              }}
-              className="flex min-w-0 flex-nowrap justify-start gap-2"
-              aria-label={t('citiesLabel')}
-            >
-              <ToggleGroupItem value={CITY_ALL} className={chipClass}>
-                {t('cityAll')}
+      {cities.length > 0 ? (
+        <div className="flex w-full flex-nowrap items-center gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <ToggleGroup
+            type="single"
+            value={cityValue}
+            onValueChange={(value) => {
+              if (!value || value === CITY_ALL) {
+                navigate(null, query)
+                return
+              }
+              navigate(value, query)
+            }}
+            className="flex min-w-0 flex-nowrap justify-start gap-2"
+            aria-label={t('citiesLabel')}
+          >
+            <ToggleGroupItem value={CITY_ALL} className={chipClass}>
+              {t('cityAll')}
+            </ToggleGroupItem>
+            {cities.map((name) => (
+              <ToggleGroupItem key={name} value={name} className={chipClass}>
+                {name}
               </ToggleGroupItem>
-              {cities.map((name) => (
-                <ToggleGroupItem key={name} value={name} className={chipClass}>
-                  {name}
-                </ToggleGroupItem>
-              ))}
-            </ToggleGroup>
-          </>
-        ) : null}
-      </div>
+            ))}
+          </ToggleGroup>
+        </div>
+      ) : null}
     </div>
   )
 }

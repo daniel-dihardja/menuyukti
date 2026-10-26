@@ -1,40 +1,306 @@
 {
-  "nav": {
-    "home": true,
-    "dashboard": false,
-    "media": true,
-    "posts": false,
-    "calendar": true,
-    "playbooks": true,
-    "branches": true,
-    "crm": true,
-    "printShop": true,
-    "services": true,
-    "inventar": true,
-    "team": true,
-    "usage": true,
-    "chat": true
-  },
-  "routes": {
-    "/dashboard": true,
-    "/home": true,
-    "/continue": true,
-    "/media": true,
-    "/ig-studio": true,
-    "/calendar": true,
-    "/playbooks": true,
-    "/analytics": true,
-    "/crm": true,
-    "/shop": true,
-    "/explore": true,
-    "/print-orders": true,
-    "/inventar": true,
-    "/services": true,
-    "/team": true,
-    "/profile": true,
-    "/advisor": true,
-    "/usage": true,
-    "/staff": true
-  },
-  "defaultAuthenticatedPath": "/home"
+  "defaultAuthenticatedPath": "/home",
+  "features": [
+    {
+      "id": "home",
+      "description": "Customer home hub.",
+      "enabled": true,
+      "audience": "all",
+      "routePrefixes": ["/home"],
+      "navKeys": ["home"],
+      "actionMenuKeys": []
+    },
+    {
+      "id": "continue",
+      "description": "Post-auth continue flow.",
+      "enabled": true,
+      "audience": "all",
+      "routePrefixes": ["/continue"],
+      "navKeys": [],
+      "actionMenuKeys": []
+    },
+    {
+      "id": "profile",
+      "description": "Account profile.",
+      "enabled": true,
+      "audience": "all",
+      "routePrefixes": ["/profile"],
+      "navKeys": [],
+      "actionMenuKeys": []
+    },
+    {
+      "id": "dashboard",
+      "description": "Legacy operator dashboard (off for current release).",
+      "enabled": false,
+      "audience": "all",
+      "routePrefixes": ["/dashboard"],
+      "navKeys": ["dashboard"],
+      "actionMenuKeys": []
+    },
+    {
+      "id": "media",
+      "description": "Media library (platform admin).",
+      "enabled": true,
+      "audience": "admin",
+      "routePrefixes": ["/media"],
+      "navKeys": ["media"],
+      "actionMenuKeys": []
+    },
+    {
+      "id": "chat",
+      "description": "Advisor chat home.",
+      "enabled": true,
+      "audience": "all",
+      "routePrefixes": ["/advisor", "/agent"],
+      "navKeys": ["chat"],
+      "actionMenuKeys": []
+    },
+    {
+      "id": "playbooks",
+      "description": "Playbook library.",
+      "enabled": true,
+      "audience": "all",
+      "routePrefixes": ["/playbooks"],
+      "navKeys": ["playbooks"],
+      "actionMenuKeys": []
+    },
+    {
+      "id": "analytics",
+      "description": "Locations and analytics shell (menu primary; nested POS/reports gated separately).",
+      "enabled": true,
+      "audience": "all",
+      "routePrefixes": ["/analytics"],
+      "navKeys": ["branches"],
+      "actionMenuKeys": []
+    },
+    {
+      "id": "services",
+      "description": "Cloud services catalog shell.",
+      "enabled": true,
+      "audience": "all",
+      "routePrefixes": ["/services"],
+      "navKeys": ["services"],
+      "actionMenuKeys": []
+    },
+    {
+      "id": "serviceDigitalMenu",
+      "description": "Digital menu service (MVP on).",
+      "enabled": true,
+      "audience": "all",
+      "routePrefixes": ["/services/digital-menu"],
+      "navKeys": [],
+      "actionMenuKeys": [],
+      "serviceKeys": ["digital_menu"]
+    },
+    {
+      "id": "serviceVoting",
+      "description": "Voting service (MVP on).",
+      "enabled": true,
+      "audience": "all",
+      "routePrefixes": ["/services/voting"],
+      "navKeys": [],
+      "actionMenuKeys": [],
+      "serviceKeys": ["voting"]
+    },
+    {
+      "id": "servicePickAndWin",
+      "description": "Pick-and-win / prediction service (MVP off; code retained).",
+      "enabled": false,
+      "audience": "all",
+      "routePrefixes": ["/services/pick-and-win"],
+      "navKeys": [],
+      "actionMenuKeys": [],
+      "serviceKeys": ["pick_and_win"]
+    },
+    {
+      "id": "servicePointSystem",
+      "description": "Point system service (MVP off; code retained).",
+      "enabled": false,
+      "audience": "all",
+      "routePrefixes": ["/services/point-system"],
+      "navKeys": [],
+      "actionMenuKeys": [],
+      "serviceKeys": ["point_system"]
+    },
+    {
+      "id": "servicePickupOffer",
+      "description": "Pickup offer service (MVP off; code retained).",
+      "enabled": false,
+      "audience": "all",
+      "routePrefixes": ["/services/pickup-offer"],
+      "navKeys": [],
+      "actionMenuKeys": [],
+      "serviceKeys": ["pickup_offer"]
+    },
+    {
+      "id": "serviceStampCard",
+      "description": "Stamp card coming-soon catalog card (MVP off).",
+      "enabled": false,
+      "audience": "all",
+      "routePrefixes": [],
+      "navKeys": [],
+      "actionMenuKeys": [],
+      "serviceKeys": ["stamp_card"]
+    },
+    {
+      "id": "serviceCashback",
+      "description": "Cashback coming-soon catalog card (MVP off).",
+      "enabled": false,
+      "audience": "all",
+      "routePrefixes": [],
+      "navKeys": [],
+      "actionMenuKeys": [],
+      "serviceKeys": ["cashback"]
+    },
+    {
+      "id": "explore",
+      "description": "Guest venue directory.",
+      "enabled": true,
+      "audience": "all",
+      "routePrefixes": ["/explore"],
+      "navKeys": [],
+      "actionMenuKeys": []
+    },
+    {
+      "id": "usage",
+      "description": "AI usage meter.",
+      "enabled": true,
+      "audience": "all",
+      "routePrefixes": ["/usage"],
+      "navKeys": ["usage"],
+      "actionMenuKeys": []
+    },
+    {
+      "id": "inventar",
+      "description": "Inventory assistant (MVP off; code retained).",
+      "enabled": false,
+      "audience": "all",
+      "routePrefixes": ["/inventar"],
+      "navKeys": ["inventar"],
+      "actionMenuKeys": []
+    },
+    {
+      "id": "team",
+      "description": "Workspace team management (MVP off; code retained).",
+      "enabled": false,
+      "audience": "all",
+      "routePrefixes": ["/team"],
+      "navKeys": ["team"],
+      "actionMenuKeys": []
+    },
+    {
+      "id": "pos",
+      "description": "Native POS cashier (MVP off; code retained).",
+      "enabled": false,
+      "audience": "all",
+      "routePrefixes": [],
+      "routePatterns": ["/analytics/locations/*/pos"],
+      "navKeys": [],
+      "actionMenuKeys": ["pos"]
+    },
+    {
+      "id": "salesReports",
+      "description": "Sales report upload / location reports (MVP off; code retained).",
+      "enabled": false,
+      "audience": "all",
+      "routePrefixes": ["/analytics/locations/reports", "/analytics/sales"],
+      "routePatterns": ["/analytics/locations/*/reports"],
+      "navKeys": [],
+      "actionMenuKeys": ["reports"]
+    },
+    {
+      "id": "studio",
+      "description": "IG Studio post drafts, style packs, and Post Creator (admin).",
+      "enabled": true,
+      "audience": "admin",
+      "routePrefixes": ["/ig-studio"],
+      "navKeys": ["posts"],
+      "actionMenuKeys": []
+    },
+    {
+      "id": "printOrders",
+      "description": "Internal print-on-demand fulfillment queue (admin)—distinct from the /shop catalog.",
+      "enabled": true,
+      "audience": "admin",
+      "routePrefixes": ["/print-orders"],
+      "navKeys": [],
+      "actionMenuKeys": []
+    },
+    {
+      "id": "staff",
+      "description": "Menuyukti staff console.",
+      "enabled": true,
+      "audience": "admin",
+      "routePrefixes": ["/staff"],
+      "navKeys": ["staff"],
+      "actionMenuKeys": []
+    },
+    {
+      "id": "calendar",
+      "description": "Content calendar.",
+      "enabled": true,
+      "audience": "admin",
+      "routePrefixes": ["/calendar"],
+      "navKeys": ["calendar"],
+      "actionMenuKeys": []
+    },
+    {
+      "id": "crm",
+      "description": "CRM apps and registrations (operator console).",
+      "enabled": true,
+      "audience": "admin",
+      "routePrefixes": ["/crm"],
+      "navKeys": ["crm", "crmApps", "crmRegistrations"],
+      "actionMenuKeys": []
+    },
+    {
+      "id": "printShop",
+      "description": "Print shop catalog (/shop)—admin only; distinct from /print-orders fulfillment.",
+      "enabled": true,
+      "audience": "admin",
+      "routePrefixes": ["/shop"],
+      "navKeys": ["printShop"],
+      "actionMenuKeys": []
+    },
+    {
+      "id": "analyticsHeatmap",
+      "description": "Menu sales heatmap report from the sales actions menu (admin).",
+      "enabled": true,
+      "audience": "admin",
+      "routePrefixes": [],
+      "navKeys": [],
+      "actionMenuKeys": ["heatmap"],
+      "analyticsReportSegments": ["heatmap"]
+    },
+    {
+      "id": "analyticsMenuCombos",
+      "description": "Menu combos report from the sales actions menu (admin).",
+      "enabled": true,
+      "audience": "admin",
+      "routePrefixes": [],
+      "navKeys": [],
+      "actionMenuKeys": ["menu-combos"],
+      "analyticsReportSegments": ["menu-combos"]
+    },
+    {
+      "id": "analyticsOrderMetrics",
+      "description": "Order metrics report from the sales actions menu (admin).",
+      "enabled": true,
+      "audience": "admin",
+      "routePrefixes": [],
+      "navKeys": [],
+      "actionMenuKeys": ["order-metrics"],
+      "analyticsReportSegments": ["order-metrics"]
+    },
+    {
+      "id": "analyticsCampaignSignals",
+      "description": "Campaign signals report from the sales actions menu (admin).",
+      "enabled": true,
+      "audience": "admin",
+      "routePrefixes": [],
+      "navKeys": [],
+      "actionMenuKeys": ["campaign-signals"],
+      "analyticsReportSegments": ["campaign-signals"]
+    }
+  ]
 }

@@ -12,6 +12,7 @@
     "format-fix": "prettier --write \"**/*.{ts,tsx,md,css}\"",
     "check-types": "turbo run check-types",
     "test": "turbo run test",
+    "backlog": "backlog browser",
     "prepare": "husky",
     "docker:build:graphql": "docker build -f apps/graphql/Dockerfile -t johngoyason/menuyukti-graphql:${DOCKER_TAG:-latest} .",
     "docker:build:web": "docker build -f apps/web/Dockerfile -t johngoyason/menuyukti-web:${DOCKER_TAG:-latest} --build-arg DATABASE_URL=\\\"$DATABASE_URL\\\" --build-arg ANALYTICS_API_URL=\\\"${ANALYTICS_API_URL:-http://graphql:8000}\\\" .",

@@ -1,19 +1,19 @@
 import { Suspense } from 'react'
 import { notFound } from 'next/navigation'
-import Link from 'next/link'
+import { connection } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { getTranslations } from 'next-intl/server'
 import type { Metadata } from 'next'
 
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { PageHeading } from '@/components/page-heading'
-import { Button } from '@workspace/ui/components/button'
 import { Skeleton } from '@workspace/ui/components/skeleton'
 import { getCachedLocation } from '@/lib/graphql/cached-queries'
 import { graphqlQuery } from '@/lib/graphql/client'
 import { LOCATION_QUERY, type LocationData } from '@/lib/graphql/queries/locations'
 import { ANALYTICS_REPORT_SHELL_MAIN_CLASS, LOCATION_DETAIL_SECTION_CLASS } from '@/lib/app-layout'
 import { routes } from '@/lib/routes'
+import { LocationDetailActions } from '../location-detail-actions'
 import { LocationForm, type Weekday } from '../location-form'
 
 type PageProps = {
@@ -42,7 +42,6 @@ async function LocationDetailContent({ params }: { params: Promise<{ id: string 
     notFound()
   }
 
-  const t = await getTranslations('analytics.branches')
   const openingHoursByDay = new Map(
     location.openingHours.map((entry) => [
       entry.dayOfWeek,
@@ -63,27 +62,13 @@ async function LocationDetailContent({ params }: { params: Promise<{ id: string 
     <section className={LOCATION_DETAIL_SECTION_CLASS}>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <PageHeading title={location.name} />
-        <div className="flex flex-wrap gap-2">
-          <Button asChild variant="outline">
-            <Link href={routes.analytics.branchesReports(location.id)}>{t('manageReports')}</Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link href={routes.analytics.branchesCogs(location.id)}>{t('manageCogs')}</Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link href={routes.analytics.branchesMenu(location.id)}>{t('manageMenu')}</Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link href={routes.analytics.branchesPos(location.id)}>{t('managePos')}</Link>
-          </Button>
-        </div>
+        <LocationDetailActions locationId={location.id} />
       </div>
       <LocationForm
         key={`${location.id}-${JSON.stringify(location.manualBriefInput?.quickProfile ?? {})}`}
         mode="edit"
         locationId={location.id}
         initialManualQuickProfile={location.manualBriefInput?.quickProfile ?? null}
-        initialAreas={location.areas ?? []}
         initialValues={{
           name: location.name,
           street: location.street ?? '',
@@ -121,6 +106,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function Page({ params }: PageProps) {
+  // Bind this route to the request before auth. Clerk session checks can read
+  // the current time; without this, Cache Components treats Date.now() as a
+  // blocking prerender value on the page segment (layout connection() is not enough).
+  await connection()
   const t = await getTranslations('analytics.branches')
 
   return (

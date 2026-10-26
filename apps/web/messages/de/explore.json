@@ -1,8 +1,5 @@
 {
   "explore": {
-    "pickupLabel": "Abholung",
-    "pickupAll": "Alle",
-    "pickupAvailable": "Jetzt abholen",
     "pickupBadge": "Abholung",
     "emptyFiltersBody": "Probiere eine andere Stadt oder eine andere Suche."
   }

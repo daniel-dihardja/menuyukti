@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { InfoIcon, PackageIcon } from 'lucide-react'
+import { PackageIcon } from 'lucide-react'
 
 import { Alert, AlertDescription, AlertTitle } from '@workspace/ui/components/alert'
 import {
@@ -124,12 +124,6 @@ export function ServicesSubscriptionsOverview({ subscriptions: initial }: Props)
         <CardDescription>{t('subtitle')}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
-        <Alert>
-          <InfoIcon />
-          <AlertTitle>{t('billingNoteTitle')}</AlertTitle>
-          <AlertDescription>{t('billingNote')}</AlertDescription>
-        </Alert>
-
         {rows.length === 0 ? (
           <Empty className="border border-dashed">
             <EmptyHeader>
@@ -193,7 +187,14 @@ export function ServicesSubscriptionsOverview({ subscriptions: initial }: Props)
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t('cancelConfirmTitle')}</AlertDialogTitle>
+            <AlertDialogTitle>
+              {confirmRow
+                ? t('cancelConfirmTitle', {
+                    service: confirmServiceLabel,
+                    location: confirmRow.locationName,
+                  })
+                : null}
+            </AlertDialogTitle>
             <AlertDialogDescription>
               {confirmRow
                 ? t('cancelConfirmDescription', {

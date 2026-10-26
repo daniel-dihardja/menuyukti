@@ -1,62 +1,61 @@
 import { describe, expect, it } from 'vitest'
 
-import { orderClientFlatNav, partitionClientNav } from '@/lib/client-flat-nav'
-
-describe('partitionClientNav', () => {
-  it('puts Home, Inventory, and Team in core and Services separately', () => {
-    const partitioned = partitionClientNav([
-      { key: 'team' },
-      { key: 'services' },
-      { key: 'home' },
-      { key: 'inventar' },
-    ])
-    expect(partitioned.core.map((item) => item.key)).toEqual(['home', 'inventar', 'team'])
-    expect(partitioned.services.map((item) => item.key)).toEqual(['services'])
-    expect(partitioned.other).toEqual([])
-  })
-
-  it('keeps unexpected keys in other without reordering them relative to each other', () => {
-    const partitioned = partitionClientNav([
-      { key: 'branches' },
-      { key: 'team' },
-      { key: 'dashboard' },
-      { key: 'inventar' },
-      { key: 'services' },
-      { key: 'home' },
-    ])
-    expect(partitioned.core.map((item) => item.key)).toEqual(['home', 'inventar', 'team'])
-    expect(partitioned.services.map((item) => item.key)).toEqual(['services'])
-    expect(partitioned.other.map((item) => item.key)).toEqual(['branches', 'dashboard'])
-  })
-})
+import { orderClientFlatNav, partitionClientNav, splitClientNavAtAi } from '@/lib/client-flat-nav'
 
 describe('orderClientFlatNav', () => {
-  it('orders Home, Inventory, Team, then Services', () => {
+  it('orders Locations, Services, then AI tools', () => {
     const ordered = orderClientFlatNav([
-      { key: 'team' },
-      { key: 'home' },
+      { key: 'usage' },
+      { key: 'playbooks' },
       { key: 'services' },
-      { key: 'inventar' },
-    ])
-    expect(ordered.map((item) => item.key)).toEqual(['home', 'inventar', 'team', 'services'])
-  })
-
-  it('keeps other keys after core and services without reordering them relative to each other', () => {
-    const ordered = orderClientFlatNav([
-      { key: 'branches' },
-      { key: 'team' },
-      { key: 'dashboard' },
-      { key: 'inventar' },
-      { key: 'services' },
+      { key: 'chat' },
       { key: 'home' },
     ])
     expect(ordered.map((item) => item.key)).toEqual([
       'home',
-      'inventar',
-      'team',
       'services',
-      'branches',
-      'dashboard',
+      'chat',
+      'playbooks',
+      'usage',
     ])
+  })
+
+  it('keeps other keys after ranked items without reordering them relative to each other', () => {
+    const ordered = orderClientFlatNav([
+      { key: 'media' },
+      { key: 'services' },
+      { key: 'calendar' },
+      { key: 'home' },
+    ])
+    expect(ordered.map((item) => item.key)).toEqual(['home', 'services', 'media', 'calendar'])
+  })
+})
+
+describe('partitionClientNav', () => {
+  it('splits Locations and Services for legacy callers', () => {
+    const partitioned = partitionClientNav([
+      { key: 'chat' },
+      { key: 'services' },
+      { key: 'home' },
+      { key: 'usage' },
+    ])
+    expect(partitioned.core.map((item) => item.key)).toEqual(['home'])
+    expect(partitioned.services.map((item) => item.key)).toEqual(['services'])
+    expect(partitioned.other.map((item) => item.key)).toEqual(['chat', 'usage'])
+  })
+})
+
+describe('splitClientNavAtAi', () => {
+  it('puts AI and Playbooks after the first separator, AI usage after the second', () => {
+    const split = splitClientNavAtAi([
+      { key: 'home' },
+      { key: 'services' },
+      { key: 'chat' },
+      { key: 'playbooks' },
+      { key: 'usage' },
+    ])
+    expect(split.primary.map((item) => item.key)).toEqual(['home', 'services'])
+    expect(split.ai.map((item) => item.key)).toEqual(['chat', 'playbooks'])
+    expect(split.usage.map((item) => item.key)).toEqual(['usage'])
   })
 })

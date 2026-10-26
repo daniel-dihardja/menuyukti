@@ -4,8 +4,8 @@ import { isReservedPublicSlug } from '@/lib/public-location/reserved-slugs'
  * Operator app shell (sidebar + inset + `AnalyticsPageShell`).
  * `MainHeader` is hidden on these paths (`AppChrome` uses `isOperatorAppShellPath`).
  * Guest location surfaces keep `MainHeader` (guest sign-in / account only).
- * Feature visibility (nav + route allowlist): `config/feature-flags.json`.
- * Admin-only paths: also declare in `config/admin-only-features.json` (nav + route guards).
+ * Feature visibility (enabled + audience): `config/feature-flags.json`
+ * (nav keys, route prefixes/patterns, action menus, admin audience).
  */
 export const OPERATOR_APP_SHELL_PREFIXES = [
   '/analytics',
