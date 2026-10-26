@@ -7,7 +7,7 @@ alwaysApply: true
 
 ## Product
 
-Menuyukti is an **agentic AI platform for data-driven restaurant marketing and operations**. Operators use a **chat-first** home (`/advisor`, modes `general` | `image_assistant`) plus analytics, **native POS**, inventar, media, IG Studio, calendar, and CRM — without a live campaign-workflow / milestone pipeline.
+Menuyukti is an **agentic AI platform for data-driven restaurant marketing and operations**. Operators use a **chat-first** home (`/advisor`, modes `general` | `image_assistant`) plus analytics, **digital-menu Order board**, inventar, media, IG Studio, calendar, and CRM — without a live campaign-workflow / milestone pipeline or native POS cashier UI.
 
 **Customer-facing focus** is the **web PWA** (`apps/web` customer shell + Serwist). The Expo native app remains in the repo but is **deprecated / inactive** (not the product focus).
 

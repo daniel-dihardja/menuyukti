@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
   clearPublicMenuActiveOrder,
+  isGuestOrderComplete,
   isTerminalTicketStatus,
   loadPublicMenuActiveOrder,
   normalizeFulfillmentMode,
@@ -62,6 +63,14 @@ describe('public-menu active-order-storage', () => {
     expect(isTerminalTicketStatus(null)).toBe(false)
   })
 
+  it('treats terminal prep as guest-order complete', () => {
+    expect(isGuestOrderComplete('open', 'PICKED_UP')).toBe(true)
+    expect(isGuestOrderComplete('open', 'SERVED')).toBe(true)
+    expect(isGuestOrderComplete('open', 'DELIVERED')).toBe(true)
+    expect(isGuestOrderComplete('open', 'READY')).toBe(false)
+    expect(isGuestOrderComplete('paid', 'READY')).toBe(true)
+  })
+
   it('normalizes GraphQL enum wire values', () => {
     expect(normalizeTicketStatus('OPEN')).toBe('open')
     expect(normalizeTicketStatus('paid')).toBe('paid')
@@ -115,12 +124,22 @@ describe('public-menu active-order-storage', () => {
     savePublicMenuActiveOrder(1, sampleOrder)
     savePublicMenuActiveOrder(1, { ...sampleOrder, status: 'paid' })
     expect(loadPublicMenuActiveOrder(1)).toBeNull()
+
+    savePublicMenuActiveOrder(1, sampleOrder)
+    savePublicMenuActiveOrder(1, { ...sampleOrder, prepStatus: 'PICKED_UP' })
+    expect(loadPublicMenuActiveOrder(1)).toBeNull()
   })
 
   it('drops terminal or malformed payloads on load', () => {
     localStorage.setItem(
       'public-menu-active-order:5',
       JSON.stringify({ ...sampleOrder, status: 'void', savedAt: Date.now() }),
+    )
+    expect(loadPublicMenuActiveOrder(5)).toBeNull()
+
+    localStorage.setItem(
+      'public-menu-active-order:5',
+      JSON.stringify({ ...sampleOrder, prepStatus: 'PICKED_UP', savedAt: Date.now() }),
     )
     expect(loadPublicMenuActiveOrder(5)).toBeNull()
 

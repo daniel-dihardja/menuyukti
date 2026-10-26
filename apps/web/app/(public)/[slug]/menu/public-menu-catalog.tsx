@@ -26,7 +26,7 @@ import {
 } from '@/lib/menu/menu-attributes'
 import {
   clearPublicMenuActiveOrder,
-  isTerminalTicketStatus,
+  isGuestOrderComplete,
   loadPublicMenuActiveOrder,
   normalizeFulfillmentMode,
   normalizePrepStatus,
@@ -42,6 +42,7 @@ import {
 } from '@/lib/public-menu/cart-storage'
 import {
   resolveGuestFulfillment,
+  type GuestFulfillmentChoice,
   type PublicMenuFulfillmentMode,
 } from '@/lib/public-menu/fulfillment-mode'
 import type { PublicMenuCategoryView, PublicMenuItemView } from '@/lib/public-menu/load-public-menu'
@@ -82,7 +83,6 @@ type Props = {
   tableLabel: string | null
   allowDineIn: boolean
   allowPickup: boolean
-  allowDelivery: boolean
   /** When false, skip menu-open earn and do not write the header points pill. */
   pointSystemAvailable: boolean
 }
@@ -118,18 +118,11 @@ function guestPrepCopyKey(
 function defaultGuestChoice(input: {
   allowDineIn: boolean
   allowPickup: boolean
-  allowDelivery: boolean
-}): PublicMenuFulfillmentMode {
-  const { allowDineIn, allowPickup, allowDelivery } = input
-  const enabled = [allowPickup, allowDineIn, allowDelivery].filter(Boolean).length
-  if (enabled === 1) {
-    if (allowPickup) return 'pickup'
-    if (allowDineIn) return 'dine_in'
-    return 'delivery'
-  }
+}): GuestFulfillmentChoice {
+  const { allowDineIn, allowPickup } = input
   if (allowPickup) return 'pickup'
   if (allowDineIn) return 'dine_in'
-  return 'delivery'
+  return 'pickup'
 }
 
 function fulfillmentLabelKey(mode: PublicMenuFulfillmentMode): string {
@@ -230,7 +223,6 @@ export function PublicMenuCatalog({
   tableLabel,
   allowDineIn,
   allowPickup,
-  allowDelivery,
   pointSystemAvailable,
 }: Props) {
   const t = useTranslations('public.menu')
@@ -253,25 +245,15 @@ export function PublicMenuCatalog({
   const [feedbackError, setFeedbackError] = useState<string | null>(null)
   const [feedbackSubmitting, setFeedbackSubmitting] = useState(false)
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false)
-  const enabledModeCount = [allowDineIn, allowPickup, allowDelivery].filter(Boolean).length
-  const [guestChoice, setGuestChoice] = useState<PublicMenuFulfillmentMode>(() =>
-    defaultGuestChoice({ allowDineIn, allowPickup, allowDelivery }),
+  const enabledModeCount = [allowDineIn, allowPickup].filter(Boolean).length
+  const [guestChoice, setGuestChoice] = useState<GuestFulfillmentChoice>(() =>
+    defaultGuestChoice({ allowDineIn, allowPickup }),
   )
   const [guestTableInput, setGuestTableInput] = useState('')
-  const [deliveryAddress, setDeliveryAddress] = useState('')
-  const [deliveryPhone, setDeliveryPhone] = useState('')
-  const [deliveryNotes, setDeliveryNotes] = useState('')
   const showModeToggle = enabledModeCount > 1 && !tableLabel
   const needsGuestTable =
-    !tableLabel &&
-    allowDineIn &&
-    (guestChoice === 'dine_in' || (allowDineIn && !allowPickup && !allowDelivery))
-  const needsDeliveryFields =
-    !activeOrder &&
-    !tableLabel &&
-    allowDelivery &&
-    (guestChoice === 'delivery' || (!allowDineIn && !allowPickup && allowDelivery))
-  const anyFulfillmentEnabled = allowDineIn || allowPickup || allowDelivery
+    !tableLabel && allowDineIn && (guestChoice === 'dine_in' || (allowDineIn && !allowPickup))
+  const anyFulfillmentEnabled = allowDineIn || allowPickup
 
   const allItems = useMemo(() => categories.flatMap((category) => category.items), [categories])
   const itemsById = useMemo(() => new Map(allItems.map((item) => [item.id, item])), [allItems])
@@ -305,6 +287,7 @@ export function PublicMenuCatalog({
   const cartItemCount = cartLines.reduce((sum, line) => sum + line.qty, 0)
   const cartTotal = cartLines.reduce((sum, line) => sum + line.price * line.qty, 0)
   const hasCart = cartItemCount > 0
+  const orderingLocked = activeOrder != null
 
   useEffect(() => {
     setCart(loadPublicMenuCart(locationId))
@@ -321,6 +304,14 @@ export function PublicMenuCatalog({
       setBasketOpen(false)
     }
   }, [basketOpen, hasCart])
+
+  // An open ticket is status-only — clear any leftover basket so guests cannot append.
+  useEffect(() => {
+    if (!orderingLocked || !cartHydrated) return
+    setCart({})
+    clearPublicMenuCart(locationId)
+    setBasketOpen(false)
+  }, [cartHydrated, locationId, orderingLocked])
 
   // Fire-and-forget: credit open_menu_qr when a signed-in guest opens the menu.
   // Skip entirely when Point System is off — the earn API still returns a historical
@@ -377,7 +368,8 @@ export function PublicMenuCatalog({
         if (!remote?.orderId || !remote.billNumber || cancelled) return
 
         const status = normalizeTicketStatus(remote.status) ?? 'open'
-        if (isTerminalTicketStatus(status)) return
+        const prepStatus = normalizePrepStatus(remote.prepStatus)
+        if (isGuestOrderComplete(status, prepStatus)) return
 
         const fulfillmentMode =
           normalizeFulfillmentMode(remote.fulfillmentMode) ??
@@ -388,7 +380,7 @@ export function PublicMenuCatalog({
           billNumber: remote.billNumber,
           fulfillmentMode,
           tableLabel: remote.tableLabel?.trim() || null,
-          prepStatus: normalizePrepStatus(remote.prepStatus),
+          prepStatus,
           status,
           lines: Array.isArray(remote.lines)
             ? remote.lines.filter(
@@ -412,10 +404,15 @@ export function PublicMenuCatalog({
     }
   }, [isLoaded, isSignedIn, locationId])
 
-  // Poll ticket + prep status until paid/void/refunded.
+  // Poll ticket + prep status until the guest order is complete.
   useEffect(() => {
     if (!activeOrder?.orderId) return
-    if (isTerminalTicketStatus(activeOrder.status)) return
+    if (isGuestOrderComplete(activeOrder.status, activeOrder.prepStatus)) {
+      clearPublicMenuActiveOrder(locationId)
+      setActiveOrder(null)
+      setOrderSheetOpen(false)
+      return
+    }
 
     const orderId = activeOrder.orderId
     let cancelled = false
@@ -430,7 +427,8 @@ export function PublicMenuCatalog({
         if (cancelled) return
 
         const bodyStatus = normalizeTicketStatus(body.status)
-        if (bodyStatus && isTerminalTicketStatus(bodyStatus)) {
+        const bodyPrep = normalizePrepStatus(body.prepStatus)
+        if (isGuestOrderComplete(bodyStatus, bodyPrep)) {
           clearPublicMenuActiveOrder(locationId)
           setActiveOrder(null)
           setOrderSheetOpen(false)
@@ -440,11 +438,11 @@ export function PublicMenuCatalog({
         setActiveOrder((prev) => {
           if (!prev || prev.orderId !== orderId) return prev
           const nextStatus = bodyStatus ?? normalizeTicketStatus(prev.status) ?? 'open'
-          if (isTerminalTicketStatus(nextStatus)) {
+          const nextPrep = bodyPrep ?? prev.prepStatus
+          if (isGuestOrderComplete(nextStatus, nextPrep)) {
             clearPublicMenuActiveOrder(locationId)
             return null
           }
-          const nextPrep = normalizePrepStatus(body.prepStatus) ?? prev.prepStatus
           if (nextStatus === prev.status && nextPrep === prev.prepStatus) return prev
           const updated: ActiveOrder = {
             ...prev,
@@ -468,7 +466,7 @@ export function PublicMenuCatalog({
       cancelled = true
       window.clearInterval(timer)
     }
-  }, [activeOrder?.orderId, activeOrder?.status, locationId])
+  }, [activeOrder?.orderId, activeOrder?.status, activeOrder?.prepStatus, locationId])
 
   const openOrderSheet = () => {
     setOrderSheetOpen(true)
@@ -483,6 +481,7 @@ export function PublicMenuCatalog({
   }
 
   const addItem = (item: PublicMenuItemView) => {
+    if (orderingLocked) return
     setSubmitError(null)
     setCart((prev) => {
       const existing = prev[item.id]
@@ -505,6 +504,7 @@ export function PublicMenuCatalog({
   }
 
   const decrementItem = (menuItemId: number) => {
+    if (orderingLocked) return
     setSubmitError(null)
     setCart((prev) => {
       const existing = prev[menuItemId]
@@ -529,7 +529,7 @@ export function PublicMenuCatalog({
   }
 
   const submitOrder = async () => {
-    if (!hasCart || submitting) return
+    if (!hasCart || submitting || orderingLocked) return
     setSubmitError(null)
 
     if (!isLoaded) return
@@ -538,46 +538,21 @@ export function PublicMenuCatalog({
       return
     }
 
-    const appendingTo = activeOrder
-    let submitMode: PublicMenuFulfillmentMode
-    let submitTableLabel: string | null
-    let submitDeliveryAddress: string | null = null
-    let submitDeliveryPhone: string | null = null
-    let submitDeliveryNotes: string | null = null
-
-    if (appendingTo) {
-      submitMode = appendingTo.fulfillmentMode
-      submitTableLabel = appendingTo.tableLabel
-    } else {
-      const resolved = resolveGuestFulfillment({
-        allowDineIn,
-        allowPickup,
-        allowDelivery,
-        lockedTableLabel: tableLabel,
-        guestChoice,
-        guestTableLabel: guestTableInput,
-        deliveryAddress,
-        deliveryPhone,
-        deliveryNotes,
-      })
-      if (!resolved.ok) {
-        const reasonKey =
-          resolved.reason === 'table_required'
-            ? 'order.tableRequired'
-            : resolved.reason === 'delivery_address_required'
-              ? 'order.deliveryAddressRequired'
-              : resolved.reason === 'delivery_phone_required'
-                ? 'order.deliveryPhoneRequired'
-                : 'order.noFulfillmentModes'
-        setSubmitError(t(reasonKey))
-        return
-      }
-      submitMode = resolved.mode
-      submitTableLabel = resolved.tableLabel
-      submitDeliveryAddress = resolved.deliveryAddress
-      submitDeliveryPhone = resolved.deliveryPhone
-      submitDeliveryNotes = resolved.deliveryNotes
+    const resolved = resolveGuestFulfillment({
+      allowDineIn,
+      allowPickup,
+      lockedTableLabel: tableLabel,
+      guestChoice,
+      guestTableLabel: guestTableInput,
+    })
+    if (!resolved.ok) {
+      const reasonKey =
+        resolved.reason === 'table_required' ? 'order.tableRequired' : 'order.noFulfillmentModes'
+      setSubmitError(t(reasonKey))
+      return
     }
+    const submitMode = resolved.mode
+    const submitTableLabel = resolved.tableLabel
 
     setSubmitting(true)
     try {
@@ -592,9 +567,6 @@ export function PublicMenuCatalog({
           })),
           fulfillmentMode: submitMode,
           tableLabel: submitTableLabel,
-          deliveryAddress: submitDeliveryAddress,
-          deliveryPhone: submitDeliveryPhone,
-          deliveryNotes: submitDeliveryNotes,
         }),
       })
       const body = (await res.json().catch(() => ({}))) as {
@@ -628,29 +600,17 @@ export function PublicMenuCatalog({
               : [],
           )
         : null
-      const wasAppend = Boolean(appendingTo && body.orderId === appendingTo.orderId)
       const orderedLines =
         responseLines && responseLines.length > 0
           ? responseLines
-          : wasAppend && appendingTo
-            ? [
-                ...appendingTo.lines,
-                ...cartLines.map((line) => ({
-                  menuItemId: line.menuItemId,
-                  name: line.name,
-                })),
-              ]
-            : cartLines.map((line) => ({
-                menuItemId: line.menuItemId,
-                name: line.name,
-              }))
+          : cartLines.map((line) => ({
+              menuItemId: line.menuItemId,
+              name: line.name,
+            }))
       setCart({})
       clearPublicMenuCart(locationId)
       setBasketOpen(false)
       setGuestTableInput('')
-      setDeliveryAddress('')
-      setDeliveryPhone('')
-      setDeliveryNotes('')
       const nextOrder: ActiveOrder = {
         orderId: body.orderId,
         billNumber: body.billNumber,
@@ -733,7 +693,7 @@ export function PublicMenuCatalog({
     <div
       className={cn(
         'flex flex-col gap-8',
-        hasCart ? 'pb-[calc(7rem+env(safe-area-inset-bottom))]' : undefined,
+        hasCart && !orderingLocked ? 'pb-[calc(7rem+env(safe-area-inset-bottom))]' : undefined,
       )}
     >
       {showStickyChrome ? (
@@ -940,28 +900,30 @@ export function PublicMenuCatalog({
                               })
                             : t('feedback.openFeedback')}
                         </button>
-                        <div className="mt-3 flex items-center justify-end gap-2">
-                          {inCart > 0 ? (
-                            <QtyStepper
-                              qty={inCart}
-                              onDecrease={() => decrementItem(item.id)}
-                              onIncrease={() => addItem(item)}
-                              decreaseLabel={t('order.decreaseQty', { name: item.name })}
-                              increaseLabel={t('order.increaseQty', { name: item.name })}
-                              removeLabel={t('order.removeItem', { name: item.name })}
-                            />
-                          ) : (
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="outline"
-                              className="min-h-11 touch-manipulation px-4 sm:min-h-8"
-                              onClick={() => addItem(item)}
-                            >
-                              {t('order.add')}
-                            </Button>
-                          )}
-                        </div>
+                        {!orderingLocked ? (
+                          <div className="mt-3 flex items-center justify-end gap-2">
+                            {inCart > 0 ? (
+                              <QtyStepper
+                                qty={inCart}
+                                onDecrease={() => decrementItem(item.id)}
+                                onIncrease={() => addItem(item)}
+                                decreaseLabel={t('order.decreaseQty', { name: item.name })}
+                                increaseLabel={t('order.increaseQty', { name: item.name })}
+                                removeLabel={t('order.removeItem', { name: item.name })}
+                              />
+                            ) : (
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                className="min-h-11 touch-manipulation px-4 sm:min-h-8"
+                                onClick={() => addItem(item)}
+                              >
+                                {t('order.add')}
+                              </Button>
+                            )}
+                          </div>
+                        ) : null}
                       </div>
                     </li>
                   )
@@ -972,7 +934,7 @@ export function PublicMenuCatalog({
         </div>
       )}
 
-      {hasCart ? (
+      {hasCart && !orderingLocked ? (
         <div className="border-border bg-card/95 fixed inset-x-0 bottom-0 z-40 border-t px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-sm sm:px-6">
           <div className="mx-auto flex w-full max-w-4xl items-center justify-between gap-3">
             <div className="min-w-0">
@@ -1043,43 +1005,23 @@ export function PublicMenuCatalog({
             </div>
           </ScrollArea>
           <DrawerFooter className="shrink-0 border-t pb-[max(1rem,env(safe-area-inset-bottom))]">
-            <div className="flex w-full flex-col gap-2">
-              {hasCart ? (
-                <>
-                  <Button
-                    type="button"
-                    className="min-h-11 w-full touch-manipulation"
-                    onClick={() => {
-                      setOrderSheetOpen(false)
-                      setBasketOpen(true)
-                    }}
-                  >
-                    {t('order.viewBasket')}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="min-h-11 w-full touch-manipulation"
-                    onClick={() => setOrderSheetOpen(false)}
-                  >
-                    {t('order.continueBrowsing')}
-                  </Button>
-                </>
-              ) : (
-                <Button
-                  type="button"
-                  className="min-h-11 w-full touch-manipulation"
-                  onClick={() => setOrderSheetOpen(false)}
-                >
-                  {t('order.orderAnotherRound')}
-                </Button>
-              )}
-            </div>
+            <Button
+              type="button"
+              className="min-h-11 w-full touch-manipulation"
+              onClick={() => setOrderSheetOpen(false)}
+            >
+              {t('order.continueBrowsing')}
+            </Button>
           </DrawerFooter>
         </DrawerContent>
       </Drawer>
 
-      <Drawer open={basketOpen} onOpenChange={setBasketOpen}>
+      <Drawer
+        open={basketOpen && !orderingLocked}
+        onOpenChange={(open) => {
+          if (!orderingLocked) setBasketOpen(open)
+        }}
+      >
         <DrawerContent className="flex max-h-[min(90dvh,40rem)] flex-col gap-0 overflow-hidden">
           <DrawerHeader className="shrink-0 border-b text-left">
             <DrawerTitle>{t('order.basketTitle')}</DrawerTitle>
@@ -1146,27 +1088,17 @@ export function PublicMenuCatalog({
                     {formatCurrency(cartTotal, currencyCode, locale)}
                   </p>
                 </div>
-                {activeOrder ? (
-                  <p className="text-muted-foreground text-sm font-medium">
-                    {activeOrder.fulfillmentMode === 'dine_in' && activeOrder.tableLabel
-                      ? t('order.tableLabelReadOnly', { label: activeOrder.tableLabel })
-                      : t(fulfillmentLabelKey(activeOrder.fulfillmentMode))}
-                  </p>
-                ) : tableLabel && allowDineIn ? (
+                {tableLabel && allowDineIn ? (
                   <p className="text-muted-foreground text-sm font-medium">
                     {t('order.tableLabelReadOnly', { label: tableLabel })}
                   </p>
                 ) : !showModeToggle && enabledModeCount === 1 ? (
                   <p className="text-muted-foreground text-sm font-medium">
-                    {t(
-                      fulfillmentLabelKey(
-                        defaultGuestChoice({ allowDineIn, allowPickup, allowDelivery }),
-                      ),
-                    )}
+                    {t(fulfillmentLabelKey(defaultGuestChoice({ allowDineIn, allowPickup })))}
                   </p>
                 ) : null}
               </div>
-              {!activeOrder && showModeToggle ? (
+              {showModeToggle ? (
                 <div className="flex flex-col gap-2">
                   <p className="text-muted-foreground text-xs font-medium">
                     {t('order.fulfillmentLabel')}
@@ -1175,7 +1107,7 @@ export function PublicMenuCatalog({
                     type="single"
                     value={guestChoice}
                     onValueChange={(value) => {
-                      if (value === 'dine_in' || value === 'pickup' || value === 'delivery') {
+                      if (value === 'dine_in' || value === 'pickup') {
                         setGuestChoice(value)
                         setSubmitError(null)
                       }
@@ -1199,18 +1131,10 @@ export function PublicMenuCatalog({
                         {t('order.fulfillmentDineIn')}
                       </ToggleGroupItem>
                     ) : null}
-                    {allowDelivery ? (
-                      <ToggleGroupItem
-                        value="delivery"
-                        className="h-11 min-h-11 flex-1 touch-manipulation sm:h-9 sm:min-h-9"
-                      >
-                        {t('order.fulfillmentDelivery')}
-                      </ToggleGroupItem>
-                    ) : null}
                   </ToggleGroup>
                 </div>
               ) : null}
-              {!activeOrder && needsGuestTable ? (
+              {needsGuestTable ? (
                 <div className="flex flex-col gap-1.5">
                   <label htmlFor="public-menu-guest-table" className="text-sm font-medium">
                     {t('order.tableInputLabel')}
@@ -1231,58 +1155,6 @@ export function PublicMenuCatalog({
                   />
                 </div>
               ) : null}
-              {!activeOrder && needsDeliveryFields ? (
-                <div className="flex flex-col gap-3">
-                  <div className="flex flex-col gap-1.5">
-                    <label htmlFor="public-menu-delivery-address" className="text-sm font-medium">
-                      {t('order.deliveryAddressLabel')}
-                    </label>
-                    <Input
-                      id="public-menu-delivery-address"
-                      value={deliveryAddress}
-                      onChange={(e) => {
-                        setDeliveryAddress(e.target.value)
-                        setSubmitError(null)
-                      }}
-                      placeholder={t('order.deliveryAddressPlaceholder')}
-                      maxLength={512}
-                      autoComplete="street-address"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label htmlFor="public-menu-delivery-phone" className="text-sm font-medium">
-                      {t('order.deliveryPhoneLabel')}
-                    </label>
-                    <Input
-                      id="public-menu-delivery-phone"
-                      type="tel"
-                      value={deliveryPhone}
-                      onChange={(e) => {
-                        setDeliveryPhone(e.target.value)
-                        setSubmitError(null)
-                      }}
-                      placeholder={t('order.deliveryPhonePlaceholder')}
-                      maxLength={32}
-                      autoComplete="tel"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label htmlFor="public-menu-delivery-notes" className="text-sm font-medium">
-                      {t('order.deliveryNotesLabel')}
-                    </label>
-                    <Input
-                      id="public-menu-delivery-notes"
-                      value={deliveryNotes}
-                      onChange={(e) => {
-                        setDeliveryNotes(e.target.value)
-                        setSubmitError(null)
-                      }}
-                      placeholder={t('order.deliveryNotesPlaceholder')}
-                      maxLength={256}
-                    />
-                  </div>
-                </div>
-              ) : null}
               {submitError ? (
                 <Alert variant="destructive">
                   <AlertTitle>{t('order.submitFailedTitle')}</AlertTitle>
@@ -1297,18 +1169,12 @@ export function PublicMenuCatalog({
               >
                 {!isLoaded || submitting ? <Spinner /> : null}
                 {!isLoaded
-                  ? activeOrder
-                    ? t('order.addingToOrder')
-                    : t('order.sending')
+                  ? t('order.sending')
                   : !isSignedIn
                     ? t('order.signInToOrder')
                     : submitting
-                      ? activeOrder
-                        ? t('order.addingToOrder')
-                        : t('order.sending')
-                      : activeOrder
-                        ? t('order.addToOrder')
-                        : t('order.send')}
+                      ? t('order.sending')
+                      : t('order.send')}
               </Button>
             </div>
           </DrawerFooter>

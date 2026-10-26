@@ -37,7 +37,6 @@ type Props = {
   initialHeaderImageFilename: string | null
   initialAllowDineIn: boolean
   initialAllowPickup: boolean
-  initialAllowDelivery: boolean
   initialFeedbacks: MenuItemFeedbackRow[]
   initialFeedbackPendingCount: number
 }
@@ -50,7 +49,6 @@ export function DigitalMenuConsole({
   initialHeaderImageFilename,
   initialAllowDineIn,
   initialAllowPickup,
-  initialAllowDelivery,
   initialFeedbacks,
   initialFeedbackPendingCount,
 }: Props) {
@@ -62,7 +60,6 @@ export function DigitalMenuConsole({
   )
   const [allowDineIn, setAllowDineIn] = useState(initialAllowDineIn)
   const [allowPickup, setAllowPickup] = useState(initialAllowPickup)
-  const [allowDelivery, setAllowDelivery] = useState(initialAllowDelivery)
   const [persistedPublicEnabled, setPersistedPublicEnabled] = useState(initialPublicEnabled)
   const [copied, setCopied] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -119,7 +116,7 @@ export function DigitalMenuConsole({
       setError(t('errors.slugRequired'))
       return
     }
-    if (!allowDineIn && !allowPickup && !allowDelivery) {
+    if (!allowDineIn && !allowPickup) {
       setError(t('errors.fulfillmentRequired'))
       return
     }
@@ -133,7 +130,8 @@ export function DigitalMenuConsole({
           headerImageFilename,
           allowDineIn,
           allowPickup,
-          allowDelivery,
+          // Delivery is no longer offered on the digital menu; clear any legacy flag.
+          allowDelivery: false,
         }),
       })
       if (!res.ok) {
@@ -160,7 +158,6 @@ export function DigitalMenuConsole({
           headerImageFilename?: string | null
           allowDineIn?: boolean
           allowPickup?: boolean
-          allowDelivery?: boolean
         }
       }
       if (typeof body.publicEnabled === 'boolean') {
@@ -175,9 +172,6 @@ export function DigitalMenuConsole({
       }
       if (typeof body.menu?.allowPickup === 'boolean') {
         setAllowPickup(body.menu.allowPickup)
-      }
-      if (typeof body.menu?.allowDelivery === 'boolean') {
-        setAllowDelivery(body.menu.allowDelivery)
       }
       setSaved(true)
       router.refresh()
@@ -203,9 +197,14 @@ export function DigitalMenuConsole({
   return (
     <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
       <div className="flex min-w-0 flex-1 flex-col gap-6">
-        <section className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold tracking-tight">{t('heading')}</h1>
-          <p className="text-muted-foreground text-sm">{t('description')}</p>
+        <section className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex flex-col gap-1">
+            <h1 className="text-2xl font-semibold tracking-tight">{t('heading')}</h1>
+            <p className="text-muted-foreground text-sm">{t('description')}</p>
+          </div>
+          <Button asChild variant="outline" className="shrink-0">
+            <Link href={routes.servicesDigitalMenuOrders(locationId)}>{t('openOrderBoard')}</Link>
+          </Button>
         </section>
 
         <DigitalMenuFeedbackInbox
@@ -326,22 +325,6 @@ export function DigitalMenuConsole({
                 checked={allowPickup}
                 onCheckedChange={(next) => {
                   setAllowPickup(next)
-                  setSaved(false)
-                  setError(null)
-                }}
-                disabled={loading}
-              />
-            </Field>
-            <Field orientation="horizontal" className="items-center justify-between gap-4">
-              <div className="flex flex-col gap-1">
-                <FieldLabel htmlFor="digital-menu-allow-delivery">{t('allowDelivery')}</FieldLabel>
-                <p className="text-muted-foreground text-xs">{t('allowDeliveryHint')}</p>
-              </div>
-              <Switch
-                id="digital-menu-allow-delivery"
-                checked={allowDelivery}
-                onCheckedChange={(next) => {
-                  setAllowDelivery(next)
                   setSaved(false)
                   setError(null)
                 }}

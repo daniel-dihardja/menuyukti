@@ -42,20 +42,20 @@ Commands: [`apps/graphql/README.md`](../../../apps/graphql/README.md). Deep SQLA
 4. **Tests** — add coverage under `apps/graphql/tests/`.
 5. **Generic `Node`** — polymorphic `node` rows (`type` + JSON `data`) still exist for some product entities; use `GenericHandler` / type-specific handlers under `schema/node_handlers/` when needed. **Do not** treat workflow-container / milestone export-import as live product APIs.
 
-## Native POS
+## Order tickets (PosOrder) / digital-menu fulfillment
 
-Location-scoped cashier tickets, tax/money helpers, audit trail, and fiscalization (mock TSE now; provider port for certified TSE later):
+`PosOrder` persists **digital-menu guest tickets** (`note=digital_menu`) for the Order board. Tax/money helpers and fiscalization modules remain in GraphQL; there is **no live cashier UI** in `apps/web` (removed TASK-5.8). Staff prep uses `advancePosOrderPrepStatus` / `voidPosOrder`; guests use `submitPublicMenuOrder`.
 
 | Concern        | Paths                                                                                                                                                                                                                               |
 | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Orders service | [`services/pos_orders.py`](../../../apps/graphql/services/pos_orders.py)                                                                                                                                                            |
+| Orders service | [`services/pos_orders.py`](../../../apps/graphql/services/pos_orders.py), [`pos_order_lifecycle.py`](../../../apps/graphql/services/pos_order_lifecycle.py)                                                                         |
 | Tax / money    | [`pos_tax.py`](../../../apps/graphql/services/pos_tax.py), [`pos_money.py`](../../../apps/graphql/services/pos_money.py)                                                                                                            |
 | Fiscalization  | [`pos_fiscalization.py`](../../../apps/graphql/services/pos_fiscalization.py), [`pos_fiscal_port.py`](../../../apps/graphql/services/pos_fiscal_port.py), [`pos_fiscal_mock.py`](../../../apps/graphql/services/pos_fiscal_mock.py) |
 | Models         | `data_sources/models/pos_order.py`, `pos_fiscal_process.py`, `pos_register.py`, `pos_bill_sequence.py`, `pos_audit_event.py`                                                                                                        |
-| GraphQL        | [`schema/queries/pos_orders.py`](../../../apps/graphql/schema/queries/pos_orders.py), [`schema/mutations/pos_orders.py`](../../../apps/graphql/schema/mutations/pos_orders.py)                                                      |
+| GraphQL        | [`schema/queries/pos_orders.py`](../../../apps/graphql/schema/queries/pos_orders.py), [`schema/mutations/pos_orders.py`](../../../apps/graphql/schema/mutations/pos_orders.py), `submit_public_menu_order`                          |
 | Sales import   | [`pos_sales_import.py`](../../../apps/graphql/services/pos_sales_import.py), mutation `import_pos_sales_report`                                                                                                                     |
 
-Web UI: `/analytics/locations/[id]/pos` — see [`menuyukti-web`](../menuyukti-web/SKILL.md).
+Web Order board: `/services/digital-menu/[locationId]/orders` — see [`menuyukti-web`](../menuyukti-web/SKILL.md).
 
 ## Inventory
 

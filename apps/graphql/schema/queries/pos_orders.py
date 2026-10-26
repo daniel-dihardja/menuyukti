@@ -22,6 +22,7 @@ from graphql.schema.types.pos_order import (
     PosOrderStatus,
     PosOrderType,
     PosPaymentMethod,
+    PosPrepStatus,
     PublicMenuOrderStatusType,
 )
 from graphql.services.pos_audit import list_audit_events_for_order
@@ -47,7 +48,8 @@ class PosOrdersQuery:
     @strawberry.field(
         description=(
             "List POS tickets for a location. Defaults to tickets opened since "
-            "start of the current Europe/Berlin business day."
+            "start of the current Europe/Berlin business day. Optional note and "
+            "prepStatus filter digital-menu Order board tickets."
         )
     )
     def pos_orders(
@@ -56,6 +58,8 @@ class PosOrdersQuery:
         location_id: int,
         status: PosOrderStatus | None = None,
         since: datetime | None = None,
+        note: str | None = None,
+        prep_status: PosPrepStatus | None = None,
     ) -> list[PosOrderType]:
         user_id = user_id_from_info(info)
         if not user_id:
@@ -68,11 +72,19 @@ class PosOrdersQuery:
                 return []
             since_dt = since if since is not None else start_of_berlin_day()
             status_value = status.value if status is not None else None
+            prep_value = prep_status.value if prep_status is not None else None
+            note_value: str | None = None
+            if note is not None:
+                cleaned_note = note.strip()
+                if cleaned_note:
+                    note_value = cleaned_note
             orders = pos_svc.list_orders(
                 session,
                 location_id,
                 status=status_value,
                 since=since_dt,
+                note=note_value,
+                prep_status=prep_value,
             )
             return [pos_order_to_gql(order) for order in orders]
 

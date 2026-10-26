@@ -19,18 +19,12 @@ const submitPublicMenuOrderSchema = z.object({
     )
     .min(1)
     .max(50),
-  fulfillmentMode: z.enum(['dine_in', 'pickup', 'delivery']),
+  fulfillmentMode: z.enum(['dine_in', 'pickup']),
   tableLabel: z.string().trim().max(64).optional().nullable(),
-  deliveryAddress: z.string().trim().max(512).optional().nullable(),
-  deliveryPhone: z.string().trim().max(32).optional().nullable(),
-  deliveryNotes: z.string().trim().max(256).optional().nullable(),
 })
 
-function toGraphqlFulfillmentMode(
-  mode: 'dine_in' | 'pickup' | 'delivery',
-): 'DINE_IN' | 'PICKUP' | 'DELIVERY' {
+function toGraphqlFulfillmentMode(mode: 'dine_in' | 'pickup'): 'DINE_IN' | 'PICKUP' {
   if (mode === 'dine_in') return 'DINE_IN'
-  if (mode === 'delivery') return 'DELIVERY'
   return 'PICKUP'
 }
 
@@ -45,9 +39,6 @@ export async function POST(req: Request) {
     const json = await req.json()
     const payload = submitPublicMenuOrderSchema.parse(json)
     const tableLabel = payload.tableLabel?.trim() || null
-    const deliveryAddress = payload.deliveryAddress?.trim() || null
-    const deliveryPhone = payload.deliveryPhone?.trim() || null
-    const deliveryNotes = payload.deliveryNotes?.trim() || null
     const fulfillmentMode = toGraphqlFulfillmentMode(payload.fulfillmentMode)
 
     const data = await graphqlQuery<SubmitPublicMenuOrderData>(
@@ -60,9 +51,6 @@ export async function POST(req: Request) {
         })),
         fulfillmentMode,
         tableLabel,
-        deliveryAddress,
-        deliveryPhone,
-        deliveryNotes,
       },
       userId,
       'SubmitPublicMenuOrder',

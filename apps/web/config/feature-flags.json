@@ -84,7 +84,7 @@
     },
     {
       "id": "serviceDigitalMenu",
-      "description": "Digital menu service (MVP on).",
+      "description": "Digital menu service + Order board (MVP on). Staff fulfillment lives under /services/digital-menu/*/orders — not POS cashier.",
       "enabled": true,
       "audience": "all",
       "routePrefixes": ["/services/digital-menu"],
@@ -187,16 +187,6 @@
       "routePrefixes": ["/team"],
       "navKeys": ["team"],
       "actionMenuKeys": []
-    },
-    {
-      "id": "pos",
-      "description": "Native POS cashier (MVP off; code retained).",
-      "enabled": false,
-      "audience": "all",
-      "routePrefixes": [],
-      "routePatterns": ["/analytics/locations/*/pos"],
-      "navKeys": [],
-      "actionMenuKeys": ["pos"]
     },
     {
       "id": "salesReports",

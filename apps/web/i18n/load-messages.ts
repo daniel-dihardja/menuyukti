@@ -6,7 +6,6 @@ export type AppLocale = (typeof SUPPORTED_LOCALES)[number]
 
 async function loadEnglishMessages(): Promise<AbstractIntlMessages> {
   const chunks = await Promise.all([
-    import('../messages/en/about.json'),
     import('../messages/en/accountMenu.json'),
     import('../messages/en/agentChat.json'),
     import('../messages/en/agents.json'),
@@ -35,7 +34,6 @@ async function loadEnglishMessages(): Promise<AbstractIntlMessages> {
     import('../messages/en/notFound.json'),
     import('../messages/en/platform.json'),
     import('../messages/en/playbooks.json'),
-    import('../messages/en/pos.json'),
     import('../messages/en/postCreator.json'),
     import('../messages/en/posts.json'),
     import('../messages/en/profile.json'),
@@ -81,23 +79,19 @@ function deepMergeMessages(
 /**
  * Load next-intl message catalogs for a locale.
  * Catalogs live under `messages/<locale>/<namespace>.json` (one top-level key each).
- * For ``de``, English is the base; ``messages/de/pos.json``, ``messages/de/public.json``,
- * and ``messages/de/explore.json`` overlay those namespaces (deep-merged so partial
+ * For ``de``, English is the base; ``messages/de/public.json`` and
+ * ``messages/de/explore.json`` overlay those namespaces (deep-merged so partial
  * catalogs keep English keys).
  * Touch this module when message JSON changes fail to hot-reload under Turbopack.
  */
 export async function loadMessages(locale: string): Promise<AbstractIntlMessages> {
   const base = await loadEnglishMessages()
   if (locale === 'de') {
-    const [dePos, dePublic, deExplore] = await Promise.all([
-      import('../messages/de/pos.json'),
+    const [dePublic, deExplore] = await Promise.all([
       import('../messages/de/public.json'),
       import('../messages/de/explore.json'),
     ])
-    return deepMergeMessages(
-      deepMergeMessages(deepMergeMessages(base, dePos.default), dePublic.default),
-      deExplore.default,
-    )
+    return deepMergeMessages(deepMergeMessages(base, dePublic.default), deExplore.default)
   }
   return base
 }

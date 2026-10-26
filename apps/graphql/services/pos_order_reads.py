@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import date, datetime, timedelta
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from graphql.data_sources.models.pos_order import PosOrder, PosOrderLine
@@ -16,6 +16,7 @@ from graphql.services.pos_order_constants import (
     POS_STATUS_PAID,
     POS_STATUS_REFUNDED,
     POS_STATUS_VOID,
+    PREP_TERMINAL,
     PUBLIC_MENU_ORDER_NOTE,
 )
 from graphql.services.pos_tax import tax_breakdown_by_rate
@@ -48,7 +49,11 @@ def get_open_public_menu_order_for_guest(
     location_id: int,
     clerk_user_id: str,
 ) -> PosOrder | None:
-    """Latest open digital-menu ticket opened by this guest at the location."""
+    """Latest open digital-menu ticket opened by this guest at the location.
+
+    Terminal prep (served / picked_up / delivered) counts as complete for the
+    guest even while the fiscal ticket status remains open.
+    """
     user_id = (clerk_user_id or "").strip()
     if not user_id:
         return None
@@ -61,6 +66,10 @@ def get_open_public_menu_order_for_guest(
                 PosOrder.opened_by_clerk_user_id == user_id,
                 PosOrder.note == PUBLIC_MENU_ORDER_NOTE,
                 PosOrder.status == POS_STATUS_OPEN,
+                or_(
+                    PosOrder.prep_status.is_(None),
+                    PosOrder.prep_status.notin_(tuple(PREP_TERMINAL)),
+                ),
             )
             .order_by(PosOrder.id.desc())
             .limit(1)
@@ -76,6 +85,8 @@ def list_orders(
     *,
     status: str | None = None,
     since: datetime | None = None,
+    note: str | None = None,
+    prep_status: str | None = None,
 ) -> list[PosOrder]:
     stmt = (
         select(PosOrder)
@@ -87,6 +98,10 @@ def list_orders(
         stmt = stmt.where(PosOrder.status == status)
     if since is not None:
         stmt = stmt.where(PosOrder.opened_at >= since)
+    if note is not None:
+        stmt = stmt.where(PosOrder.note == note)
+    if prep_status is not None:
+        stmt = stmt.where(PosOrder.prep_status == prep_status)
     return list(session.execute(stmt).unique().scalars().all())
 
 

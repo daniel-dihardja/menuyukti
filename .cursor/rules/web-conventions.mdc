@@ -18,13 +18,13 @@ Use **route groups** to separate concerns:
 
 | Group | Path | Notes |
 |---|---|---|
-| `(protected)` | `/advisor` (chat home), `/analytics/*` (incl. `/analytics/locations/[id]/pos`), `/calendar`, `/ig-studio/*`, `/media`, `/content/*`, `/crm/*`, `/dashboard`, `/staff`, `/usage`, `/inventar`, … | Operator shell: sidebar + context providers; `auth()` guard — see `OPERATOR_APP_SHELL_PREFIXES` in `lib/routes.ts` |
+| `(protected)` | `/advisor` (chat home), `/analytics/*`, `/services/digital-menu/*/orders` (Order board), `/calendar`, `/ig-studio/*`, `/media`, `/content/*`, `/crm/*`, `/dashboard`, `/staff`, `/usage`, `/inventar`, … | Operator shell: sidebar + context providers; `auth()` guard — see `OPERATOR_APP_SHELL_PREFIXES` in `lib/routes.ts` |
 | `(customer)` | `/home`, `/continue`, `/profile/*` | Auth-required **customer PWA** shell (no sidebar); global `MainHeader` — see `CUSTOMER_AUTH_PREFIXES` |
 | `(standalone)` | `/login`, `/sign-up`, `/sso-callback` | No sidebar; Clerk-branded pages |
 | `(public)` | `/m/[slug]`, `/l/[slug]` | Public digital menu (and legacy wall redirect) |
 | `app/api/` | `/api/**` | BFF route handlers — call `graphqlQuery` with Clerk user id (incl. `/api/mobile/crm/v1/*` for legacy mobile BFF) |
 
-Chat home public URL is **`/advisor`** (`routes.agent`); App Router pages live under `app/(protected)/agent/` via rewrite. Legacy `/workflow` redirects to `/advisor`. Shared chat UI lives in `components/chat/`. Other feature-specific client components live **next to their route** under `app/(protected)/<feature>/_components/`. Native POS UI: `app/(protected)/analytics/locations/[id]/pos/` (`routes.branchesPos`).
+Chat home public URL is **`/advisor`** (`routes.agent`); App Router pages live under `app/(protected)/agent/` via rewrite. Legacy `/workflow` redirects to `/advisor`. Shared chat UI lives in `components/chat/`. Other feature-specific client components live **next to their route** under `app/(protected)/<feature>/_components/`. Digital-menu Order board: `app/(protected)/services/digital-menu/[locationId]/orders/` (`routes.servicesDigitalMenuOrders`). There is no live native POS cashier UI.
 
 ## Auth
 

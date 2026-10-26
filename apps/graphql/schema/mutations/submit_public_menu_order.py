@@ -23,10 +23,10 @@ class SubmitPublicMenuOrderMutation:
     @strawberry.mutation(
         description=(
             "Authenticated guest: open a POS ticket for a published digital menu "
-            "and add lines, or append lines to the guest's existing open digital-menu "
-            "ticket at this location. No location ownership required. Close/pay remains "
-            "staff-only. dine_in requires tableLabel; delivery requires address+phone; "
-            "pickup clears table/delivery. Append keeps the open ticket's fulfillment."
+            "and add lines. Rejects if the guest already has an open digital-menu "
+            "ticket at this location (no append). No location ownership required. "
+            "Close/pay remains staff-only. dine_in requires tableLabel; delivery "
+            "requires address+phone; pickup clears table/delivery."
         )
     )
     def submit_public_menu_order(

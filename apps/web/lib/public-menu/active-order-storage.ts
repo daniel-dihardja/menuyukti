@@ -1,3 +1,4 @@
+import { isTerminalPrepStatus } from '@/lib/orders/prep-status'
 import type { PublicMenuFulfillmentMode } from '@/lib/public-menu/fulfillment-mode'
 
 export type PublicMenuPrepStatus =
@@ -35,6 +36,14 @@ const PREP_STATUSES = new Set<PublicMenuPrepStatus>([
 export function isTerminalTicketStatus(status: string | null | undefined): boolean {
   if (!status) return false
   return TERMINAL_TICKET_STATUSES.has(status.trim().toLowerCase())
+}
+
+/** Guest “My order” is done when the ticket closes or prep reaches a terminal stage. */
+export function isGuestOrderComplete(
+  status: string | null | undefined,
+  prepStatus: PublicMenuPrepStatus | null | undefined,
+): boolean {
+  return isTerminalTicketStatus(status) || isTerminalPrepStatus(prepStatus)
 }
 
 /** Normalize GraphQL enum names/values (OPEN / open) to lowercase ticket status. */
@@ -132,7 +141,7 @@ export function loadPublicMenuActiveOrder(locationId: number): PublicMenuActiveO
       localStorage.removeItem(storageKey(locationId))
       return null
     }
-    if (isTerminalTicketStatus(parsed.status)) {
+    if (isGuestOrderComplete(parsed.status, parsed.prepStatus)) {
       localStorage.removeItem(storageKey(locationId))
       return null
     }
@@ -147,7 +156,7 @@ export function savePublicMenuActiveOrder(
   order: Omit<PublicMenuActiveOrder, 'savedAt'> & { savedAt?: number },
 ): void {
   if (typeof window === 'undefined') return
-  if (isTerminalTicketStatus(order.status)) {
+  if (isGuestOrderComplete(order.status, order.prepStatus)) {
     clearPublicMenuActiveOrder(locationId)
     return
   }

@@ -28,7 +28,6 @@ export function MainHeader() {
   const isLogin = pathname === routes.login || (pathname?.startsWith(`${routes.login}/`) ?? false)
   const isSignUp =
     pathname === routes.signUp || (pathname?.startsWith(`${routes.signUp}/`) ?? false)
-  const isAbout = pathname === routes.about || (pathname?.startsWith(`${routes.about}/`) ?? false)
   const isExplore =
     pathname === routes.explore || (pathname?.startsWith(`${routes.explore}/`) ?? false)
   const isGuestLocation = isPublicLocationSurfacePath(pathname)
@@ -78,29 +77,17 @@ export function MainHeader() {
             <span className="text-sm font-semibold tracking-tight md:text-base">{t('brand')}</span>
           </Link>
 
-          {!isGuestLocation ? (
+          {!isGuestLocation && showExplore ? (
             <nav aria-label={t('navAria')} className="hidden min-w-0 items-center gap-1 md:flex">
-              {showExplore ? (
-                <Link
-                  href={routes.explore}
-                  aria-current={isExplore ? 'page' : undefined}
-                  className={cn(
-                    'rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors',
-                    isExplore ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
-                  )}
-                >
-                  {t('navExplore')}
-                </Link>
-              ) : null}
               <Link
-                href={routes.about}
-                aria-current={isAbout ? 'page' : undefined}
+                href={routes.explore}
+                aria-current={isExplore ? 'page' : undefined}
                 className={cn(
                   'rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors',
-                  isAbout ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
+                  isExplore ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
                 )}
               >
-                {t('navAbout')}
+                {t('navExplore')}
               </Link>
             </nav>
           ) : null}

@@ -83,7 +83,6 @@ export default async function DigitalMenuConsolePage({ params }: PageProps) {
           initialHeaderImageFilename={menuData.locationMenu?.headerImageFilename ?? null}
           initialAllowDineIn={menuData.locationMenu?.allowDineIn ?? true}
           initialAllowPickup={menuData.locationMenu?.allowPickup ?? true}
-          initialAllowDelivery={menuData.locationMenu?.allowDelivery ?? false}
           initialFeedbacks={feedbackData.locationMenuItemFeedbacks}
           initialFeedbackPendingCount={feedbackData.locationMenuItemFeedbackPendingCount}
         />

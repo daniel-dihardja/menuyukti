@@ -54,17 +54,21 @@ describe('feature-flags', () => {
     expect(isPathnameFeatureEnabled('/usage')).toBe(true)
   })
 
-  it('disables MVP-off inventar, team, POS, and sales reports', () => {
+  it('disables MVP-off inventar, team, and sales reports', () => {
     expect(isPathnameFeatureEnabled('/inventar')).toBe(false)
     expect(isPathnameFeatureEnabled('/inventar/catalog')).toBe(false)
     expect(isPathnameFeatureEnabled('/team')).toBe(false)
-    expect(isPathnameFeatureEnabled('/analytics/locations/1/pos')).toBe(false)
     expect(isPathnameFeatureEnabled('/analytics/locations/1/reports')).toBe(false)
     expect(isPathnameFeatureEnabled('/analytics/locations/reports')).toBe(false)
     expect(isPathnameFeatureEnabled('/analytics/sales')).toBe(false)
-    expect(isActionMenuKeyEnabled('pos')).toBe(false)
     expect(isActionMenuKeyEnabled('reports')).toBe(false)
     expect(isActionMenuKeyEnabled('cogs')).toBe(true)
+  })
+
+  it('keeps Digital Menu Order board reachable under serviceDigitalMenu', () => {
+    expect(isFeatureEnabled('serviceDigitalMenu')).toBe(true)
+    expect(isPathnameFeatureEnabled('/services/digital-menu/42/orders')).toBe(true)
+    expect(pathnameRequiresAdmin('/services/digital-menu/42/orders')).toBe(false)
   })
 
   it('leaves unlisted paths enabled', () => {
@@ -146,6 +150,7 @@ describe('feature-flags', () => {
     expect(isPathnameFeatureEnabled('/services')).toBe(true)
     expect(isPathnameFeatureEnabled('/services/digital-menu')).toBe(true)
     expect(isPathnameFeatureEnabled('/services/digital-menu/1')).toBe(true)
+    expect(isPathnameFeatureEnabled('/services/digital-menu/1/orders')).toBe(true)
     expect(isPathnameFeatureEnabled('/services/voting')).toBe(true)
     expect(isPathnameFeatureEnabled('/services/voting/1')).toBe(true)
     expect(isPathnameFeatureEnabled('/services/pick-and-win')).toBe(false)
