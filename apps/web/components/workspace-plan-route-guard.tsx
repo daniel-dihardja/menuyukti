@@ -3,7 +3,7 @@
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 
-import { pathnameRequiresAdmin } from '@/lib/admin-only-features'
+import { pathnameRequiresAdmin } from '@/lib/feature-flags'
 import { useMenuyuktiRole } from '@/hooks/use-menuyukti-role'
 import { isMenuyuktiAdmin } from '@/lib/menuyukti-role'
 import { getDefaultPathForPlan } from '@/lib/workspace-plan'

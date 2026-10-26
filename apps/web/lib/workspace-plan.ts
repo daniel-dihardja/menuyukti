@@ -13,9 +13,9 @@ export type WorkspacePlan = typeof WORKSPACE_PLAN_FREE | typeof WORKSPACE_PLAN_P
  * `workspace.plan` for provisioning metadata).
  *
  * - Sign-up is Clerk-only until staff provisions a workspace (`provisionWorkspace`).
- * - Operator routes (Locations, Inventar, Team, Advisor, media, …) are available to
- *   any signed-in user. Calendar, CRM, and print shop remain platform-admin only
- *   (see `config/admin-only-features.json`). Self-serve workspace creation is disabled.
+ * - Operator routes (Locations, Advisor, media, …) are available to any signed-in
+ *   user when enabled in `config/feature-flags.json`. Calendar, CRM, and print shop
+ *   use `audience: "admin"` there. Self-serve workspace creation is disabled.
  */
 
 /**
@@ -33,7 +33,7 @@ export const FREE_ROUTE_PREFIXES = ['/home', '/continue', '/profile'] as const
 /**
  * Operator sidebar keys (documentation / tests). {@link isNavKeyAllowedForPlan}
  * allows all keys except `branches` (Locations is reached via Home / Workspace CTA).
- * Admin-only keys are filtered separately via `config/admin-only-features.json`.
+ * Admin-audience keys are filtered via `config/feature-flags.json`.
  */
 export const PRO_NAV_KEYS = new Set([
   'home',
@@ -71,8 +71,8 @@ export function isNavKeyAllowedForPlan(navKey: string): boolean {
 }
 
 /**
- * Plan no longer gates routes. Admin-only paths are gated separately via
- * `pathnameRequiresAdmin` / `config/admin-only-features.json`.
+ * Plan no longer gates routes. Admin-audience paths are gated separately via
+ * `pathnameRequiresAdmin` / `config/feature-flags.json`.
  */
 export function isPathnameAllowedForPlan(): boolean {
   return true

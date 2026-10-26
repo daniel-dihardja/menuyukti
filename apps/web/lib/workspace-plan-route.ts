@@ -1,7 +1,7 @@
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 
-import { pathnameRequiresAdmin } from '@/lib/admin-only-features'
+import { pathnameRequiresAdmin } from '@/lib/feature-flags'
 import { isMenuyuktiAdmin } from '@/lib/menuyukti-role'
 import { resolveMenuyuktiRole } from '@/lib/menuyukti-role-server'
 import { getDefaultPathForPlan } from '@/lib/workspace-plan'
