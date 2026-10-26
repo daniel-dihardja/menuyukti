@@ -46,7 +46,7 @@ describe('partitionClientNav', () => {
 })
 
 describe('splitClientNavAtAi', () => {
-  it('puts AI, Playbooks, and AI usage after the separator group', () => {
+  it('puts AI and Playbooks after the first separator, AI usage after the second', () => {
     const split = splitClientNavAtAi([
       { key: 'home' },
       { key: 'services' },
@@ -55,6 +55,7 @@ describe('splitClientNavAtAi', () => {
       { key: 'usage' },
     ])
     expect(split.primary.map((item) => item.key)).toEqual(['home', 'services'])
-    expect(split.ai.map((item) => item.key)).toEqual(['chat', 'playbooks', 'usage'])
+    expect(split.ai.map((item) => item.key)).toEqual(['chat', 'playbooks'])
+    expect(split.usage.map((item) => item.key)).toEqual(['usage'])
   })
 })

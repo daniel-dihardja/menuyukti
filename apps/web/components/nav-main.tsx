@@ -292,7 +292,7 @@ export function NavMain() {
   if (!showAdminNav) {
     const clientItems = orderClientFlatNav(visibleWorkspaceItems)
     if (clientItems.length === 0) return null
-    const { primary, ai } = splitClientNavAtAi(clientItems)
+    const { primary, ai, usage } = splitClientNavAtAi(clientItems)
     return (
       <>
         {primary.length > 0 ? (
@@ -311,6 +311,18 @@ export function NavMain() {
               <SidebarGroupContent>
                 <SidebarMenu>
                   <NavMenuItems items={ai} t={t} isActive={isActive} />
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </>
+        ) : null}
+        {usage.length > 0 ? (
+          <>
+            <SidebarSeparator className="my-2" />
+            <SidebarGroup>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <NavMenuItems items={usage} t={t} isActive={isActive} />
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>

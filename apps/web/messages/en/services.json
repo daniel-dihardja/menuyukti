@@ -5,19 +5,17 @@
     "headline": "Guest experience",
     "subtitle": "Publish an interactive digital menu and turn on guest experiences for each location.",
     "subscriptions": {
-      "title": "Your subscriptions",
-      "subtitle": "Active guest experiences for your locations.",
-      "billingNoteTitle": "Billing not connected",
-      "billingNote": "Billing is not connected yet — activate and cancel freely while we prepare payments.",
+      "title": "What's live",
+      "subtitle": "Guest experiences turned on for your locations.",
       "empty": "No active guest experiences yet.",
       "emptyHint": "Turn on Digital Menu or Voting for a location to get started.",
-      "cancel": "Cancel",
-      "canceling": "Canceling…",
-      "cancelFailed": "Could not cancel this subscription.",
-      "cancelConfirmTitle": "Cancel this subscription?",
+      "cancel": "Turn off",
+      "canceling": "Turning off…",
+      "cancelFailed": "Could not turn off this experience.",
+      "cancelConfirmTitle": "Turn off {service} for {location}?",
       "cancelConfirmDescription": "This turns off {service} for {location}. You can turn it back on later.",
-      "cancelConfirmAction": "Cancel subscription",
-      "cancelConfirmCancel": "Keep subscription",
+      "cancelConfirmAction": "Turn off",
+      "cancelConfirmCancel": "Keep it on",
       "serviceLabels": {
         "digital_menu": "Digital Menu",
         "point_system": "Point System",
@@ -165,7 +163,7 @@
       "turnOnCta": "Turn on for a location",
       "includedTitle": "What’s included",
       "included": {
-        "enable": "Per-location enablement and subscription",
+        "enable": "Per-location enablement",
         "create": "Create picks with outcomes and a close time",
         "reward": "Choose social rewards or Point System payouts"
       },
@@ -176,7 +174,7 @@
       "manageCta": "Manage",
       "enable": {
         "title": "Turn on for a location",
-        "description": "Choose which location gets Pick & Win. We’ll activate the subscription.",
+        "description": "Choose which location gets Pick & Win. We’ll turn it on for that location.",
         "locationLabel": "Location",
         "locationPlaceholder": "Select a location",
         "noLocations": "Add a location first, then turn on Pick & Win.",
@@ -251,7 +249,7 @@
       "turnOnCta": "Turn on for a location",
       "includedTitle": "What’s included",
       "included": {
-        "enable": "Per-location enablement and subscription",
+        "enable": "Per-location enablement",
         "earn": "Configurable earn rules for guest actions",
         "redeem": "Guest balances on their home (redeem coming soon)"
       },
@@ -262,7 +260,7 @@
       "manageCta": "Manage",
       "enable": {
         "title": "Turn on for a location",
-        "description": "Choose which location gets Point System. We’ll activate the subscription.",
+        "description": "Choose which location gets Point System. We’ll turn it on for that location.",
         "locationLabel": "Location",
         "locationPlaceholder": "Select a location",
         "noLocations": "Add a location first, then turn on Point System.",
@@ -276,7 +274,7 @@
         "heading": "Point System",
         "description": "Configure how guests earn points at this location.",
         "enabled": "Point System is on",
-        "enabledHint": "This location has an active Point System subscription. Guests earn points when enabled rules fire (menu open and completed digital-menu orders).",
+        "enabledHint": "Point System is on for this location. Guests earn points when enabled rules fire (menu open and completed digital-menu orders).",
         "backCta": "Back to Point System",
         "rulesTitle": "Earn rules",
         "rulesSubtitle": "Choose which actions award points and how many. Rules apply only while Point System is on for this location.",
@@ -334,7 +332,7 @@
       "manageCta": "Manage",
       "enable": {
         "title": "Turn on for a location",
-        "description": "Choose which location gets Digital Menu. We’ll activate the subscription, then you can set the guest link.",
+        "description": "Choose which location gets Digital Menu. We’ll turn it on for that location, then you can set the guest link.",
         "locationLabel": "Location",
         "locationPlaceholder": "Select a location",
         "noLocations": "Add a location first, then turn on Digital Menu.",
@@ -433,7 +431,7 @@
         },
         "errors": {
           "slugRequired": "Set a public URL slug on location Basics before turning the menu on",
-          "subscriptionRequired": "Activate Digital Menu for this location before publishing",
+          "subscriptionRequired": "Turn on Digital Menu for this location before publishing",
           "fulfillmentRequired": "Turn on at least one fulfillment option: bring to table, pickup, or delivery",
           "saveFailed": "Failed to save Digital Menu settings",
           "unknown": "Something went wrong"

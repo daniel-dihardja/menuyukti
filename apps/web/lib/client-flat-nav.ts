@@ -4,8 +4,11 @@
  */
 export const CLIENT_NAV_ORDER = ['home', 'services', 'chat', 'playbooks', 'usage'] as const
 
-/** Keys rendered after the separator (AI section). */
-export const CLIENT_AI_NAV_KEYS = new Set<string>(['chat', 'playbooks', 'usage'])
+/** Keys rendered in the AI tools section (after the first separator). */
+export const CLIENT_AI_NAV_KEYS = new Set<string>(['chat', 'playbooks'])
+
+/** Keys rendered after Playbooks (second separator) — account / metering. */
+export const CLIENT_USAGE_NAV_KEYS = new Set<string>(['usage'])
 
 type FlatNavItem = { key: string }
 
@@ -26,17 +29,22 @@ export function orderClientFlatNav<T extends FlatNavItem>(items: readonly T[]): 
   return [...ranked, ...other]
 }
 
-/** Split ordered client nav into primary items and AI-section items. */
+/**
+ * Split ordered client nav into primary, AI tools, and AI usage groups
+ * (separators between primary → AI and Playbooks → usage).
+ */
 export function splitClientNavAtAi<T extends FlatNavItem>(
   items: readonly T[],
-): { primary: T[]; ai: T[] } {
+): { primary: T[]; ai: T[]; usage: T[] } {
   const primary: T[] = []
   const ai: T[] = []
+  const usage: T[] = []
   for (const item of items) {
     if (CLIENT_AI_NAV_KEYS.has(item.key)) ai.push(item)
+    else if (CLIENT_USAGE_NAV_KEYS.has(item.key)) usage.push(item)
     else primary.push(item)
   }
-  return { primary, ai }
+  return { primary, ai, usage }
 }
 
 /**
