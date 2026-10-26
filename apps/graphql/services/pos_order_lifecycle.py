@@ -20,11 +20,7 @@ from graphql.services.pos_order_constants import (
     POS_STATUS_OPEN,
     POS_STATUS_REFUNDED,
     POS_STATUS_VOID,
-    PREP_DELIVERED,
-    PREP_PICKED_UP,
-    PREP_READY,
     PREP_RECEIVED,
-    PREP_SERVED,
     PUBLIC_MENU_ORDER_NOTE,
     next_prep_status,
     normalize_delivery_address,
@@ -38,8 +34,6 @@ from graphql.services.pos_order_reads import get_open_public_menu_order_for_gues
 from graphql.services.pos_register_bill import ensure_default_register, next_bill_number
 from graphql.services.pos_tax import normalize_tax_class, recompute_order_tax, resolve_tax_rate_bps
 
-_PREP_RESET_ON_APPEND = frozenset({PREP_READY, PREP_SERVED, PREP_PICKED_UP, PREP_DELIVERED})
-
 
 def _utcnow() -> datetime:
     return datetime.now(UTC)
@@ -51,6 +45,7 @@ def open_order(
     location_id: int,
     clerk_user_id: str,
     table_label: str | None = None,
+    start_fiscal: bool = True,
 ) -> PosOrder:
     now = _utcnow()
     register = ensure_default_register(session, location_id)
@@ -75,9 +70,14 @@ def open_order(
         pos_order_id=order.id,
         actor_clerk_user_id=clerk_user_id,
         action="open",
-        payload={"bill_number": order.bill_number, "register_id": register.id},
+        payload={
+            "bill_number": order.bill_number,
+            "register_id": register.id,
+            "start_fiscal": start_fiscal,
+        },
     )
-    fiscal.start_sale_process(session, order, actor_clerk_user_id=clerk_user_id)
+    if start_fiscal:
+        fiscal.start_sale_process(session, order, actor_clerk_user_id=clerk_user_id)
     return get_order(session, order.id) or order
 
 
@@ -93,11 +93,10 @@ def submit_public_menu_order(
     delivery_phone: str | None = None,
     delivery_notes: str | None = None,
 ) -> PosOrder:
-    """Open or append to a guest digital-menu ticket (no modifiers / no payment).
+    """Open a guest digital-menu ticket (no modifiers / no payment).
 
-    If the guest already has an open digital-menu ticket at this location, lines
-    are appended to that ticket (fulfillment/table/delivery unchanged). Otherwise
-    a new ticket is opened.
+    Guests may have at most one open digital-menu ticket per location. After
+    submit, only staff prep/status transitions apply — new lines are not added.
     """
     if not lines:
         raise ValueError("At least one line is required")
@@ -112,34 +111,10 @@ def submit_public_menu_order(
         clerk_user_id=clerk_user_id,
     )
     if existing is not None:
-        for menu_item_id, qty in lines:
-            add_line(
-                session,
-                order_id=existing.id,
-                menu_item_id=menu_item_id,
-                qty=qty,
-                modifier_option_ids=None,
-                note=None,
-                actor_clerk_user_id=clerk_user_id,
-            )
-        order = get_order(session, existing.id) or existing
-        current_prep = (order.prep_status or "").strip().lower()
-        if current_prep in _PREP_RESET_ON_APPEND:
-            order.prep_status = PREP_RECEIVED
-            session.flush()
-            record_pos_audit(
-                session,
-                location_id=order.location_id,
-                pos_order_id=order.id,
-                actor_clerk_user_id=clerk_user_id,
-                action="prep_status",
-                payload={
-                    "from": current_prep,
-                    "to": PREP_RECEIVED,
-                    "reason": "append_public_menu_lines",
-                },
-            )
-        return get_order(session, order.id) or order
+        raise ValueError(
+            "You already have an open order at this location; "
+            "wait until it is closed before sending a new one"
+        )
 
     mode = normalize_fulfillment_mode(fulfillment_mode)
     resolved_table: str | None = None
@@ -167,11 +142,13 @@ def submit_public_menu_order(
             raise ValueError("delivery_phone is required for delivery fulfillment")
         resolved_notes = normalize_delivery_notes(delivery_notes)
 
+    # Fulfillment-only: do not start a fiscal sale (restaurants use external POS).
     order = open_order(
         session,
         location_id=location_id,
         clerk_user_id=clerk_user_id,
         table_label=resolved_table,
+        start_fiscal=False,
     )
     order.note = PUBLIC_MENU_ORDER_NOTE
     order.fulfillment_mode = mode

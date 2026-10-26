@@ -132,7 +132,6 @@ export const routes = {
     branchesDetail: (id: string | number) => `/analytics/locations/${id}`,
     branchesCogs: (id: string | number) => `/analytics/locations/${id}/cogs`,
     branchesMenu: (id: string | number) => `/analytics/locations/${id}/menu`,
-    branchesPos: (id: string | number) => `/analytics/locations/${id}/pos`,
     /** Sales reports for a single location (Locations → venue → Reports). */
     branchesReports: (id: string | number) => `/analytics/locations/${id}/reports`,
     /**
@@ -232,6 +231,8 @@ export const routes = {
   servicesDigitalMenu: '/services/digital-menu',
   servicesDigitalMenuLocation: (locationId: string | number) =>
     `/services/digital-menu/${encodeURIComponent(String(locationId))}`,
+  servicesDigitalMenuOrders: (locationId: string | number) =>
+    `/services/digital-menu/${encodeURIComponent(String(locationId))}/orders`,
   servicesPointSystem: '/services/point-system',
   servicesPointSystemLocation: (locationId: string | number) =>
     `/services/point-system/${encodeURIComponent(String(locationId))}`,

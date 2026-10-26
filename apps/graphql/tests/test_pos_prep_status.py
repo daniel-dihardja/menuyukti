@@ -425,3 +425,58 @@ def test_unauthenticated_guest_poll_returns_null(published_menu_location):
     )
     assert result.errors is None, result.errors
     assert result.data["publicMenuOrder"] is None
+
+
+_LIST_DIGITAL = """
+query ListDigital(
+  $locationId: Int!
+  $status: PosOrderStatus
+  $note: String
+  $prepStatus: PosPrepStatus
+) {
+  posOrders(
+    locationId: $locationId
+    status: $status
+    note: $note
+    prepStatus: $prepStatus
+  ) {
+    id
+    note
+    prepStatus
+    status
+  }
+}
+"""
+
+
+def test_owner_lists_digital_menu_orders_filtered_by_note_and_prep(published_menu_location):
+    location_id, item_id = published_menu_location
+    digital_id = _submit(location_id, item_id, "PICKUP")
+    opened = asyncio.run(
+        schema.execute(
+            _OPEN,
+            variable_values={"locationId": location_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert opened.errors is None, opened.errors
+    cashier_id = int(opened.data["openPosOrder"]["id"])
+
+    listed = asyncio.run(
+        schema.execute(
+            _LIST_DIGITAL,
+            variable_values={
+                "locationId": location_id,
+                "status": "OPEN",
+                "note": "digital_menu",
+                "prepStatus": "RECEIVED",
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert listed.errors is None, listed.errors
+    ids = {int(row["id"]) for row in listed.data["posOrders"]}
+    assert digital_id in ids
+    assert cashier_id not in ids
+    assert all(row["note"] == "digital_menu" for row in listed.data["posOrders"])
+    assert all(row["prepStatus"] == "RECEIVED" for row in listed.data["posOrders"])

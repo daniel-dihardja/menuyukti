@@ -76,6 +76,8 @@ def list_orders(
     *,
     status: str | None = None,
     since: datetime | None = None,
+    note: str | None = None,
+    prep_status: str | None = None,
 ) -> list[PosOrder]:
     stmt = (
         select(PosOrder)
@@ -87,6 +89,10 @@ def list_orders(
         stmt = stmt.where(PosOrder.status == status)
     if since is not None:
         stmt = stmt.where(PosOrder.opened_at >= since)
+    if note is not None:
+        stmt = stmt.where(PosOrder.note == note)
+    if prep_status is not None:
+        stmt = stmt.where(PosOrder.prep_status == prep_status)
     return list(session.execute(stmt).unique().scalars().all())
 
 

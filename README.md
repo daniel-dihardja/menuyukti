@@ -23,7 +23,7 @@ Agent-first workflow for this monorepo:
 ## Notable product surfaces
 
 - Chat advisor with streaming ReAct agents and tool calling into GraphQL
-- Native POS cashier (tax / fiscalization hooks) scoped by location
+- Digital-menu Order board (guest submit + staff prep lifecycle; tickets persist as GraphQL `PosOrder`)
 - Inventory chat mode with refill-forecast tools
 - Public location hub + explore (customer PWA)
 

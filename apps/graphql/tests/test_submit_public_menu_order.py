@@ -482,7 +482,7 @@ mutation ClosePosOrder($orderId: Int!, $paymentMethod: PosPaymentMethod!) {
 """
 
 
-def test_second_submit_appends_to_open_ticket(published_menu_location):
+def test_second_submit_rejected_while_open_ticket(published_menu_location):
     location_id, item_id, _ = published_menu_location
     first = asyncio.run(
         schema.execute(
@@ -497,9 +497,8 @@ def test_second_submit_appends_to_open_ticket(published_menu_location):
         )
     )
     assert first.errors is None, first.errors
-    first_order = first.data["submitPublicMenuOrder"]
-    first_id = int(first_order["id"])
-    first_bill = first_order["billNumber"]
+    first_id = int(first.data["submitPublicMenuOrder"]["id"])
+    assert len(first.data["submitPublicMenuOrder"]["lines"]) == 1
 
     second = asyncio.run(
         schema.execute(
@@ -513,14 +512,18 @@ def test_second_submit_appends_to_open_ticket(published_menu_location):
             context_value={"user_id": GUEST_USER_ID},
         )
     )
-    assert second.errors is None, second.errors
-    order = second.data["submitPublicMenuOrder"]
-    assert int(order["id"]) == first_id
-    assert order["billNumber"] == first_bill
-    assert order["fulfillmentMode"] == "DINE_IN"
-    assert order["tableLabel"] == "A1"
-    assert len(order["lines"]) == 2
-    assert sum(int(line["qty"]) for line in order["lines"]) == 3
+    assert second.errors
+    assert "already have an open order" in second.errors[0].message
+
+    session = SessionLocal()
+    try:
+        from graphql.data_sources.models.pos_order import PosOrder
+
+        row = session.get(PosOrder, first_id)
+        assert row is not None
+        assert len(row.lines) == 1
+    finally:
+        session.close()
 
 
 def test_submit_after_paid_creates_new_ticket(published_menu_location):
@@ -565,48 +568,49 @@ def test_submit_after_paid_creates_new_ticket(published_menu_location):
     assert second_id != first_id
 
 
-def test_append_resets_prep_when_ready_or_served(published_menu_location):
+def test_public_menu_submit_skips_fiscal_start(
+    published_menu_location, monkeypatch: pytest.MonkeyPatch
+):
+    """Fulfillment-only digital-menu opens must not start a fiscal sale process."""
+    calls: list[int] = []
+
+    def spy_start(session, order, *, actor_clerk_user_id=None):  # noqa: ANN001
+        calls.append(int(order.id))
+        return None
+
+    monkeypatch.setattr(
+        "graphql.services.pos_order_lifecycle.fiscal.start_sale_process",
+        spy_start,
+    )
+
     location_id, item_id, _ = published_menu_location
-    first = asyncio.run(
+    result = asyncio.run(
         schema.execute(
             _SUBMIT,
             variable_values={
                 "locationId": location_id,
                 "lines": [{"menuItemId": item_id, "qty": 1}],
-                "fulfillmentMode": "DINE_IN",
-                "tableLabel": "B2",
+                "fulfillmentMode": "PICKUP",
             },
             context_value={"user_id": GUEST_USER_ID},
         )
     )
-    assert first.errors is None, first.errors
-    order_id = int(first.data["submitPublicMenuOrder"]["id"])
+    assert result.errors is None, result.errors
+    assert result.data["submitPublicMenuOrder"]["prepStatus"] == "RECEIVED"
+    assert result.data["submitPublicMenuOrder"]["note"] == PUBLIC_MENU_ORDER_NOTE
+    assert calls == []
 
-    session = SessionLocal()
-    try:
-        from graphql.data_sources.models.pos_order import PosOrder
-
-        row = session.get(PosOrder, order_id)
-        assert row is not None
-        row.prep_status = "ready"
-        session.commit()
-    finally:
-        session.close()
-
-    second = asyncio.run(
+    # Cashier open still starts fiscal when start_fiscal defaults to True.
+    opened = asyncio.run(
         schema.execute(
-            _SUBMIT,
-            variable_values={
-                "locationId": location_id,
-                "lines": [{"menuItemId": item_id, "qty": 1}],
-                "fulfillmentMode": "DINE_IN",
-                "tableLabel": "B2",
-            },
-            context_value={"user_id": GUEST_USER_ID},
+            """
+            mutation Open($locationId: Int!) {
+              openPosOrder(locationId: $locationId) { id }
+            }
+            """,
+            variable_values={"locationId": location_id},
+            context_value=graphql_auth_context(),
         )
     )
-    assert second.errors is None, second.errors
-    order = second.data["submitPublicMenuOrder"]
-    assert int(order["id"]) == order_id
-    assert order["prepStatus"] == "RECEIVED"
-    assert len(order["lines"]) == 2
+    assert opened.errors is None, opened.errors
+    assert calls == [int(opened.data["openPosOrder"]["id"])]

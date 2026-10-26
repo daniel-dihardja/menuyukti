@@ -203,9 +203,14 @@ export function DigitalMenuConsole({
   return (
     <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
       <div className="flex min-w-0 flex-1 flex-col gap-6">
-        <section className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold tracking-tight">{t('heading')}</h1>
-          <p className="text-muted-foreground text-sm">{t('description')}</p>
+        <section className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex flex-col gap-1">
+            <h1 className="text-2xl font-semibold tracking-tight">{t('heading')}</h1>
+            <p className="text-muted-foreground text-sm">{t('description')}</p>
+          </div>
+          <Button asChild variant="outline" className="shrink-0">
+            <Link href={routes.servicesDigitalMenuOrders(locationId)}>{t('openOrderBoard')}</Link>
+          </Button>
         </section>
 
         <DigitalMenuFeedbackInbox

@@ -267,7 +267,6 @@ export function PublicMenuCatalog({
     allowDineIn &&
     (guestChoice === 'dine_in' || (allowDineIn && !allowPickup && !allowDelivery))
   const needsDeliveryFields =
-    !activeOrder &&
     !tableLabel &&
     allowDelivery &&
     (guestChoice === 'delivery' || (!allowDineIn && !allowPickup && allowDelivery))
@@ -305,6 +304,7 @@ export function PublicMenuCatalog({
   const cartItemCount = cartLines.reduce((sum, line) => sum + line.qty, 0)
   const cartTotal = cartLines.reduce((sum, line) => sum + line.price * line.qty, 0)
   const hasCart = cartItemCount > 0
+  const orderingLocked = activeOrder != null
 
   useEffect(() => {
     setCart(loadPublicMenuCart(locationId))
@@ -321,6 +321,14 @@ export function PublicMenuCatalog({
       setBasketOpen(false)
     }
   }, [basketOpen, hasCart])
+
+  // An open ticket is status-only — clear any leftover basket so guests cannot append.
+  useEffect(() => {
+    if (!orderingLocked || !cartHydrated) return
+    setCart({})
+    clearPublicMenuCart(locationId)
+    setBasketOpen(false)
+  }, [cartHydrated, locationId, orderingLocked])
 
   // Fire-and-forget: credit open_menu_qr when a signed-in guest opens the menu.
   // Skip entirely when Point System is off — the earn API still returns a historical
@@ -483,6 +491,7 @@ export function PublicMenuCatalog({
   }
 
   const addItem = (item: PublicMenuItemView) => {
+    if (orderingLocked) return
     setSubmitError(null)
     setCart((prev) => {
       const existing = prev[item.id]
@@ -505,6 +514,7 @@ export function PublicMenuCatalog({
   }
 
   const decrementItem = (menuItemId: number) => {
+    if (orderingLocked) return
     setSubmitError(null)
     setCart((prev) => {
       const existing = prev[menuItemId]
@@ -529,7 +539,7 @@ export function PublicMenuCatalog({
   }
 
   const submitOrder = async () => {
-    if (!hasCart || submitting) return
+    if (!hasCart || submitting || orderingLocked) return
     setSubmitError(null)
 
     if (!isLoaded) return
@@ -538,46 +548,34 @@ export function PublicMenuCatalog({
       return
     }
 
-    const appendingTo = activeOrder
-    let submitMode: PublicMenuFulfillmentMode
-    let submitTableLabel: string | null
-    let submitDeliveryAddress: string | null = null
-    let submitDeliveryPhone: string | null = null
-    let submitDeliveryNotes: string | null = null
-
-    if (appendingTo) {
-      submitMode = appendingTo.fulfillmentMode
-      submitTableLabel = appendingTo.tableLabel
-    } else {
-      const resolved = resolveGuestFulfillment({
-        allowDineIn,
-        allowPickup,
-        allowDelivery,
-        lockedTableLabel: tableLabel,
-        guestChoice,
-        guestTableLabel: guestTableInput,
-        deliveryAddress,
-        deliveryPhone,
-        deliveryNotes,
-      })
-      if (!resolved.ok) {
-        const reasonKey =
-          resolved.reason === 'table_required'
-            ? 'order.tableRequired'
-            : resolved.reason === 'delivery_address_required'
-              ? 'order.deliveryAddressRequired'
-              : resolved.reason === 'delivery_phone_required'
-                ? 'order.deliveryPhoneRequired'
-                : 'order.noFulfillmentModes'
-        setSubmitError(t(reasonKey))
-        return
-      }
-      submitMode = resolved.mode
-      submitTableLabel = resolved.tableLabel
-      submitDeliveryAddress = resolved.deliveryAddress
-      submitDeliveryPhone = resolved.deliveryPhone
-      submitDeliveryNotes = resolved.deliveryNotes
+    const resolved = resolveGuestFulfillment({
+      allowDineIn,
+      allowPickup,
+      allowDelivery,
+      lockedTableLabel: tableLabel,
+      guestChoice,
+      guestTableLabel: guestTableInput,
+      deliveryAddress,
+      deliveryPhone,
+      deliveryNotes,
+    })
+    if (!resolved.ok) {
+      const reasonKey =
+        resolved.reason === 'table_required'
+          ? 'order.tableRequired'
+          : resolved.reason === 'delivery_address_required'
+            ? 'order.deliveryAddressRequired'
+            : resolved.reason === 'delivery_phone_required'
+              ? 'order.deliveryPhoneRequired'
+              : 'order.noFulfillmentModes'
+      setSubmitError(t(reasonKey))
+      return
     }
+    const submitMode = resolved.mode
+    const submitTableLabel = resolved.tableLabel
+    const submitDeliveryAddress = resolved.deliveryAddress
+    const submitDeliveryPhone = resolved.deliveryPhone
+    const submitDeliveryNotes = resolved.deliveryNotes
 
     setSubmitting(true)
     try {
@@ -628,22 +626,13 @@ export function PublicMenuCatalog({
               : [],
           )
         : null
-      const wasAppend = Boolean(appendingTo && body.orderId === appendingTo.orderId)
       const orderedLines =
         responseLines && responseLines.length > 0
           ? responseLines
-          : wasAppend && appendingTo
-            ? [
-                ...appendingTo.lines,
-                ...cartLines.map((line) => ({
-                  menuItemId: line.menuItemId,
-                  name: line.name,
-                })),
-              ]
-            : cartLines.map((line) => ({
-                menuItemId: line.menuItemId,
-                name: line.name,
-              }))
+          : cartLines.map((line) => ({
+              menuItemId: line.menuItemId,
+              name: line.name,
+            }))
       setCart({})
       clearPublicMenuCart(locationId)
       setBasketOpen(false)
@@ -733,7 +722,7 @@ export function PublicMenuCatalog({
     <div
       className={cn(
         'flex flex-col gap-8',
-        hasCart ? 'pb-[calc(7rem+env(safe-area-inset-bottom))]' : undefined,
+        hasCart && !orderingLocked ? 'pb-[calc(7rem+env(safe-area-inset-bottom))]' : undefined,
       )}
     >
       {showStickyChrome ? (
@@ -940,28 +929,30 @@ export function PublicMenuCatalog({
                               })
                             : t('feedback.openFeedback')}
                         </button>
-                        <div className="mt-3 flex items-center justify-end gap-2">
-                          {inCart > 0 ? (
-                            <QtyStepper
-                              qty={inCart}
-                              onDecrease={() => decrementItem(item.id)}
-                              onIncrease={() => addItem(item)}
-                              decreaseLabel={t('order.decreaseQty', { name: item.name })}
-                              increaseLabel={t('order.increaseQty', { name: item.name })}
-                              removeLabel={t('order.removeItem', { name: item.name })}
-                            />
-                          ) : (
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="outline"
-                              className="min-h-11 touch-manipulation px-4 sm:min-h-8"
-                              onClick={() => addItem(item)}
-                            >
-                              {t('order.add')}
-                            </Button>
-                          )}
-                        </div>
+                        {!orderingLocked ? (
+                          <div className="mt-3 flex items-center justify-end gap-2">
+                            {inCart > 0 ? (
+                              <QtyStepper
+                                qty={inCart}
+                                onDecrease={() => decrementItem(item.id)}
+                                onIncrease={() => addItem(item)}
+                                decreaseLabel={t('order.decreaseQty', { name: item.name })}
+                                increaseLabel={t('order.increaseQty', { name: item.name })}
+                                removeLabel={t('order.removeItem', { name: item.name })}
+                              />
+                            ) : (
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                className="min-h-11 touch-manipulation px-4 sm:min-h-8"
+                                onClick={() => addItem(item)}
+                              >
+                                {t('order.add')}
+                              </Button>
+                            )}
+                          </div>
+                        ) : null}
                       </div>
                     </li>
                   )
@@ -972,7 +963,7 @@ export function PublicMenuCatalog({
         </div>
       )}
 
-      {hasCart ? (
+      {hasCart && !orderingLocked ? (
         <div className="border-border bg-card/95 fixed inset-x-0 bottom-0 z-40 border-t px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-sm sm:px-6">
           <div className="mx-auto flex w-full max-w-4xl items-center justify-between gap-3">
             <div className="min-w-0">
@@ -1043,43 +1034,23 @@ export function PublicMenuCatalog({
             </div>
           </ScrollArea>
           <DrawerFooter className="shrink-0 border-t pb-[max(1rem,env(safe-area-inset-bottom))]">
-            <div className="flex w-full flex-col gap-2">
-              {hasCart ? (
-                <>
-                  <Button
-                    type="button"
-                    className="min-h-11 w-full touch-manipulation"
-                    onClick={() => {
-                      setOrderSheetOpen(false)
-                      setBasketOpen(true)
-                    }}
-                  >
-                    {t('order.viewBasket')}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="min-h-11 w-full touch-manipulation"
-                    onClick={() => setOrderSheetOpen(false)}
-                  >
-                    {t('order.continueBrowsing')}
-                  </Button>
-                </>
-              ) : (
-                <Button
-                  type="button"
-                  className="min-h-11 w-full touch-manipulation"
-                  onClick={() => setOrderSheetOpen(false)}
-                >
-                  {t('order.orderAnotherRound')}
-                </Button>
-              )}
-            </div>
+            <Button
+              type="button"
+              className="min-h-11 w-full touch-manipulation"
+              onClick={() => setOrderSheetOpen(false)}
+            >
+              {t('order.continueBrowsing')}
+            </Button>
           </DrawerFooter>
         </DrawerContent>
       </Drawer>
 
-      <Drawer open={basketOpen} onOpenChange={setBasketOpen}>
+      <Drawer
+        open={basketOpen && !orderingLocked}
+        onOpenChange={(open) => {
+          if (!orderingLocked) setBasketOpen(open)
+        }}
+      >
         <DrawerContent className="flex max-h-[min(90dvh,40rem)] flex-col gap-0 overflow-hidden">
           <DrawerHeader className="shrink-0 border-b text-left">
             <DrawerTitle>{t('order.basketTitle')}</DrawerTitle>
@@ -1146,13 +1117,7 @@ export function PublicMenuCatalog({
                     {formatCurrency(cartTotal, currencyCode, locale)}
                   </p>
                 </div>
-                {activeOrder ? (
-                  <p className="text-muted-foreground text-sm font-medium">
-                    {activeOrder.fulfillmentMode === 'dine_in' && activeOrder.tableLabel
-                      ? t('order.tableLabelReadOnly', { label: activeOrder.tableLabel })
-                      : t(fulfillmentLabelKey(activeOrder.fulfillmentMode))}
-                  </p>
-                ) : tableLabel && allowDineIn ? (
+                {tableLabel && allowDineIn ? (
                   <p className="text-muted-foreground text-sm font-medium">
                     {t('order.tableLabelReadOnly', { label: tableLabel })}
                   </p>
@@ -1166,7 +1131,7 @@ export function PublicMenuCatalog({
                   </p>
                 ) : null}
               </div>
-              {!activeOrder && showModeToggle ? (
+              {showModeToggle ? (
                 <div className="flex flex-col gap-2">
                   <p className="text-muted-foreground text-xs font-medium">
                     {t('order.fulfillmentLabel')}
@@ -1210,7 +1175,7 @@ export function PublicMenuCatalog({
                   </ToggleGroup>
                 </div>
               ) : null}
-              {!activeOrder && needsGuestTable ? (
+              {needsGuestTable ? (
                 <div className="flex flex-col gap-1.5">
                   <label htmlFor="public-menu-guest-table" className="text-sm font-medium">
                     {t('order.tableInputLabel')}
@@ -1231,7 +1196,7 @@ export function PublicMenuCatalog({
                   />
                 </div>
               ) : null}
-              {!activeOrder && needsDeliveryFields ? (
+              {needsDeliveryFields ? (
                 <div className="flex flex-col gap-3">
                   <div className="flex flex-col gap-1.5">
                     <label htmlFor="public-menu-delivery-address" className="text-sm font-medium">
@@ -1297,18 +1262,12 @@ export function PublicMenuCatalog({
               >
                 {!isLoaded || submitting ? <Spinner /> : null}
                 {!isLoaded
-                  ? activeOrder
-                    ? t('order.addingToOrder')
-                    : t('order.sending')
+                  ? t('order.sending')
                   : !isSignedIn
                     ? t('order.signInToOrder')
                     : submitting
-                      ? activeOrder
-                        ? t('order.addingToOrder')
-                        : t('order.sending')
-                      : activeOrder
-                        ? t('order.addToOrder')
-                        : t('order.send')}
+                      ? t('order.sending')
+                      : t('order.send')}
               </Button>
             </div>
           </DrawerFooter>

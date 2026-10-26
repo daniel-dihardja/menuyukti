@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
-import { BarChart3, Calculator, MonitorSmartphone } from 'lucide-react'
+import { BarChart3, Calculator } from 'lucide-react'
 
 import {
   ResponsiveActionMenu,
@@ -36,12 +36,6 @@ export function LocationDetailActions({ locationId }: LocationDetailActionsProps
       icon: Calculator,
       href: routes.analytics.branchesCogs(locationId),
     },
-    {
-      id: 'pos',
-      label: t('managePos'),
-      icon: MonitorSmartphone,
-      href: routes.analytics.branchesPos(locationId),
-    },
   ].filter((item) => {
     if (!isActionMenuKeyEnabled(item.id)) return false
     if (!showAdminActions && isActionMenuItemHiddenFromNonAdmin(item.id)) return false
@@ -55,6 +49,9 @@ export function LocationDetailActions({ locationId }: LocationDetailActionsProps
       </Button>
       <Button asChild variant="outline">
         <Link href={routes.servicesDigitalMenuLocation(locationId)}>{t('manageDigitalMenu')}</Link>
+      </Button>
+      <Button asChild variant="outline">
+        <Link href={routes.servicesDigitalMenuOrders(locationId)}>{t('manageOrderBoard')}</Link>
       </Button>
       {overflowItems.length > 0 ? (
         <ResponsiveActionMenu
