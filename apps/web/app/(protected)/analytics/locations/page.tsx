@@ -70,7 +70,6 @@ async function LocationsPageData() {
     return {
       ...location,
       analyticsRunCount: summary?.runCount ?? 0,
-      latestAnalyticsId: summary?.latestRun ? Number(summary.latestRun.id) : null,
     }
   })
 

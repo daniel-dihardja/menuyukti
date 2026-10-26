@@ -10,8 +10,6 @@
         "city": "City",
         "action": "Actions",
         "view": "Edit Location",
-        "viewAnalytics": "View Latest Analytics",
-        "uploadSales": "Upload Sales Report",
         "delete": "Delete",
         "deleteConfirmTitle": "Delete this location?",
         "deleteConfirmDescription": "This permanently removes “{name}” and its sales analytics, inventory stock, and calendar entries. This cannot be undone.",
