@@ -1,5 +1,6 @@
 import { Suspense } from 'react'
 import { notFound } from 'next/navigation'
+import { connection } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { getTranslations } from 'next-intl/server'
 import type { Metadata } from 'next'
@@ -105,6 +106,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function Page({ params }: PageProps) {
+  // Bind this route to the request before auth. Clerk session checks can read
+  // the current time; without this, Cache Components treats Date.now() as a
+  // blocking prerender value on the page segment (layout connection() is not enough).
+  await connection()
   const t = await getTranslations('analytics.branches')
 
   return (

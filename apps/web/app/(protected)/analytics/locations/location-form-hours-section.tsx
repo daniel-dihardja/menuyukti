@@ -60,36 +60,34 @@ function LocationOpeningHourRow({
     openInputRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' })
   }, [autoFocusOpen, row.closed])
 
-  const toggleOpen = () => {
-    if (loading) return
-    setRowClosed(row.dayOfWeek, !row.closed)
-  }
-
   const controls = (
     <>
-      <button
-        type="button"
-        id={switchId}
-        disabled={loading}
-        onClick={toggleOpen}
+      <div
         className={cn(
-          'flex min-h-11 w-full touch-manipulation items-center gap-3 rounded-md border border-border/60 bg-background px-3 py-2 text-left sm:w-52 sm:shrink-0',
-          loading && 'pointer-events-none opacity-50',
+          'flex min-h-11 w-full touch-manipulation items-center gap-3 rounded-md border border-border/60 bg-background px-3 py-2 sm:w-52 sm:shrink-0',
+          loading && 'opacity-50',
         )}
-        aria-pressed={!row.closed}
-        aria-label={t('openDaySwitchAria', { day: dayLabel })}
       >
         <Switch
+          id={switchId}
           checked={!row.closed}
           disabled={loading}
-          tabIndex={-1}
-          aria-hidden
-          className="pointer-events-none"
+          aria-label={t('openDaySwitchAria', { day: dayLabel })}
+          onCheckedChange={(open) => {
+            if (loading) return
+            setRowClosed(row.dayOfWeek, !open)
+          }}
         />
-        <span className="text-sm font-normal leading-none">
+        <label
+          htmlFor={switchId}
+          className={cn(
+            'text-sm font-normal leading-none',
+            loading ? 'pointer-events-none' : 'cursor-pointer',
+          )}
+        >
           {row.closed ? t('dayClosed') : t('dayOpen')}
-        </span>
-      </button>
+        </label>
+      </div>
       {!row.closed ? (
         <div className="grid flex-1 grid-cols-2 gap-3 sm:max-w-md">
           <Field>
@@ -171,8 +169,6 @@ function LocationHoursFields({
 }) {
   const t = useTranslations('analytics.branches.form')
   const { loading, openingHours } = useLocationFormState()
-  const { presetWeekdaysOnly, presetCopyMondayToWeekdays, presetAllClosed } =
-    useLocationFormActions()
   const [editorOpen, setEditorOpen] = useState(() => Boolean(forceEditorOpen || focusDay))
   const [accordionValue, setAccordionValue] = useState<string | undefined>(focusDay ?? undefined)
   const sectionRef = useRef<HTMLFieldSetElement>(null)
@@ -190,27 +186,6 @@ function LocationHoursFields({
     if (!focusDay) return
     sectionRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' })
   }, [focusDay])
-
-  const presets = [
-    {
-      id: 'weekdays',
-      label: t('presetWeekdays'),
-      hint: t('presetWeekdaysHint'),
-      onClick: presetWeekdaysOnly,
-    },
-    {
-      id: 'copy-monday',
-      label: t('presetCopyMonday'),
-      hint: t('presetCopyMondayHint'),
-      onClick: presetCopyMondayToWeekdays,
-    },
-    {
-      id: 'all-closed',
-      label: t('presetAllClosed'),
-      hint: t('presetAllClosedHint'),
-      onClick: presetAllClosed,
-    },
-  ] as const
 
   return (
     <FieldSet ref={sectionRef} id="location-hours-section">
@@ -231,29 +206,6 @@ function LocationHoursFields({
         >
           {editorOpen ? t('hoursSummaryHide') : t('hoursSummaryEdit')}
         </Button>
-      </div>
-
-      <div
-        className="grid gap-2 sm:grid-cols-3"
-        role="group"
-        aria-label={t('openingHoursPresetsAria')}
-      >
-        {presets.map((preset) => (
-          <Button
-            key={preset.id}
-            type="button"
-            variant="outline"
-            disabled={loading}
-            onClick={() => {
-              preset.onClick()
-              setEditorOpen(true)
-            }}
-            className="flex h-auto min-h-14 touch-manipulation flex-col items-start gap-0.5 whitespace-normal px-3 py-3 text-left"
-          >
-            <span className="text-sm font-medium">{preset.label}</span>
-            <span className="text-xs font-normal text-muted-foreground">{preset.hint}</span>
-          </Button>
-        ))}
       </div>
 
       {editorOpen ? (

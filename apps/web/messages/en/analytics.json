@@ -80,8 +80,7 @@
           "EUR": "Euro (EUR)"
         },
         "openingHoursTitle": "Opening hours",
-        "openingHoursDescription": "Pick a schedule, then tweak individual days if needed.",
-        "openingHoursPresetsAria": "Quick presets for opening hours",
+        "openingHoursDescription": "Set when guests can visit, then tweak individual days if needed.",
         "addOpeningHours": "Add opening hours",
         "hoursSummaryClosedAll": "Closed all week",
         "hoursSummaryWeekdays": "Mon–Fri {open}–{close}",
@@ -89,12 +88,6 @@
         "hoursSummaryCustom": "Custom schedule",
         "hoursSummaryEdit": "Edit days",
         "hoursSummaryHide": "Hide day editor",
-        "presetWeekdays": "Weekdays 9–22",
-        "presetWeekdaysHint": "Mon–Fri open; weekends closed",
-        "presetAllClosed": "Every day closed",
-        "presetAllClosedHint": "Clear the week",
-        "presetCopyMonday": "Copy Monday",
-        "presetCopyMondayHint": "Apply Monday to Tue–Fri",
         "tabs": {
           "basics": "Guest info",
           "hours": "Hours",

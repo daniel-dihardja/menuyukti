@@ -174,56 +174,6 @@ export function LocationForm({
     )
   }
 
-  function presetWeekdaysOnly() {
-    markDirty()
-    setOpeningHours((prev) =>
-      prev.map((row) => {
-        const isWeekday =
-          row.dayOfWeek === 'monday' ||
-          row.dayOfWeek === 'tuesday' ||
-          row.dayOfWeek === 'wednesday' ||
-          row.dayOfWeek === 'thursday' ||
-          row.dayOfWeek === 'friday'
-        if (isWeekday) {
-          return {
-            ...row,
-            closed: false,
-            openTime: LOCATION_DEFAULT_OPEN,
-            closeTime: LOCATION_DEFAULT_CLOSE,
-          }
-        }
-        return { ...row, closed: true, openTime: '', closeTime: '' }
-      }),
-    )
-  }
-
-  function presetAllClosed() {
-    markDirty()
-    setOpeningHours(defaultLocationOpeningHours())
-  }
-
-  function presetCopyMondayToWeekdays() {
-    markDirty()
-    setOpeningHours((prev) => {
-      const monday = prev.find((row) => row.dayOfWeek === 'monday')
-      if (!monday) return prev
-      return prev.map((row) => {
-        const isWeekday =
-          row.dayOfWeek === 'tuesday' ||
-          row.dayOfWeek === 'wednesday' ||
-          row.dayOfWeek === 'thursday' ||
-          row.dayOfWeek === 'friday'
-        if (!isWeekday) return row
-        return {
-          ...row,
-          closed: monday.closed,
-          openTime: monday.openTime,
-          closeTime: monday.closeTime,
-        }
-      })
-    })
-  }
-
   function setHintField<K extends keyof BriefHintsState>(key: K, value: BriefHintsState[K]) {
     markDirty()
     setHints((h) => ({ ...h, [key]: value }))
@@ -397,9 +347,6 @@ export function LocationForm({
     },
     setRowClosed,
     updateOpeningHour,
-    presetWeekdaysOnly,
-    presetCopyMondayToWeekdays,
-    presetAllClosed,
     setHintField,
     resetHints: () => {
       markDirty()
