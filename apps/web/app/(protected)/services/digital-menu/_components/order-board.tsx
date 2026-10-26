@@ -259,6 +259,7 @@ export function OrderBoard({ locationId, locationName }: Props) {
     } finally {
       setLoading(false)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- onOrdersLoaded is useEffectEvent
   }, [locationId, t])
 
   useEffect(() => {
