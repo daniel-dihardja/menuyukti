@@ -6,7 +6,6 @@ export type AppLocale = (typeof SUPPORTED_LOCALES)[number]
 
 async function loadEnglishMessages(): Promise<AbstractIntlMessages> {
   const chunks = await Promise.all([
-    import('../messages/en/about.json'),
     import('../messages/en/accountMenu.json'),
     import('../messages/en/agentChat.json'),
     import('../messages/en/agents.json'),

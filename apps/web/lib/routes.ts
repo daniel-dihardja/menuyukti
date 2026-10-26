@@ -119,10 +119,9 @@ export const routes = {
   /** OAuth / SSO return URL (Clerk custom social sign-in). */
   ssoCallback: '/sso-callback',
 
-  /** Public marketing / legal (not behind app shell). */
-  about: '/about',
   /** Guest venue directory (published digital menus). */
   explore: '/explore',
+  /** Public legal pages (not behind app shell). */
   privacy: '/privacy',
   terms: '/terms',
 

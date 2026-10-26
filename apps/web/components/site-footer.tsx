@@ -19,20 +19,17 @@ export async function SiteFooter() {
     <footer className="mt-auto bg-surface text-foreground">
       <div className="h-px w-full bg-border-strong" aria-hidden />
       <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-3 px-6 py-5">
-        {/* Explore / About live in the header from md up — keep footer links for mobile only. */}
-        <nav
-          aria-label={t('navAria')}
-          className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-sm md:hidden"
-        >
-          {showExplore ? (
+        {/* Explore lives in the header from md up — keep footer link for mobile only. */}
+        {showExplore ? (
+          <nav
+            aria-label={t('navAria')}
+            className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-sm md:hidden"
+          >
             <Link href={routes.explore} className={linkClassName}>
               {t('explore')}
             </Link>
-          ) : null}
-          <Link href={routes.about} className={linkClassName}>
-            {t('about')}
-          </Link>
-        </nav>
+          </nav>
+        ) : null}
         <p className="text-center text-sm tracking-wide text-muted-foreground">
           {t('copyright', { year: COPYRIGHT_YEAR })}
         </p>
