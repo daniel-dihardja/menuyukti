@@ -92,11 +92,6 @@ class UpdateLocationPublicMenuMutation:
             next_allow_pickup = (
                 bool(allow_pickup) if allow_pickup is not UNSET else bool(menu.allow_pickup)
             )
-            next_allow_delivery = (
-                bool(allow_delivery)
-                if allow_delivery is not UNSET
-                else bool(menu.allow_delivery)
-            )
             if (
                 allow_dine_in is not UNSET
                 or allow_pickup is not UNSET
@@ -105,11 +100,11 @@ class UpdateLocationPublicMenuMutation:
                 validate_menu_fulfillment_allows(
                     allow_dine_in=next_allow_dine_in,
                     allow_pickup=next_allow_pickup,
-                    allow_delivery=next_allow_delivery,
                 )
                 menu.allow_dine_in = next_allow_dine_in
                 menu.allow_pickup = next_allow_pickup
-                menu.allow_delivery = next_allow_delivery
+                # Delivery is no longer offered on the digital menu.
+                menu.allow_delivery = False
 
             session.commit()
             session.refresh(menu)

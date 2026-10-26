@@ -365,7 +365,8 @@ def test_fulfillment_flags_round_trip_on_public_menu(menu_location_id):
     menu = enable.data["updateLocationPublicMenu"]["menu"]
     assert menu["allowDineIn"] is False
     assert menu["allowPickup"] is True
-    assert menu["allowDelivery"] is True
+    # Delivery can no longer be enabled on the digital menu.
+    assert menu["allowDelivery"] is False
 
     public = asyncio.run(
         schema.execute(
@@ -378,7 +379,7 @@ def test_fulfillment_flags_round_trip_on_public_menu(menu_location_id):
     payload = public.data["publicLocationMenu"]
     assert payload["allowDineIn"] is False
     assert payload["allowPickup"] is True
-    assert payload["allowDelivery"] is True
+    assert payload["allowDelivery"] is False
 
 
 def test_cannot_disable_all_fulfillment_modes(menu_location_id):
@@ -397,7 +398,7 @@ def test_cannot_disable_all_fulfillment_modes(menu_location_id):
         )
     )
     assert result.errors
-    assert "allow_delivery" in result.errors[0].message
+    assert "allow_pickup" in result.errors[0].message or "allow_dine_in" in result.errors[0].message
 
     delivery_only = asyncio.run(
         schema.execute(
@@ -413,5 +414,5 @@ def test_cannot_disable_all_fulfillment_modes(menu_location_id):
             context_value=graphql_auth_context(),
         )
     )
-    assert delivery_only.errors is None, delivery_only.errors
-    assert delivery_only.data["updateLocationPublicMenu"]["menu"]["allowDelivery"] is True
+    assert delivery_only.errors
+    assert "allow_pickup" in delivery_only.errors[0].message or "allow_dine_in" in delivery_only.errors[0].message

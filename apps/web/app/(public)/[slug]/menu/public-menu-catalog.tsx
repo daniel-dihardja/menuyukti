@@ -26,7 +26,7 @@ import {
 } from '@/lib/menu/menu-attributes'
 import {
   clearPublicMenuActiveOrder,
-  isTerminalTicketStatus,
+  isGuestOrderComplete,
   loadPublicMenuActiveOrder,
   normalizeFulfillmentMode,
   normalizePrepStatus,
@@ -42,6 +42,7 @@ import {
 } from '@/lib/public-menu/cart-storage'
 import {
   resolveGuestFulfillment,
+  type GuestFulfillmentChoice,
   type PublicMenuFulfillmentMode,
 } from '@/lib/public-menu/fulfillment-mode'
 import type { PublicMenuCategoryView, PublicMenuItemView } from '@/lib/public-menu/load-public-menu'
@@ -82,7 +83,6 @@ type Props = {
   tableLabel: string | null
   allowDineIn: boolean
   allowPickup: boolean
-  allowDelivery: boolean
   /** When false, skip menu-open earn and do not write the header points pill. */
   pointSystemAvailable: boolean
 }
@@ -118,18 +118,11 @@ function guestPrepCopyKey(
 function defaultGuestChoice(input: {
   allowDineIn: boolean
   allowPickup: boolean
-  allowDelivery: boolean
-}): PublicMenuFulfillmentMode {
-  const { allowDineIn, allowPickup, allowDelivery } = input
-  const enabled = [allowPickup, allowDineIn, allowDelivery].filter(Boolean).length
-  if (enabled === 1) {
-    if (allowPickup) return 'pickup'
-    if (allowDineIn) return 'dine_in'
-    return 'delivery'
-  }
+}): GuestFulfillmentChoice {
+  const { allowDineIn, allowPickup } = input
   if (allowPickup) return 'pickup'
   if (allowDineIn) return 'dine_in'
-  return 'delivery'
+  return 'pickup'
 }
 
 function fulfillmentLabelKey(mode: PublicMenuFulfillmentMode): string {
@@ -230,7 +223,6 @@ export function PublicMenuCatalog({
   tableLabel,
   allowDineIn,
   allowPickup,
-  allowDelivery,
   pointSystemAvailable,
 }: Props) {
   const t = useTranslations('public.menu')
@@ -253,24 +245,15 @@ export function PublicMenuCatalog({
   const [feedbackError, setFeedbackError] = useState<string | null>(null)
   const [feedbackSubmitting, setFeedbackSubmitting] = useState(false)
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false)
-  const enabledModeCount = [allowDineIn, allowPickup, allowDelivery].filter(Boolean).length
-  const [guestChoice, setGuestChoice] = useState<PublicMenuFulfillmentMode>(() =>
-    defaultGuestChoice({ allowDineIn, allowPickup, allowDelivery }),
+  const enabledModeCount = [allowDineIn, allowPickup].filter(Boolean).length
+  const [guestChoice, setGuestChoice] = useState<GuestFulfillmentChoice>(() =>
+    defaultGuestChoice({ allowDineIn, allowPickup }),
   )
   const [guestTableInput, setGuestTableInput] = useState('')
-  const [deliveryAddress, setDeliveryAddress] = useState('')
-  const [deliveryPhone, setDeliveryPhone] = useState('')
-  const [deliveryNotes, setDeliveryNotes] = useState('')
   const showModeToggle = enabledModeCount > 1 && !tableLabel
   const needsGuestTable =
-    !tableLabel &&
-    allowDineIn &&
-    (guestChoice === 'dine_in' || (allowDineIn && !allowPickup && !allowDelivery))
-  const needsDeliveryFields =
-    !tableLabel &&
-    allowDelivery &&
-    (guestChoice === 'delivery' || (!allowDineIn && !allowPickup && allowDelivery))
-  const anyFulfillmentEnabled = allowDineIn || allowPickup || allowDelivery
+    !tableLabel && allowDineIn && (guestChoice === 'dine_in' || (allowDineIn && !allowPickup))
+  const anyFulfillmentEnabled = allowDineIn || allowPickup
 
   const allItems = useMemo(() => categories.flatMap((category) => category.items), [categories])
   const itemsById = useMemo(() => new Map(allItems.map((item) => [item.id, item])), [allItems])
@@ -385,7 +368,8 @@ export function PublicMenuCatalog({
         if (!remote?.orderId || !remote.billNumber || cancelled) return
 
         const status = normalizeTicketStatus(remote.status) ?? 'open'
-        if (isTerminalTicketStatus(status)) return
+        const prepStatus = normalizePrepStatus(remote.prepStatus)
+        if (isGuestOrderComplete(status, prepStatus)) return
 
         const fulfillmentMode =
           normalizeFulfillmentMode(remote.fulfillmentMode) ??
@@ -396,7 +380,7 @@ export function PublicMenuCatalog({
           billNumber: remote.billNumber,
           fulfillmentMode,
           tableLabel: remote.tableLabel?.trim() || null,
-          prepStatus: normalizePrepStatus(remote.prepStatus),
+          prepStatus,
           status,
           lines: Array.isArray(remote.lines)
             ? remote.lines.filter(
@@ -420,10 +404,15 @@ export function PublicMenuCatalog({
     }
   }, [isLoaded, isSignedIn, locationId])
 
-  // Poll ticket + prep status until paid/void/refunded.
+  // Poll ticket + prep status until the guest order is complete.
   useEffect(() => {
     if (!activeOrder?.orderId) return
-    if (isTerminalTicketStatus(activeOrder.status)) return
+    if (isGuestOrderComplete(activeOrder.status, activeOrder.prepStatus)) {
+      clearPublicMenuActiveOrder(locationId)
+      setActiveOrder(null)
+      setOrderSheetOpen(false)
+      return
+    }
 
     const orderId = activeOrder.orderId
     let cancelled = false
@@ -438,7 +427,8 @@ export function PublicMenuCatalog({
         if (cancelled) return
 
         const bodyStatus = normalizeTicketStatus(body.status)
-        if (bodyStatus && isTerminalTicketStatus(bodyStatus)) {
+        const bodyPrep = normalizePrepStatus(body.prepStatus)
+        if (isGuestOrderComplete(bodyStatus, bodyPrep)) {
           clearPublicMenuActiveOrder(locationId)
           setActiveOrder(null)
           setOrderSheetOpen(false)
@@ -448,11 +438,11 @@ export function PublicMenuCatalog({
         setActiveOrder((prev) => {
           if (!prev || prev.orderId !== orderId) return prev
           const nextStatus = bodyStatus ?? normalizeTicketStatus(prev.status) ?? 'open'
-          if (isTerminalTicketStatus(nextStatus)) {
+          const nextPrep = bodyPrep ?? prev.prepStatus
+          if (isGuestOrderComplete(nextStatus, nextPrep)) {
             clearPublicMenuActiveOrder(locationId)
             return null
           }
-          const nextPrep = normalizePrepStatus(body.prepStatus) ?? prev.prepStatus
           if (nextStatus === prev.status && nextPrep === prev.prepStatus) return prev
           const updated: ActiveOrder = {
             ...prev,
@@ -476,7 +466,7 @@ export function PublicMenuCatalog({
       cancelled = true
       window.clearInterval(timer)
     }
-  }, [activeOrder?.orderId, activeOrder?.status, locationId])
+  }, [activeOrder?.orderId, activeOrder?.status, activeOrder?.prepStatus, locationId])
 
   const openOrderSheet = () => {
     setOrderSheetOpen(true)
@@ -551,31 +541,18 @@ export function PublicMenuCatalog({
     const resolved = resolveGuestFulfillment({
       allowDineIn,
       allowPickup,
-      allowDelivery,
       lockedTableLabel: tableLabel,
       guestChoice,
       guestTableLabel: guestTableInput,
-      deliveryAddress,
-      deliveryPhone,
-      deliveryNotes,
     })
     if (!resolved.ok) {
       const reasonKey =
-        resolved.reason === 'table_required'
-          ? 'order.tableRequired'
-          : resolved.reason === 'delivery_address_required'
-            ? 'order.deliveryAddressRequired'
-            : resolved.reason === 'delivery_phone_required'
-              ? 'order.deliveryPhoneRequired'
-              : 'order.noFulfillmentModes'
+        resolved.reason === 'table_required' ? 'order.tableRequired' : 'order.noFulfillmentModes'
       setSubmitError(t(reasonKey))
       return
     }
     const submitMode = resolved.mode
     const submitTableLabel = resolved.tableLabel
-    const submitDeliveryAddress = resolved.deliveryAddress
-    const submitDeliveryPhone = resolved.deliveryPhone
-    const submitDeliveryNotes = resolved.deliveryNotes
 
     setSubmitting(true)
     try {
@@ -590,9 +567,6 @@ export function PublicMenuCatalog({
           })),
           fulfillmentMode: submitMode,
           tableLabel: submitTableLabel,
-          deliveryAddress: submitDeliveryAddress,
-          deliveryPhone: submitDeliveryPhone,
-          deliveryNotes: submitDeliveryNotes,
         }),
       })
       const body = (await res.json().catch(() => ({}))) as {
@@ -637,9 +611,6 @@ export function PublicMenuCatalog({
       clearPublicMenuCart(locationId)
       setBasketOpen(false)
       setGuestTableInput('')
-      setDeliveryAddress('')
-      setDeliveryPhone('')
-      setDeliveryNotes('')
       const nextOrder: ActiveOrder = {
         orderId: body.orderId,
         billNumber: body.billNumber,
@@ -1123,11 +1094,7 @@ export function PublicMenuCatalog({
                   </p>
                 ) : !showModeToggle && enabledModeCount === 1 ? (
                   <p className="text-muted-foreground text-sm font-medium">
-                    {t(
-                      fulfillmentLabelKey(
-                        defaultGuestChoice({ allowDineIn, allowPickup, allowDelivery }),
-                      ),
-                    )}
+                    {t(fulfillmentLabelKey(defaultGuestChoice({ allowDineIn, allowPickup })))}
                   </p>
                 ) : null}
               </div>
@@ -1140,7 +1107,7 @@ export function PublicMenuCatalog({
                     type="single"
                     value={guestChoice}
                     onValueChange={(value) => {
-                      if (value === 'dine_in' || value === 'pickup' || value === 'delivery') {
+                      if (value === 'dine_in' || value === 'pickup') {
                         setGuestChoice(value)
                         setSubmitError(null)
                       }
@@ -1162,14 +1129,6 @@ export function PublicMenuCatalog({
                         className="h-11 min-h-11 flex-1 touch-manipulation sm:h-9 sm:min-h-9"
                       >
                         {t('order.fulfillmentDineIn')}
-                      </ToggleGroupItem>
-                    ) : null}
-                    {allowDelivery ? (
-                      <ToggleGroupItem
-                        value="delivery"
-                        className="h-11 min-h-11 flex-1 touch-manipulation sm:h-9 sm:min-h-9"
-                      >
-                        {t('order.fulfillmentDelivery')}
                       </ToggleGroupItem>
                     ) : null}
                   </ToggleGroup>
@@ -1194,58 +1153,6 @@ export function PublicMenuCatalog({
                     autoCorrect="off"
                     spellCheck={false}
                   />
-                </div>
-              ) : null}
-              {needsDeliveryFields ? (
-                <div className="flex flex-col gap-3">
-                  <div className="flex flex-col gap-1.5">
-                    <label htmlFor="public-menu-delivery-address" className="text-sm font-medium">
-                      {t('order.deliveryAddressLabel')}
-                    </label>
-                    <Input
-                      id="public-menu-delivery-address"
-                      value={deliveryAddress}
-                      onChange={(e) => {
-                        setDeliveryAddress(e.target.value)
-                        setSubmitError(null)
-                      }}
-                      placeholder={t('order.deliveryAddressPlaceholder')}
-                      maxLength={512}
-                      autoComplete="street-address"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label htmlFor="public-menu-delivery-phone" className="text-sm font-medium">
-                      {t('order.deliveryPhoneLabel')}
-                    </label>
-                    <Input
-                      id="public-menu-delivery-phone"
-                      type="tel"
-                      value={deliveryPhone}
-                      onChange={(e) => {
-                        setDeliveryPhone(e.target.value)
-                        setSubmitError(null)
-                      }}
-                      placeholder={t('order.deliveryPhonePlaceholder')}
-                      maxLength={32}
-                      autoComplete="tel"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label htmlFor="public-menu-delivery-notes" className="text-sm font-medium">
-                      {t('order.deliveryNotesLabel')}
-                    </label>
-                    <Input
-                      id="public-menu-delivery-notes"
-                      value={deliveryNotes}
-                      onChange={(e) => {
-                        setDeliveryNotes(e.target.value)
-                        setSubmitError(null)
-                      }}
-                      placeholder={t('order.deliveryNotesPlaceholder')}
-                      maxLength={256}
-                    />
-                  </div>
                 </div>
               ) : null}
               {submitError ? (

@@ -45,11 +45,14 @@ def validate_menu_fulfillment_allows(
     allow_pickup: bool,
     allow_delivery: bool = False,
 ) -> None:
-    """Require at least one digital-menu fulfillment mode enabled."""
-    if not allow_dine_in and not allow_pickup and not allow_delivery:
-        raise ValueError(
-            "At least one of allow_dine_in, allow_pickup, or allow_delivery must be true"
-        )
+    """Require at least one digital-menu fulfillment mode enabled (dine_in or pickup).
+
+    ``allow_delivery`` is accepted for call-site compatibility but ignored — delivery
+    is no longer an offered digital-menu mode.
+    """
+    del allow_delivery  # unused; kept for callers that still pass the legacy flag
+    if not allow_dine_in and not allow_pickup:
+        raise ValueError("At least one of allow_dine_in or allow_pickup must be true")
 
 
 def normalize_fulfillment_mode(mode: str) -> str:

@@ -42,7 +42,6 @@ import { routes } from '@/lib/routes'
 
 const POLL_MS = 5000
 const NEW_ORDER_FLASH_MS = 4000
-const SOUND_STORAGE_KEY = 'menuyukti:orderBoardSound:v1'
 const TERMINAL_PREP = new Set<PosPrepStatus>(['SERVED', 'PICKED_UP', 'DELIVERED'])
 
 type Props = {
@@ -68,47 +67,6 @@ function prepLabelKey(status: PosPrepStatus): string {
       return 'prepDelivered'
     default:
       return 'prepReceived'
-  }
-}
-
-function readSoundEnabled(): boolean {
-  if (typeof window === 'undefined') return false
-  try {
-    return window.localStorage.getItem(SOUND_STORAGE_KEY) === '1'
-  } catch {
-    return false
-  }
-}
-
-function writeSoundEnabled(enabled: boolean): void {
-  if (typeof window === 'undefined') return
-  try {
-    window.localStorage.setItem(SOUND_STORAGE_KEY, enabled ? '1' : '0')
-  } catch {
-    /* ignore */
-  }
-}
-
-function playNewOrderChime(): void {
-  try {
-    const Ctx =
-      window.AudioContext ||
-      (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
-    if (!Ctx) return
-    const ctx = new Ctx()
-    const osc = ctx.createOscillator()
-    const gain = ctx.createGain()
-    osc.type = 'sine'
-    osc.frequency.value = 880
-    gain.gain.value = 0.08
-    osc.connect(gain)
-    gain.connect(ctx.destination)
-    osc.start()
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25)
-    osc.stop(ctx.currentTime + 0.26)
-    void ctx.close()
-  } catch {
-    /* ignore autoplay / unsupported */
   }
 }
 
@@ -244,19 +202,11 @@ export function OrderBoard({ locationId, locationName }: Props) {
   const [busyId, setBusyId] = useState<number | null>(null)
   const [cancelId, setCancelId] = useState<number | null>(null)
   const [nowMs, setNowMs] = useState(() => Date.now())
-  const [soundOn, setSoundOn] = useState(false)
   const [newOrderFlash, setNewOrderFlash] = useState(false)
   const [highlightedIds, setHighlightedIds] = useState<Set<number>>(() => new Set())
   const [activeTab, setActiveTab] = useState<ColumnId>('new')
   const knownIdsRef = useRef<Set<number> | null>(null)
-  const soundOnRef = useRef(false)
   const flashTimerRef = useRef<number | null>(null)
-
-  useEffect(() => {
-    const enabled = readSoundEnabled()
-    setSoundOn(enabled)
-    soundOnRef.current = enabled
-  }, [])
 
   useEffect(() => {
     const id = window.setInterval(() => setNowMs(Date.now()), 30_000)
@@ -287,7 +237,6 @@ export function OrderBoard({ locationId, locationName }: Props) {
           setHighlightedIds(new Set())
           flashTimerRef.current = null
         }, NEW_ORDER_FLASH_MS)
-        if (soundOnRef.current) playNewOrderChime()
       }
     }
     knownIdsRef.current = ids
@@ -358,13 +307,6 @@ export function OrderBoard({ locationId, locationName }: Props) {
     { id: 'done', label: t('columnDone') },
   ]
 
-  const toggleSound = () => {
-    const next = !soundOn
-    setSoundOn(next)
-    soundOnRef.current = next
-    writeSoundEnabled(next)
-  }
-
   const renderCard = (order: PosOrder, showPrepBadge: boolean) => (
     <OrderBoardCard
       key={order.id}
@@ -381,31 +323,17 @@ export function OrderBoard({ locationId, locationName }: Props) {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4">
-      <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-col gap-1">
-          <p className="text-muted-foreground text-sm">{locationName}</p>
-          <div className="flex flex-wrap items-center gap-2">
-            <Button variant="ghost" size="default" asChild className="-ml-2">
-              <Link href={routes.servicesDigitalMenuLocation(locationId)}>
-                {t('backToConsole')}
-              </Link>
-            </Button>
-            {newOrderFlash ? <Badge>{t('newOrderBadge')}</Badge> : null}
-            {loading ? (
-              <span className="text-muted-foreground text-xs">{t('refreshing')}</span>
-            ) : null}
-          </div>
+      <div className="flex shrink-0 flex-col gap-1">
+        <p className="text-muted-foreground text-sm">{locationName}</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="ghost" size="default" asChild className="-ml-2">
+            <Link href={routes.servicesDigitalMenuLocation(locationId)}>{t('backToConsole')}</Link>
+          </Button>
+          {newOrderFlash ? <Badge>{t('newOrderBadge')}</Badge> : null}
+          {loading ? (
+            <span className="text-muted-foreground text-xs">{t('refreshing')}</span>
+          ) : null}
         </div>
-        <Button
-          type="button"
-          size="default"
-          variant="outline"
-          onClick={toggleSound}
-          aria-pressed={soundOn}
-          aria-label={t('soundToggle')}
-        >
-          {soundOn ? t('soundOn') : t('soundOff')}
-        </Button>
       </div>
 
       {error ? (

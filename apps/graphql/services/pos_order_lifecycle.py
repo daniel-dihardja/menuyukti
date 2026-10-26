@@ -23,9 +23,6 @@ from graphql.services.pos_order_constants import (
     PREP_RECEIVED,
     PUBLIC_MENU_ORDER_NOTE,
     next_prep_status,
-    normalize_delivery_address,
-    normalize_delivery_notes,
-    normalize_delivery_phone,
     normalize_fulfillment_mode,
     normalize_line_note,
     normalize_table_label,
@@ -117,10 +114,10 @@ def submit_public_menu_order(
         )
 
     mode = normalize_fulfillment_mode(fulfillment_mode)
+    # Delivery fields remain on the mutation for API compatibility; new delivery
+    # orders are rejected.
+    _ = (delivery_address, delivery_phone, delivery_notes)
     resolved_table: str | None = None
-    resolved_address: str | None = None
-    resolved_phone: str | None = None
-    resolved_notes: str | None = None
 
     if mode == FULFILLMENT_DINE_IN:
         if not bool(menu.allow_dine_in):
@@ -132,15 +129,7 @@ def submit_public_menu_order(
         if not bool(menu.allow_pickup):
             raise ValueError("pickup fulfillment is not enabled for this menu")
     elif mode == FULFILLMENT_DELIVERY:
-        if not bool(menu.allow_delivery):
-            raise ValueError("delivery fulfillment is not enabled for this menu")
-        resolved_address = normalize_delivery_address(delivery_address)
-        if resolved_address is None:
-            raise ValueError("delivery_address is required for delivery fulfillment")
-        resolved_phone = normalize_delivery_phone(delivery_phone)
-        if resolved_phone is None:
-            raise ValueError("delivery_phone is required for delivery fulfillment")
-        resolved_notes = normalize_delivery_notes(delivery_notes)
+        raise ValueError("delivery fulfillment is no longer offered on the digital menu")
 
     # Fulfillment-only: do not start a fiscal sale (restaurants use external POS).
     order = open_order(
@@ -153,9 +142,6 @@ def submit_public_menu_order(
     order.note = PUBLIC_MENU_ORDER_NOTE
     order.fulfillment_mode = mode
     order.prep_status = PREP_RECEIVED
-    order.delivery_address = resolved_address
-    order.delivery_phone = resolved_phone
-    order.delivery_notes = resolved_notes
     session.flush()
 
     for menu_item_id, qty in lines:

@@ -379,81 +379,7 @@ def test_submit_rejected_when_dine_in_disabled(published_menu_location):
     assert "dine_in fulfillment is not enabled" in result.errors[0].message
 
 
-def _enable_delivery(location_id: int) -> None:
-    session = SessionLocal()
-    try:
-        menu = session.query(Menu).filter(Menu.location_id == location_id).one()
-        menu.allow_delivery = True
-        session.commit()
-    finally:
-        session.close()
-
-
-def test_guest_can_submit_delivery_public_menu_order(published_menu_location):
-    location_id, item_id, _ = published_menu_location
-    _enable_delivery(location_id)
-    result = asyncio.run(
-        schema.execute(
-            _SUBMIT,
-            variable_values={
-                "locationId": location_id,
-                "lines": [{"menuItemId": item_id, "qty": 1}],
-                "fulfillmentMode": "DELIVERY",
-                "tableLabel": "ignored-table",
-                "deliveryAddress": " Hauptstr. 1, Berlin ",
-                "deliveryPhone": " +49 170 1234567 ",
-                "deliveryNotes": "  2nd floor ",
-            },
-            context_value={"user_id": GUEST_USER_ID},
-        )
-    )
-    assert result.errors is None, result.errors
-    order = result.data["submitPublicMenuOrder"]
-    assert order["fulfillmentMode"] == "DELIVERY"
-    assert order["prepStatus"] == "RECEIVED"
-    assert order["tableLabel"] is None
-    assert order["deliveryAddress"] == "Hauptstr. 1, Berlin"
-    assert order["deliveryPhone"] == "+49 170 1234567"
-    assert order["deliveryNotes"] == "2nd floor"
-    assert order["note"] == PUBLIC_MENU_ORDER_NOTE
-
-
-def test_delivery_requires_address_and_phone(published_menu_location):
-    location_id, item_id, _ = published_menu_location
-    _enable_delivery(location_id)
-
-    missing_address = asyncio.run(
-        schema.execute(
-            _SUBMIT,
-            variable_values={
-                "locationId": location_id,
-                "lines": [{"menuItemId": item_id, "qty": 1}],
-                "fulfillmentMode": "DELIVERY",
-                "deliveryPhone": "+49170",
-            },
-            context_value={"user_id": GUEST_USER_ID},
-        )
-    )
-    assert missing_address.errors
-    assert "delivery_address" in missing_address.errors[0].message.lower()
-
-    missing_phone = asyncio.run(
-        schema.execute(
-            _SUBMIT,
-            variable_values={
-                "locationId": location_id,
-                "lines": [{"menuItemId": item_id, "qty": 1}],
-                "fulfillmentMode": "DELIVERY",
-                "deliveryAddress": "Main 1",
-            },
-            context_value={"user_id": GUEST_USER_ID},
-        )
-    )
-    assert missing_phone.errors
-    assert "delivery_phone" in missing_phone.errors[0].message.lower()
-
-
-def test_submit_rejected_when_delivery_disabled(published_menu_location):
+def test_submit_rejects_delivery_fulfillment(published_menu_location):
     location_id, item_id, _ = published_menu_location
     result = asyncio.run(
         schema.execute(
@@ -469,7 +395,7 @@ def test_submit_rejected_when_delivery_disabled(published_menu_location):
         )
     )
     assert result.errors
-    assert "delivery fulfillment is not enabled" in result.errors[0].message
+    assert "delivery fulfillment is no longer offered" in result.errors[0].message
 
 
 _CLOSE = """
@@ -551,6 +477,59 @@ def test_submit_after_paid_creates_new_ticket(published_menu_location):
     )
     assert closed.errors is None, closed.errors
     assert closed.data["closePosOrder"]["status"] == "PAID"
+
+    second = asyncio.run(
+        schema.execute(
+            _SUBMIT,
+            variable_values={
+                "locationId": location_id,
+                "lines": [{"menuItemId": item_id, "qty": 1}],
+                "fulfillmentMode": "PICKUP",
+            },
+            context_value={"user_id": GUEST_USER_ID},
+        )
+    )
+    assert second.errors is None, second.errors
+    second_id = int(second.data["submitPublicMenuOrder"]["id"])
+    assert second_id != first_id
+
+
+_ADVANCE = """
+mutation AdvancePrep($orderId: Int!) {
+  advancePosOrderPrepStatus(orderId: $orderId) {
+    id
+    prepStatus
+  }
+}
+"""
+
+
+def test_submit_after_picked_up_creates_new_ticket(published_menu_location):
+    location_id, item_id, _ = published_menu_location
+    first = asyncio.run(
+        schema.execute(
+            _SUBMIT,
+            variable_values={
+                "locationId": location_id,
+                "lines": [{"menuItemId": item_id, "qty": 1}],
+                "fulfillmentMode": "PICKUP",
+            },
+            context_value={"user_id": GUEST_USER_ID},
+        )
+    )
+    assert first.errors is None, first.errors
+    first_id = int(first.data["submitPublicMenuOrder"]["id"])
+
+    for expected in ["PREPARING", "READY", "PICKED_UP"]:
+        advanced = asyncio.run(
+            schema.execute(
+                _ADVANCE,
+                variable_values={"orderId": first_id},
+                context_value=graphql_auth_context(),
+            )
+        )
+        assert advanced.errors is None, advanced.errors
+        assert advanced.data["advancePosOrderPrepStatus"]["prepStatus"] == expected
 
     second = asyncio.run(
         schema.execute(

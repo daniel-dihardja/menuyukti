@@ -271,22 +271,19 @@ def test_advance_pickup_through_picked_up(published_menu_location):
 
 
 def test_advance_delivery_through_delivered(published_menu_location):
+    """Legacy delivery tickets can still advance through DELIVERED on the Order board."""
     location_id, item_id = published_menu_location
+    order_id = _submit(location_id, item_id, "PICKUP")
     session = SessionLocal()
     try:
-        menu = session.query(Menu).filter(Menu.location_id == location_id).one()
-        menu.allow_delivery = True
+        order = session.query(PosOrder).filter(PosOrder.id == order_id).one()
+        order.fulfillment_mode = "delivery"
+        order.delivery_address = "Home 1"
+        order.delivery_phone = "+49170"
         session.commit()
     finally:
         session.close()
 
-    order_id = _submit(
-        location_id,
-        item_id,
-        "DELIVERY",
-        delivery_address="Home 1",
-        delivery_phone="+49170",
-    )
     for status in ["PREPARING", "READY", "DELIVERED"]:
         result = asyncio.run(
             schema.execute(
