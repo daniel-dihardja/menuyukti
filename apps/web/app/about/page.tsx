@@ -1,9 +1,12 @@
 import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
-import { Sparkles } from 'lucide-react'
+import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 
+import { Button } from '@workspace/ui/components/button'
+
 import { SiteFooter } from '@/components/site-footer'
+import { getLandingSampleMenu } from '@/lib/landing/sample-menu'
 import { routes } from '@/lib/routes'
 
 const bodyClass = 'text-pretty text-base leading-7 text-foreground'
@@ -24,6 +27,29 @@ function ParagraphStack({
           {paragraph}
         </p>
       ))}
+    </div>
+  )
+}
+
+function AboutCtas({
+  primaryLabel,
+  secondaryLabel,
+  sampleMenuPath,
+}: {
+  primaryLabel: string
+  secondaryLabel: string
+  sampleMenuPath: string | null
+}) {
+  return (
+    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+      <Button asChild>
+        <Link href={routes.login}>{primaryLabel}</Link>
+      </Button>
+      {sampleMenuPath ? (
+        <Button asChild variant="outline">
+          <Link href={sampleMenuPath}>{secondaryLabel}</Link>
+        </Button>
+      ) : null}
     </div>
   )
 }
@@ -57,6 +83,8 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function AboutPage() {
   const t = await getTranslations('about')
+  const sampleMenu = getLandingSampleMenu()
+  const sampleMenuPath = sampleMenu?.path ?? null
 
   return (
     <div className="relative flex min-h-[calc(100dvh-3.5rem)] flex-col bg-background text-foreground">
@@ -76,66 +104,47 @@ export default async function AboutPage() {
               {t('title')}
             </h1>
             <ParagraphStack paragraphs={[t('intro'), t('introFollow'), t('introClose')]} />
+            <AboutCtas
+              primaryLabel={t('ctaPrimary')}
+              secondaryLabel={t('ctaSecondary')}
+              sampleMenuPath={sampleMenuPath}
+            />
           </header>
 
           <section
             className="space-y-5 rounded-2xl border border-primary/20 bg-muted/30 px-4 py-6 sm:px-5"
-            aria-labelledby="about-engagement-heading"
+            aria-labelledby="about-presence-heading"
           >
-            <h2 id="about-engagement-heading" className={sectionTitleClass}>
-              {t('engagementTitle')}
+            <h2 id="about-presence-heading" className={sectionTitleClass}>
+              {t('presenceTitle')}
             </h2>
-            <ParagraphStack
-              paragraphs={[
-                t('engagementBody'),
-                t('engagementBodyFollow'),
-                t('engagementBodyClose'),
-              ]}
-            />
-            <p className={emphasisClass}>{t('engagementEmphasis')}</p>
+            <ParagraphStack paragraphs={[t('presenceBody'), t('presenceBodyFollow')]} />
           </section>
 
-          <section className="space-y-4" aria-labelledby="about-setup-heading">
-            <h2 id="about-setup-heading" className={sectionTitleClass}>
-              {t('setupTitle')}
+          <section className="space-y-4" aria-labelledby="about-howto-heading">
+            <h2 id="about-howto-heading" className={sectionTitleClass}>
+              {t('howtoTitle')}
             </h2>
-            <ParagraphStack
-              paragraphs={[
-                t('setupBody'),
-                t('setupBodyFollow'),
-                t('setupBodyClose'),
-                t('setupDirection'),
-              ]}
-            />
-            <p className={emphasisClass}>{t('setupEmphasis')}</p>
+            <ol className={`list-decimal space-y-3 pl-5 ${bodyClass}`}>
+              <li>{t('howtoStep1')}</li>
+              <li>{t('howtoStep2')}</li>
+              <li>{t('howtoStep3')}</li>
+            </ol>
           </section>
 
-          <section className="space-y-4" aria-labelledby="about-ai-heading">
-            <div className="flex items-center gap-2">
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
-                <Sparkles className="size-4" aria-hidden />
-              </span>
-              <h2 id="about-ai-heading" className={sectionTitleClass}>
-                {t('aiTitle')}
-              </h2>
-            </div>
-            <ParagraphStack
-              paragraphs={[t('aiBody'), t('aiBodyFollow'), t('aiBodyClose'), t('aiClosing')]}
-            />
+          <section className="space-y-4" aria-labelledby="about-benefit-heading">
+            <h2 id="about-benefit-heading" className={sectionTitleClass}>
+              {t('benefitTitle')}
+            </h2>
+            <ParagraphStack paragraphs={[t('benefitBody')]} />
+            <p className={emphasisClass}>{t('benefitEmphasis')}</p>
           </section>
 
-          <section className="space-y-4" aria-labelledby="about-vision-heading">
-            <h2 id="about-vision-heading" className={sectionTitleClass}>
-              {t('visionTitle')}
+          <section className="space-y-4" aria-labelledby="about-platform-heading">
+            <h2 id="about-platform-heading" className={sectionTitleClass}>
+              {t('platformTitle')}
             </h2>
-            <ParagraphStack
-              paragraphs={[
-                t('visionBody'),
-                t('visionBodyFollow'),
-                t('visionBodyClose'),
-                t('visionGoal'),
-              ]}
-            />
+            <ParagraphStack paragraphs={[t('platformBody'), t('platformBodyFollow')]} />
           </section>
 
           <section
@@ -145,10 +154,13 @@ export default async function AboutPage() {
             <h2 id="about-closing-heading" className={sectionTitleClass}>
               {t('closingTitle')}
             </h2>
-            <ParagraphStack
-              paragraphs={[t('closingBody'), t('closingBodyFollow'), t('closingBodyClose')]}
-            />
+            <ParagraphStack paragraphs={[t('closingBody')]} />
             <p className={emphasisClass}>{t('closingTagline')}</p>
+            <AboutCtas
+              primaryLabel={t('ctaPrimary')}
+              secondaryLabel={t('ctaSecondary')}
+              sampleMenuPath={sampleMenuPath}
+            />
           </section>
         </article>
       </div>
