@@ -403,7 +403,7 @@
       "itemLabel": "Item {number}",
       "serviceBanner": {
         "offTitle": "Digital Menu isn’t on for this location",
-        "offHint": "Turn it on under Services to publish a guest link and header image. Dish editing stays here.",
+        "offHint": "Turn it on under Guest experience to publish a guest link and header image. Dish editing stays here.",
         "turnOnCta": "Open Digital Menu",
         "onTitle": "Public menu is live",
         "onHint": "Guest link, slug, and header image are managed in Digital Menu.",

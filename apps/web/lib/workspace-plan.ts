@@ -13,9 +13,10 @@ export type WorkspacePlan = typeof WORKSPACE_PLAN_FREE | typeof WORKSPACE_PLAN_P
  * `workspace.plan` for provisioning metadata).
  *
  * - Sign-up is Clerk-only until staff provisions a workspace (`provisionWorkspace`).
- * - Operator routes (Locations, Advisor, media, …) are available to any signed-in
- *   user when enabled in `config/feature-flags.json`. Calendar, CRM, and print shop
- *   use `audience: "admin"` there. Self-serve workspace creation is disabled.
+ * - Restaurant MVP surfaces (Locations, Services / digital menu, AI, playbooks,
+ *   usage) are available to signed-in operators via `config/feature-flags.json`.
+ *   Media, calendar, CRM, and print shop use `audience: "admin"`. Self-serve
+ *   workspace creation is disabled.
  */
 
 /**

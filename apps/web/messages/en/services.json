@@ -1,16 +1,16 @@
 {
   "services": {
-    "title": "Services",
-    "description": "Playable guest experiences for each location — games, points, and the surfaces that power them.",
-    "headline": "Services",
-    "subtitle": "Turn on playable guest experiences per location. Games and rewards first — menu and classic loyalty as rails underneath.",
+    "title": "Guest experience",
+    "description": "Your restaurant’s online presence for guests — interactive digital menu and guest experiences per location.",
+    "headline": "Guest experience",
+    "subtitle": "Publish an interactive digital menu and turn on guest experiences for each location.",
     "subscriptions": {
       "title": "Your subscriptions",
-      "subtitle": "Active services for your locations.",
+      "subtitle": "Active guest experiences for your locations.",
       "billingNoteTitle": "Billing not connected",
       "billingNote": "Billing is not connected yet — activate and cancel freely while we prepare payments.",
-      "empty": "No active service subscriptions.",
-      "emptyHint": "Turn on Pick & Win or Point System for a location to start a subscription.",
+      "empty": "No active guest experiences yet.",
+      "emptyHint": "Turn on Digital Menu or Voting for a location to get started.",
       "cancel": "Cancel",
       "canceling": "Canceling…",
       "cancelFailed": "Could not cancel this subscription.",

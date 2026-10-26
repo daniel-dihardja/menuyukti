@@ -39,9 +39,9 @@
     },
     {
       "id": "media",
-      "description": "Media library.",
+      "description": "Media library (platform admin).",
       "enabled": true,
-      "audience": "all",
+      "audience": "admin",
       "routePrefixes": ["/media"],
       "navKeys": ["media"],
       "actionMenuKeys": []
@@ -51,7 +51,7 @@
       "description": "Advisor chat home.",
       "enabled": true,
       "audience": "all",
-      "routePrefixes": ["/advisor"],
+      "routePrefixes": ["/advisor", "/agent"],
       "navKeys": ["chat"],
       "actionMenuKeys": []
     },

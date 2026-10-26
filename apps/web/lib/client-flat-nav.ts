@@ -1,33 +1,46 @@
-/** Included workspace nav for restaurant clients (home/locations, stock, people). */
-export const CLIENT_CORE_ORDER = ['home', 'inventar', 'team'] as const
+/**
+ * Restaurant client sidebar order: locations, guest experience, then AI tools.
+ * Unexpected keys keep relative order after these.
+ */
+export const CLIENT_NAV_ORDER = ['home', 'services', 'chat', 'playbooks', 'usage'] as const
 
-/** Paid cloud services nav for restaurant clients. */
-export const CLIENT_SERVICES_ORDER = ['services'] as const
+/** Keys rendered after the separator (AI section). */
+export const CLIENT_AI_NAV_KEYS = new Set<string>(['chat', 'playbooks', 'usage'])
 
 type FlatNavItem = { key: string }
 
-const CORE_RANK = new Map<string, number>(CLIENT_CORE_ORDER.map((key, index) => [key, index]))
-const SERVICES_RANK = new Map<string, number>(
-  CLIENT_SERVICES_ORDER.map((key, index) => [key, index]),
-)
+const NAV_RANK = new Map<string, number>(CLIENT_NAV_ORDER.map((key, index) => [key, index]))
 
-function sortByRank<T extends FlatNavItem>(
+/**
+ * Sort client sidebar into Locations → Guest experience → AI → Playbooks → AI usage.
+ * Other keys keep their relative input order after those.
+ */
+export function orderClientFlatNav<T extends FlatNavItem>(items: readonly T[]): T[] {
+  const ranked: T[] = []
+  const other: T[] = []
+  for (const item of items) {
+    if (NAV_RANK.has(item.key)) ranked.push(item)
+    else other.push(item)
+  }
+  ranked.sort((a, b) => (NAV_RANK.get(a.key) ?? 0) - (NAV_RANK.get(b.key) ?? 0))
+  return [...ranked, ...other]
+}
+
+/** Split ordered client nav into primary items and AI-section items. */
+export function splitClientNavAtAi<T extends FlatNavItem>(
   items: readonly T[],
-  rank: ReadonlyMap<string, number>,
-): T[] {
-  return [...items].sort((a, b) => {
-    const rankA = rank.get(a.key)
-    const rankB = rank.get(b.key)
-    if (rankA != null && rankB != null) return rankA - rankB
-    if (rankA != null) return -1
-    if (rankB != null) return 1
-    return 0
-  })
+): { primary: T[]; ai: T[] } {
+  const primary: T[] = []
+  const ai: T[] = []
+  for (const item of items) {
+    if (CLIENT_AI_NAV_KEYS.has(item.key)) ai.push(item)
+    else primary.push(item)
+  }
+  return { primary, ai }
 }
 
 /**
- * Split client sidebar into core workspace vs paid Services, preserving relative
- * order for any unexpected leftover keys after Services.
+ * @deprecated Prefer {@link orderClientFlatNav}. Kept for tests during transition.
  */
 export function partitionClientNav<T extends FlatNavItem>(
   items: readonly T[],
@@ -36,26 +49,14 @@ export function partitionClientNav<T extends FlatNavItem>(
   services: T[]
   other: T[]
 } {
+  const ordered = orderClientFlatNav(items)
   const core: T[] = []
   const services: T[] = []
   const other: T[] = []
-  for (const item of items) {
-    if (CORE_RANK.has(item.key)) core.push(item)
-    else if (SERVICES_RANK.has(item.key)) services.push(item)
+  for (const item of ordered) {
+    if (item.key === 'home') core.push(item)
+    else if (item.key === 'services') services.push(item)
     else other.push(item)
   }
-  return {
-    core: sortByRank(core, CORE_RANK),
-    services: sortByRank(services, SERVICES_RANK),
-    other,
-  }
-}
-
-/**
- * Sort client sidebar items into Home → Inventory → Team → Services.
- * Other keys keep their relative input order after those.
- */
-export function orderClientFlatNav<T extends FlatNavItem>(items: readonly T[]): T[] {
-  const { core, services, other } = partitionClientNav(items)
-  return [...core, ...services, ...other]
+  return { core, services, other }
 }
