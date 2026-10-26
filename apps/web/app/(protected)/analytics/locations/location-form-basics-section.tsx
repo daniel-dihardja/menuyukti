@@ -24,10 +24,20 @@ const EMPTY_SELECT_VALUE = '__none__'
 
 export function LocationBasicsSection() {
   const t = useTranslations('analytics.branches.form')
-  const { loading, name, street, city, countryId, currency, publicSlug, showCurrencyAutoHint } =
-    useLocationFormState()
+  const {
+    mode,
+    loading,
+    name,
+    street,
+    city,
+    countryId,
+    currency,
+    publicSlug,
+    showCurrencyAutoHint,
+  } = useLocationFormState()
   const { setName, setStreet, setCity, setCountryId, setCurrency, setPublicSlug } =
     useLocationFormActions()
+  const showAddressFields = mode === 'edit'
 
   return (
     <TabsContent value="basics" className="flex flex-col gap-4">
@@ -63,82 +73,89 @@ export function LocationBasicsSection() {
           <FieldDescription>{t('publicSlugHint')}</FieldDescription>
         </Field>
 
-        <Field className="sm:col-span-2">
-          <FieldLabel htmlFor="street">{t('streetLabel')}</FieldLabel>
-          <Input
-            id="street"
-            name="street"
-            autoComplete="street-address"
-            placeholder={t('streetPlaceholder')}
-            disabled={loading}
-            value={street}
-            onChange={(e) => setStreet(e.target.value)}
-          />
-        </Field>
+        {showAddressFields ? (
+          <>
+            <Field className="sm:col-span-2">
+              <FieldLabel htmlFor="street">{t('streetLabel')}</FieldLabel>
+              <Input
+                id="street"
+                name="street"
+                autoComplete="street-address"
+                placeholder={t('streetPlaceholder')}
+                disabled={loading}
+                value={street}
+                onChange={(e) => setStreet(e.target.value)}
+              />
+            </Field>
 
-        <Field>
-          <FieldLabel htmlFor="city">{t('cityLabel')}</FieldLabel>
-          <Input
-            id="city"
-            name="city"
-            autoComplete="address-level2"
-            placeholder={t('cityPlaceholder')}
-            disabled={loading}
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
-          />
-        </Field>
+            <Field>
+              <FieldLabel htmlFor="city">{t('cityLabel')}</FieldLabel>
+              <Input
+                id="city"
+                name="city"
+                autoComplete="address-level2"
+                placeholder={t('cityPlaceholder')}
+                disabled={loading}
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+              />
+            </Field>
 
-        <Field>
-          <FieldLabel htmlFor="country">{t('countryLabel')}</FieldLabel>
-          <Select
-            value={countryId || EMPTY_SELECT_VALUE}
-            onValueChange={(value) => {
-              setCountryId(value === EMPTY_SELECT_VALUE ? '' : value)
-            }}
-            disabled={loading}
-          >
-            <SelectTrigger id="country" name="country" className="w-full">
-              <SelectValue placeholder={t('countrySelectPlaceholder')} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={EMPTY_SELECT_VALUE}>{t('noneOption')}</SelectItem>
-              {COUNTRY_OPTIONS.map((option) => (
-                <SelectItem key={option.countryId} value={option.countryId}>
-                  {t(`countryOptions.${option.countryId}`)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </Field>
+            <Field>
+              <FieldLabel htmlFor="country">{t('countryLabel')}</FieldLabel>
+              <Select
+                value={countryId || EMPTY_SELECT_VALUE}
+                onValueChange={(value) => {
+                  setCountryId(value === EMPTY_SELECT_VALUE ? '' : value)
+                }}
+                disabled={loading}
+              >
+                <SelectTrigger id="country" name="country" className="w-full">
+                  <SelectValue placeholder={t('countrySelectPlaceholder')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={EMPTY_SELECT_VALUE}>{t('noneOption')}</SelectItem>
+                  {COUNTRY_OPTIONS.map((option) => (
+                    <SelectItem key={option.countryId} value={option.countryId}>
+                      {t(`countryOptions.${option.countryId}`)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
 
-        <Field className="sm:col-span-2 sm:col-start-1">
-          <FieldLabel htmlFor="currency">{t('currencyLabel')}</FieldLabel>
-          <Select
-            value={currency || EMPTY_SELECT_VALUE}
-            onValueChange={(value) => {
-              const nextCurrency = value === EMPTY_SELECT_VALUE ? '' : value
-              const defaultCurrency = countryId ? (countryIdToCurrency[countryId] ?? '') : ''
-              setCurrency(nextCurrency, Boolean(nextCurrency) && nextCurrency !== defaultCurrency)
-            }}
-            disabled={loading}
-          >
-            <SelectTrigger id="currency" name="currency" className="w-full">
-              <SelectValue placeholder={t('currencySelectPlaceholder')} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={EMPTY_SELECT_VALUE}>{t('noneOption')}</SelectItem>
-              {SUPPORTED_CURRENCIES.map((currencyCode) => (
-                <SelectItem key={currencyCode} value={currencyCode}>
-                  {t(`currencyOptions.${currencyCode}`)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {showCurrencyAutoHint ? (
-            <FieldDescription>{t('currencyAutoHint')}</FieldDescription>
-          ) : null}
-        </Field>
+            <Field className="sm:col-span-2 sm:col-start-1">
+              <FieldLabel htmlFor="currency">{t('currencyLabel')}</FieldLabel>
+              <Select
+                value={currency || EMPTY_SELECT_VALUE}
+                onValueChange={(value) => {
+                  const nextCurrency = value === EMPTY_SELECT_VALUE ? '' : value
+                  const defaultCurrency = countryId ? (countryIdToCurrency[countryId] ?? '') : ''
+                  setCurrency(
+                    nextCurrency,
+                    Boolean(nextCurrency) && nextCurrency !== defaultCurrency,
+                  )
+                }}
+                disabled={loading}
+              >
+                <SelectTrigger id="currency" name="currency" className="w-full">
+                  <SelectValue placeholder={t('currencySelectPlaceholder')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={EMPTY_SELECT_VALUE}>{t('noneOption')}</SelectItem>
+                  {SUPPORTED_CURRENCIES.map((currencyCode) => (
+                    <SelectItem key={currencyCode} value={currencyCode}>
+                      {t(`currencyOptions.${currencyCode}`)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {showCurrencyAutoHint ? (
+                <FieldDescription>{t('currencyAutoHint')}</FieldDescription>
+              ) : null}
+            </Field>
+          </>
+        ) : null}
       </FieldGroup>
     </TabsContent>
   )

@@ -2,8 +2,8 @@
   "analytics": {
     "branches": {
       "title": "Locations",
-      "description": "Power analytics, POS, and AI-assisted planning for each venue. Configure basics here, then upload POS sales reports.",
-      "createDescription": "Create a new location to organize analytics, fixed costs, and sales reports by location.",
+      "description": "Manage guest-facing settings and menus for each venue. Start with a digital menu, then add analytics and POS when you need them.",
+      "createDescription": "Create a location with a name, public URL slug, and opening hours so you can publish a guest menu.",
       "table": {
         "index": "#",
         "branchName": "Location Name",
@@ -33,18 +33,24 @@
       },
       "empty": {
         "title": "Add your first location",
-        "description": "Locations unlock sales uploads, menu analytics, POS, inventory, and AI-assisted planning.",
+        "description": "Create a location to publish your digital menu and manage guest-facing settings.",
         "createCta": "Create New Location",
         "salesCta": "Go to Sales Reports"
       },
       "create": "Create New Location",
       "freePlanLocationLimit": "Locations are part of Pro (restaurant clients). Guest accounts use Home and profile only.",
       "manageMenu": "Manage menu",
+      "manageDigitalMenu": "Digital Menu",
       "managePos": "POS",
       "manageCogs": "Manage COGS",
       "manageReports": "Sales reports",
+      "moreActions": "More",
+      "moreActionsAria": "More location actions",
+      "moreActionsSheetTitle": "Location actions",
+      "moreActionsSheetDescription": "Reports, COGS, and POS for this location.",
       "form": {
         "createTitle": "Create Location",
+        "createDescription": "Start with a name, public URL slug, and opening hours. Address and other details can be added later.",
         "nameLabel": "Location name",
         "namePlaceholder": "Berlin Mitte",
         "publicSlugLabel": "Public URL slug",
