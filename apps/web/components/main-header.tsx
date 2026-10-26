@@ -11,6 +11,8 @@ import { AccountMenu } from '@/components/account/account-menu'
 import { GuestSignInMenu } from '@/components/guest-sign-in-menu'
 import { usePublicGuestPoints } from '@/components/public-guest-points-context'
 import { useOptionalWorkspacePlan } from '@/components/workspace-plan-provider'
+import { isServiceKeyFeatureEnabled } from '@/lib/feature-flags'
+import { SERVICE_KEY_POINT_SYSTEM } from '@/lib/graphql/queries/service-subscriptions'
 import { isMarketingSignInEnabled } from '@/lib/marketing-sign-in'
 import { isPublicLocationSurfacePath, routes } from '@/lib/routes'
 import { getDefaultPathForPlan } from '@/lib/workspace-plan'
@@ -30,8 +32,13 @@ export function MainHeader() {
   const isExplore =
     pathname === routes.explore || (pathname?.startsWith(`${routes.explore}/`) ?? false)
   const isGuestLocation = isPublicLocationSurfacePath(pathname)
+  const pointSystemFeatureEnabled = isServiceKeyFeatureEnabled(SERVICE_KEY_POINT_SYSTEM)
   const guestPointsToShow =
-    isGuestLocation && isSignedIn && guestPointBalance != null && Number.isFinite(guestPointBalance)
+    isGuestLocation &&
+    pointSystemFeatureEnabled &&
+    isSignedIn &&
+    guestPointBalance != null &&
+    Number.isFinite(guestPointBalance)
       ? guestPointBalance
       : null
   /** Hide sign-in chrome on auth pages (user is already signing in / up). */

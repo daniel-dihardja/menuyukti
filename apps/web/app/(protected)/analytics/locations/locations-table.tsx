@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useMemo, useState } from 'react'
-import { BarChart3, Loader2, MapPin, Pencil, Trash2, Upload } from 'lucide-react'
+import { Loader2, MapPin, Pencil, Trash2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 
@@ -47,7 +47,6 @@ import {
 
 export type LocationRow = LocationListItem & {
   analyticsRunCount: number
-  latestAnalyticsId: number | null
 }
 
 type LocationsTableProps = {
@@ -70,7 +69,7 @@ function buildActionItems(
   t: ReturnType<typeof useTranslations<'analytics.branches.table'>>,
   onDelete: (row: LocationRow) => void,
 ): ResponsiveActionMenuItem[] {
-  const items: ResponsiveActionMenuItem[] = [
+  return [
     {
       id: 'edit',
       label: t('view'),
@@ -78,33 +77,14 @@ function buildActionItems(
       href: routes.analytics.branchesDetail(row.id),
     },
     {
-      id: 'upload-sales',
-      label: t('uploadSales'),
-      icon: Upload,
-      href: routes.analytics.salesWithLocation(row.id),
+      id: 'delete',
+      label: t('delete'),
+      icon: Trash2,
+      destructive: true,
+      separatorBefore: true,
+      onSelect: () => onDelete(row),
     },
   ]
-
-  if (row.latestAnalyticsId !== null) {
-    items.push({
-      id: 'view-analytics',
-      label: t('viewAnalytics'),
-      icon: BarChart3,
-      href: routes.analytics.matrix(row.latestAnalyticsId),
-      separatorBefore: true,
-    })
-  }
-
-  items.push({
-    id: 'delete',
-    label: t('delete'),
-    icon: Trash2,
-    destructive: true,
-    separatorBefore: true,
-    onSelect: () => onDelete(row),
-  })
-
-  return items
 }
 
 function LocationStatusBadge({ row }: { row: LocationRow }) {
