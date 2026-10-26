@@ -5,6 +5,7 @@ import { PublicHubServiceCard } from '@/app/(public)/[slug]/_components/public-h
 import { PublicHubVoteRow } from '@/app/(public)/[slug]/_components/public-hub-vote-row'
 import { PublicGuestHeader, PublicGuestShell } from '@/app/(public)/_components/public-guest-shell'
 import { PublicGuestPointsSync } from '@/components/public-guest-points-context'
+import { isPublicPointSystemAvailable } from '@/lib/public-location/load-guest-point-balance'
 import { buildLoginUrl } from '@/lib/auth-return-path'
 import type { Prediction } from '@/lib/graphql/queries/predictions'
 import type { Voting } from '@/lib/graphql/queries/votings'
@@ -79,7 +80,7 @@ export function PublicLocationHub({
   const predictionAvailable = serviceAvailable(location, 'pick_and_win')
   const votingAvailable = serviceAvailable(location, 'voting')
   const pickupOfferAvailable = serviceAvailable(location, 'pickup_offer')
-  const pointSystemAvailable = serviceAvailable(location, 'point_system')
+  const pointSystemAvailable = isPublicPointSystemAvailable(location)
   const livePickupTeaser = location.pickupOfferTeaser
   const showPickupOffer = pickupOfferAvailable && livePickupTeaser != null
   const hasServices = menuAvailable || predictionAvailable || votingAvailable || showPickupOffer
@@ -186,7 +187,9 @@ export function PublicLocationHub({
             {menuSubtitle ? (
               <span className="text-sm font-normal text-muted-foreground">{menuSubtitle}</span>
             ) : null}
-            {location.menuOpenPoints != null && location.menuOpenPoints > 0 ? (
+            {pointSystemAvailable &&
+            location.menuOpenPoints != null &&
+            location.menuOpenPoints > 0 ? (
               <span className="mt-1 inline-flex items-center gap-1.5 text-xs font-medium text-warning">
                 <Sparkles className="size-3.5 shrink-0" aria-hidden />
                 {copy.menuEarnPoints}

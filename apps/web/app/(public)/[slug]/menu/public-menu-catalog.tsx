@@ -83,6 +83,8 @@ type Props = {
   allowDineIn: boolean
   allowPickup: boolean
   allowDelivery: boolean
+  /** When false, skip menu-open earn and do not write the header points pill. */
+  pointSystemAvailable: boolean
 }
 
 type CartLine = {
@@ -229,6 +231,7 @@ export function PublicMenuCatalog({
   allowDineIn,
   allowPickup,
   allowDelivery,
+  pointSystemAvailable,
 }: Props) {
   const t = useTranslations('public.menu')
   const pathname = usePathname()
@@ -320,8 +323,10 @@ export function PublicMenuCatalog({
   }, [basketOpen, hasCart])
 
   // Fire-and-forget: credit open_menu_qr when a signed-in guest opens the menu.
+  // Skip entirely when Point System is off — the earn API still returns a historical
+  // balance on no-op, which would incorrectly light up the header points pill.
   useEffect(() => {
-    if (!isLoaded || !isSignedIn) return
+    if (!pointSystemAvailable || !isLoaded || !isSignedIn) return
     void fetch('/api/public-menu/point-earn', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -340,7 +345,7 @@ export function PublicMenuCatalog({
       .catch(() => {
         // Menu UX must not depend on Point System availability.
       })
-  }, [isLoaded, isSignedIn, locationId, setGuestPointBalance])
+  }, [isLoaded, isSignedIn, locationId, pointSystemAvailable, setGuestPointBalance])
 
   // Restore active order: localStorage first, then server open ticket for this guest.
   useEffect(() => {

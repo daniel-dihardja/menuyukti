@@ -8,7 +8,10 @@ import { PublicGuestHeader, PublicGuestShell } from '@/app/(public)/_components/
 import { PublicVenueHomeLink } from '@/app/(public)/_components/public-venue-home-link'
 import { PublicGuestPointsSync } from '@/components/public-guest-points-context'
 import { getAppCurrencyCode } from '@/lib/app-currency'
-import { loadGuestPointBalance } from '@/lib/public-location/load-guest-point-balance'
+import {
+  isPublicPointSystemAvailable,
+  loadGuestPointBalance,
+} from '@/lib/public-location/load-guest-point-balance'
 import { loadPublicLocation } from '@/lib/public-location/load-public-location'
 import { loadPublicLocationMenu } from '@/lib/public-menu/load-public-menu'
 import {
@@ -61,6 +64,7 @@ export async function PublicLocationMenuBody({ slug, tableLabel }: PublicLocatio
   ])
   if (!menu) notFound()
 
+  const pointSystemAvailable = location ? isPublicPointSystemAvailable(location) : false
   const pointBalance = location ? await loadGuestPointBalance(location, userId) : null
 
   const currencyCode = (menu.currency?.trim() || getAppCurrencyCode()).toUpperCase()
@@ -108,6 +112,7 @@ export async function PublicLocationMenuBody({ slug, tableLabel }: PublicLocatio
             allowDineIn={menu.allowDineIn}
             allowPickup={menu.allowPickup}
             allowDelivery={menu.allowDelivery}
+            pointSystemAvailable={pointSystemAvailable}
           />
         )}
       </main>
