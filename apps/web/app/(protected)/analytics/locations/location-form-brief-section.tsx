@@ -7,6 +7,7 @@ import {
   BRIEF_PROFILE_FIELD_COUNT,
   BRIEF_TEXT_MAX_LENGTHS,
   briefHintsHasAnySelection,
+  nextSuggestedBriefField,
 } from '@/lib/location-quick-profile'
 import { Button } from '@workspace/ui/components/button'
 import {
@@ -40,6 +41,7 @@ export function LocationBriefSection() {
   const tm = useTranslations('analytics.branches.form.manualBrief')
   const { loading, hints, profileFilledCount, profileProgress } = useLocationFormState()
   const { setHintField, resetHints } = useLocationFormActions()
+  const nextField = nextSuggestedBriefField(hints)
 
   return (
     <TabsContent value="marketing" className="flex flex-col gap-4">
@@ -54,24 +56,33 @@ export function LocationBriefSection() {
           <span className="text-sm font-medium tabular-nums">{profileProgress}%</span>
         </div>
         <Progress value={profileProgress} aria-label={t('tabs.marketing')} />
+        {nextField ? (
+          <p className="text-sm text-muted-foreground">
+            {t('profileNextSuggested', { field: t(`profileNextFields.${nextField}`) })}
+          </p>
+        ) : null}
       </div>
-
-      <Field>
-        <FieldLabel htmlFor="brief-notes">{tm('notesLabel')}</FieldLabel>
-        <FieldDescription>{tm('sections.profile.description')}</FieldDescription>
-        <Textarea
-          id="brief-notes"
-          rows={4}
-          disabled={loading}
-          placeholder={tm('notesPlaceholder')}
-          value={hints.notes}
-          onChange={(e) => setHintField('notes', e.target.value)}
-        />
-      </Field>
 
       <FieldSet className="rounded-lg border border-border/80 bg-muted/10 p-4">
         <FieldLegend>{tm('sections.profile.title')}</FieldLegend>
+        <FieldDescription>{tm('sections.profile.description')}</FieldDescription>
         <FieldGroup className="gap-4 sm:grid sm:grid-cols-2">
+          <Field>
+            <FieldLabel htmlFor="phone">{tm('phoneLabel')}</FieldLabel>
+            <Input
+              id="phone"
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              maxLength={BRIEF_TEXT_MAX_LENGTHS.phone}
+              disabled={loading}
+              placeholder={tm('phonePlaceholder')}
+              value={hints.phone}
+              onChange={(e) => setHintField('phone', e.target.value)}
+              className="h-11 text-base md:h-9"
+            />
+          </Field>
+
           <Field>
             <FieldLabel htmlFor="instagram-handle">{tm('instagramHandleLabel')}</FieldLabel>
             <InputGroup>
@@ -88,8 +99,25 @@ export function LocationBriefSection() {
                 placeholder={tm('instagramHandlePlaceholder')}
                 value={hints.instagramHandle}
                 onChange={(e) => setHintField('instagramHandle', e.target.value)}
+                className="h-11 text-base md:h-9"
               />
             </InputGroup>
+          </Field>
+
+          <Field className="sm:col-span-2">
+            <FieldLabel htmlFor="website-url">{tm('websiteUrlLabel')}</FieldLabel>
+            <Input
+              id="website-url"
+              type="url"
+              inputMode="url"
+              autoComplete="url"
+              maxLength={BRIEF_TEXT_MAX_LENGTHS.websiteUrl}
+              disabled={loading}
+              placeholder={tm('websiteUrlPlaceholder')}
+              value={hints.websiteUrl}
+              onChange={(e) => setHintField('websiteUrl', e.target.value)}
+              className="h-11 text-base md:h-9"
+            />
           </Field>
 
           <Field>
@@ -102,21 +130,7 @@ export function LocationBriefSection() {
               placeholder={tm('neighborhoodPlaceholder')}
               value={hints.neighborhood}
               onChange={(e) => setHintField('neighborhood', e.target.value)}
-            />
-          </Field>
-
-          <Field>
-            <FieldLabel htmlFor="phone">{tm('phoneLabel')}</FieldLabel>
-            <Input
-              id="phone"
-              type="tel"
-              inputMode="tel"
-              autoComplete="tel"
-              maxLength={BRIEF_TEXT_MAX_LENGTHS.phone}
-              disabled={loading}
-              placeholder={tm('phonePlaceholder')}
-              value={hints.phone}
-              onChange={(e) => setHintField('phone', e.target.value)}
+              className="h-11 text-base md:h-9"
             />
           </Field>
 
@@ -133,31 +147,30 @@ export function LocationBriefSection() {
               placeholder={tm('contactEmailPlaceholder')}
               value={hints.contactEmail}
               onChange={(e) => setHintField('contactEmail', e.target.value)}
-            />
-          </Field>
-
-          <Field className="sm:col-span-2">
-            <FieldLabel htmlFor="website-url">{tm('websiteUrlLabel')}</FieldLabel>
-            <Input
-              id="website-url"
-              type="url"
-              inputMode="url"
-              autoComplete="url"
-              maxLength={BRIEF_TEXT_MAX_LENGTHS.websiteUrl}
-              disabled={loading}
-              placeholder={tm('websiteUrlPlaceholder')}
-              value={hints.websiteUrl}
-              onChange={(e) => setHintField('websiteUrl', e.target.value)}
+              className="h-11 text-base md:h-9"
             />
           </Field>
         </FieldGroup>
 
-        <Collapsible defaultOpen className="mt-4 flex flex-col gap-3">
+        <Field className="mt-4">
+          <FieldLabel htmlFor="brief-notes">{tm('notesLabel')}</FieldLabel>
+          <Textarea
+            id="brief-notes"
+            rows={3}
+            disabled={loading}
+            placeholder={tm('notesPlaceholder')}
+            value={hints.notes}
+            onChange={(e) => setHintField('notes', e.target.value)}
+            className="text-base md:text-sm"
+          />
+        </Field>
+
+        <Collapsible className="mt-4 flex flex-col gap-3">
           <CollapsibleTrigger asChild>
             <Button
               type="button"
               variant="ghost"
-              className="flex w-full touch-manipulation justify-between px-0"
+              className="flex h-11 w-full touch-manipulation justify-between px-0"
             >
               <span>{t('collapsible.bookAndOrder')}</span>
               <ChevronDown className="size-4 shrink-0 transition-transform [[data-state=open]_&]:rotate-180" />
@@ -177,6 +190,7 @@ export function LocationBriefSection() {
                   placeholder={tm('reservationUrlPlaceholder')}
                   value={hints.reservationUrl}
                   onChange={(e) => setHintField('reservationUrl', e.target.value)}
+                  className="h-11 text-base md:h-9"
                 />
               </Field>
               <Field>
@@ -191,6 +205,7 @@ export function LocationBriefSection() {
                   placeholder={tm('onlineOrderUrlPlaceholder')}
                   value={hints.onlineOrderUrl}
                   onChange={(e) => setHintField('onlineOrderUrl', e.target.value)}
+                  className="h-11 text-base md:h-9"
                 />
               </Field>
               <Field className="sm:col-span-2">
@@ -205,6 +220,7 @@ export function LocationBriefSection() {
                   placeholder={tm('menuUrlPlaceholder')}
                   value={hints.menuUrl}
                   onChange={(e) => setHintField('menuUrl', e.target.value)}
+                  className="h-11 text-base md:h-9"
                 />
               </Field>
             </FieldGroup>
@@ -216,7 +232,7 @@ export function LocationBriefSection() {
             <Button
               type="button"
               variant="ghost"
-              className="flex w-full touch-manipulation justify-between px-0"
+              className="flex h-11 w-full touch-manipulation justify-between px-0"
             >
               <span>{t('collapsible.maps')}</span>
               <ChevronDown className="size-4 shrink-0 transition-transform [[data-state=open]_&]:rotate-180" />
@@ -235,6 +251,7 @@ export function LocationBriefSection() {
                 placeholder={tm('googleMapsUrlPlaceholder')}
                 value={hints.googleMapsUrl}
                 onChange={(e) => setHintField('googleMapsUrl', e.target.value)}
+                className="h-11 text-base md:h-9"
               />
             </Field>
           </CollapsibleContent>

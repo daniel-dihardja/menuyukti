@@ -1,9 +1,11 @@
 ---
 id: TASK-1.4
 title: Defer opening hours; presets-first when editing hours
-status: To Do
-assignee: []
+status: Done
+assignee:
+  - '@danieldihardja'
 created_date: '2026-10-26T08:09:00Z'
+updated_date: '2026-10-26T09:26:00Z'
 labels:
   - web
   - locations
@@ -30,7 +32,30 @@ Create currently shows a full 7-day hours editor (defaults all closed) and may f
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 Create succeeds without configuring opening hours
-- [ ] #2 When hours are edited, presets (e.g. weekdays / every day / copy Monday) are the primary path rather than only a buried secondary control
-- [ ] #3 Invalid open/close pairs are still rejected when a day is marked open
+- [x] #1 Create succeeds without configuring opening hours
+- [x] #2 When hours are edited, presets (e.g. weekdays / every day / copy Monday) are the primary path rather than only a buried secondary control
+- [x] #3 Invalid open/close pairs are still rejected when a day is marked open
 <!-- AC:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+
+1. Add schedule summary card. 2. Replace long outline preset buttons with large short-title preset cards. 3. Enlarge day Open/Closed row targets; keep accordion on small screens. 4. Wire create optional hours block and edit Hours tab to shared UI; scroll/focus invalid day on error.
+<!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+
+Presets-first cards + schedule summary; create omits openingHours when all-closed; day editor secondary with min-h-11 row targets; invalid hours still blocked and focuses the day. Unit tests for summary helpers passed.
+
+<!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+
+Hours UX leads with summary + large preset cards; day editor is secondary. Create can skip hours (omitted when all closed). Invalid open/close pairs still rejected with focus/scroll to the day. Verified with vitest location-opening-hours-summary + typecheck.
+
+<!-- SECTION:FINAL_SUMMARY:END -->

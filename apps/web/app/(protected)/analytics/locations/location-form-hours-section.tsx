@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
 
 import {
@@ -19,9 +20,14 @@ import {
 import { Input } from '@workspace/ui/components/input'
 import { Switch } from '@workspace/ui/components/switch'
 import { TabsContent } from '@workspace/ui/components/tabs'
+import { cn } from '@workspace/ui/lib/utils'
 
 import { useLocationFormActions, useLocationFormState } from './location-form-context'
-import type { OpeningHourRow } from './location-form-types'
+import {
+  classifyOpeningHoursSummary,
+  type OpeningHourRow,
+  type Weekday,
+} from './location-form-types'
 
 function formatHoursSummary(row: OpeningHourRow, dayLabel: string, closedLabel: string): string {
   if (row.closed || !row.openTime || !row.closeTime) {
@@ -30,7 +36,15 @@ function formatHoursSummary(row: OpeningHourRow, dayLabel: string, closedLabel: 
   return `${dayLabel} · ${row.openTime}–${row.closeTime}`
 }
 
-function LocationOpeningHourRow({ row, compact }: { row: OpeningHourRow; compact?: boolean }) {
+function LocationOpeningHourRow({
+  row,
+  compact,
+  autoFocusOpen,
+}: {
+  row: OpeningHourRow
+  compact?: boolean
+  autoFocusOpen?: boolean
+}) {
   const t = useTranslations('analytics.branches.form')
   const { loading } = useLocationFormState()
   const { setRowClosed, updateOpeningHour } = useLocationFormActions()
@@ -38,56 +52,82 @@ function LocationOpeningHourRow({ row, compact }: { row: OpeningHourRow; compact
   const openId = `open-${row.dayOfWeek}`
   const closeId = `close-${row.dayOfWeek}`
   const dayLabel = t(`weekdays.${row.dayOfWeek}`)
+  const openInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (!autoFocusOpen || row.closed) return
+    openInputRef.current?.focus()
+    openInputRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+  }, [autoFocusOpen, row.closed])
+
+  const toggleOpen = () => {
+    if (loading) return
+    setRowClosed(row.dayOfWeek, !row.closed)
+  }
 
   const controls = (
     <>
-      <div className="flex items-center gap-2 sm:w-48 sm:shrink-0">
+      <button
+        type="button"
+        id={switchId}
+        disabled={loading}
+        onClick={toggleOpen}
+        className={cn(
+          'flex min-h-11 w-full touch-manipulation items-center gap-3 rounded-md border border-border/60 bg-background px-3 py-2 text-left sm:w-52 sm:shrink-0',
+          loading && 'pointer-events-none opacity-50',
+        )}
+        aria-pressed={!row.closed}
+        aria-label={t('openDaySwitchAria', { day: dayLabel })}
+      >
         <Switch
-          id={switchId}
           checked={!row.closed}
           disabled={loading}
-          onCheckedChange={(checked) => setRowClosed(row.dayOfWeek, checked !== true)}
-          aria-label={t('openDaySwitchAria', { day: dayLabel })}
+          tabIndex={-1}
+          aria-hidden
+          className="pointer-events-none"
         />
-        <FieldLabel htmlFor={switchId} className="cursor-pointer text-sm font-normal leading-none">
+        <span className="text-sm font-normal leading-none">
           {row.closed ? t('dayClosed') : t('dayOpen')}
-        </FieldLabel>
-      </div>
-      <div className="grid flex-1 grid-cols-2 gap-3 sm:max-w-md">
-        <Field>
-          <FieldLabel htmlFor={openId} className="text-xs text-muted-foreground">
-            {t('opensAt')}
-          </FieldLabel>
-          <Input
-            id={openId}
-            type="time"
-            value={row.openTime}
-            disabled={loading || row.closed}
-            aria-disabled={row.closed}
-            onChange={(e) => updateOpeningHour(row.dayOfWeek, 'openTime', e.target.value)}
-          />
-        </Field>
-        <Field>
-          <FieldLabel htmlFor={closeId} className="text-xs text-muted-foreground">
-            {t('closesAt')}
-          </FieldLabel>
-          <Input
-            id={closeId}
-            type="time"
-            value={row.closeTime}
-            disabled={loading || row.closed}
-            aria-disabled={row.closed}
-            onChange={(e) => updateOpeningHour(row.dayOfWeek, 'closeTime', e.target.value)}
-          />
-        </Field>
-      </div>
+        </span>
+      </button>
+      {!row.closed ? (
+        <div className="grid flex-1 grid-cols-2 gap-3 sm:max-w-md">
+          <Field>
+            <FieldLabel htmlFor={openId} className="text-xs text-muted-foreground">
+              {t('opensAt')}
+            </FieldLabel>
+            <Input
+              ref={openInputRef}
+              id={openId}
+              type="time"
+              value={row.openTime}
+              disabled={loading}
+              className="h-11 text-base md:h-9 md:text-sm"
+              onChange={(e) => updateOpeningHour(row.dayOfWeek, 'openTime', e.target.value)}
+            />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor={closeId} className="text-xs text-muted-foreground">
+              {t('closesAt')}
+            </FieldLabel>
+            <Input
+              id={closeId}
+              type="time"
+              value={row.closeTime}
+              disabled={loading}
+              className="h-11 text-base md:h-9 md:text-sm"
+              onChange={(e) => updateOpeningHour(row.dayOfWeek, 'closeTime', e.target.value)}
+            />
+          </Field>
+        </div>
+      ) : null}
     </>
   )
 
   if (compact) {
     return (
-      <AccordionItem key={row.dayOfWeek} value={row.dayOfWeek}>
-        <AccordionTrigger className="py-3 text-sm hover:no-underline">
+      <AccordionItem value={row.dayOfWeek}>
+        <AccordionTrigger className="min-h-11 py-3 text-sm hover:no-underline">
           {formatHoursSummary(row, dayLabel, t('dayClosed'))}
         </AccordionTrigger>
         <AccordionContent className="flex flex-col gap-3 pb-3">{controls}</AccordionContent>
@@ -97,7 +137,6 @@ function LocationOpeningHourRow({ row, compact }: { row: OpeningHourRow; compact
 
   return (
     <div
-      key={row.dayOfWeek}
       role="group"
       aria-labelledby={`${switchId}-label`}
       className="flex flex-col gap-3 rounded-md border border-border/60 bg-muted/20 p-3 sm:flex-row sm:items-center sm:gap-4"
@@ -110,63 +149,164 @@ function LocationOpeningHourRow({ row, compact }: { row: OpeningHourRow; compact
   )
 }
 
-export function LocationHoursSection() {
+function HoursSummaryText({ openingHours }: { openingHours: OpeningHourRow[] }) {
+  const t = useTranslations('analytics.branches.form')
+  const summary = classifyOpeningHoursSummary(openingHours)
+  if (summary.kind === 'closedAll') return t('hoursSummaryClosedAll')
+  if (summary.kind === 'weekdays' && summary.openTime && summary.closeTime) {
+    return t('hoursSummaryWeekdays', { open: summary.openTime, close: summary.closeTime })
+  }
+  if (summary.kind === 'everyDay' && summary.openTime && summary.closeTime) {
+    return t('hoursSummaryEveryDay', { open: summary.openTime, close: summary.closeTime })
+  }
+  return t('hoursSummaryCustom')
+}
+
+function LocationHoursFields({
+  focusDay,
+  forceEditorOpen,
+}: {
+  focusDay?: Weekday | null
+  forceEditorOpen?: boolean
+}) {
   const t = useTranslations('analytics.branches.form')
   const { loading, openingHours } = useLocationFormState()
   const { presetWeekdaysOnly, presetCopyMondayToWeekdays, presetAllClosed } =
     useLocationFormActions()
+  const [editorOpen, setEditorOpen] = useState(() => Boolean(forceEditorOpen || focusDay))
+  const [accordionValue, setAccordionValue] = useState<string | undefined>(focusDay ?? undefined)
+  const sectionRef = useRef<HTMLFieldSetElement>(null)
+
+  useEffect(() => {
+    if (forceEditorOpen || focusDay) {
+      setEditorOpen(true)
+    }
+    if (focusDay) {
+      setAccordionValue(focusDay)
+    }
+  }, [forceEditorOpen, focusDay])
+
+  useEffect(() => {
+    if (!focusDay) return
+    sectionRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' })
+  }, [focusDay])
+
+  const presets = [
+    {
+      id: 'weekdays',
+      label: t('presetWeekdays'),
+      hint: t('presetWeekdaysHint'),
+      onClick: presetWeekdaysOnly,
+    },
+    {
+      id: 'copy-monday',
+      label: t('presetCopyMonday'),
+      hint: t('presetCopyMondayHint'),
+      onClick: presetCopyMondayToWeekdays,
+    },
+    {
+      id: 'all-closed',
+      label: t('presetAllClosed'),
+      hint: t('presetAllClosedHint'),
+      onClick: presetAllClosed,
+    },
+  ] as const
+
+  return (
+    <FieldSet ref={sectionRef} id="location-hours-section">
+      <FieldLegend variant="label">{t('openingHoursTitle')}</FieldLegend>
+      <FieldDescription>{t('openingHoursDescription')}</FieldDescription>
+
+      <div className="rounded-lg border border-border/80 bg-muted/10 p-3 sm:p-4">
+        <p className="text-sm font-medium">
+          <HoursSummaryText openingHours={openingHours} />
+        </p>
+        <Button
+          type="button"
+          variant="link"
+          className="mt-1 h-auto touch-manipulation px-0 py-1 text-sm"
+          disabled={loading}
+          onClick={() => setEditorOpen((open) => !open)}
+          aria-expanded={editorOpen}
+        >
+          {editorOpen ? t('hoursSummaryHide') : t('hoursSummaryEdit')}
+        </Button>
+      </div>
+
+      <div
+        className="grid gap-2 sm:grid-cols-3"
+        role="group"
+        aria-label={t('openingHoursPresetsAria')}
+      >
+        {presets.map((preset) => (
+          <Button
+            key={preset.id}
+            type="button"
+            variant="outline"
+            disabled={loading}
+            onClick={() => {
+              preset.onClick()
+              setEditorOpen(true)
+            }}
+            className="flex h-auto min-h-14 touch-manipulation flex-col items-start gap-0.5 whitespace-normal px-3 py-3 text-left"
+          >
+            <span className="text-sm font-medium">{preset.label}</span>
+            <span className="text-xs font-normal text-muted-foreground">{preset.hint}</span>
+          </Button>
+        ))}
+      </div>
+
+      {editorOpen ? (
+        <>
+          <Accordion
+            type="single"
+            collapsible
+            className="lg:hidden"
+            value={accordionValue ?? ''}
+            onValueChange={(value) => setAccordionValue(value || undefined)}
+          >
+            {openingHours.map((row) => (
+              <LocationOpeningHourRow
+                compact
+                key={row.dayOfWeek}
+                row={row}
+                autoFocusOpen={focusDay === row.dayOfWeek}
+              />
+            ))}
+          </Accordion>
+
+          <div className="hidden flex-col gap-3 lg:flex">
+            {openingHours.map((row) => (
+              <LocationOpeningHourRow
+                key={row.dayOfWeek}
+                row={row}
+                autoFocusOpen={focusDay === row.dayOfWeek}
+              />
+            ))}
+          </div>
+        </>
+      ) : null}
+    </FieldSet>
+  )
+}
+
+export function LocationHoursSection({
+  focusDay,
+  forceEditorOpen,
+}: {
+  focusDay?: Weekday | null
+  forceEditorOpen?: boolean
+} = {}) {
+  const { mode } = useLocationFormState()
+  const fields = <LocationHoursFields focusDay={focusDay} forceEditorOpen={forceEditorOpen} />
+
+  if (mode === 'create') {
+    return <div className="flex flex-col gap-4">{fields}</div>
+  }
 
   return (
     <TabsContent value="hours" className="flex flex-col gap-4">
-      <FieldSet>
-        <FieldLegend variant="label">{t('openingHoursTitle')}</FieldLegend>
-        <FieldDescription>{t('openingHoursDescription')}</FieldDescription>
-        <div
-          className="flex flex-wrap gap-2"
-          role="group"
-          aria-label={t('openingHoursPresetsAria')}
-        >
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={loading}
-            onClick={presetWeekdaysOnly}
-          >
-            {t('presetWeekdays')}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={loading}
-            onClick={presetCopyMondayToWeekdays}
-          >
-            {t('presetCopyMonday')}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={loading}
-            onClick={presetAllClosed}
-          >
-            {t('presetAllClosed')}
-          </Button>
-        </div>
-
-        <Accordion type="single" collapsible className="lg:hidden">
-          {openingHours.map((row) => (
-            <LocationOpeningHourRow compact key={row.dayOfWeek} row={row} />
-          ))}
-        </Accordion>
-
-        <div className="hidden flex-col gap-3 lg:flex">
-          {openingHours.map((row) => (
-            <LocationOpeningHourRow key={row.dayOfWeek} row={row} />
-          ))}
-        </div>
-      </FieldSet>
+      {fields}
     </TabsContent>
   )
 }

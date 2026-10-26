@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { ChevronDown } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
@@ -23,6 +24,11 @@ import { routes } from '@/lib/routes'
 import { suggestMenuSlugFromName } from '@/lib/services/suggest-menu-slug'
 import { Alert, AlertDescription } from '@workspace/ui/components/alert'
 import { Button } from '@workspace/ui/components/button'
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@workspace/ui/components/collapsible'
 import { Spinner } from '@workspace/ui/components/spinner'
 import { Tabs, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
 
@@ -41,6 +47,7 @@ import {
   defaultLocationOpeningHours,
   LOCATION_DEFAULT_CLOSE,
   LOCATION_DEFAULT_OPEN,
+  openingHoursAreAllClosed,
   type LocationFormValues,
   type OpeningHourRow,
   type Weekday,
@@ -69,6 +76,9 @@ export function LocationForm({
   const [error, setError] = useState<string | null>(null)
   const [isDirty, setIsDirty] = useState(false)
   const [activeTab, setActiveTab] = useState('basics')
+  const [createHoursOpen, setCreateHoursOpen] = useState(false)
+  const [hoursFocusDay, setHoursFocusDay] = useState<Weekday | null>(null)
+  const [hoursForceEditorOpen, setHoursForceEditorOpen] = useState(false)
   const formRef = useRef<HTMLFormElement>(null)
 
   const [name, setName] = useState(initialValues?.name ?? '')
@@ -219,31 +229,49 @@ export function LocationForm({
     setHints((h) => ({ ...h, [key]: value }))
   }
 
-  function validateOpeningHoursClient(): string | null {
+  function validateOpeningHoursClient(): { message: string; day: Weekday } | null {
     for (const row of openingHours) {
       if (row.closed) continue
       if (!row.openTime.trim() || !row.closeTime.trim()) {
-        return t('errors.openingHoursIncomplete', { day: t(`weekdays.${row.dayOfWeek}`) })
+        return {
+          day: row.dayOfWeek,
+          message: t('errors.openingHoursIncomplete', { day: t(`weekdays.${row.dayOfWeek}`) }),
+        }
       }
       if (row.openTime >= row.closeTime) {
-        return t('errors.openingHoursOrder', { day: t(`weekdays.${row.dayOfWeek}`) })
+        return {
+          day: row.dayOfWeek,
+          message: t('errors.openingHoursOrder', { day: t(`weekdays.${row.dayOfWeek}`) }),
+        }
       }
     }
     return null
   }
 
+  function revealHoursError(day: Weekday) {
+    setHoursFocusDay(day)
+    setHoursForceEditorOpen(true)
+    if (mode === 'create') {
+      setCreateHoursOpen(true)
+    } else {
+      setActiveTab('hours')
+    }
+  }
+
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setError(null)
+    setHoursFocusDay(null)
     const clientErr = validateOpeningHoursClient()
     if (clientErr) {
-      setError(clientErr)
-      setActiveTab('hours')
+      setError(clientErr.message)
+      revealHoursError(clientErr.day)
       return
     }
     setLoading(true)
 
     try {
+      const omitHoursOnCreate = mode === 'create' && openingHoursAreAllClosed(openingHours)
       const payloadBase = {
         name,
         street,
@@ -252,11 +280,11 @@ export function LocationForm({
         country,
         currency,
         publicSlug,
-        openingHours,
+        ...(omitHoursOnCreate ? {} : { openingHours }),
       }
       const body =
         mode === 'edit'
-          ? { ...payloadBase, quickProfile: buildQuickProfilePayload(hints) }
+          ? { ...payloadBase, openingHours, quickProfile: buildQuickProfilePayload(hints) }
           : payloadBase
 
       const res = await fetch(endpoint, {
@@ -276,17 +304,18 @@ export function LocationForm({
       router.refresh()
 
       if (mode === 'create') {
+        const newId = saved.id ?? locationId
         toast.success(t('toast.createdTitle'), {
           description: t('toast.createdDescription'),
-          action: {
-            label: t('toast.uploadSalesAction'),
-            onClick: () =>
-              router.push(routes.analytics.salesWithLocation(saved.id ?? locationId ?? '')),
-          },
+          action: newId
+            ? {
+                label: t('toast.openDigitalMenuAction'),
+                onClick: () => router.push(routes.servicesDigitalMenuLocation(newId)),
+              }
+            : undefined,
         })
-        const newId = saved.id ?? locationId
         if (newId) {
-          router.push(routes.analytics.branchesDetail(newId))
+          router.push(routes.analytics.branchesMenu(newId))
         } else {
           router.push(routes.analytics.branches)
         }
@@ -295,10 +324,6 @@ export function LocationForm({
 
       toast.success(t('toast.savedTitle'), {
         description: t('toast.savedDescription'),
-        action: {
-          label: t('toast.uploadSalesAction'),
-          onClick: () => router.push(routes.analytics.salesWithLocation(locationId ?? '')),
-        },
       })
     } catch (err) {
       setError(err instanceof Error ? err.message : t('errors.saveFailed'))
@@ -389,12 +414,27 @@ export function LocationForm({
       actions={actions}
       meta={{ formId: FORM_ID, formRef }}
     >
-      <LocationFormShell />
+      <LocationFormShell
+        createHoursOpen={createHoursOpen}
+        setCreateHoursOpen={setCreateHoursOpen}
+        hoursFocusDay={hoursFocusDay}
+        hoursForceEditorOpen={hoursForceEditorOpen}
+      />
     </LocationFormContextProvider>
   )
 }
 
-function LocationFormShell() {
+function LocationFormShell({
+  createHoursOpen,
+  setCreateHoursOpen,
+  hoursFocusDay,
+  hoursForceEditorOpen,
+}: {
+  createHoursOpen: boolean
+  setCreateHoursOpen: (open: boolean) => void
+  hoursFocusDay: Weekday | null
+  hoursForceEditorOpen: boolean
+}) {
   const t = useTranslations('analytics.branches.form')
   const { mode, loading, error, activeTab, submitLabel } = useLocationFormState()
   const { setActiveTab, onSubmit } = useLocationFormActions()
@@ -410,25 +450,49 @@ function LocationFormShell() {
       >
         <div className="flex flex-col gap-4 sm:gap-6">
           {mode === 'create' ? (
-            <div className="space-y-1">
-              <h2 className="text-base font-semibold tracking-tight">{t('createTitle')}</h2>
-              <p className="text-sm text-muted-foreground">{t('createDescription')}</p>
-            </div>
-          ) : null}
+            <>
+              <LocationBasicsSection />
+              <Collapsible open={createHoursOpen} onOpenChange={setCreateHoursOpen}>
+                <CollapsibleTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="flex h-12 w-full touch-manipulation justify-between"
+                  >
+                    <span>{t('addOpeningHours')}</span>
+                    <ChevronDown className="size-4 shrink-0 transition-transform [[data-state=open]_&]:rotate-180" />
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-4 flex flex-col gap-4">
+                  <LocationHoursSection
+                    focusDay={hoursFocusDay}
+                    forceEditorOpen={hoursForceEditorOpen}
+                  />
+                </CollapsibleContent>
+              </Collapsible>
+            </>
+          ) : (
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="mb-4 h-11 w-full justify-start">
+                <TabsTrigger value="basics" className="min-h-9 touch-manipulation">
+                  {t('tabs.basics')}
+                </TabsTrigger>
+                <TabsTrigger value="hours" className="min-h-9 touch-manipulation">
+                  {t('tabs.hours')}
+                </TabsTrigger>
+                <TabsTrigger value="marketing" className="min-h-9 touch-manipulation">
+                  {t('tabs.marketing')}
+                </TabsTrigger>
+              </TabsList>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="mb-4 w-full justify-start">
-              <TabsTrigger value="basics">{t('tabs.basics')}</TabsTrigger>
-              <TabsTrigger value="hours">{t('tabs.hours')}</TabsTrigger>
-              {mode === 'edit' ? (
-                <TabsTrigger value="marketing">{t('tabs.marketing')}</TabsTrigger>
-              ) : null}
-            </TabsList>
-
-            <LocationBasicsSection />
-            <LocationHoursSection />
-            {mode === 'edit' ? <LocationBriefSection /> : null}
-          </Tabs>
+              <LocationBasicsSection />
+              <LocationHoursSection
+                focusDay={hoursFocusDay}
+                forceEditorOpen={hoursForceEditorOpen}
+              />
+              <LocationBriefSection />
+            </Tabs>
+          )}
 
           {error ? (
             <Alert variant="destructive" role="alert" aria-live="assertive">
@@ -458,7 +522,7 @@ function LocationFormShell() {
         <Button
           type="submit"
           disabled={loading}
-          className="w-full touch-manipulation"
+          className="h-12 w-full touch-manipulation"
           form={formId}
         >
           {loading ? (

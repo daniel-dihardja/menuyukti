@@ -3,7 +3,7 @@
     "branches": {
       "title": "Locations",
       "description": "Manage guest-facing settings and menus for each venue. Start with a digital menu, then add analytics and POS when you need them.",
-      "createDescription": "Create a location with a name, public URL slug, and opening hours so you can publish a guest menu.",
+      "createDescription": "Name your venue, get a guest menu link, then add dishes. Opening hours are optional.",
       "table": {
         "index": "#",
         "branchName": "Location Name",
@@ -50,12 +50,18 @@
       "moreActionsSheetDescription": "Reports, COGS, and POS for this location.",
       "form": {
         "createTitle": "Create Location",
-        "createDescription": "Start with a name, public URL slug, and opening hours. Address and other details can be added later.",
+        "createDescription": "Name your venue to get a guest menu link. Add opening hours if you like — you can change them later.",
         "nameLabel": "Location name",
         "namePlaceholder": "Berlin Mitte",
-        "publicSlugLabel": "Public URL slug",
+        "publicSlugLabel": "Menu link",
         "publicSlugPlaceholder": "berlin-mitte",
-        "publicSlugHint": "Guest home, menu, and Pick & Win use this as the first URL path segment. Lowercase letters, numbers, and hyphens.",
+        "publicSlugHint": "Lowercase letters, numbers, and hyphens. Used for your guest menu URL.",
+        "menuLinkPreviewAria": "Guest menu link preview",
+        "menuLinkPreviewEmpty": "Enter a name to preview your menu link",
+        "editLink": "Edit link",
+        "hideEditLink": "Done",
+        "locationDetails": "Location details",
+        "locationDetailsDescription": "Address, country, and currency for this venue.",
         "streetLabel": "Street address",
         "streetPlaceholder": "Rosenthaler Str. 1",
         "cityLabel": "City",
@@ -74,16 +80,26 @@
           "EUR": "Euro (EUR)"
         },
         "openingHoursTitle": "Opening hours",
-        "openingHoursDescription": "Mark days as closed, or set open and close times only on days you serve guests. You can use a preset for common patterns.",
+        "openingHoursDescription": "Pick a schedule, then tweak individual days if needed.",
         "openingHoursPresetsAria": "Quick presets for opening hours",
-        "presetWeekdays": "Mon–Fri, 9:00–22:00 (weekends closed)",
-        "presetAllClosed": "Mark every day closed",
-        "presetCopyMonday": "Copy Monday to weekdays",
+        "addOpeningHours": "Add opening hours",
+        "hoursSummaryClosedAll": "Closed all week",
+        "hoursSummaryWeekdays": "Mon–Fri {open}–{close}",
+        "hoursSummaryEveryDay": "Every day {open}–{close}",
+        "hoursSummaryCustom": "Custom schedule",
+        "hoursSummaryEdit": "Edit days",
+        "hoursSummaryHide": "Hide day editor",
+        "presetWeekdays": "Weekdays 9–22",
+        "presetWeekdaysHint": "Mon–Fri open; weekends closed",
+        "presetAllClosed": "Every day closed",
+        "presetAllClosedHint": "Clear the week",
+        "presetCopyMonday": "Copy Monday",
+        "presetCopyMondayHint": "Apply Monday to Tue–Fri",
         "tabs": {
-          "basics": "Basics",
+          "basics": "Guest info",
           "hours": "Hours",
           "areas": "Areas",
-          "marketing": "Marketing profile"
+          "marketing": "Profile"
         },
         "areas": {
           "title": "Areas",
@@ -112,13 +128,27 @@
         "currencyAutoHint": "Currency is set from country — change if needed.",
         "toast": {
           "savedTitle": "Location saved",
-          "savedDescription": "Your changes are ready for analytics and campaigns.",
+          "savedDescription": "Guest-facing settings are up to date.",
           "createdTitle": "Location created",
-          "createdDescription": "Upload a sales report to start analytics.",
+          "createdDescription": "Add your menu so guests can browse and order.",
+          "openDigitalMenuAction": "Digital Menu",
           "uploadSalesAction": "Upload sales report"
         },
         "stickySaveAria": "Save location form",
         "profileCompleteness": "{filled} of {total} profile fields complete",
+        "profileNextSuggested": "Next: add {field}",
+        "profileNextFields": {
+          "phone": "a phone number",
+          "instagramHandle": "an Instagram handle",
+          "websiteUrl": "a website",
+          "neighborhood": "a neighborhood",
+          "contactEmail": "a contact email",
+          "notes": "a short note about the venue",
+          "reservationUrl": "a reservation link",
+          "onlineOrderUrl": "an online order link",
+          "menuUrl": "an external menu link",
+          "googleMapsUrl": "a Google Maps link"
+        },
         "collapsible": {
           "bookAndOrder": "Book & order links",
           "socialAndWeb": "Social & web",
@@ -152,11 +182,11 @@
           "sections": {
             "profile": {
               "title": "Profile & contact links",
-              "description": "Identity, contact methods, and link-in-bio destinations the AI can reference."
+              "description": "How guests and your team reach this venue online."
             }
           },
-          "notesLabel": "Additional location information",
-          "notesPlaceholder": "Write any important location details for AI.",
+          "notesLabel": "Notes",
+          "notesPlaceholder": "Anything else your team should know about this venue.",
           "instagramHandleLabel": "Instagram handle",
           "instagramHandlePlaceholder": "menuyukti (without @)",
           "neighborhoodLabel": "Neighborhood / district",

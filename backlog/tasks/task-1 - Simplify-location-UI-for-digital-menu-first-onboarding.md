@@ -1,10 +1,10 @@
 ---
 id: TASK-1
 title: Simplify location UI for digital-menu-first onboarding
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-10-26T08:08:00Z'
-updated_date: '2026-10-26T09:06:00Z'
+updated_date: '2026-10-26T09:26:00Z'
 labels:
   - web
   - locations
@@ -36,12 +36,20 @@ Out of scope: implementing POS/COGS/inventar features; removing backend APIs; fu
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 A new operator can create a location with name (and optional auto slug) without filling address, areas, COGS, or POS fields; opening hours remain available on create as essential guest-facing settings
-- [ ] #2 After create, primary guidance points to menu / digital menu — not upload sales, POS, COGS, or inventar
-- [ ] #3 Location edit removes the inventar Areas tab; Marketing brief remains; guest-facing settings (name, slug, optional address/country/currency/hours) remain available
-- [ ] #4 Location detail does not present POS, COGS, or inventar as peer primary actions alongside Menu / digital menu for this release path
-- [ ] #5 Existing locations with areas, brief, COGS, or POS data remain readable via existing APIs; simplification is UI/onboarding, not data deletion
+- [x] #1 A new operator can create a location with name (and optional auto slug) without filling address, areas, COGS, or POS fields; opening hours remain available on create as essential guest-facing settings
+- [x] #2 After create, primary guidance points to menu / digital menu — not upload sales, POS, COGS, or inventar
+- [x] #3 Location edit removes the inventar Areas tab; Marketing brief remains; guest-facing settings (name, slug, optional address/country/currency/hours) remain available
+- [x] #4 Location detail does not present POS, COGS, or inventar as peer primary actions alongside Menu / digital menu for this release path
+- [x] #5 Existing locations with areas, brief, COGS, or POS data remain readable via existing APIs; simplification is UI/onboarding, not data deletion
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+
+All subtasks 1.1–1.7 Done. Create is single-screen name+slug+optional hours; post-create → menu; edit keeps Profile without Areas; detail Menu-primary; no API deletions.
+
+<!-- SECTION:NOTES:END -->
 
 ## Comments
 
@@ -64,3 +72,11 @@ Product decision (2026-10-26): remove only Areas from location edit (keep Market
 ---
 
 <!-- COMMENTS:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+
+Digital-menu-first location onboarding is complete across create (single screen), post-create menu redirect, hours presets-first, edit guest IA, and detail CTAs. Areas/POS/COGS demoted without deleting backend data. Verified with apps/web typecheck and helper unit tests.
+
+<!-- SECTION:FINAL_SUMMARY:END -->
