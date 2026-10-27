@@ -154,8 +154,8 @@
     },
     {
       "id": "explore",
-      "description": "Guest venue directory.",
-      "enabled": true,
+      "description": "Guest venue directory (MVP off; depends on migrated public menus).",
+      "enabled": false,
       "audience": "all",
       "routePrefixes": ["/explore"],
       "navKeys": [],

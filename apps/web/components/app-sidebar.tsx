@@ -9,7 +9,7 @@ import {
 } from '@workspace/ui/components/sidebar'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@workspace/ui/components/tooltip'
 import { cn } from '@workspace/ui/lib/utils'
-import { Leaf } from 'lucide-react'
+import { Activity } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
@@ -37,7 +37,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         'justify-start group-data-[collapsible=icon]:justify-center',
       )}
     >
-      <Leaf className="size-4 shrink-0" aria-hidden />
+      <Activity className="size-4 shrink-0" aria-hidden />
       <span className="truncate group-data-[collapsible=icon]:hidden" translate="no">
         {brandLabel}
       </span>

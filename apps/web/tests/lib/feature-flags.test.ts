@@ -43,7 +43,6 @@ describe('feature-flags', () => {
     expect(isPathnameFeatureEnabled('/crm/registrations')).toBe(true)
     expect(isPathnameFeatureEnabled('/media')).toBe(true)
     expect(isPathnameFeatureEnabled('/shop')).toBe(true)
-    expect(isPathnameFeatureEnabled('/explore')).toBe(true)
     expect(isPathnameFeatureEnabled('/print-orders')).toBe(true)
     expect(isPathnameFeatureEnabled('/advisor')).toBe(true)
     expect(isPathnameFeatureEnabled('/advisor/abc')).toBe(true)
@@ -54,12 +53,14 @@ describe('feature-flags', () => {
     expect(isPathnameFeatureEnabled('/usage')).toBe(true)
   })
 
-  it('disables MVP-off inventar, team, and pos', () => {
+  it('disables MVP-off inventar, team, pos, and explore', () => {
     expect(isPathnameFeatureEnabled('/inventar')).toBe(false)
     expect(isPathnameFeatureEnabled('/inventar/catalog')).toBe(false)
     expect(isPathnameFeatureEnabled('/team')).toBe(false)
     expect(isFeatureEnabled('pos')).toBe(false)
     expect(isActionMenuKeyEnabled('pos')).toBe(false)
+    expect(isFeatureEnabled('explore')).toBe(false)
+    expect(isPathnameFeatureEnabled('/explore')).toBe(false)
   })
 
   it('enables sales reports and COGS for advisor sales-report workflows', () => {
@@ -128,7 +129,6 @@ describe('feature-flags', () => {
     expect(pathnameRequiresAdmin('/playbooks')).toBe(false)
     expect(pathnameRequiresAdmin('/usage')).toBe(false)
     expect(pathnameRequiresAdmin('/home')).toBe(false)
-    expect(pathnameRequiresAdmin('/explore')).toBe(false)
     expect(pathnameRequiresAdmin('/profile')).toBe(false)
   })
 

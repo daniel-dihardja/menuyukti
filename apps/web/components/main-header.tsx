@@ -1,7 +1,7 @@
 'use client'
 
 import { Show, useAuth } from '@clerk/nextjs'
-import { Coins, Leaf } from 'lucide-react'
+import { Activity, Coins } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
@@ -11,7 +11,7 @@ import { AccountMenu } from '@/components/account/account-menu'
 import { GuestSignInMenu } from '@/components/guest-sign-in-menu'
 import { usePublicGuestPoints } from '@/components/public-guest-points-context'
 import { useOptionalWorkspacePlan } from '@/components/workspace-plan-provider'
-import { isServiceKeyFeatureEnabled } from '@/lib/feature-flags'
+import { isFeatureEnabled, isServiceKeyFeatureEnabled } from '@/lib/feature-flags'
 import { SERVICE_KEY_POINT_SYSTEM } from '@/lib/graphql/queries/service-subscriptions'
 import { isMarketingSignInEnabled } from '@/lib/marketing-sign-in'
 import { isPublicLocationSurfacePath, routes } from '@/lib/routes'
@@ -42,8 +42,8 @@ export function MainHeader() {
       : null
   /** Hide sign-in chrome on auth pages (user is already signing in / up). */
   const showSignIn = !isLogin && !isSignUp && isMarketingSignInEnabled()
-  /** Explore is Clerk-protected — only tease the link for signed-in users. */
-  const showExplore = Boolean(isSignedIn)
+  /** Explore is Clerk-protected and feature-flagged — only tease when enabled. */
+  const showExplore = Boolean(isSignedIn) && isFeatureEnabled('explore')
   const [isScrolled, setIsScrolled] = React.useState(false)
 
   /** Signed-out → marketing `/`; signed-in → plan home (fallback `/home` outside provider). */
@@ -73,7 +73,7 @@ export function MainHeader() {
             )}
             aria-label={t('brandAria')}
           >
-            <Leaf className="size-5 shrink-0 text-primary" aria-hidden />
+            <Activity className="size-5 shrink-0 text-foreground" aria-hidden />
             <span className="text-sm font-semibold tracking-tight md:text-base">{t('brand')}</span>
           </Link>
 
