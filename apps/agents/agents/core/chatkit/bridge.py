@@ -12,7 +12,11 @@ from agents_app.agents.core.chat.sse_stream import (
     chunk_text,
     tool_events_from_update,
 )
-from agents_app.agents.core.chatkit.widget_stream import emit_widget_done
+from agents_app.agents.core.chatkit.widget_stream import (
+    emit_widget_added,
+    emit_widget_done,
+    emit_widget_root_updated,
+)
 from agents_app.agents.core.chatkit.widgets import (
     generated_image_widget,
     story_confirm_widget,
@@ -44,11 +48,19 @@ from langgraph.graph.state import CompiledStateGraph
 _COMPACT_STATUS_TOOLS = frozenset(
     {
         "get_chart_data",
+        "get_location_data",
         "search_web",
         "save_story_asset",
         "clear_story_assets",
     }
 )
+
+_CHART_TITLES: dict[str, str] = {
+    "venue_slot_strength_heatmap": "Venue slot strength",
+    "menu_item_heatmap": "Menu item heatmap",
+    "pair_lift_matrix_heatmap": "Pair lift matrix",
+    "low_end_review": "Weak items review",
+}
 
 
 def _utcnow() -> datetime:
@@ -106,23 +118,142 @@ def _tool_output_looks_like_error(output: object) -> bool:
     return isinstance(err, str) and bool(err.strip())
 
 
+def _chart_id_from_input(tool_input: object) -> str | None:
+    if not isinstance(tool_input, dict):
+        return None
+    raw = tool_input.get("chart_id") or tool_input.get("chartId")
+    if isinstance(raw, str) and raw.strip():
+        return raw.strip()
+    return None
+
+
+def _chart_id_from_output(output: object) -> str | None:
+    """Recover chart id from markdown when tool_end has no input args."""
+    if not isinstance(output, str):
+        return None
+    for chart_id, title in _CHART_TITLES.items():
+        if f"## Visualization data — {title}" in output:
+            return chart_id
+    return None
+
+
+def _resolve_chart_id(tool_input: object, output: object | None = None) -> str | None:
+    return _chart_id_from_input(tool_input) or (
+        _chart_id_from_output(output) if output is not None else None
+    )
+
+
 def _chart_status_detail(tool_input: object, output: object) -> tuple[str, str | None]:
-    chart_id = None
-    if isinstance(tool_input, dict):
-        raw = tool_input.get("chart_id") or tool_input.get("chartId")
-        if isinstance(raw, str) and raw.strip():
-            chart_id = raw.strip()
-    titles = {
-        "venue_slot_strength_heatmap": "Venue slot strength",
-        "menu_item_heatmap": "Menu item heatmap",
-        "pair_lift_matrix_heatmap": "Pair lift matrix",
-        "low_end_review": "Weak items review",
-    }
+    chart_id = _resolve_chart_id(tool_input, output)
     if _tool_output_looks_like_error(output):
-        return ("Could not load chart", chart_id)
-    if chart_id and chart_id in titles:
-        return (f"Loaded {titles[chart_id]}", chart_id)
+        title = (
+            f"Could not load {_CHART_TITLES[chart_id]}"
+            if chart_id and chart_id in _CHART_TITLES
+            else "Could not load chart"
+        )
+        return (title, chart_id)
+    if chart_id and chart_id in _CHART_TITLES:
+        return (f"Loaded {_CHART_TITLES[chart_id]}", chart_id)
     return ("Chart data ready", chart_id)
+
+
+def _progress_for_tool_start(
+    tool_name: str, tool_input: object
+) -> tuple[str, str]:
+    """Return (progress text, icon) shown while a tool runs."""
+    if tool_name == "get_chart_data":
+        chart_id = _chart_id_from_input(tool_input)
+        if chart_id and chart_id in _CHART_TITLES:
+            return (f"Loading {_CHART_TITLES[chart_id]}…", "chart")
+        return ("Loading chart data…", "chart")
+    if tool_name == "get_location_data":
+        return ("Loading location context…", "map-pin")
+    if tool_name == "search_web":
+        return ("Searching the web…", "globe")
+    if tool_name == "save_story_asset":
+        return ("Saving story asset…", "images")
+    if tool_name == "clear_story_assets":
+        return ("Clearing story assets…", "images")
+    if tool_name == "present_weekly_instagram_schedule":
+        return ("Building weekly Instagram plan…", "calendar")
+    if tool_name == "generate_instagram_post_image":
+        return ("Generating post image…", "images")
+    if tool_name == "list_media" or tool_name == "list_media_collections":
+        return ("Checking media library…", "images")
+    if tool_name == "get_inventory_refill_forecast":
+        return ("Loading refill forecast…", "analytics")
+    label = tool_name.replace("_", " ")
+    return (f"Running {label}…", "bolt")
+
+
+def _progress_for_tool_end(
+    tool_name: str, *, tool_input: object, output: object
+) -> str:
+    """Short progress line when a tool finishes (ephemeral ChatKit status)."""
+    if tool_name == "get_chart_data":
+        title, _detail = _chart_status_detail(tool_input, output)
+        return title
+    if tool_name == "get_location_data":
+        return (
+            "Could not load location"
+            if _tool_output_looks_like_error(output)
+            else "Loaded location context"
+        )
+    if tool_name == "search_web":
+        return (
+            "Web search failed"
+            if _tool_output_looks_like_error(output)
+            else "Web search complete"
+        )
+    if tool_name == "save_story_asset":
+        return (
+            "Could not save asset"
+            if _tool_output_looks_like_error(output)
+            else "Story asset saved"
+        )
+    if tool_name == "clear_story_assets":
+        return (
+            "Could not clear assets"
+            if _tool_output_looks_like_error(output)
+            else "Story assets cleared"
+        )
+    if tool_name == "present_weekly_instagram_schedule":
+        return "Weekly Instagram plan ready"
+    if tool_name == "generate_instagram_post_image":
+        return (
+            "Image generation failed"
+            if _tool_output_looks_like_error(output)
+            else "Generated post image"
+        )
+    if tool_name == "list_media" or tool_name == "list_media_collections":
+        return "Media library ready"
+    if tool_name == "get_inventory_refill_forecast":
+        return "Refill forecast ready"
+    return f"Finished {tool_name.replace('_', ' ')}"
+
+
+def _running_status_for_tool(tool_name: str, tool_input: object) -> Card | None:
+    """Durable in-flight status card (updated to done/error when the tool ends)."""
+    if tool_name not in _COMPACT_STATUS_TOOLS:
+        return None
+    if tool_name == "get_chart_data":
+        chart_id = _chart_id_from_input(tool_input)
+        if chart_id and chart_id in _CHART_TITLES:
+            return tool_status_widget(
+                title=f"Loading {_CHART_TITLES[chart_id]}…",
+                detail=chart_id,
+                tone="info",
+            )
+        return tool_status_widget(title="Loading chart data…", tone="info")
+    if tool_name == "get_location_data":
+        return tool_status_widget(title="Loading location context…", tone="info")
+    if tool_name == "search_web":
+        return tool_status_widget(title="Searching the web…", tone="info")
+    if tool_name == "save_story_asset":
+        return tool_status_widget(title="Saving story asset…", tone="info")
+    if tool_name == "clear_story_assets":
+        return tool_status_widget(title="Clearing story assets…", tone="info")
+    return None
 
 
 def _compact_status_for_tool(
@@ -138,6 +269,11 @@ def _compact_status_for_tool(
     if tool_name == "get_chart_data":
         title, detail = _chart_status_detail(tool_input, output)
         return tool_status_widget(title=title, detail=detail, tone=tone)
+    if tool_name == "get_location_data":
+        return tool_status_widget(
+            title="Could not load location" if is_err else "Loaded location context",
+            tone=tone,
+        )
     if tool_name == "search_web":
         return tool_status_widget(
             title="Web search failed" if is_err else "Web search complete",
@@ -170,12 +306,55 @@ async def stream_langgraph_as_chatkit(
     content_index = 0
     text_parts: list[str] = []
     message_started = False
+    # tool_end events omit args — keep start inputs so done hints stay chart-specific
+    pending_tool_inputs_by_id: dict[str, object] = {}
+    pending_tool_inputs_by_name: dict[str, list[object]] = {}
+    pending_status_widget_ids: dict[str, str] = {}
+    pending_status_widget_ids_by_name: dict[str, list[str]] = {}
     token = chat_http_client_var.set(http_client)
 
     def _gen_id(item_type: str) -> str:
         if generate_id is not None:
             return generate_id(item_type)
         return f"{item_type}_{_utcnow().timestamp()}"
+
+    def _remember_tool_input(tool_name: str, tool_call_id: str | None, tool_input: object) -> None:
+        if tool_call_id:
+            pending_tool_inputs_by_id[tool_call_id] = tool_input
+        pending_tool_inputs_by_name.setdefault(tool_name, []).append(tool_input)
+
+    def _take_tool_input(
+        tool_name: str, tool_call_id: str | None
+    ) -> object:
+        if tool_call_id and tool_call_id in pending_tool_inputs_by_id:
+            remembered = pending_tool_inputs_by_id.pop(tool_call_id)
+            fifo = pending_tool_inputs_by_name.get(tool_name) or []
+            if remembered in fifo:
+                fifo.remove(remembered)
+            return remembered
+        fifo = pending_tool_inputs_by_name.get(tool_name) or []
+        if fifo:
+            return fifo.pop(0)
+        return None
+
+    def _remember_status_widget(
+        tool_name: str, tool_call_id: str | None, widget_item_id: str
+    ) -> None:
+        if tool_call_id:
+            pending_status_widget_ids[tool_call_id] = widget_item_id
+        pending_status_widget_ids_by_name.setdefault(tool_name, []).append(widget_item_id)
+
+    def _take_status_widget_id(tool_name: str, tool_call_id: str | None) -> str | None:
+        if tool_call_id and tool_call_id in pending_status_widget_ids:
+            widget_item_id = pending_status_widget_ids.pop(tool_call_id)
+            fifo = pending_status_widget_ids_by_name.get(tool_name) or []
+            if widget_item_id in fifo:
+                fifo.remove(widget_item_id)
+            return widget_item_id
+        fifo = pending_status_widget_ids_by_name.get(tool_name) or []
+        if fifo:
+            return fifo.pop(0)
+        return None
 
     try:
         async for mode, chunk in graph.astream(
@@ -216,21 +395,40 @@ async def stream_langgraph_as_chatkit(
                     ),
                 )
             elif mode == "updates":
-                for status, tool_name, output, _tool_call_id, tool_input in tool_events_from_update(
+                for status, tool_name, output, tool_call_id, tool_input in tool_events_from_update(
                     chunk
                 ):
                     if status == "tool_start":
-                        label = tool_name.replace("_", " ")
-                        detail = ""
-                        if isinstance(tool_input, dict) and tool_input:
-                            detail = f" ({', '.join(list(tool_input.keys())[:3])})"
-                        yield ProgressUpdateEvent(
-                            text=f"Running {label}{detail}…",
-                            icon="bolt",
+                        _remember_tool_input(tool_name, tool_call_id, tool_input)
+                        progress_text, progress_icon = _progress_for_tool_start(
+                            tool_name, tool_input
                         )
-                    elif status == "tool_end":
                         yield ProgressUpdateEvent(
-                            text=f"Finished {tool_name.replace('_', ' ')}",
+                            text=progress_text,
+                            icon=progress_icon,  # type: ignore[arg-type]
+                        )
+                        running_widget = _running_status_for_tool(tool_name, tool_input)
+                        if running_widget is not None:
+                            widget_item_id = _gen_id("message")
+                            _remember_status_widget(
+                                tool_name, tool_call_id, widget_item_id
+                            )
+                            async for widget_event in emit_widget_added(
+                                thread,
+                                running_widget,
+                                item_id=widget_item_id,
+                            ):
+                                yield widget_event
+                    elif status == "tool_end":
+                        resolved_input = _take_tool_input(tool_name, tool_call_id)
+                        if resolved_input is None:
+                            resolved_input = tool_input
+                        yield ProgressUpdateEvent(
+                            text=_progress_for_tool_end(
+                                tool_name,
+                                tool_input=resolved_input,
+                                output=output,
+                            ),
                             icon="check",
                         )
                         if tool_name == "request_story_generate_confirmation":
@@ -279,15 +477,26 @@ async def stream_langgraph_as_chatkit(
                             status_widget = _compact_status_for_tool(
                                 tool_name,
                                 output=output,
-                                tool_input=tool_input,
+                                tool_input=resolved_input,
                             )
                             if status_widget is not None:
-                                async for widget_event in emit_widget_done(
-                                    thread,
-                                    status_widget,
-                                    generate_id=_gen_id,
-                                ):
-                                    yield widget_event
+                                existing_id = _take_status_widget_id(
+                                    tool_name, tool_call_id
+                                )
+                                if existing_id is not None:
+                                    async for widget_event in emit_widget_root_updated(
+                                        item_id=existing_id,
+                                        thread=thread,
+                                        widget=status_widget,
+                                    ):
+                                        yield widget_event
+                                else:
+                                    async for widget_event in emit_widget_done(
+                                        thread,
+                                        status_widget,
+                                        generate_id=_gen_id,
+                                    ):
+                                        yield widget_event
 
         full_text = "".join(text_parts)
         if message_started:

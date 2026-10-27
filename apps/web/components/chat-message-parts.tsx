@@ -181,6 +181,9 @@ function GetChartDataToolBlock({ part }: { part: ToolUIPart<UITools> | DynamicTo
       status === 'running'
         ? t('charts.pair_lift_matrix_heatmap.running')
         : t('charts.pair_lift_matrix_heatmap.done')
+  } else if (chartId === 'low_end_review') {
+    message =
+      status === 'running' ? t('charts.low_end_review.running') : t('charts.low_end_review.done')
   } else {
     message = status === 'running' ? t('runningGeneric') : t('doneGeneric')
   }

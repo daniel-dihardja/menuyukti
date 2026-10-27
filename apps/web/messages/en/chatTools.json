@@ -28,6 +28,10 @@
         "pair_lift_matrix_heatmap": {
           "running": "Checking menu combos and pair-lift opportunities…",
           "done": "Reviewed pair lift matrix"
+        },
+        "low_end_review": {
+          "running": "Checking weak items to reprice, improve, or remove…",
+          "done": "Reviewed weak items"
         }
       }
     },

@@ -151,7 +151,8 @@ def tool_status_widget(
     detail: str | None = None,
     tone: ToolStatusTone = "ok",
 ) -> Card:
-    prefix = {"ok": "✓", "error": "!", "info": "i"}.get(tone, "•")
+    # info = in-flight / loading; keep distinct from completed checkmark
+    prefix = {"ok": "✓", "error": "!", "info": "→"}.get(tone, "•")
     kids: list[Any] = [
         Text(value=f"{prefix} {title}", size="sm", weight="semibold"),
     ]
