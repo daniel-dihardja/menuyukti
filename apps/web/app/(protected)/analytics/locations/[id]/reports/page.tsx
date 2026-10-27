@@ -31,6 +31,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 function PosUploadInfoSection({ t }: { t: Awaited<ReturnType<typeof getTranslations>> }) {
+  // Quino remains supported in the backend; omit it from the operator-facing list.
   const reportRequirements = [
     {
       key: 'esb',
@@ -38,32 +39,56 @@ function PosUploadInfoSection({ t }: { t: Awaited<ReturnType<typeof getTranslati
       report: t('uploadInfo.reports.esb.report'),
     },
     {
-      key: 'quino',
-      pos: t('uploadInfo.reports.quino.pos'),
-      report: t('uploadInfo.reports.quino.report'),
+      key: 'moka',
+      pos: t('uploadInfo.reports.moka.pos'),
+      report: t('uploadInfo.reports.moka.report'),
     },
   ]
 
   return (
-    <section aria-labelledby="upload-info-heading" className="flex flex-col gap-2">
+    <section
+      aria-labelledby="upload-info-heading"
+      className="flex flex-col gap-3 rounded-lg border bg-muted/30 p-4"
+    >
       <div className="flex flex-col gap-1">
         <h2 id="upload-info-heading" className="text-sm font-semibold">
           {t('uploadInfo.title')}
         </h2>
-        <p className="text-xs text-muted-foreground">{t('uploadInfo.description')}</p>
+        <p className="text-sm text-muted-foreground">{t('uploadInfo.description')}</p>
       </div>
       <div className="flex flex-col gap-2">
-        {reportRequirements.map((item) => (
-          <div
-            key={item.key}
-            className="flex flex-wrap items-center justify-between gap-2 rounded-md border px-3 py-2"
-          >
-            <span className="text-xs font-medium">{item.pos}</span>
-            <Badge variant="secondary" className="font-mono text-xs">
-              {item.report}
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          {t('uploadInfo.supportedLabel')}
+        </p>
+        <div
+          className="flex flex-wrap gap-2"
+          role="list"
+          aria-label={t('uploadInfo.supportedLabel')}
+        >
+          {reportRequirements.map((item) => (
+            <Badge key={item.key} role="listitem" variant="default" className="px-2.5 py-1 text-sm">
+              {item.pos}
             </Badge>
-          </div>
-        ))}
+          ))}
+        </div>
+      </div>
+      <div className="flex flex-col gap-2">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          {t('uploadInfo.reportLabel')}
+        </p>
+        <ul className="flex flex-col gap-2">
+          {reportRequirements.map((item) => (
+            <li
+              key={item.key}
+              className="flex flex-wrap items-center justify-between gap-2 rounded-md border bg-background px-3 py-2"
+            >
+              <span className="text-sm font-medium">{item.pos}</span>
+              <Badge variant="secondary" className="text-xs font-normal">
+                {item.report}
+              </Badge>
+            </li>
+          ))}
+        </ul>
       </div>
     </section>
   )

@@ -1,4 +1,4 @@
-.PHONY: help test unit_tests core_tests clean lint type-check format
+.PHONY: help test unit_tests core_tests clean lint type-check format generate-pos-demos
 
 help:
 	@echo "menuyukti test commands:"
@@ -10,6 +10,7 @@ help:
 	@echo "  make test_coverage     - Run tests with coverage report"
 	@echo ""
 	@echo "Other commands:"
+	@echo "  make generate-pos-demos - Rebuild fixtures/pos-sales-reports/*.xlsx from shared dataset"
 	@echo "  make clean             - Remove pytest cache and compiled files"
 	@echo "  make lint              - Run Ruff lint (from repo root: uv run ruff check)"
 	@echo "  make type-check        - Run mypy type checking"
@@ -57,6 +58,10 @@ lint:
 # Format via workspace Ruff
 format:
 	uv run ruff format src/menuyukti tests/
+
+# Rebuild committed POS sales-report demos from shared/demo-dataset.json
+generate-pos-demos:
+	uv run python fixtures/pos-sales-reports/scripts/generate_pos_demos.py
 
 # Run all checks
 check: lint type-check test
