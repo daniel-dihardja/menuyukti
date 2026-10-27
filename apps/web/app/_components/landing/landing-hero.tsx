@@ -18,7 +18,6 @@ type LandingHeroSampleMenu = {
 }
 
 type LandingHeroProps = {
-  brand: string
   headline: string
   subtitle: string
   mobileCta: string
@@ -26,14 +25,7 @@ type LandingHeroProps = {
   qr: LandingHeroQrCopy
 }
 
-export function LandingHero({
-  brand,
-  headline,
-  subtitle,
-  mobileCta,
-  sampleMenu,
-  qr,
-}: LandingHeroProps) {
+export function LandingHero({ headline, subtitle, mobileCta, sampleMenu, qr }: LandingHeroProps) {
   const horizontalPadding =
     'pl-[max(1.5rem,env(safe-area-inset-left,0px))] pr-[max(1.5rem,env(safe-area-inset-right,0px))]'
 
@@ -56,10 +48,6 @@ export function LandingHero({
         )}
       >
         <div className="flex w-full min-w-0 max-w-xl flex-col items-center text-center lg:items-start lg:text-left">
-          <p className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl lg:text-4xl">
-            {brand}
-          </p>
-
           <LandingHeroHeadline>{headline}</LandingHeroHeadline>
 
           <p className="landing-hero-subtitle mt-4 max-w-xl text-pretty text-lg md:mt-5 md:text-xl">
