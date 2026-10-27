@@ -49,8 +49,8 @@ def test_build_system_prompt_without_optional_blocks() -> None:
     assert "## Weak items" in out
     assert "## Hours" in out
     assert "## Next" in out
-    assert "present_weekly_instagram_schedule" in out
-    assert "Do **not** call `present_weekly_instagram_schedule` for this default job" in out
+    assert "Weekly Instagram schedules" in out
+    assert "write the plan directly in markdown" in out
     assert "## Sales report" in out
     assert "No sales report is attached" in out
     assert "## Workflow chart catalog" not in out
@@ -90,7 +90,7 @@ def test_build_system_prompt_with_chart_catalog() -> None:
     assert "Visualization data" in out
     assert "Do not load all four on every" in out
     assert "No sales report is attached" not in out
-    assert "Do **not** call `present_weekly_instagram_schedule` for this default job" in out
+    assert "Weekly Instagram schedules" in out
     # Analytics section is usage rules only — per-chart blurbs live in the catalog.
     assert CHART_ANALYTICS_SECTION.count("venue_slot_strength_heatmap") == 0
     assert "Daily highlights" not in CHART_ANALYTICS_SECTION

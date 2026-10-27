@@ -7,7 +7,7 @@ import pytest
 from agents_app.agents.core.chatkit.bridge import _image_url_from_tool_output
 from agents_app.agents.core.chatkit.context import ChatKitRequestContext
 from agents_app.agents.core.chatkit.memory_store import MemoryChatKitStore
-from agents_app.agents.core.chatkit.widgets import story_confirm_widget, weekly_schedule_widget
+from agents_app.agents.core.chatkit.widgets import story_confirm_widget
 from chatkit.store import NotFoundError
 
 
@@ -36,14 +36,6 @@ def test_story_confirm_widget_has_actions() -> None:
     text = str(dumped)
     assert "story.generate" in text
     assert "story.change" in text
-
-
-def test_weekly_schedule_widget_parses_json() -> None:
-    card = weekly_schedule_widget('{"title":"Week 12","days":[]}')
-    dumped = card.model_dump(mode="json")
-    text = str(dumped)
-    assert "Week 12" in text
-    assert "schedule.export_ics" in text
 
 
 def test_memory_store_autocreates_agent_thread() -> None:

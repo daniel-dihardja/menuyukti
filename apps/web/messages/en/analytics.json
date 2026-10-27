@@ -45,7 +45,7 @@
       "moreActions": "More",
       "moreActionsAria": "More location actions",
       "moreActionsSheetTitle": "Location actions",
-      "moreActionsSheetDescription": "Reports, COGS, and POS for this location.",
+      "moreActionsSheetDescription": "Menu, digital menu, and order board for this location.",
       "form": {
         "createTitle": "Create Location",
         "createDescription": "Name your venue to get a guest menu link. Add opening hours if you like — you can change them later.",

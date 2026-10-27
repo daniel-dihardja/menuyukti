@@ -47,8 +47,8 @@ describe('buildAuthContinueUrl / buildLoginUrl', () => {
     expect(buildLoginUrl('/explore')).toBe(`/login?${AUTH_RETURN_TO_QUERY}=%2Fexplore`)
   })
 
-  it('falls back to /home when no safe return path', () => {
-    expect(buildAuthContinueUrl('/advisor')).toBe('/home')
+  it('falls back to /advisor when no safe return path', () => {
+    expect(buildAuthContinueUrl('/analytics')).toBe('/advisor')
     expect(buildLoginUrl(null)).toBe('/login')
   })
 })

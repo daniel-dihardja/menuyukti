@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
-import { BarChart3, Calculator } from 'lucide-react'
+import { ClipboardList, MonitorSmartphone, UtensilsCrossed } from 'lucide-react'
 
 import {
   ResponsiveActionMenu,
@@ -18,41 +18,53 @@ type LocationDetailActionsProps = {
   locationId: string
 }
 
+function isLocationActionVisible(actionId: string, showAdminActions: boolean): boolean {
+  if (!isActionMenuKeyEnabled(actionId)) return false
+  if (!showAdminActions && isActionMenuItemHiddenFromNonAdmin(actionId)) return false
+  return true
+}
+
 export function LocationDetailActions({ locationId }: LocationDetailActionsProps) {
   const t = useTranslations('analytics.branches')
   const { role, isLoaded } = useMenuyuktiRole()
   const showAdminActions = isLoaded && isMenuyuktiAdmin(role)
 
+  const showReports = isLocationActionVisible('reports', showAdminActions)
+  const showCogs = isLocationActionVisible('cogs', showAdminActions)
+
   const overflowItems: ResponsiveActionMenuItem[] = [
     {
-      id: 'reports',
-      label: t('manageReports'),
-      icon: BarChart3,
-      href: routes.analytics.branchesReports(locationId),
+      id: 'menu',
+      label: t('manageMenu'),
+      icon: UtensilsCrossed,
+      href: routes.analytics.branchesMenu(locationId),
     },
     {
-      id: 'cogs',
-      label: t('manageCogs'),
-      icon: Calculator,
-      href: routes.analytics.branchesCogs(locationId),
+      id: 'digital-menu',
+      label: t('manageDigitalMenu'),
+      icon: MonitorSmartphone,
+      href: routes.servicesDigitalMenuLocation(locationId),
     },
-  ].filter((item) => {
-    if (!isActionMenuKeyEnabled(item.id)) return false
-    if (!showAdminActions && isActionMenuItemHiddenFromNonAdmin(item.id)) return false
-    return true
-  })
+    {
+      id: 'order-board',
+      label: t('manageOrderBoard'),
+      icon: ClipboardList,
+      href: routes.servicesDigitalMenuOrders(locationId),
+    },
+  ].filter((item) => isLocationActionVisible(item.id, showAdminActions))
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <Button asChild>
-        <Link href={routes.analytics.branchesMenu(locationId)}>{t('manageMenu')}</Link>
-      </Button>
-      <Button asChild variant="outline">
-        <Link href={routes.servicesDigitalMenuLocation(locationId)}>{t('manageDigitalMenu')}</Link>
-      </Button>
-      <Button asChild variant="outline">
-        <Link href={routes.servicesDigitalMenuOrders(locationId)}>{t('manageOrderBoard')}</Link>
-      </Button>
+      {showReports ? (
+        <Button asChild>
+          <Link href={routes.analytics.branchesReports(locationId)}>{t('manageReports')}</Link>
+        </Button>
+      ) : null}
+      {showCogs ? (
+        <Button asChild variant="outline">
+          <Link href={routes.analytics.branchesCogs(locationId)}>{t('manageCogs')}</Link>
+        </Button>
+      ) : null}
       {overflowItems.length > 0 ? (
         <ResponsiveActionMenu
           items={overflowItems}

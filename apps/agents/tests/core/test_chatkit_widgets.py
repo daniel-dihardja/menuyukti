@@ -3,15 +3,17 @@
 from __future__ import annotations
 
 from agents_app.agents.core.chatkit.bridge import (
+    _chart_status_detail,
     _compact_status_for_tool,
     _image_url_from_tool_output,
     _is_rejected_story_asset_save,
+    _progress_for_tool_start,
+    _running_status_for_tool,
 )
 from agents_app.agents.core.chatkit.widgets import (
     generated_image_widget,
     story_confirm_widget,
     tool_status_widget,
-    weekly_schedule_widget,
 )
 
 
@@ -21,30 +23,6 @@ def test_story_confirm_widget_actions() -> None:
     assert "story.generate" in text
     assert "story.change" in text
     assert "Ready?" in text
-
-
-def test_weekly_schedule_widget_client_actions_and_days() -> None:
-    payload = {
-        "title": "Week plan",
-        "summary": "Busy week",
-        "days": [
-            {
-                "day": "monday",
-                "time": "10:00",
-                "format": "story",
-                "menu_items": "Ramen",
-                "caption_angle": "Steam shot",
-                "why": "Peak lunch",
-            }
-        ],
-    }
-    card = weekly_schedule_widget(payload)
-    text = str(card.model_dump(mode="json"))
-    assert "Week plan" in text
-    assert "monday" in text.lower() or "Monday" in text
-    assert "schedule.export_ics" in text
-    assert "schedule.share" in text
-    assert '"handler": "client"' in text or "'handler': 'client'" in text or "client" in text
 
 
 def test_generated_image_widget() -> None:
@@ -82,3 +60,41 @@ def test_compact_status_skips_rejected_save() -> None:
     )
     assert widget is not None
     assert "Menu item heatmap" in str(widget.model_dump(mode="json"))
+
+
+def test_chart_status_uses_input_and_output_fallback() -> None:
+    title, detail = _chart_status_detail(
+        {"chart_id": "low_end_review"},
+        "ok",
+    )
+    assert title == "Loaded Weak items review"
+    assert detail == "low_end_review"
+
+    # tool_end historically had no input — recover from markdown heading
+    title2, detail2 = _chart_status_detail(
+        None,
+        "## Visualization data — Weak items review\n- dogs",
+    )
+    assert title2 == "Loaded Weak items review"
+    assert detail2 == "low_end_review"
+
+    title3, _ = _chart_status_detail(None, "ok")
+    assert title3 == "Chart data ready"
+
+
+def test_running_status_and_progress_name_the_chart() -> None:
+    text, icon = _progress_for_tool_start(
+        "get_chart_data",
+        {"chart_id": "low_end_review"},
+    )
+    assert text == "Loading Weak items review…"
+    assert icon == "chart"
+
+    running = _running_status_for_tool(
+        "get_chart_data",
+        {"chart_id": "low_end_review"},
+    )
+    assert running is not None
+    dumped = str(running.model_dump(mode="json"))
+    assert "Loading Weak items review" in dumped
+    assert "→" in dumped

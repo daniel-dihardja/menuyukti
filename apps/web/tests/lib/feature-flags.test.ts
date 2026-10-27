@@ -14,7 +14,7 @@ import {
 
 describe('feature-flags', () => {
   it('reports operator product surface enabled state', () => {
-    expect(isNavKeyEnabled('home')).toBe(true)
+    expect(isNavKeyEnabled('home')).toBe(true) // Locations (analytics), not customer /home
     expect(isNavKeyEnabled('dashboard')).toBe(false)
     expect(isNavKeyEnabled('media')).toBe(true)
     expect(isNavKeyEnabled('posts')).toBe(true)
@@ -22,7 +22,8 @@ describe('feature-flags', () => {
     expect(isNavKeyEnabled('printShop')).toBe(true)
     expect(isNavKeyEnabled('chat')).toBe(true)
     expect(isNavKeyEnabled('branches')).toBe(true)
-    expect(isNavKeyEnabled('services')).toBe(true)
+    expect(isNavKeyEnabled('services')).toBe(false)
+    expect(isNavKeyEnabled('playbooks')).toBe(false)
     expect(isNavKeyEnabled('crm')).toBe(true)
     expect(isNavKeyEnabled('usage')).toBe(true)
     expect(isNavKeyEnabled('inventar')).toBe(false)
@@ -34,7 +35,6 @@ describe('feature-flags', () => {
   })
 
   it('enables operator route prefixes and nested menu paths', () => {
-    expect(isPathnameFeatureEnabled('/home')).toBe(true)
     expect(isPathnameFeatureEnabled('/continue')).toBe(true)
     expect(isPathnameFeatureEnabled('/ig-studio')).toBe(true)
     expect(isPathnameFeatureEnabled('/ig-studio/styles')).toBe(true)
@@ -43,23 +43,29 @@ describe('feature-flags', () => {
     expect(isPathnameFeatureEnabled('/crm/registrations')).toBe(true)
     expect(isPathnameFeatureEnabled('/media')).toBe(true)
     expect(isPathnameFeatureEnabled('/shop')).toBe(true)
-    expect(isPathnameFeatureEnabled('/explore')).toBe(true)
     expect(isPathnameFeatureEnabled('/print-orders')).toBe(true)
     expect(isPathnameFeatureEnabled('/advisor')).toBe(true)
     expect(isPathnameFeatureEnabled('/advisor/abc')).toBe(true)
     expect(isPathnameFeatureEnabled('/analytics/locations')).toBe(true)
     expect(isPathnameFeatureEnabled('/analytics/locations/1/menu')).toBe(true)
-    expect(isPathnameFeatureEnabled('/services')).toBe(true)
     expect(isPathnameFeatureEnabled('/services/digital-menu')).toBe(true)
     expect(isPathnameFeatureEnabled('/usage')).toBe(true)
   })
 
-  it('disables MVP-off inventar, team, and pos', () => {
+  it('disables MVP-off inventar, team, guests, playbooks, customer home, pos, and explore', () => {
     expect(isPathnameFeatureEnabled('/inventar')).toBe(false)
     expect(isPathnameFeatureEnabled('/inventar/catalog')).toBe(false)
     expect(isPathnameFeatureEnabled('/team')).toBe(false)
+    expect(isFeatureEnabled('services')).toBe(false)
+    expect(isPathnameFeatureEnabled('/services')).toBe(false)
+    expect(isFeatureEnabled('playbooks')).toBe(false)
+    expect(isPathnameFeatureEnabled('/playbooks')).toBe(false)
+    expect(isFeatureEnabled('home')).toBe(false)
+    expect(isPathnameFeatureEnabled('/home')).toBe(false)
     expect(isFeatureEnabled('pos')).toBe(false)
     expect(isActionMenuKeyEnabled('pos')).toBe(false)
+    expect(isFeatureEnabled('explore')).toBe(false)
+    expect(isPathnameFeatureEnabled('/explore')).toBe(false)
   })
 
   it('enables sales reports and COGS for advisor sales-report workflows', () => {
@@ -72,12 +78,15 @@ describe('feature-flags', () => {
     expect(isPathnameFeatureEnabled('/analytics/abc/cogs')).toBe(true)
     expect(isActionMenuKeyEnabled('reports')).toBe(true)
     expect(isActionMenuKeyEnabled('cogs')).toBe(true)
+    expect(isActionMenuKeyEnabled('menu')).toBe(true)
   })
 
   it('keeps Digital Menu Order board reachable under serviceDigitalMenu', () => {
     expect(isFeatureEnabled('serviceDigitalMenu')).toBe(true)
     expect(isPathnameFeatureEnabled('/services/digital-menu/42/orders')).toBe(true)
     expect(pathnameRequiresAdmin('/services/digital-menu/42/orders')).toBe(false)
+    expect(isActionMenuKeyEnabled('digital-menu')).toBe(true)
+    expect(isActionMenuKeyEnabled('order-board')).toBe(true)
   })
 
   it('leaves unlisted paths enabled', () => {
@@ -85,8 +94,8 @@ describe('feature-flags', () => {
     expect(isPathnameFeatureEnabled('/login')).toBe(true)
   })
 
-  it('returns /home as default authenticated path', () => {
-    expect(getDefaultAuthenticatedPath()).toBe('/home')
+  it('returns /advisor as default authenticated path', () => {
+    expect(getDefaultAuthenticatedPath()).toBe('/advisor')
   })
 
   it('marks admin-audience nav keys', () => {
@@ -122,13 +131,9 @@ describe('feature-flags', () => {
   it('does not require admin for restaurant MVP surfaces', () => {
     expect(pathnameRequiresAdmin('/analytics/locations')).toBe(false)
     expect(pathnameRequiresAdmin('/analytics/locations/1/menu')).toBe(false)
-    expect(pathnameRequiresAdmin('/services')).toBe(false)
     expect(pathnameRequiresAdmin('/services/digital-menu')).toBe(false)
     expect(pathnameRequiresAdmin('/advisor')).toBe(false)
-    expect(pathnameRequiresAdmin('/playbooks')).toBe(false)
     expect(pathnameRequiresAdmin('/usage')).toBe(false)
-    expect(pathnameRequiresAdmin('/home')).toBe(false)
-    expect(pathnameRequiresAdmin('/explore')).toBe(false)
     expect(pathnameRequiresAdmin('/profile')).toBe(false)
   })
 
@@ -156,7 +161,7 @@ describe('feature-flags', () => {
     expect(isServiceKeyFeatureEnabled('stamp_card')).toBe(false)
     expect(isServiceKeyFeatureEnabled('cashback')).toBe(false)
 
-    expect(isPathnameFeatureEnabled('/services')).toBe(true)
+    expect(isPathnameFeatureEnabled('/services')).toBe(false)
     expect(isPathnameFeatureEnabled('/services/digital-menu')).toBe(true)
     expect(isPathnameFeatureEnabled('/services/digital-menu/1')).toBe(true)
     expect(isPathnameFeatureEnabled('/services/digital-menu/1/orders')).toBe(true)

@@ -5,14 +5,9 @@ import {
   getAssistantTrailingThinkingState,
   shouldShowAssistantTrailingThinking,
 } from '@/lib/chat/should-show-assistant-trailing-thinking'
-import { isWeeklyPlanRequest } from '@/lib/chat/weekly-plan-request'
 
 function assistant(parts: UIMessage['parts'] | undefined, id = 'assistant-1'): UIMessage {
   return { id, role: 'assistant', parts } as UIMessage
-}
-
-function user(text: string, id = 'user-1'): UIMessage {
-  return { id, role: 'user', parts: [{ type: 'text', text }] } as UIMessage
 }
 
 const chartDone = {
@@ -33,21 +28,6 @@ const locationDone = {
   output: 'ok',
 }
 
-describe('isWeeklyPlanRequest', () => {
-  it('matches quick-prompt style weekly plan requests', () => {
-    const messages = [
-      user('Create a weekly Instagram plan for this venue.'),
-      assistant([chartDone]),
-    ]
-    expect(isWeeklyPlanRequest(messages, 'assistant-1')).toBe(true)
-  })
-
-  it('does not match unrelated user messages', () => {
-    const messages = [user('What are our opening hours?'), assistant([locationDone])]
-    expect(isWeeklyPlanRequest(messages, 'assistant-1')).toBe(false)
-  })
-})
-
 describe('shouldShowAssistantTrailingThinking', () => {
   it('is false when not streaming or empty parts', () => {
     expect(shouldShowAssistantTrailingThinking(assistant([]), true)).toBe(false)
@@ -66,7 +46,7 @@ describe('shouldShowAssistantTrailingThinking', () => {
           {
             type: 'dynamic-tool',
             toolCallId: '2',
-            toolName: 'present_weekly_instagram_schedule',
+            toolName: 'get_location_data',
             state: 'input-streaming',
             input: {},
           },
@@ -76,78 +56,39 @@ describe('shouldShowAssistantTrailingThinking', () => {
     ).toBe(false)
   })
 
-  it('hides once assistant text follows the last tool for generic chart questions', () => {
-    const messages = [
-      user('Explain this heatmap.'),
-      assistant([chartDone, { type: 'text', text: 'Here is your plan.' }]),
-    ]
+  it('hides once assistant text follows the last tool', () => {
     expect(
-      shouldShowAssistantTrailingThinking(messages[1]!, true, { visibleMessages: messages }),
+      shouldShowAssistantTrailingThinking(
+        assistant([chartDone, { type: 'text', text: 'Here is your plan.' }]),
+        true,
+      ),
     ).toBe(false)
   })
 
-  it('shows during weekly plan gap when text precedes the schedule tool', () => {
-    const messages = [
-      user('Create a weekly Instagram plan for this venue.'),
-      assistant([
-        locationDone,
-        chartDone,
-        { type: 'text', text: 'I loaded opening hours and sales signals.' },
-      ]),
-    ]
+  it('hides for location Q&A once text is present', () => {
     expect(
-      shouldShowAssistantTrailingThinking(messages[1]!, true, { visibleMessages: messages }),
-    ).toBe(true)
-  })
-
-  it('hides after present_weekly_instagram_schedule completes even with follow-up text', () => {
-    const messages = [
-      user('Create a weekly Instagram plan for this venue.'),
-      assistant([
-        locationDone,
-        chartDone,
-        {
-          type: 'dynamic-tool',
-          toolCallId: '3',
-          toolName: 'present_weekly_instagram_schedule',
-          state: 'output-available',
-          input: {},
-          output: 'ok',
-        },
-        { type: 'text', text: 'Here is your weekly plan.' },
-      ]),
-    ]
-    expect(
-      shouldShowAssistantTrailingThinking(messages[1]!, true, { visibleMessages: messages }),
-    ).toBe(false)
-  })
-
-  it('does not show weekly plan gap for location-only Q&A with text', () => {
-    const messages = [
-      user('What are our opening hours?'),
-      assistant([locationDone, { type: 'text', text: 'You are open Monday through Friday.' }]),
-    ]
-    expect(
-      shouldShowAssistantTrailingThinking(messages[1]!, true, { visibleMessages: messages }),
+      shouldShowAssistantTrailingThinking(
+        assistant([locationDone, { type: 'text', text: 'You are open Monday through Friday.' }]),
+        true,
+      ),
     ).toBe(false)
   })
 })
 
 describe('getAssistantTrailingThinkingState', () => {
-  it('returns buildingWeeklyPlan label during weekly plan gap', () => {
-    const messages = [
-      user('Create a weekly Instagram plan for this venue.'),
-      assistant([locationDone, chartDone, { type: 'text', text: 'Building…' }]),
-    ]
-    expect(
-      getAssistantTrailingThinkingState(messages[1]!, true, { visibleMessages: messages }),
-    ).toEqual({ show: true, labelKey: 'buildingWeeklyPlan' })
-  })
-
   it('returns thinking label for generic tool gap without text', () => {
     expect(getAssistantTrailingThinkingState(assistant([chartDone]), true)).toEqual({
       show: true,
       labelKey: 'thinking',
     })
+  })
+
+  it('hides when follow-up text is already present', () => {
+    expect(
+      getAssistantTrailingThinkingState(
+        assistant([chartDone, { type: 'text', text: 'Building…' }]),
+        true,
+      ),
+    ).toEqual({ show: false, labelKey: 'thinking' })
   })
 })

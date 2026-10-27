@@ -1,37 +1,11 @@
-import type { DynamicToolUIPart, ToolUIPart, UIMessage, UITools } from 'ai'
+import type { UIMessage } from 'ai'
 import { isToolUIPart } from 'ai'
 
-import { isWeeklyPlanRequest } from '@/lib/chat/weekly-plan-request'
-
-const PRESENT_WEEKLY_SCHEDULE_TOOL = 'present_weekly_instagram_schedule'
-
-export type AssistantTrailingThinkingLabelKey = 'thinking' | 'buildingWeeklyPlan'
+export type AssistantTrailingThinkingLabelKey = 'thinking'
 
 export type AssistantTrailingThinkingState = {
   show: boolean
   labelKey: AssistantTrailingThinkingLabelKey
-}
-
-export type AssistantTrailingThinkingOptions = {
-  visibleMessages?: readonly UIMessage[]
-}
-
-function resolveToolName(part: ToolUIPart<UITools> | DynamicToolUIPart): string {
-  if (part.type === 'dynamic-tool') {
-    return part.toolName
-  }
-  return part.type.split('-').slice(1).join('-')
-}
-
-function isPresentWeeklyScheduleDone(parts: UIMessage['parts']): boolean {
-  if (!parts?.length) return false
-
-  return parts.some(
-    (part) =>
-      isToolUIPart(part) &&
-      resolveToolName(part) === PRESENT_WEEKLY_SCHEDULE_TOOL &&
-      part.state === 'output-available',
-  )
 }
 
 type PartScanResult = {
@@ -78,7 +52,6 @@ function scanAssistantParts(parts: UIMessage['parts']): PartScanResult {
 export function getAssistantTrailingThinkingState(
   message: UIMessage,
   isActiveStream: boolean,
-  options: AssistantTrailingThinkingOptions = {},
 ): AssistantTrailingThinkingState {
   const hidden: AssistantTrailingThinkingState = { show: false, labelKey: 'thinking' }
 
@@ -92,29 +65,19 @@ export function getAssistantTrailingThinkingState(
   }
 
   const { hasTool, hasInFlightTool, hasTextAfterLastTool } = scanAssistantParts(parts)
-  if (!hasTool || hasInFlightTool) {
-    return hidden
-  }
-
-  const baseGap = !hasTextAfterLastTool
-  const weeklyPlanGap =
-    !isPresentWeeklyScheduleDone(parts) &&
-    isWeeklyPlanRequest(options.visibleMessages ?? [], message.id)
-
-  if (!baseGap && !weeklyPlanGap) {
+  if (!hasTool || hasInFlightTool || hasTextAfterLastTool) {
     return hidden
   }
 
   return {
     show: true,
-    labelKey: weeklyPlanGap ? 'buildingWeeklyPlan' : 'thinking',
+    labelKey: 'thinking',
   }
 }
 
 export function shouldShowAssistantTrailingThinking(
   message: UIMessage,
   isActiveStream: boolean,
-  options: AssistantTrailingThinkingOptions = {},
 ): boolean {
-  return getAssistantTrailingThinkingState(message, isActiveStream, options).show
+  return getAssistantTrailingThinkingState(message, isActiveStream).show
 }

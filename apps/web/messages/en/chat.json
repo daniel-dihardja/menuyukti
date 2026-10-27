@@ -12,7 +12,7 @@
       },
       "weeklyPlan": {
         "label": "Weekly Instagram plan",
-        "prompt": "Create a weekly Instagram plan for this venue. First load location opening hours, then present the plan with the weekly schedule tool (one entry per posting slot). Prefer open days and posting times during or shortly before service. For each slot include a suggested posting time, the format (Story, post, carousel, or Reel), the menu items to feature, a short caption angle, and a one-line why based on open hours and sales or demand when available."
+        "prompt": "Create a weekly Instagram plan for this venue. First load location opening hours, then write a clear day-by-day plan in markdown (one slot per posting). Prefer open days and posting times during or shortly before service. For each slot include a suggested posting time, the format (Story, post, carousel, or Reel), the menu items to feature, a short caption angle, and a one-line why based on open hours and sales or demand when available."
       },
       "featureTopDishes": {
         "label": "Feature top dishes",

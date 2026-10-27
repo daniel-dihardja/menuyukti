@@ -76,8 +76,8 @@ const NAV_GROUP_LABEL_KEYS: Record<NavGroupId, string> = {
 
 /**
  * Sidebar catalog. Restaurant clients (non-admin) see a flat MVP list via
- * feature flags + {@link orderClientFlatNav}: Locations → Services.
- * Platform admins keep grouped overview → create → … → platform.
+ * feature flags + {@link orderClientFlatNav}: (AI Analytics + Locations) →
+ * (Guests + Playbooks) → AI usage. Platform admins keep grouped overview → create → … → platform.
  */
 const NAV_WORKSPACE: NavItem[] = [
   {
@@ -292,42 +292,22 @@ export function NavMain() {
   if (!showAdminNav) {
     const clientItems = orderClientFlatNav(visibleWorkspaceItems)
     if (clientItems.length === 0) return null
-    const { primary, ai, usage } = splitClientNavAtAi(clientItems)
+    const { primary, guests, usage } = splitClientNavAtAi(clientItems)
+    const sections = [primary, guests, usage].filter((section) => section.length > 0)
     return (
       <>
-        {primary.length > 0 ? (
-          <SidebarGroup>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <NavMenuItems items={primary} t={t} isActive={isActive} />
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ) : null}
-        {ai.length > 0 ? (
-          <>
-            <SidebarSeparator className="my-2" />
+        {sections.map((section, index) => (
+          <div key={section.map((item) => item.key).join('-')} className="contents">
+            {index > 0 ? <SidebarSeparator className="my-2" /> : null}
             <SidebarGroup>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  <NavMenuItems items={ai} t={t} isActive={isActive} />
+                  <NavMenuItems items={section} t={t} isActive={isActive} />
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
-          </>
-        ) : null}
-        {usage.length > 0 ? (
-          <>
-            <SidebarSeparator className="my-2" />
-            <SidebarGroup>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  <NavMenuItems items={usage} t={t} isActive={isActive} />
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </>
-        ) : null}
+          </div>
+        ))}
       </>
     )
   }

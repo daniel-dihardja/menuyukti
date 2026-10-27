@@ -6,7 +6,6 @@ import { getLandingSampleMenu } from '@/lib/landing/sample-menu'
 
 export default async function LandingPage() {
   const t = await getTranslations('landing')
-  const tHeader = await getTranslations('mainHeader')
   const sampleMenu = getLandingSampleMenu()
 
   return (
@@ -20,7 +19,6 @@ export default async function LandingPage() {
 
       <main id="main-content" className="flex min-w-0 w-full flex-1 flex-col">
         <LandingHero
-          brand={tHeader('brand')}
           headline={t('hero.headline')}
           subtitle={t('hero.subtitle')}
           mobileCta={t('hero.mobileCta')}

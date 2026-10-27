@@ -10,9 +10,6 @@ from agents_app.agents.core.chat.generate_instagram_post_image import (
 from agents_app.agents.core.chat.inventory_refill_forecast import (
     get_inventory_refill_forecast,
 )
-from agents_app.agents.core.chat.present_weekly_instagram_schedule import (
-    present_weekly_instagram_schedule,
-)
 from agents_app.agents.core.chat.request_story_generate_confirmation import (
     request_story_generate_confirmation,
 )
@@ -108,7 +105,6 @@ def chat_tools_list(
     tools = []
     tools.append(list_media_collections)
     tools.append(list_media)
-    tools.append(present_weekly_instagram_schedule)
     if location_id:
         tools.append(get_location_data)
     if analytics_run:

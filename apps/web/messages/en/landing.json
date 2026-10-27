@@ -2,8 +2,8 @@
   "landing": {
     "skipToContent": "Skip to content",
     "hero": {
-      "headline": "Open the menu on your phone.",
-      "subtitle": "Scan to open a living digital menu — no app required.",
+      "headline": "We read between the bites.",
+      "subtitle": "Attach a sales report. Watch demand and dishes light up. Ask for the next move.",
       "mobileCta": "Open a sample menu",
       "qr": {
         "ariaLabel": "QR code that opens a sample Menuyukti digital menu",

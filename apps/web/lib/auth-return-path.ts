@@ -1,3 +1,4 @@
+import { getDefaultAuthenticatedPath } from '@/lib/feature-flags'
 import { isPublicLocationSurfacePath, routes } from '@/lib/routes'
 
 /** Query param on `/continue` and `/login` for post-auth return. */
@@ -35,14 +36,14 @@ export function getSafeAuthReturnPath(raw: string | null | undefined): string | 
   return pathname
 }
 
-/** Post-auth URL: public menu return path when safe, otherwise shared `/home`. */
+/** Post-auth URL: public menu return path when safe, otherwise Advisor (feature default). */
 export function buildAuthContinueUrl(returnTo?: string | null): string {
   const safe = getSafeAuthReturnPath(returnTo)
   // Guest menus skip intermediate hops — auth-gated `/continue` briefly bounced to
   // `/login` when the session cookie was not visible yet (common on mobile).
-  // Default login lands on `/home` directly (avoids `/continue` → `/home` flash).
+  // Default login lands on Advisor directly (avoids `/continue` → default flash).
   if (safe) return safe
-  return routes.home
+  return getDefaultAuthenticatedPath()
 }
 
 /**

@@ -102,7 +102,7 @@ export function ChatMessageList() {
       const isActiveStream = isLast && (status === 'submitted' || status === 'streaming')
 
       const trailingThinking = isActiveStream
-        ? getAssistantTrailingThinkingState(msg, true, { visibleMessages })
+        ? getAssistantTrailingThinkingState(msg, true)
         : HIDDEN_TRAILING
 
       const actionsEnabled = isStoryGenerateConfirmationActionable({
