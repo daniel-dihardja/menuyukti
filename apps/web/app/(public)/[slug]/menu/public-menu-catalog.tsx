@@ -81,6 +81,8 @@ type Props = {
   currencyCode: string
   /** Locked table from `/{slug}/menu/t/{label}`; null on the shared menu URL. */
   tableLabel: string | null
+  /** When false, browse-only: hide Add / cart; existing open tickets still show. */
+  orderingEnabled: boolean
   allowDineIn: boolean
   allowPickup: boolean
   /** When false, skip menu-open earn and do not write the header points pill. */
@@ -221,6 +223,7 @@ export function PublicMenuCatalog({
   categories,
   currencyCode,
   tableLabel,
+  orderingEnabled,
   allowDineIn,
   allowPickup,
   pointSystemAvailable,
@@ -287,7 +290,8 @@ export function PublicMenuCatalog({
   const cartItemCount = cartLines.reduce((sum, line) => sum + line.qty, 0)
   const cartTotal = cartLines.reduce((sum, line) => sum + line.price * line.qty, 0)
   const hasCart = cartItemCount > 0
-  const orderingLocked = activeOrder != null
+  // Lock Add/cart when an open ticket exists or the menu is browse-only.
+  const orderingLocked = activeOrder != null || !orderingEnabled
 
   useEffect(() => {
     setCart(loadPublicMenuCart(locationId))
@@ -305,7 +309,7 @@ export function PublicMenuCatalog({
     }
   }, [basketOpen, hasCart])
 
-  // An open ticket is status-only — clear any leftover basket so guests cannot append.
+  // Open ticket or browse-only — clear leftover basket so guests cannot append/order.
   useEffect(() => {
     if (!orderingLocked || !cartHydrated) return
     setCart({})

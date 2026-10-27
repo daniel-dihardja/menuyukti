@@ -126,6 +126,7 @@ class PublicLocationMenuQuery:
                 workspace_id=strawberry.ID(workspace_id) if workspace_id else None,
                 media_owner_clerk_user_id=media_owner,
                 header_image_filename=menu.header_image_filename,
+                ordering_enabled=bool(menu.ordering_enabled),
                 allow_dine_in=bool(menu.allow_dine_in),
                 allow_pickup=bool(menu.allow_pickup),
                 allow_delivery=bool(menu.allow_delivery),

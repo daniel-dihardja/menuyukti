@@ -189,14 +189,33 @@
       "actionMenuKeys": []
     },
     {
-      "id": "salesReports",
-      "description": "Sales report upload / location reports (MVP off; code retained).",
+      "id": "pos",
+      "description": "Menuyukti POS (MVP off). Gates Import from Menuyukti POS on sales report upload; cashier UI deferred.",
       "enabled": false,
+      "audience": "all",
+      "routePrefixes": [],
+      "navKeys": [],
+      "actionMenuKeys": ["pos"]
+    },
+    {
+      "id": "salesReports",
+      "description": "Sales report upload / location reports (required for advisor sales-report selection).",
+      "enabled": true,
       "audience": "all",
       "routePrefixes": ["/analytics/locations/reports", "/analytics/sales"],
       "routePatterns": ["/analytics/locations/*/reports"],
       "navKeys": [],
       "actionMenuKeys": ["reports"]
+    },
+    {
+      "id": "cogs",
+      "description": "Location and analytics-run COGS create/edit (required for menu engineering and advisor sales context).",
+      "enabled": true,
+      "audience": "all",
+      "routePrefixes": [],
+      "routePatterns": ["/analytics/locations/*/cogs", "/analytics/*/cogs"],
+      "navKeys": [],
+      "actionMenuKeys": ["cogs"]
     },
     {
       "id": "studio",

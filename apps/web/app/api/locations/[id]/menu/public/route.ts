@@ -15,6 +15,7 @@ const updatePublicMenuSchema = z.object({
   /** Optional; omit to leave the location public slug unchanged. */
   publicSlug: z.string().max(128).nullable().optional(),
   headerImageFilename: z.string().max(512).nullable(),
+  orderingEnabled: z.boolean(),
   allowDineIn: z.boolean(),
   allowPickup: z.boolean(),
   /** Accepted for backward compatibility; always persisted as false. */
@@ -51,6 +52,7 @@ export async function PATCH(req: Request, context: RouteContext) {
       locationId: locId,
       publicEnabled: payload.publicEnabled,
       headerImageFilename: payload.headerImageFilename,
+      orderingEnabled: payload.orderingEnabled,
       allowDineIn: payload.allowDineIn,
       allowPickup: payload.allowPickup,
       // Delivery is no longer an offered digital-menu fulfillment mode.

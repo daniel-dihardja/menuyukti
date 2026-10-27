@@ -42,6 +42,7 @@ class UpdateLocationPublicMenuMutation:
         public_enabled: bool | None = UNSET,
         public_slug: str | None = UNSET,
         header_image_filename: str | None = UNSET,
+        ordering_enabled: bool | None = UNSET,
         allow_dine_in: bool | None = UNSET,
         allow_pickup: bool | None = UNSET,
         allow_delivery: bool | None = UNSET,
@@ -86,25 +87,34 @@ class UpdateLocationPublicMenuMutation:
                 cleaned = (header_image_filename or "").strip() or None
                 menu.header_image_filename = cleaned
 
+            if ordering_enabled is not UNSET:
+                menu.ordering_enabled = bool(ordering_enabled)
+
+            next_ordering_enabled = bool(menu.ordering_enabled)
             next_allow_dine_in = (
                 bool(allow_dine_in) if allow_dine_in is not UNSET else bool(menu.allow_dine_in)
             )
             next_allow_pickup = (
                 bool(allow_pickup) if allow_pickup is not UNSET else bool(menu.allow_pickup)
             )
-            if (
+            fulfillment_touched = (
                 allow_dine_in is not UNSET
                 or allow_pickup is not UNSET
                 or allow_delivery is not UNSET
-            ):
-                validate_menu_fulfillment_allows(
-                    allow_dine_in=next_allow_dine_in,
-                    allow_pickup=next_allow_pickup,
-                )
+            )
+            if fulfillment_touched:
+                # Delivery is no longer offered on the digital menu.
                 menu.allow_dine_in = next_allow_dine_in
                 menu.allow_pickup = next_allow_pickup
-                # Delivery is no longer offered on the digital menu.
                 menu.allow_delivery = False
+
+            if next_ordering_enabled and (
+                fulfillment_touched or ordering_enabled is not UNSET
+            ):
+                validate_menu_fulfillment_allows(
+                    allow_dine_in=bool(menu.allow_dine_in),
+                    allow_pickup=bool(menu.allow_pickup),
+                )
 
             session.commit()
             session.refresh(menu)

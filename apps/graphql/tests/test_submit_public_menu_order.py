@@ -274,6 +274,31 @@ def test_submit_rejected_when_menu_unpublished(published_menu_location):
     assert "not published" in result.errors[0].message
 
 
+def test_submit_rejected_when_ordering_disabled(published_menu_location):
+    location_id, item_id, _ = published_menu_location
+    session = SessionLocal()
+    try:
+        menu = session.query(Menu).filter(Menu.location_id == location_id).one()
+        menu.ordering_enabled = False
+        session.commit()
+    finally:
+        session.close()
+
+    result = asyncio.run(
+        schema.execute(
+            _SUBMIT,
+            variable_values={
+                "locationId": location_id,
+                "lines": [{"menuItemId": item_id, "qty": 1}],
+                "fulfillmentMode": "PICKUP",
+            },
+            context_value={"user_id": GUEST_USER_ID},
+        )
+    )
+    assert result.errors
+    assert "Ordering is disabled" in result.errors[0].message
+
+
 def test_submit_rejected_for_unavailable_item(published_menu_location):
     location_id, _, unavailable_id = published_menu_location
     result = asyncio.run(

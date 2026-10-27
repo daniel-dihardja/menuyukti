@@ -52,6 +52,12 @@ class Menu(Base):
         default=False,
         server_default=text("false"),
     )
+    ordering_enabled: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=True,
+        server_default=text("true"),
+    )
     allow_dine_in: Mapped[bool] = mapped_column(
         Boolean,
         nullable=False,

@@ -54,14 +54,23 @@ describe('feature-flags', () => {
     expect(isPathnameFeatureEnabled('/usage')).toBe(true)
   })
 
-  it('disables MVP-off inventar, team, and sales reports', () => {
+  it('disables MVP-off inventar, team, and pos', () => {
     expect(isPathnameFeatureEnabled('/inventar')).toBe(false)
     expect(isPathnameFeatureEnabled('/inventar/catalog')).toBe(false)
     expect(isPathnameFeatureEnabled('/team')).toBe(false)
-    expect(isPathnameFeatureEnabled('/analytics/locations/1/reports')).toBe(false)
-    expect(isPathnameFeatureEnabled('/analytics/locations/reports')).toBe(false)
-    expect(isPathnameFeatureEnabled('/analytics/sales')).toBe(false)
-    expect(isActionMenuKeyEnabled('reports')).toBe(false)
+    expect(isFeatureEnabled('pos')).toBe(false)
+    expect(isActionMenuKeyEnabled('pos')).toBe(false)
+  })
+
+  it('enables sales reports and COGS for advisor sales-report workflows', () => {
+    expect(isFeatureEnabled('salesReports')).toBe(true)
+    expect(isFeatureEnabled('cogs')).toBe(true)
+    expect(isPathnameFeatureEnabled('/analytics/locations/1/reports')).toBe(true)
+    expect(isPathnameFeatureEnabled('/analytics/locations/reports')).toBe(true)
+    expect(isPathnameFeatureEnabled('/analytics/sales')).toBe(true)
+    expect(isPathnameFeatureEnabled('/analytics/locations/1/cogs')).toBe(true)
+    expect(isPathnameFeatureEnabled('/analytics/abc/cogs')).toBe(true)
+    expect(isActionMenuKeyEnabled('reports')).toBe(true)
     expect(isActionMenuKeyEnabled('cogs')).toBe(true)
   })
 
