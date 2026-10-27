@@ -11,7 +11,11 @@ import { PageHeading } from '@/components/page-heading'
 import { getCachedLocationsListData } from '@/lib/graphql/cached-queries'
 import { graphqlQuery } from '@/lib/graphql/client'
 import { PLAYBOOK_QUERY, type PlaybookData } from '@/lib/graphql/queries/playbooks'
-import { getPlaybookBySlug, slugFromPlaybookType } from '@/lib/playbooks/catalog'
+import {
+  getPlaybookBySlug,
+  isPlaybookCatalogEntryEnabled,
+  slugFromPlaybookType,
+} from '@/lib/playbooks/catalog'
 import { formatLocationAddress } from '@/lib/playbooks/nearby-locations'
 import { routes } from '@/lib/routes'
 
@@ -23,7 +27,13 @@ export async function generateMetadata({ params }: PlaybookInstancePageProps): P
   const { slug, id: idParam } = await params
   const catalog = getPlaybookBySlug(slug)
   const id = Number(idParam)
-  if (!catalog || !catalog.supportsCreate || !Number.isInteger(id) || id < 1) {
+  if (
+    !catalog ||
+    !catalog.supportsCreate ||
+    !isPlaybookCatalogEntryEnabled(catalog) ||
+    !Number.isInteger(id) ||
+    id < 1
+  ) {
     return {}
   }
 
@@ -47,7 +57,13 @@ export default async function PlaybookInstancePage({ params }: PlaybookInstanceP
   const { slug, id: idParam } = await params
   const catalog = getPlaybookBySlug(slug)
   const id = Number(idParam)
-  if (!catalog || !catalog.supportsCreate || !Number.isInteger(id) || id < 1) {
+  if (
+    !catalog ||
+    !catalog.supportsCreate ||
+    !isPlaybookCatalogEntryEnabled(catalog) ||
+    !Number.isInteger(id) ||
+    id < 1
+  ) {
     notFound()
   }
 

@@ -73,6 +73,14 @@ describe('feature-flags', () => {
     expect(isNavKeyEnabled('playbooks')).toBe(true)
   })
 
+  it('disables nearby locations scan under playbookNearbyLocations', () => {
+    expect(isFeatureEnabled('playbookNearbyLocations')).toBe(false)
+    expect(isPathnameFeatureEnabled('/playbooks/nearby-locations')).toBe(false)
+    expect(isPathnameFeatureEnabled('/playbooks/nearby-locations/new')).toBe(false)
+    expect(isPathnameFeatureEnabled('/api/playbooks/nearby-locations/scan')).toBe(false)
+    expect(isPathnameFeatureEnabled('/playbooks/public-holidays')).toBe(true)
+  })
+
   it('enables sales reports and COGS for advisor sales-report workflows', () => {
     expect(isFeatureEnabled('salesReports')).toBe(true)
     expect(isFeatureEnabled('cogs')).toBe(true)

@@ -4,7 +4,7 @@ import Link from 'next/link'
 
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { PageHeading } from '@/components/page-heading'
-import { PLAYBOOK_CATALOG } from '@/lib/playbooks/catalog'
+import { getEnabledPlaybookCatalog } from '@/lib/playbooks/catalog'
 import { routes } from '@/lib/routes'
 import { Button } from '@workspace/ui/components/button'
 import {
@@ -30,7 +30,7 @@ export default async function PlaybooksPage() {
       <div className="flex flex-col gap-6">
         <PageHeading title={t('title')} description={t('description')} />
         <ul aria-label={t('catalogAria')} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {PLAYBOOK_CATALOG.map((playbook) => (
+          {getEnabledPlaybookCatalog().map((playbook) => (
             <li key={playbook.id}>
               <Card className="h-full gap-0 py-0">
                 <CardHeader className="py-6">

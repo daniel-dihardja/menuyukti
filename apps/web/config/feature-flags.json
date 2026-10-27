@@ -65,6 +65,15 @@
       "actionMenuKeys": []
     },
     {
+      "id": "playbookNearbyLocations",
+      "description": "Nearby locations scan playbook (MVP off; code retained).",
+      "enabled": false,
+      "audience": "all",
+      "routePrefixes": ["/playbooks/nearby-locations", "/api/playbooks/nearby-locations"],
+      "navKeys": [],
+      "actionMenuKeys": []
+    },
+    {
       "id": "analytics",
       "description": "Locations and analytics shell (menu primary; nested POS/reports gated separately).",
       "enabled": true,
