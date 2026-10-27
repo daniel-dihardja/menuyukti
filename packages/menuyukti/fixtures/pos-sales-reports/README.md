@@ -4,9 +4,12 @@ Small, committed Excel demos for POS ingest / normalizer work in `menuyukti`.
 
 Every POS workbook encodes the same line items from [`shared/demo-dataset.json`](./shared/demo-dataset.json).
 
-| POS   | Demo workbook                                                                                      |
-| ----- | -------------------------------------------------------------------------------------------------- |
-| `esb` | [`esb/SalesRecapitulationDetailReport_DEMO.xlsx`](./esb/SalesRecapitulationDetailReport_DEMO.xlsx) |
+| POS    | Demo workbook                                                                                      |
+| ------ | -------------------------------------------------------------------------------------------------- |
+| `esb`  | [`esb/SalesRecapitulationDetailReport_DEMO.xlsx`](./esb/SalesRecapitulationDetailReport_DEMO.xlsx) |
+| `moka` | [`moka/ItemDetails_DEMO.xlsx`](./moka/ItemDetails_DEMO.xlsx)                                       |
+
+Moka columns mirror Backoffice **Export Item Details** (payment + line-item fields). Shared `menu_category_detail` is stored in **Variant Name** so both demos keep identical analytics data.
 
 Large real vendor dumps stay local under gitignored `/reports/` — do not commit them here.
 

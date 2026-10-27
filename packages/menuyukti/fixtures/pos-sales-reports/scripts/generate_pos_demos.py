@@ -18,9 +18,12 @@ from openpyxl import Workbook
 FIXTURES_ROOT = Path(__file__).resolve().parents[1]
 SHARED_DATASET = FIXTURES_ROOT / "shared" / "demo-dataset.json"
 ESB_OUTPUT = FIXTURES_ROOT / "esb" / "SalesRecapitulationDetailReport_DEMO.xlsx"
+MOKA_OUTPUT = FIXTURES_ROOT / "moka" / "ItemDetails_DEMO.xlsx"
 
-HEADER_ROW = 11
-DATA_START_ROW = 12
+ESB_HEADER_ROW = 11
+ESB_DATA_START_ROW = 12
+MOKA_HEADER_ROW = 4
+MOKA_DATA_START_ROW = 5
 
 # Column order matches ESB Sales Recapitulation Detail Report (SNABB / 2026+).
 ESB_HEADERS: list[str] = [
@@ -72,6 +75,29 @@ ESB_HEADERS: list[str] = [
     "Order Time",
 ]
 
+# Moka Backoffice → Reports → Transactions → Export Item Details.
+# Headers follow Moka's payment + checkout line-item field names (API CheckoutApiItem /
+# Payment). Exact vendor Excel labels may vary slightly; this fixture is the
+# committed contract for iterative normalizer work until a live dump is available.
+MOKA_HEADERS: list[str] = [
+    "Payment No",
+    "Date",
+    "Created At",
+    "Outlet Name",
+    "Payment Type",
+    "Sales Type",
+    "Category",
+    "Item Name",
+    "Variant Name",
+    "SKU",
+    "Quantity",
+    "Price",
+    "Gross Sales",
+    "Discount",
+    "Net Sales",
+    "Collected By",
+]
+
 
 def _parse_order_time(value: str) -> datetime:
     return datetime.fromisoformat(value)
@@ -110,7 +136,7 @@ def _write_esb(dataset: dict, output_path: Path) -> int:
     ws["B9"] = "SalesRecapitulationDetailReport_DEMO"
 
     for col_idx, header in enumerate(ESB_HEADERS, start=1):
-        ws.cell(HEADER_ROW, col_idx, value=header)
+        ws.cell(ESB_HEADER_ROW, col_idx, value=header)
 
     for offset, item in enumerate(line_items):
         order_time = _parse_order_time(item["order_time"])
@@ -166,8 +192,66 @@ def _write_esb(dataset: dict, output_path: Path) -> int:
             "Waiter": "DEMO KASIR",
             "Order Time": order_time,
         }
-        excel_row = DATA_START_ROW + offset
+        excel_row = ESB_DATA_START_ROW + offset
         for col_idx, header in enumerate(ESB_HEADERS, start=1):
+            ws.cell(excel_row, col_idx, value=values.get(header))
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    wb.save(output_path)
+    wb.close()
+    return len(line_items)
+
+
+def _write_moka(dataset: dict, output_path: Path) -> int:
+    """Encode the shared dataset as a Moka Export Item Details workbook."""
+    meta = dataset["meta"]
+    line_items = dataset["line_items"]
+    period_start = date.fromisoformat(meta["period_start"])
+    period_end = date.fromisoformat(meta["period_end"])
+
+    wb = Workbook()
+    ws = wb.active
+    assert ws is not None
+    ws.title = "Item Details"
+
+    # A1 title used for future POS detection (Reports → Export Item Details).
+    ws["A1"] = "Item Details"
+    ws["A2"] = meta["location_name"]
+    ws["B2"] = (
+        f"{period_start.strftime('%d-%m-%Y')} - {period_end.strftime('%d-%m-%Y')}"
+    )
+
+    for col_idx, header in enumerate(MOKA_HEADERS, start=1):
+        ws.cell(MOKA_HEADER_ROW, col_idx, value=header)
+
+    for offset, item in enumerate(line_items):
+        order_time = _parse_order_time(item["order_time"])
+        sales_date = datetime(order_time.year, order_time.month, order_time.day)
+        qty = int(item["qty"])
+        price = float(item["price"])
+        subtotal = round(price * qty, 2)
+        # Preserve shared category_detail in Variant Name so both POS demos
+        # carry identical analytics fields (Moka has no separate subcategory).
+        values: dict[str, object] = {
+            "Payment No": item["bill_number"],
+            "Date": sales_date,
+            "Created At": order_time,
+            "Outlet Name": meta["location_name"],
+            "Payment Type": item["payment_method"],
+            "Sales Type": meta["visit_purpose"],
+            "Category": item["menu_category"],
+            "Item Name": item["menu"],
+            "Variant Name": item["menu_category_detail"],
+            "SKU": item.get("menu_code"),
+            "Quantity": qty,
+            "Price": price,
+            "Gross Sales": subtotal,
+            "Discount": 0.0,
+            "Net Sales": subtotal,
+            "Collected By": "DEMO KASIR",
+        }
+        excel_row = MOKA_DATA_START_ROW + offset
+        for col_idx, header in enumerate(MOKA_HEADERS, start=1):
             ws.cell(excel_row, col_idx, value=values.get(header))
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -193,6 +277,32 @@ def _smoke_esb(output_path: Path) -> None:
     )
 
 
+def _smoke_moka(output_path: Path, expected_rows: int) -> None:
+    import pandas as pd
+    from openpyxl import load_workbook
+
+    wb = load_workbook(output_path, data_only=True)
+    ws = wb.active
+    assert ws is not None
+    a1 = ws["A1"].value
+    wb.close()
+    if a1 != "Item Details":
+        raise SystemExit(f"ERROR: expected Moka A1 'Item Details', got {a1!r}")
+
+    df = pd.read_excel(output_path, skiprows=MOKA_HEADER_ROW - 1)
+    missing = [h for h in MOKA_HEADERS if h not in df.columns]
+    if missing:
+        raise SystemExit(f"ERROR: Moka fixture missing columns: {missing}")
+    if len(df) != expected_rows:
+        raise SystemExit(f"ERROR: expected {expected_rows} Moka rows, got {len(df)}")
+    if df["Payment No"].nunique() != 4:
+        raise SystemExit("ERROR: expected 4 distinct Moka Payment No values")
+    print(
+        f"Smoke Moka: a1={a1!r} rows={len(df)} "
+        f"bills={df['Payment No'].nunique()} menus={df['Item Name'].nunique()}"
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Generate POS sales-report demos from shared/demo-dataset.json"
@@ -205,25 +315,35 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--pos",
-        choices=("esb", "all"),
+        choices=("esb", "moka", "all"),
         default="all",
         help="Which POS demo(s) to generate (default: all)",
     )
     parser.add_argument(
         "--skip-smoke",
         action="store_true",
-        help="Skip menuyukti normalizer smoke check",
+        help="Skip menuyukti normalizer / fixture smoke check",
     )
     args = parser.parse_args(argv)
 
     dataset = _load_dataset(args.dataset)
-    targets = ["esb"] if args.pos in {"esb", "all"} else []
+    targets: list[str] = []
+    if args.pos == "all":
+        targets = ["esb", "moka"]
+    else:
+        targets = [args.pos]
 
     if "esb" in targets:
         n = _write_esb(dataset, ESB_OUTPUT)
         print(f"Wrote {ESB_OUTPUT} ({n} line items)")
         if not args.skip_smoke:
             _smoke_esb(ESB_OUTPUT)
+
+    if "moka" in targets:
+        n = _write_moka(dataset, MOKA_OUTPUT)
+        print(f"Wrote {MOKA_OUTPUT} ({n} line items)")
+        if not args.skip_smoke:
+            _smoke_moka(MOKA_OUTPUT, expected_rows=n)
 
     return 0
 
