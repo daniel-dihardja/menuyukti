@@ -203,17 +203,22 @@
       "title": "Sales Reports",
       "description": "Import paid tickets from Menuyukti POS or upload an Excel sales file to power analytics for each location.",
       "uploadInfo": {
-        "title": "Required Excel report by POS",
-        "description": "When uploading Excel, use the matching report file format below so the system can parse your sales data correctly.",
-        "reportLabel": "Upload this report",
+        "title": "Supported POS Excel uploads",
+        "description": "These POS systems are supported today. Upload the matching report type so we can detect and parse your file.",
+        "supportedLabel": "Supported now",
+        "reportLabel": "Required report",
         "reports": {
           "esb": {
             "pos": "ESB",
-            "report": "SalesRecapitulationDetail.xlsx"
+            "report": "Sales Recapitulation Detail Report"
           },
           "quino": {
             "pos": "Quino",
-            "report": "TransactionItemDetailReport.xlsx"
+            "report": "Transaction Item Detail Report"
+          },
+          "moka": {
+            "pos": "Moka",
+            "report": "Export Item Details"
           }
         }
       },
@@ -271,7 +276,9 @@
       "upload": {
         "cta": "Upload New Sales Report",
         "uploading": "Uploading…",
-        "detectedPos": "Detected POS:"
+        "detectedPos": "Detected POS:",
+        "fileInputLabel": "Upload analytics Excel file",
+        "supportedPos": "Supported POS: ESB, Moka"
       },
       "noBranches": {
         "title": "No locations yet",
