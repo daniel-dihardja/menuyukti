@@ -60,6 +60,7 @@ class MenuType:
     location_id: int
     title: str
     public_enabled: bool
+    ordering_enabled: bool
     allow_dine_in: bool
     allow_pickup: bool
     allow_delivery: bool

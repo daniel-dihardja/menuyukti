@@ -101,6 +101,8 @@ def submit_public_menu_order(
     menu = session.scalar(select(Menu).where(Menu.location_id == location_id))
     if menu is None or not bool(menu.public_enabled):
         raise ValueError("Public digital menu is not published for this location")
+    if not bool(menu.ordering_enabled):
+        raise ValueError("Ordering is disabled for this menu")
 
     existing = get_open_public_menu_order_for_guest(
         session,

@@ -11,6 +11,7 @@ import ImportPosClient from './import-pos-client'
 import UploadExcelClient from './upload-xcel-client'
 import { useImportPosAnalytics } from './use-import-pos-analytics'
 import { useUploadAnalytics } from './use-upload-analytics'
+import { isFeatureEnabled } from '@/lib/feature-flags'
 import { routes } from '@/lib/routes'
 import { useAnalytics } from '../use-analytics'
 
@@ -86,6 +87,7 @@ export function AnalyticsSalesClient({
 
   const uploads = initialAnalytics
   const hasUploads = uploads.length > 0
+  const showImportFromPos = isFeatureEnabled('pos')
 
   return (
     <div className="space-y-6">
@@ -99,16 +101,18 @@ export function AnalyticsSalesClient({
             className="w-full max-w-none sm:max-w-xs"
           />
         )}
-        <ImportPosClient
-          disabled={!locationId}
-          importing={importing}
-          status={importStatus}
-          errorMessage={importErrorMessage}
-          successName={importResult?.name ?? null}
-          successOrderCount={importResult?.orderCount ?? null}
-          successLineCount={importResult?.lineCount ?? null}
-          onImport={importPos}
-        />
+        {showImportFromPos ? (
+          <ImportPosClient
+            disabled={!locationId}
+            importing={importing}
+            status={importStatus}
+            errorMessage={importErrorMessage}
+            successName={importResult?.name ?? null}
+            successOrderCount={importResult?.orderCount ?? null}
+            successLineCount={importResult?.lineCount ?? null}
+            onImport={importPos}
+          />
+        ) : null}
         <UploadExcelClient
           disabled={!locationId}
           uploading={uploading}

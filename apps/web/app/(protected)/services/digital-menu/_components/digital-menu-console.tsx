@@ -35,6 +35,7 @@ type Props = {
   initialPublicEnabled: boolean
   initialPublicSlug: string
   initialHeaderImageFilename: string | null
+  initialOrderingEnabled: boolean
   initialAllowDineIn: boolean
   initialAllowPickup: boolean
   initialFeedbacks: MenuItemFeedbackRow[]
@@ -47,6 +48,7 @@ export function DigitalMenuConsole({
   initialPublicEnabled,
   initialPublicSlug,
   initialHeaderImageFilename,
+  initialOrderingEnabled,
   initialAllowDineIn,
   initialAllowPickup,
   initialFeedbacks,
@@ -58,6 +60,7 @@ export function DigitalMenuConsole({
   const [headerImageFilename, setHeaderImageFilename] = useState<string | null>(
     initialHeaderImageFilename,
   )
+  const [orderingEnabled, setOrderingEnabled] = useState(initialOrderingEnabled)
   const [allowDineIn, setAllowDineIn] = useState(initialAllowDineIn)
   const [allowPickup, setAllowPickup] = useState(initialAllowPickup)
   const [persistedPublicEnabled, setPersistedPublicEnabled] = useState(initialPublicEnabled)
@@ -116,7 +119,7 @@ export function DigitalMenuConsole({
       setError(t('errors.slugRequired'))
       return
     }
-    if (!allowDineIn && !allowPickup) {
+    if (orderingEnabled && !allowDineIn && !allowPickup) {
       setError(t('errors.fulfillmentRequired'))
       return
     }
@@ -128,6 +131,7 @@ export function DigitalMenuConsole({
         body: JSON.stringify({
           publicEnabled,
           headerImageFilename,
+          orderingEnabled,
           allowDineIn,
           allowPickup,
           // Delivery is no longer offered on the digital menu; clear any legacy flag.
@@ -156,6 +160,7 @@ export function DigitalMenuConsole({
         publicEnabled?: boolean
         menu?: {
           headerImageFilename?: string | null
+          orderingEnabled?: boolean
           allowDineIn?: boolean
           allowPickup?: boolean
         }
@@ -166,6 +171,9 @@ export function DigitalMenuConsole({
       }
       if (body.menu && 'headerImageFilename' in body.menu) {
         setHeaderImageFilename(body.menu.headerImageFilename ?? null)
+      }
+      if (typeof body.menu?.orderingEnabled === 'boolean') {
+        setOrderingEnabled(body.menu.orderingEnabled)
       }
       if (typeof body.menu?.allowDineIn === 'boolean') {
         setAllowDineIn(body.menu.allowDineIn)
@@ -296,8 +304,38 @@ export function DigitalMenuConsole({
         </section>
 
         <section className="border-border flex max-w-xl flex-col gap-4 rounded-lg border p-4">
+          <h2 className="text-base font-semibold">{t('orderingTitle')}</h2>
+          <FieldGroup>
+            <Field orientation="horizontal" className="items-center justify-between gap-4">
+              <div className="flex flex-col gap-1">
+                <FieldLabel htmlFor="digital-menu-ordering-enabled">
+                  {t('orderingEnabled')}
+                </FieldLabel>
+                <p className="text-muted-foreground text-xs">{t('orderingEnabledHint')}</p>
+              </div>
+              <Switch
+                id="digital-menu-ordering-enabled"
+                checked={orderingEnabled}
+                onCheckedChange={(next) => {
+                  setOrderingEnabled(next)
+                  setSaved(false)
+                  setError(null)
+                }}
+                disabled={loading}
+              />
+            </Field>
+          </FieldGroup>
+        </section>
+
+        <section
+          className={`border-border flex max-w-xl flex-col gap-4 rounded-lg border p-4 ${
+            orderingEnabled ? '' : 'opacity-60'
+          }`}
+        >
           <h2 className="text-base font-semibold">{t('fulfillmentTitle')}</h2>
-          <p className="text-muted-foreground text-xs">{t('fulfillmentHint')}</p>
+          <p className="text-muted-foreground text-xs">
+            {orderingEnabled ? t('fulfillmentHint') : t('fulfillmentDisabledHint')}
+          </p>
           <FieldGroup>
             <Field orientation="horizontal" className="items-center justify-between gap-4">
               <div className="flex flex-col gap-1">
@@ -312,7 +350,7 @@ export function DigitalMenuConsole({
                   setSaved(false)
                   setError(null)
                 }}
-                disabled={loading}
+                disabled={loading || !orderingEnabled}
               />
             </Field>
             <Field orientation="horizontal" className="items-center justify-between gap-4">
@@ -328,10 +366,10 @@ export function DigitalMenuConsole({
                   setSaved(false)
                   setError(null)
                 }}
-                disabled={loading}
+                disabled={loading || !orderingEnabled}
               />
             </Field>
-            {publicEnabled && livePublicPath && allowDineIn ? (
+            {publicEnabled && livePublicPath && orderingEnabled && allowDineIn ? (
               <Field>
                 <FieldLabel htmlFor="digital-menu-table-label">{t('tableLabel')}</FieldLabel>
                 <p className="text-muted-foreground text-xs">{t('tableLabelHint')}</p>
