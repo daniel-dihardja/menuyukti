@@ -8,10 +8,6 @@ export type AssistantTrailingThinkingState = {
   labelKey: AssistantTrailingThinkingLabelKey
 }
 
-export type AssistantTrailingThinkingOptions = {
-  visibleMessages?: readonly UIMessage[]
-}
-
 type PartScanResult = {
   hasTool: boolean
   hasInFlightTool: boolean
@@ -56,7 +52,6 @@ function scanAssistantParts(parts: UIMessage['parts']): PartScanResult {
 export function getAssistantTrailingThinkingState(
   message: UIMessage,
   isActiveStream: boolean,
-  _options: AssistantTrailingThinkingOptions = {},
 ): AssistantTrailingThinkingState {
   const hidden: AssistantTrailingThinkingState = { show: false, labelKey: 'thinking' }
 
@@ -83,7 +78,6 @@ export function getAssistantTrailingThinkingState(
 export function shouldShowAssistantTrailingThinking(
   message: UIMessage,
   isActiveStream: boolean,
-  options: AssistantTrailingThinkingOptions = {},
 ): boolean {
-  return getAssistantTrailingThinkingState(message, isActiveStream, options).show
+  return getAssistantTrailingThinkingState(message, isActiveStream).show
 }
