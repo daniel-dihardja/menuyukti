@@ -112,9 +112,9 @@ export function AccountMenu({ className }: AccountMenuProps) {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-[12rem]">
         <div className="border-b px-2 py-2">
-          <p className="truncate text-sm font-medium">{name}</p>
+          <p className="truncate type-chrome font-medium">{name}</p>
           {user.primaryEmailAddress?.emailAddress ? (
-            <p className="text-muted-foreground truncate text-xs">
+            <p className="text-muted-foreground truncate type-caption">
               {user.primaryEmailAddress.emailAddress}
             </p>
           ) : null}
@@ -126,7 +126,7 @@ export function AccountMenu({ className }: AccountMenuProps) {
           <Link href={routes.analytics.branches}>{t('workspace')}</Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuLabel className="text-muted-foreground text-xs font-normal">
+        <DropdownMenuLabel className="text-muted-foreground type-caption font-normal">
           {t('language')}
         </DropdownMenuLabel>
         <DropdownMenuRadioGroup

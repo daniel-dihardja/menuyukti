@@ -109,7 +109,7 @@ export function SchedulerCalendarMonthGrid({
             key={label}
             role="columnheader"
             className={cn(
-              'border-b border-r border-border/60 bg-muted/40 px-1 py-2 text-center text-[11px] font-medium uppercase tracking-wide text-muted-foreground last:border-r-0',
+              'border-b border-r border-border/60 bg-muted/40 px-1 py-2 text-center type-caption font-medium uppercase tracking-wide text-muted-foreground last:border-r-0',
               weekendWeekdayIndexes.has(weekdayIndex) && SCHEDULER_WEEKEND_HEADER_CLASS,
             )}
           >
@@ -166,7 +166,7 @@ export function SchedulerCalendarMonthGrid({
                 <div className="flex shrink-0 items-center gap-1">
                   {isPublicHoliday ? (
                     <span
-                      className={cn(SCHEDULER_HOLIDAY_BADGE_CLASS, 'px-1 py-0.5 text-[9px]')}
+                      className={cn(SCHEDULER_HOLIDAY_BADGE_CLASS, 'px-1 py-0.5 type-caption')}
                       title={holidayName}
                     >
                       {t('milestoneSchedulerPreviewHolidayBadge')}

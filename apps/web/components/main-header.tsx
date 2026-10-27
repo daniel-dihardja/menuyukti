@@ -73,7 +73,9 @@ export function MainHeader() {
             aria-label={t('brandAria')}
           >
             <MenuyuktiBrandIcon className="size-5 text-foreground" />
-            <span className="text-sm font-semibold tracking-tight md:text-base">{t('brand')}</span>
+            <span className="type-chrome font-semibold tracking-tight md:text-base">
+              {t('brand')}
+            </span>
           </Link>
 
           {!isGuestLocation && showExplore ? (
@@ -82,7 +84,7 @@ export function MainHeader() {
                 href={routes.explore}
                 aria-current={isExplore ? 'page' : undefined}
                 className={cn(
-                  'rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors',
+                  'rounded-md px-2.5 py-1.5 type-chrome font-medium transition-colors',
                   isExplore ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
                 )}
               >
@@ -95,7 +97,7 @@ export function MainHeader() {
         <div className="flex shrink-0 items-center gap-2 pe-3 sm:pe-4">
           {guestPointsToShow != null ? (
             <span
-              className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1 text-xs font-medium tabular-nums text-foreground"
+              className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1 type-caption font-medium tabular-nums text-foreground"
               aria-label={tPublic('pointsBalanceAria', { balance: guestPointsToShow })}
             >
               <Coins className="size-3.5 shrink-0 text-warning" aria-hidden />

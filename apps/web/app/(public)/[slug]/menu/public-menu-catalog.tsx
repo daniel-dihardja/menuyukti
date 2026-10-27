@@ -724,7 +724,7 @@ export function PublicMenuCatalog({
                     {t('order.myOrderStickyLabel')}
                   </span>
                   {activeOrderItemCount > 0 ? (
-                    <span className="bg-foreground text-background rounded-md px-1.5 py-0.5 text-[11px] font-semibold tabular-nums">
+                    <span className="bg-foreground text-background rounded-md px-1.5 py-0.5 type-caption font-semibold tabular-nums">
                       {activeOrderItemCount}
                     </span>
                   ) : null}
@@ -876,7 +876,7 @@ export function PublicMenuCatalog({
                               <Badge
                                 key={`diet-${tag}`}
                                 variant="secondary"
-                                className="rounded-full px-2 py-0 text-[11px] font-medium"
+                                className="rounded-full px-2 py-0 type-caption font-medium"
                               >
                                 {t(`dietary.${tag as MenuDietaryTag}`)}
                               </Badge>
@@ -885,7 +885,7 @@ export function PublicMenuCatalog({
                               <Badge
                                 key={`all-${allergen}`}
                                 variant="outline"
-                                className="rounded-full px-2 py-0 text-[11px] font-medium"
+                                className="rounded-full px-2 py-0 type-caption font-medium"
                               >
                                 {t(`allergens.${allergen as MenuAllergen}`)}
                               </Badge>

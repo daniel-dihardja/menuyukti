@@ -66,7 +66,7 @@ export async function ShopPrintOrdersPreview() {
                     />
                   </div>
                   {p.digitalDeliverable ? (
-                    <p className="mb-2 text-[11px] leading-snug text-muted-foreground">
+                    <p className="mb-2 type-caption leading-snug text-muted-foreground">
                       {shopT('digitalPrintQualityCaption')}
                     </p>
                   ) : null}
