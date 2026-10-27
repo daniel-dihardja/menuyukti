@@ -278,28 +278,22 @@ def _smoke_esb(output_path: Path) -> None:
 
 
 def _smoke_moka(output_path: Path, expected_rows: int) -> None:
-    import pandas as pd
-    from openpyxl import load_workbook
+    from menuyukti.core.analytics.moka import normalize_moka_excel
+    from menuyukti.core.analytics.pos_detector import detect_pos_from_excel_bytes
 
-    wb = load_workbook(output_path, data_only=True)
-    ws = wb.active
-    assert ws is not None
-    a1 = ws["A1"].value
-    wb.close()
-    if a1 != "Item Details":
-        raise SystemExit(f"ERROR: expected Moka A1 'Item Details', got {a1!r}")
+    payload = output_path.read_bytes()
+    detected = detect_pos_from_excel_bytes(payload)
+    if detected != "moka":
+        raise SystemExit(f"ERROR: expected POS detect 'moka', got {detected!r}")
 
-    df = pd.read_excel(output_path, skiprows=MOKA_HEADER_ROW - 1)
-    missing = [h for h in MOKA_HEADERS if h not in df.columns]
-    if missing:
-        raise SystemExit(f"ERROR: Moka fixture missing columns: {missing}")
+    df = normalize_moka_excel(payload)
     if len(df) != expected_rows:
         raise SystemExit(f"ERROR: expected {expected_rows} Moka rows, got {len(df)}")
-    if df["Payment No"].nunique() != 4:
-        raise SystemExit("ERROR: expected 4 distinct Moka Payment No values")
+    if df["bill_number"].nunique() != 4:
+        raise SystemExit("ERROR: expected 4 distinct Moka bill_number values")
     print(
-        f"Smoke Moka: a1={a1!r} rows={len(df)} "
-        f"bills={df['Payment No'].nunique()} menus={df['Item Name'].nunique()}"
+        f"Smoke Moka: pos={detected} rows={len(df)} "
+        f"bills={df['bill_number'].nunique()} menus={df['menu'].nunique()}"
     )
 
 

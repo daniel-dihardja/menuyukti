@@ -16,6 +16,7 @@ from collections.abc import Callable
 from typing import Any
 
 from menuyukti.core.analytics.esb.normalizer import normalize_esb_excel
+from menuyukti.core.analytics.moka.normalizer import normalize_moka_excel
 from menuyukti.core.analytics.quino.normalizer import normalize_quino_excel
 
 Normalizer = Callable[..., Any]
@@ -23,6 +24,7 @@ Normalizer = Callable[..., Any]
 NORMALIZERS: dict[str, Normalizer] = {
     "esb": normalize_esb_excel,
     "quino": normalize_quino_excel,
+    "moka": normalize_moka_excel,
 }
 
 

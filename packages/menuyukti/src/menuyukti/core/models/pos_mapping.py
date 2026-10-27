@@ -9,6 +9,7 @@ ESB column names are the canonical schema - other POS systems map to them.
 POS_CONFIG = {
     "esb": ("sales recapitulation", 10, {}),  # header on Excel row 11 (2026+ export)
     "quino": ("transaction item detail report", 3, {}),
+    "moka": ("item details", 3, {}),  # header on Excel row 4 (Export Item Details)
     # Add new POS systems here:
     # "toast": ("toast", 0, {"check_id": "bill_number", "item_name": "menu", "quantity": "qty"}),
     # "square": ("square", 1, {"order_id": "bill_number", "item": "menu"}),
