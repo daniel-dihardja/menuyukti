@@ -35,12 +35,8 @@ function ChatMessageRowInner({
   threadMessages,
 }: ChatMessageRowProps) {
   const tChat = useTranslations('chat')
-  const tWeeklySchedule = useTranslations('chatTools.presentWeeklyInstagramSchedule')
   const showFallbackSpinner = shouldShowAssistantThinkingFallback(message, isActiveStream)
-  const trailingLabel =
-    trailingThinking.labelKey === 'buildingWeeklyPlan'
-      ? tWeeklySchedule('running')
-      : tChat('thinking')
+  const trailingLabel = tChat('thinking')
   const isAssistant = message.role === 'assistant'
 
   return (

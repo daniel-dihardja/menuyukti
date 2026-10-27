@@ -14,7 +14,6 @@ from agents_app.agents.core.chatkit.widgets import (
     generated_image_widget,
     story_confirm_widget,
     tool_status_widget,
-    weekly_schedule_widget,
 )
 
 
@@ -24,30 +23,6 @@ def test_story_confirm_widget_actions() -> None:
     assert "story.generate" in text
     assert "story.change" in text
     assert "Ready?" in text
-
-
-def test_weekly_schedule_widget_client_actions_and_days() -> None:
-    payload = {
-        "title": "Week plan",
-        "summary": "Busy week",
-        "days": [
-            {
-                "day": "monday",
-                "time": "10:00",
-                "format": "story",
-                "menu_items": "Ramen",
-                "caption_angle": "Steam shot",
-                "why": "Peak lunch",
-            }
-        ],
-    }
-    card = weekly_schedule_widget(payload)
-    text = str(card.model_dump(mode="json"))
-    assert "Week plan" in text
-    assert "monday" in text.lower() or "Monday" in text
-    assert "schedule.export_ics" in text
-    assert "schedule.share" in text
-    assert '"handler": "client"' in text or "'handler': 'client'" in text or "client" in text
 
 
 def test_generated_image_widget() -> None:

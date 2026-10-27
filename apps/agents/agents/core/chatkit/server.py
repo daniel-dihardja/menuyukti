@@ -135,7 +135,6 @@ def _menuyukti_chatkit_server_cls() -> type:
                 async for event in self.respond(thread, fake, context):
                     yield event
                 return
-            # schedule.export_ics / schedule.share are client-handled (handler="client").
             _logger.info("Unhandled ChatKit action type=%s", action_type)
 
     _SERVER_CLS = MenuyuktiChatKitServer

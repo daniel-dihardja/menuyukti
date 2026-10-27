@@ -1,8 +1,7 @@
-"""ChatKit widgets for advisor generative UI (story, schedule, image, tool status)."""
+"""ChatKit widgets for advisor generative UI (story, image, tool status)."""
 
 from __future__ import annotations
 
-import json
 from typing import Any, Literal
 
 from chatkit.actions import ActionConfig
@@ -46,93 +45,6 @@ def story_confirm_widget(*, message: str = "Ready to generate?") -> Card:
             )
         ]
     )
-
-
-def _parse_schedule(schedule_payload: str | dict[str, Any]) -> dict[str, Any]:
-    if isinstance(schedule_payload, str):
-        try:
-            data = json.loads(schedule_payload)
-        except json.JSONDecodeError:
-            return {"raw": schedule_payload, "title": "Weekly Instagram schedule", "days": []}
-        return data if isinstance(data, dict) else {"raw": schedule_payload, "days": []}
-    return schedule_payload if isinstance(schedule_payload, dict) else {"days": []}
-
-
-def _day_rows(data: dict[str, Any]) -> list[Any]:
-    raw_days = data.get("days") or data.get("schedule") or data.get("slots") or []
-    if isinstance(raw_days, dict):
-        raw_days = list(raw_days.values())
-    if not isinstance(raw_days, list):
-        return []
-    rows: list[Any] = []
-    for item in raw_days[:14]:
-        if not isinstance(item, dict):
-            continue
-        day = str(item.get("day") or item.get("weekday") or "").strip() or "—"
-        time = str(item.get("time") or item.get("posting_time") or "—").strip()
-        fmt = str(item.get("format") or item.get("type") or "post").strip()
-        menus = str(
-            item.get("menu_items") or item.get("menuItems") or item.get("menus") or "—"
-        ).strip()
-        caption = str(
-            item.get("caption_angle") or item.get("caption") or item.get("angle") or ""
-        ).strip()
-        line = f"{day.title()} · {time} · {fmt}"
-        detail = menus if not caption else f"{menus} — {caption}"
-        rows.append(
-            Col(
-                gap=0,
-                children=[
-                    Text(value=line, size="sm", weight="semibold"),
-                    Caption(value=detail[:200] if detail else "—"),
-                ],
-            )
-        )
-    return rows
-
-
-def weekly_schedule_widget(schedule_payload: str | dict[str, Any]) -> Card:
-    data = _parse_schedule(schedule_payload)
-    title = str(data.get("title") or data.get("weekLabel") or "Weekly Instagram schedule")
-    summary = str(data.get("summary") or data.get("description") or "").strip()
-    day_children = _day_rows(data)
-    if not day_children and data.get("raw"):
-        day_children = [Text(value=str(data["raw"])[:600], size="sm")]
-    if not day_children:
-        day_children = [Text(value="Schedule ready.", size="sm")]
-
-    children: list[Any] = [
-        Title(value=title, size="md"),
-    ]
-    if summary:
-        children.append(Caption(value=summary[:300]))
-    children.extend(day_children)
-    children.append(
-        Row(
-            gap=2,
-            children=[
-                Button(
-                    label="Export ICS",
-                    onClickAction=ActionConfig(
-                        type="schedule.export_ics",
-                        payload={"schedule": data},
-                        handler="client",
-                    ),
-                    color="primary",
-                ),
-                Button(
-                    label="Share",
-                    onClickAction=ActionConfig(
-                        type="schedule.share",
-                        payload={"schedule": data},
-                        handler="client",
-                    ),
-                    color="secondary",
-                ),
-            ],
-        )
-    )
-    return Card(children=[Col(gap=3, children=children)])
 
 
 def generated_image_widget(*, url: str, caption: str | None = None) -> Card:

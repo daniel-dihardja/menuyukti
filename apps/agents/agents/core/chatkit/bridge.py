@@ -21,7 +21,6 @@ from agents_app.agents.core.chatkit.widgets import (
     generated_image_widget,
     story_confirm_widget,
     tool_status_widget,
-    weekly_schedule_widget,
 )
 from agents_app.agents.errors import structured_error_payload
 from chatkit.types import (
@@ -174,8 +173,6 @@ def _progress_for_tool_start(
         return ("Saving story asset…", "images")
     if tool_name == "clear_story_assets":
         return ("Clearing story assets…", "images")
-    if tool_name == "present_weekly_instagram_schedule":
-        return ("Building weekly Instagram plan…", "calendar")
     if tool_name == "generate_instagram_post_image":
         return ("Generating post image…", "images")
     if tool_name == "list_media" or tool_name == "list_media_collections":
@@ -217,8 +214,6 @@ def _progress_for_tool_end(
             if _tool_output_looks_like_error(output)
             else "Story assets cleared"
         )
-    if tool_name == "present_weekly_instagram_schedule":
-        return "Weekly Instagram plan ready"
     if tool_name == "generate_instagram_post_image":
         return (
             "Image generation failed"
@@ -440,13 +435,6 @@ async def stream_langgraph_as_chatkit(
                             async for widget_event in emit_widget_done(
                                 thread,
                                 story_confirm_widget(message=msg),
-                                generate_id=_gen_id,
-                            ):
-                                yield widget_event
-                        elif tool_name == "present_weekly_instagram_schedule" and output:
-                            async for widget_event in emit_widget_done(
-                                thread,
-                                weekly_schedule_widget(output),
                                 generate_id=_gen_id,
                             ):
                                 yield widget_event
