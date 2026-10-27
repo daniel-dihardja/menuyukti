@@ -3,8 +3,8 @@
 import { useClerk, useUser } from '@clerk/nextjs'
 import { ChevronDown } from 'lucide-react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { useTranslations } from 'next-intl'
+import { usePathname, useRouter } from 'next/navigation'
+import { useLocale, useTranslations } from 'next-intl'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@workspace/ui/components/avatar'
 import { Button } from '@workspace/ui/components/button'
@@ -12,6 +12,9 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@workspace/ui/components/dropdown-menu'
@@ -19,6 +22,11 @@ import { cn } from '@workspace/ui/lib/utils'
 
 import { withProfileImageParams } from '@/lib/clerk-profile-image'
 import { getSafeAuthReturnPath } from '@/lib/auth-return-path'
+import {
+  isLanguageMenuLocale,
+  setLocalePreferenceCookie,
+  type LanguageMenuLocale,
+} from '@/lib/locale-preference'
 import { routes } from '@/lib/routes'
 
 const AVATAR_PX = 28
@@ -56,12 +64,16 @@ export type AccountMenuProps = {
 
 export function AccountMenu({ className }: AccountMenuProps) {
   const t = useTranslations('accountMenu')
+  const locale = useLocale()
+  const router = useRouter()
   const pathname = usePathname()
   const { user, isLoaded } = useUser()
   const { signOut } = useClerk()
   /** Stay on guest surfaces (landing or public menu) after sign-out; otherwise go to login. */
   const signOutRedirectUrl =
     pathname === routes.root ? routes.root : (getSafeAuthReturnPath(pathname) ?? routes.login)
+
+  const languageValue: LanguageMenuLocale = isLanguageMenuLocale(locale) ? locale : 'en'
 
   if (!isLoaded) {
     return (
@@ -100,9 +112,9 @@ export function AccountMenu({ className }: AccountMenuProps) {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-[12rem]">
         <div className="border-b px-2 py-2">
-          <p className="truncate text-sm font-medium">{name}</p>
+          <p className="truncate type-chrome font-medium">{name}</p>
           {user.primaryEmailAddress?.emailAddress ? (
-            <p className="text-muted-foreground truncate text-xs">
+            <p className="text-muted-foreground truncate type-caption">
               {user.primaryEmailAddress.emailAddress}
             </p>
           ) : null}
@@ -113,6 +125,21 @@ export function AccountMenu({ className }: AccountMenuProps) {
         <DropdownMenuItem asChild>
           <Link href={routes.analytics.branches}>{t('workspace')}</Link>
         </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel className="text-muted-foreground type-caption font-normal">
+          {t('language')}
+        </DropdownMenuLabel>
+        <DropdownMenuRadioGroup
+          value={languageValue}
+          onValueChange={(value) => {
+            if (!isLanguageMenuLocale(value) || value === languageValue) return
+            setLocalePreferenceCookie(value)
+            router.refresh()
+          }}
+        >
+          <DropdownMenuRadioItem value="en">{t('languageEn')}</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="id">{t('languageId')}</DropdownMenuRadioItem>
+        </DropdownMenuRadioGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           variant="destructive"

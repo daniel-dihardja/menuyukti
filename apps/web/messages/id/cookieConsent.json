@@ -1,0 +1,14 @@
+{
+  "cookieConsent": {
+    "title": "Pelacakan penting",
+    "description": "Menuyukti menggunakan Google Analytics 4 untuk menghitung tampilan halaman di halaman publik dan workspace saat masuk agar kami dapat melihat bagaimana produk digunakan. Toko cetak tidak dilacak.",
+    "privacyLink": "Baca Kebijakan Privasi",
+    "dismiss": "Mengerti",
+    "settingsLink": "Pengaturan cookie",
+    "preferences": {
+      "essentialTitle": "Penting",
+      "essentialDescription": "Termasuk masuk, keamanan, fungsi inti platform, dan pengukuran penggunaan situs (tampilan halaman di halaman publik dan workspace). Selalu aktif. Toko cetak tidak termasuk.",
+      "essentialAria": "Cookie penting (selalu aktif)"
+    }
+  }
+}

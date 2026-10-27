@@ -3,6 +3,9 @@
     "triggerAria": "Open account menu",
     "profile": "Profile",
     "workspace": "Workspace",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "language": "Language",
+    "languageEn": "English",
+    "languageId": "Indonesia"
   }
 }

@@ -12,7 +12,7 @@ import { PageHeading } from '@/components/page-heading'
 import { getCachedLocationsListData } from '@/lib/graphql/cached-queries'
 import { graphqlQuery } from '@/lib/graphql/client'
 import { PLAYBOOKS_QUERY, type PlaybooksData } from '@/lib/graphql/queries/playbooks'
-import { getPlaybookBySlug } from '@/lib/playbooks/catalog'
+import { getPlaybookBySlug, isPlaybookCatalogEntryEnabled } from '@/lib/playbooks/catalog'
 import { routes } from '@/lib/routes'
 import { Button } from '@workspace/ui/components/button'
 import {
@@ -41,7 +41,7 @@ function PlaybookOverviewSkeleton() {
 async function PlaybookOverviewContent({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const catalog = getPlaybookBySlug(slug)
-  if (!catalog) {
+  if (!catalog || !isPlaybookCatalogEntryEnabled(catalog)) {
     notFound()
   }
 
@@ -104,7 +104,7 @@ async function PlaybookOverviewContent({ params }: { params: Promise<{ slug: str
 export async function generateMetadata({ params }: PlaybookOverviewPageProps): Promise<Metadata> {
   const { slug } = await params
   const playbook = getPlaybookBySlug(slug)
-  if (!playbook) {
+  if (!playbook || !isPlaybookCatalogEntryEnabled(playbook)) {
     return {}
   }
 

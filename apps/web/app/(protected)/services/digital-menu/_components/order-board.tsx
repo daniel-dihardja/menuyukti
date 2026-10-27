@@ -376,7 +376,7 @@ export function OrderBoard({ locationId, locationName }: Props) {
                   >
                     <span>{col.label}</span>
                     {byColumn[col.id].length > 0 ? (
-                      <Badge variant="secondary" className="px-1.5 py-0 text-[10px] tabular-nums">
+                      <Badge variant="secondary" className="px-1.5 py-0 type-caption tabular-nums">
                         {byColumn[col.id].length}
                       </Badge>
                     ) : null}

@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server'
 import { ZodError } from 'zod'
 
 import { buildAgentsHeaders } from '@/lib/agents/headers'
-import { getPythonAgentsUrl } from '@/lib/config'
 import { requireAuthenticatedApi } from '@/lib/authenticated-api'
+import { getPythonAgentsUrl } from '@/lib/config'
+import { isFeatureEnabled } from '@/lib/feature-flags'
 
 import { nearbyScanBodySchema, nearbyScanResponseSchema } from './schema'
 
@@ -11,6 +12,10 @@ export const maxDuration = 180
 
 export async function POST(req: Request) {
   try {
+    if (!isFeatureEnabled('playbookNearbyLocations')) {
+      return NextResponse.json({ message: 'Not found' }, { status: 404 })
+    }
+
     const authz = await requireAuthenticatedApi()
     if (!authz.ok) return authz.response
     const { userId } = authz

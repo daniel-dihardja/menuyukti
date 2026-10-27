@@ -57,11 +57,20 @@
     },
     {
       "id": "playbooks",
-      "description": "Playbook library (MVP off; code retained).",
-      "enabled": false,
+      "description": "Playbook library (MVP on).",
+      "enabled": true,
       "audience": "all",
       "routePrefixes": ["/playbooks"],
       "navKeys": ["playbooks"],
+      "actionMenuKeys": []
+    },
+    {
+      "id": "playbookNearbyLocations",
+      "description": "Nearby locations scan playbook (MVP off; code retained).",
+      "enabled": false,
+      "audience": "all",
+      "routePrefixes": ["/playbooks/nearby-locations", "/api/playbooks/nearby-locations"],
+      "navKeys": [],
       "actionMenuKeys": []
     },
     {

@@ -5,10 +5,10 @@ import { segmentUserMessageForCommandBadges } from '@/lib/chat/segment-user-mess
 import { stripLlmOnlyChatSections } from '@/lib/chat/strip-llm-only-chat-sections'
 
 const slashBadgeClass =
-  'inline-flex max-w-full items-center rounded-md border border-[color-mix(in_srgb,var(--color-accent)_32%,transparent)] bg-gradient-to-b from-[color-mix(in_srgb,var(--color-accent-soft)_92%,white)] to-[color-mix(in_srgb,var(--color-mint)_70%,var(--color-surface))] px-2 py-0.5 align-baseline font-mono text-[0.7rem] font-semibold tracking-wide text-ink shadow-[inset_0_1px_0_0_rgba(255,255,255,0.65)]'
+  'inline-flex max-w-full items-center rounded-md border border-[color-mix(in_srgb,var(--color-accent)_32%,transparent)] bg-gradient-to-b from-[color-mix(in_srgb,var(--color-accent-soft)_92%,white)] to-[color-mix(in_srgb,var(--color-mint)_70%,var(--color-surface))] px-2 py-0.5 align-baseline font-mono type-caption font-semibold tracking-wide text-ink shadow-[inset_0_1px_0_0_rgba(255,255,255,0.65)]'
 
 const mentionBadgeClass =
-  'tone-analytics inline-flex max-w-full items-center rounded-md border px-2 py-0.5 align-baseline text-[0.7rem] font-medium tracking-tight shadow-[inset_0_1px_0_0_rgba(255,255,255,0.65)]'
+  'tone-analytics inline-flex max-w-full items-center rounded-md border px-2 py-0.5 align-baseline type-caption font-medium tracking-tight shadow-[inset_0_1px_0_0_rgba(255,255,255,0.65)]'
 
 export function UserMessageWithCommandBadges({
   text,
@@ -31,12 +31,12 @@ export function UserMessageWithCommandBadges({
   return (
     <span
       className={cn(
-        'inline-block whitespace-pre-wrap break-words text-sm leading-relaxed',
+        'inline-block whitespace-pre-wrap break-words type-body leading-relaxed',
         className,
       )}
     >
       {hasAttachments ? (
-        <span className="mb-1 block text-muted-foreground text-xs">
+        <span className="mb-1 block text-muted-foreground type-caption">
           {attachedMediaNames.map((name) => (
             <span className="mr-2 inline-block last:mr-0" key={name} title={name}>
               {name}

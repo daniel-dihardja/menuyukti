@@ -1,0 +1,146 @@
+{
+  "shop": {
+    "listPageLoadingTitle": "Memuat toko…",
+    "listMetaTitle": "The Digital Curator | Seni Dinding Gratis untuk Restoran, Bar & Kafe",
+    "listMetaDescription": "Tingkatkan restoran, ruang makan, bar, atau kafe Anda. Karya seni cetak bertema gastronomi — adegan dapur, budaya bar, jiwa hospitality — tersedia sebagai unduhan resolusi tinggi secara gratis. Siap cetak 18×24 in, 300 DPI. Gratis.",
+    "nav": {
+      "brand": "Menuyukti",
+      "brandAria": "Beranda toko cetak Menuyukti",
+      "tagline": "Print-on-demand dengan jiwa dapur dan bar — bagian dari workspace Menuyukti Anda.",
+      "signedInNavAria": "Navigasi workspace",
+      "backDashboard": "Dasbor",
+      "backChat": "Chat",
+      "backBranches": "Cabang",
+      "backStudio": "IG Studio",
+      "navigationMenuTriggerAria": "Buka menu navigasi",
+      "shopMenuTitle": "Navigasi",
+      "shopMenuDescription": "Area situs dan pintasan workspace dari toko cetak.",
+      "workspaceSectionHeading": "Workspace",
+      "workspaceMenuDescription": "Buka Cabang atau tetap di toko cetak."
+    },
+    "skipToContent": "Lewati ke produk",
+    "filterAria": "Filter menurut koleksi",
+    "noImagesAvailable": "Tidak ada gambar yang tersedia saat ini.",
+    "footer": {
+      "about": "Tentang",
+      "contact": "Kontak",
+      "privacy": "Kebijakan Privasi",
+      "copyright": "© 2025 Menuyukti Print"
+    },
+    "collections": {
+      "all": "Semua Koleksi",
+      "posters": "Poster",
+      "menuBackgrounds": "Latar Belakang Menu",
+      "customPrints": "Cetakan Kustom",
+      "limitedEdition": "Edisi Terbatas",
+      "digitalDownloads": "Unduhan Digital"
+    },
+    "sort": {
+      "label": "Urutkan menurut",
+      "newest": "Terbaru",
+      "popularity": "Popularitas"
+    },
+    "digitalPrintQualityCaption": "Unduhan resolusi tinggi mendukung cetakan hingga sekitar 18×24 in (vertikal) pada 300 DPI.",
+    "grid": {
+      "viewDetails": "Lihat detail"
+    },
+    "pdp": {
+      "pageLoadingTitle": "Memuat produk…",
+      "digitalProduct": "Unduhan digital",
+      "downloadFullResolution": "Unduh resolusi penuh",
+      "downloadHint": "Membuka tautan aman untuk menyimpan file resolusi tinggi. Gunakan pratinjau di atas untuk web dan berbagi cepat.",
+      "printOnDemand": "Print on demand",
+      "sizeOrLicense": "Ukuran atau lisensi",
+      "finishOrProfile": "Finishing / profil warna",
+      "quantity": "Jumlah",
+      "choosePlaceholder": "Pilih…",
+      "share": "Bagikan",
+      "shareCopied": "Tautan disalin ke clipboard.",
+      "breadcrumbShop": "Toko",
+      "aboutPiece": "Tentang karya ini",
+      "accordionShippingTitle": "Produksi dan pengiriman",
+      "accordionShippingBody": "Setiap pesanan dicetak setelah checkout—siapkan 3–5 hari kerja untuk produksi ditambah waktu pengiriman. Pelacakan dikirim saat paket meninggalkan lab mitra kami. Pengiriman internasional dapat dikenakan bea.",
+      "accordionReturnsTitle": "Pengembalian dan cetak ulang",
+      "accordionReturnsBody": "Karena karya dibuat sesuai pesanan, pengembalian terbatas pada kerusakan dalam perjalanan atau cacat cetak—hubungi kami dalam 14 hari beserta foto kemasan dan barang. Variasi warna hingga 10% dibanding layar Anda adalah normal untuk giclée dan kanvas.",
+      "accordionCareTitle": "Perawatan",
+      "accordionCareBody": "Tangani karya berbingkai dan kanvas dengan tangan yang bersih dan kering. Debu secara ringan dengan kain microfiber lembut; hindari pembersih rumah tangga pada permukaan cetakan. Jauhkan dari sinar matahari langsung agar warna terjaga selama bertahun-tahun di lingkungan hospitality.",
+      "accordionDigitalLicenseTitle": "Lisensi dan penggunaan",
+      "accordionDigitalLicenseBody": "File gratis ini untuk pemasaran dan penggunaan di venue restoran Anda sendiri. Redistribusi, penjualan ulang, atau penggunaan sebagai aset stok komersial mandiri di luar merek Anda tidak diizinkan kecuali kami memberikan izin tertulis.",
+      "accordionDigitalFileTitle": "Detail file",
+      "accordionDigitalFileBody": "Unduhan berupa JPEG resolusi tinggi 6656×9984 px (potret). Jumlah piksel tersebut mendukung poster vertikal yang tajam hingga sekitar 18×24 inci pada 300 DPI; Anda dapat memotong atau memutar untuk tata letak lain jika diperlukan. Warna dapat sedikit berbeda antar layar, lab, dan kertas—minta proof dari pencetak Anda saat mencocokkan warna yang kritis bagi merek.",
+      "backToShop": "Kembali ke toko",
+      "breadcrumbNavAria": "Breadcrumb",
+      "ariaPrevImage": "Gambar sebelumnya",
+      "ariaNextImage": "Gambar berikutnya",
+      "ariaShowImage": "Tampilkan {label}",
+      "ariaDecreaseQty": "Kurangi jumlah",
+      "ariaIncreaseQty": "Tambah jumlah",
+      "addToCartDisabled": "Segera hadir",
+      "checkoutHint": "Checkout online belum tersedia—kami akan memberi tahu Anda saat pemesanan dibuka."
+    },
+    "hero": {
+      "kicker": "Koleksi editorial · Jiwa dapur & bar",
+      "headline": "The Digital Curator: Seni bertema gastronomi untuk setiap dinding",
+      "description": "Citra yang dibentuk oleh restoran, kafe, dan bar—dan terbuka bagi siapa pun yang ingin membingkainya atau menggantungnya dalam skala penuh. Unduhan digital gratis mencakup JPEG resolusi tinggi yang cocok untuk poster vertikal tebal sekitar 18×24 inci pada 300 DPI.",
+      "subtitle": "Print-on-demand dan unduhan dengan sudut pandang dapur dan bar—dari dinding venue hingga karya berbingkai di rumah.",
+      "ctaPrimary": "Jelajahi Produk"
+    },
+    "intro": "Makanan hebat layak mendapat presentasi yang hebat. Toko cetak restoran kami menangani semuanya, dari cetakan dinding yang mengatur suasana hingga kemasan bermerek — tanpa jumlah pesanan minimum dan penyelesaian cepat.",
+    "categories": {
+      "title": "Kategori Produk",
+      "subtitle": "Semua yang dibutuhkan restoran Anda, dicetak dan dikirim."
+    },
+    "products": {
+      "wallPosters": {
+        "title": "Poster Dinding & Cetakan Seni",
+        "description": "Atur suasana. Cetakan format besar dan seni berbingkai yang menentukan karakter serta estetika restoran Anda."
+      },
+      "menuBackgrounds": {
+        "title": "Latar Belakang Menu & Template",
+        "description": "Gambar latar belakang menu yang indah dan siap cetak serta template tata letak yang disesuaikan untuk papan menu dan sisipan standar."
+      },
+      "tableCards": {
+        "title": "Kartu Meja & Tent Card",
+        "description": "Promosikan special, kode QR, dan program loyalitas tepat di meja — dua sisi, glossy atau matte."
+      },
+      "windowGraphics": {
+        "title": "Grafis Jendela & Stiker Storefront",
+        "description": "Ubah jendela Anda menjadi pernyataan visual. Vinyl buram, berlubang, dan penuh warna untuk storefront."
+      },
+      "uniforms": {
+        "title": "Seragam Staf & Apparel Bermerek",
+        "description": "Apron, kaos polo, dan topi dengan logo Anda. Konsisten, profesional, dan dibuat untuk penggunaan dapur dan lantai harian."
+      },
+      "packaging": {
+        "title": "Kemasan Bermerek",
+        "description": "Kantong kertas, serbet, kotak takeaway, dan gelas dengan identitas merek Anda — memperkuat pengenalan pada setiap pesanan."
+      }
+    },
+    "howItWorks": {
+      "title": "Cara kerjanya",
+      "steps": {
+        "choose": {
+          "title": "1. Pilih produk Anda",
+          "description": "Pilih dari katalog khusus restoran kami. Setiap produk berukuran dan berspesifikasi untuk layanan makanan."
+        },
+        "upload": {
+          "title": "2. Unggah aset merek Anda",
+          "description": "Tambahkan logo, warna, dan artwork Anda. Template kami membuatnya sederhana — tanpa agen desain."
+        },
+        "deliver": {
+          "title": "3. Kami cetak dan kirim",
+          "description": "Produksi dimulai segera. Penyelesaian cepat dengan pengiriman terlacak ke restoran Anda."
+        }
+      }
+    },
+    "cta": {
+      "title": "Siap merekkan setiap titik kontak?",
+      "description": "Tanpa pesanan minimum. Kualitas cetak kelas restoran. Dikirim cepat.",
+      "primary": "Mulai"
+    },
+    "mobileCta": {
+      "primary": "Jelajahi Produk",
+      "secondary": "Pelajari Lebih Lanjut"
+    }
+  }
+}

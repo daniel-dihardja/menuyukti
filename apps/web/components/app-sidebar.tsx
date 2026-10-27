@@ -31,7 +31,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       href={routes.analytics.branches}
       aria-label={state === 'collapsed' ? brandLabel : undefined}
       className={cn(
-        'flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-2 text-sm font-semibold text-sidebar-foreground',
+        'flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-2 type-chrome font-semibold text-sidebar-foreground',
         'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring',
         'justify-start group-data-[collapsible=icon]:justify-center',

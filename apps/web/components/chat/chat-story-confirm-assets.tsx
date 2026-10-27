@@ -39,7 +39,7 @@ export function ChatStoryConfirmAssets({ assets }: ChatStoryConfirmAssetsProps) 
               src={mediaDownloadHref(asset.name)}
             />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[0.65rem] font-semibold uppercase tracking-wide text-muted-foreground">
+              <p className="truncate type-caption font-semibold uppercase tracking-wide text-muted-foreground">
                 {roleLabel}
               </p>
               <p className="truncate text-xs text-foreground" title={asset.name}>

@@ -1,0 +1,40 @@
+{
+  "usage": {
+    "title": "Penggunaan AI",
+    "breadcrumb": "Penggunaan AI",
+    "heading": "Penggunaan AI Anda",
+    "description": "Pengeluaran LLM Anda melalui AI Gateway dan generasi gambar Leonardo selama 30 hari terakhir (UTC).",
+    "dateRange": "Periode: {start} → {end} (UTC).",
+    "llm": {
+      "sectionTitle": "Model bahasa",
+      "sectionHint": "Data token dan biaya dari API pelaporan AI Gateway untuk akun Anda saat Custom Reporting tersedia.",
+      "sectionHintLedger": "Jumlah permintaan dan token dari buku besar penggunaan Menuyukti (dicatat pada setiap panggilan chat / helper).",
+      "ledgerCostNote": "Biaya USD memerlukan Vercel AI Gateway Custom Reporting (Pro/Enterprise). Jumlah di bawah tetap mencerminkan penggunaan Anda.",
+      "missingKeyTitle": "Kunci AI Gateway belum dikonfigurasi",
+      "missingKeyDescription": "Atur AI_GATEWAY_API_KEY atau VERCEL_OIDC_TOKEN untuk aplikasi web agar penggunaan dapat dimuat. Lihat dokumentasi Vercel AI Gateway.",
+      "forbiddenTitle": "Belum ada penggunaan model bahasa",
+      "forbiddenDescription": "Custom Reporting tidak tersedia pada paket Vercel ini. Kirim pesan chat terlebih dahulu — penggunaan dicatat di Menuyukti dan akan muncul di sini.",
+      "errorTitle": "Tidak dapat memuat rincian model",
+      "httpError": "Permintaan laporan gagal (HTTP {status}).",
+      "parseError": "Respons laporan tidak dapat dibaca.",
+      "empty": "Belum ada penggunaan model bahasa untuk periode ini. Chat sekali, lalu segarkan.",
+      "columnModel": "Model",
+      "columnRequests": "Permintaan",
+      "columnInputTokens": "Token input",
+      "columnOutputTokens": "Token output",
+      "columnCost": "Biaya (USD)"
+    },
+    "leonardo": {
+      "sectionTitle": "Generasi gambar (Leonardo)",
+      "sectionHint": "Generasi gambar Instagram yang berhasil yang dikaitkan dengan akun Anda.",
+      "errorTitle": "Tidak dapat memuat penggunaan gambar",
+      "errorDescription": "Ringkasan penggunaan tidak dapat dimuat dari GraphQL. Coba lagi nanti.",
+      "empty": "Belum ada generasi Leonardo yang tercatat untuk periode ini.",
+      "totalUnits": "Total generasi: {count}",
+      "columnFeature": "Fitur",
+      "columnModel": "Model",
+      "columnGenerations": "Generasi",
+      "columnEvents": "Peristiwa"
+    }
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "sidebar": {
+    "groupLabel": "Menuyukti",
+    "groupOverview": "Ringkasan",
+    "groupCreate": "Buat",
+    "groupAnalytics": "Analitik",
+    "groupOperations": "Operasional",
+    "groupAccount": "Akun",
+    "groupPlatform": "Platform",
+    "groupWorkspace": "Workspace",
+    "groupServices": "Tamu",
+    "toggleSectionAria": "Buka atau tutup {section}",
+    "home": "Lokasi",
+    "dashboard": "Dasbor",
+    "branches": "Lokasi",
+    "chat": "Analitik AI",
+    "calendar": "Kalender",
+    "playbooks": "Playbook",
+    "posts": "IG Studio",
+    "media": "Media",
+    "printShop": "Toko cetak",
+    "services": "Tamu",
+    "inventar": "Inventaris",
+    "crm": "CRM",
+    "crmApps": "Aplikasi",
+    "crmRegistrations": "Pendaftaran",
+    "team": "Tim",
+    "usage": "Penggunaan AI",
+    "staff": "Staf"
+  }
+}

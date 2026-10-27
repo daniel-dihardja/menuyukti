@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 
-import { requireAuthenticatedApi } from '@/lib/authenticated-api'
 import { ZodError } from 'zod'
 
+import { requireAuthenticatedApi } from '@/lib/authenticated-api'
 import { graphqlQuery } from '@/lib/graphql/client'
 import {
   CREATE_PLAYBOOK_MUTATION,
@@ -10,6 +10,7 @@ import {
   type CreatePlaybookData,
   type PlaybooksData,
 } from '@/lib/graphql/queries/playbooks'
+import { isPlaybookTypeEnabled } from '@/lib/playbooks/catalog'
 
 import { createPlaybookBodySchema } from './schema'
 
@@ -22,6 +23,9 @@ export async function GET(req: Request) {
     const playbookType = new URL(req.url).searchParams.get('playbookType')?.trim()
     if (!playbookType) {
       return NextResponse.json({ message: 'playbookType is required' }, { status: 400 })
+    }
+    if (!isPlaybookTypeEnabled(playbookType)) {
+      return NextResponse.json({ message: 'Not found' }, { status: 404 })
     }
 
     const data = await graphqlQuery<PlaybooksData>(PLAYBOOKS_QUERY, { playbookType }, userId)
@@ -41,6 +45,10 @@ export async function POST(req: Request) {
 
     const json = await req.json()
     const body = createPlaybookBodySchema.parse(json)
+
+    if (!isPlaybookTypeEnabled(body.playbookType)) {
+      return NextResponse.json({ message: 'Not found' }, { status: 404 })
+    }
 
     if (body.endDate < body.startDate) {
       return NextResponse.json(

@@ -1,0 +1,8 @@
+{
+  "errorBoundary": {
+    "title": "Terjadi kesalahan",
+    "description": "Terjadi kesalahan yang tidak terduga. Silakan coba lagi.",
+    "tryAgain": "Coba lagi",
+    "digestLabel": "Referensi: {digest}"
+  }
+}

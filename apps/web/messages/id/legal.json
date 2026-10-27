@@ -1,0 +1,64 @@
+{
+  "legal": {
+    "privacy": {
+      "metaTitle": "Kebijakan Privasi | Menuyukti",
+      "metaDescription": "Bagaimana Menuyukti mengumpulkan, menggunakan, dan melindungi data di workspace Anda.",
+      "title": "Kebijakan Privasi",
+      "lastUpdated": "Terakhir diperbarui: 12 April 2026.",
+      "sections": {
+        "data": {
+          "title": "Data yang kami proses",
+          "body": "Menuyukti memproses informasi yang Anda berikan saat menggunakan produk—termasuk detail akun, data lokasi dan penjualan yang Anda unggah, konten alur kerja, serta penggunaan yang diperlukan untuk menjalankan layanan. Kami memproses data ini untuk menyediakan analitik, alur kerja, dan fitur berbantuan AI yang Anda minta."
+        },
+        "use": {
+          "title": "Bagaimana kami menggunakan data Anda",
+          "body": "Kami menggunakan data Anda untuk mengoperasikan dan meningkatkan platform, memberikan dukungan, mengamankan akun, dan mematuhi hukum. Kami tidak menjual informasi pribadi Anda atau data penjualan restoran Anda kepada pihak ketiga untuk pemasaran mereka."
+        },
+        "sharing": {
+          "title": "Penyedia layanan",
+          "body": "Kami dapat menggunakan subprosesor tepercaya (misalnya hosting, autentikasi, dan inferensi AI) yang memproses data berdasarkan kontrak dan hanya sejauh diperlukan untuk menyediakan layanan. Daftar terkini dapat diberikan atas permintaan."
+        },
+        "security": {
+          "title": "Keamanan",
+          "body": "Kami menerapkan langkah teknis dan organisasi yang wajar untuk melindungi informasi Anda. Tidak ada metode transmisi atau penyimpanan yang sepenuhnya aman; kami mendorong kata sandi yang kuat dan berbagi akses workspace secara aman."
+        },
+        "cookies": {
+          "title": "Cookie dan analitik",
+          "body": "Menuyukti menggunakan Google Analytics 4 untuk pengukuran penggunaan dasar (tampilan halaman) di halaman publik dan workspace saat masuk agar kami memahami bagaimana produk digunakan. Toko cetak tidak termasuk. Anda dapat meninjau atau menutup pemberitahuan cookie melalui tautan Pengaturan cookie di footer."
+        },
+        "contact": {
+          "title": "Kontak",
+          "body": "Untuk pertanyaan atau permintaan terkait privasi, hubungi kami melalui saluran yang sama yang Anda gunakan untuk dukungan produk Menuyukti."
+        }
+      }
+    },
+    "terms": {
+      "metaTitle": "Ketentuan Layanan | Menuyukti",
+      "metaDescription": "Ketentuan yang mengatur penggunaan platform Menuyukti.",
+      "title": "Ketentuan Layanan",
+      "lastUpdated": "Terakhir diperbarui: 12 April 2026.",
+      "sections": {
+        "service": {
+          "title": "Layanan",
+          "body": "Menuyukti menyediakan perangkat lunak untuk pemasaran dan operasional restoran—termasuk analitik, fitur berbantuan AI, POS, inventaris, dan pengalaman digital tamu. Fitur dapat berubah seiring perkembangan produk."
+        },
+        "account": {
+          "title": "Akun Anda",
+          "body": "Anda bertanggung jawab atas aktivitas di bawah akun Anda dan menjaga keamanan kredensial. Anda setuju untuk memberikan informasi yang akurat dan menggunakan layanan sesuai hukum yang berlaku."
+        },
+        "acceptable": {
+          "title": "Penggunaan yang dapat diterima",
+          "body": "Anda tidak boleh menyalahgunakan layanan, mencoba mengakses data orang lain tanpa izin, mengganggu operasi platform, atau menggunakan layanan untuk melanggar hukum atau hak pihak ketiga."
+        },
+        "disclaimer": {
+          "title": "Penafian",
+          "body": "Layanan dan setiap keluaran yang dihasilkan AI disediakan “sebagaimana adanya”. Analitik dan saran bersifat informatif; Anda tetap bertanggung jawab atas keputusan bisnis dan kepatuhan."
+        },
+        "changes": {
+          "title": "Perubahan",
+          "body": "Kami dapat memperbarui ketentuan ini atau layanan. Penggunaan berkelanjutan setelah perubahan merupakan penerimaan atas ketentuan yang diperbarui sejauh diizinkan oleh hukum."
+        }
+      }
+    }
+  }
+}

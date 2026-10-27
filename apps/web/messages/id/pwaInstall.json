@@ -1,0 +1,27 @@
+{
+  "pwaInstall": {
+    "sectionTitle": "Tambahkan ke layar utama",
+    "sectionHint": "Pilih perangkat Anda, lalu ikuti langkah-langkahnya.",
+    "installHint": "Membuka layar penuh—seperti aplikasi native. Masuk sekali saja.",
+    "platforms": {
+      "ios": {
+        "label": "iPhone",
+        "browser": "Gunakan Safari",
+        "steps": {
+          "step1": "Buka di Safari dan masuk.",
+          "step2": "Bagikan → Tambah ke Layar Utama.",
+          "step3": "Ketuk Tambah."
+        }
+      },
+      "android": {
+        "label": "Android",
+        "browser": "Gunakan Chrome",
+        "steps": {
+          "step1": "Buka di Chrome dan masuk.",
+          "step2": "Menu (⋮) → Instal aplikasi.",
+          "step3": "Konfirmasi Instal."
+        }
+      }
+    }
+  }
+}

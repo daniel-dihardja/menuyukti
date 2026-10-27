@@ -1,0 +1,62 @@
+{
+  "chatTools": {
+    "searchWeb": {
+      "running": "Mencari di web…",
+      "runningDetail": "Mencari sumber terkini secara online",
+      "done": "Mencari di web"
+    },
+    "generateInstagramPostImage": {
+      "running": "Menghasilkan gambar post…",
+      "runningDetail": "Membuat gambar Anda…",
+      "done": "Menghasilkan gambar post",
+      "error": "Pembuatan gambar gagal",
+      "imageAlt": "Gambar yang dihasilkan"
+    },
+    "getChartData": {
+      "runningGeneric": "Membaca grafik penjualan Anda…",
+      "doneGeneric": "Meninjau grafik penjualan",
+      "error": "Tidak dapat memuat data grafik",
+      "charts": {
+        "venue_slot_strength_heatmap": {
+          "running": "Memeriksa ritme tempat usaha, slot puncak, dan frekuensi posting…",
+          "done": "Meninjau kekuatan slot tempat usaha"
+        },
+        "menu_item_heatmap": {
+          "running": "Memeriksa item menu mana yang paling laku dan kapan…",
+          "done": "Meninjau heatmap menu"
+        },
+        "pair_lift_matrix_heatmap": {
+          "running": "Memeriksa combo menu dan peluang pair-lift…",
+          "done": "Meninjau matriks pair lift"
+        },
+        "low_end_review": {
+          "running": "Memeriksa item lemah untuk dinilai ulang harga, diperbaiki, atau dihapus…",
+          "done": "Meninjau item lemah"
+        }
+      }
+    },
+    "getLocationData": {
+      "running": "Memuat konteks lokasi…",
+      "done": "Memuat konteks lokasi",
+      "error": "Tidak dapat memuat konteks lokasi"
+    },
+    "saveStoryAsset": {
+      "running": "Menyimpan referensi Story…",
+      "done": "Menyimpan referensi Story",
+      "error": "Tidak dapat menyimpan referensi Story"
+    },
+    "clearStoryAssets": {
+      "running": "Memperbarui referensi Story…",
+      "done": "Memperbarui referensi Story",
+      "error": "Tidak dapat memperbarui referensi Story"
+    },
+    "requestStoryGenerateConfirmation": {
+      "running": "Menyiapkan konfirmasi…",
+      "done": "Menunggu konfirmasi",
+      "ready": "Siap menghasilkan saat Anda mengonfirmasi",
+      "error": "Tidak dapat menyiapkan konfirmasi",
+      "generate": "Hasilkan",
+      "change": "Ubah"
+    }
+  }
+}

@@ -143,7 +143,7 @@ export function SchedulerCalendarMonthList({
               }
             >
               <div className="flex w-12 shrink-0 flex-col items-center">
-                <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                <span className="type-caption font-medium uppercase tracking-wide text-muted-foreground">
                   {weekday}
                 </span>
                 <span className="text-base font-semibold leading-tight">{dayNumber}</span>

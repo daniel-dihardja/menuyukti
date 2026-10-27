@@ -82,7 +82,7 @@ export function StoryImageArtifact({
               >
                 <FormatPreviewFrame format={formatId} />
                 <span>{name}</span>
-                <span className="text-[0.65rem] font-normal opacity-70">{ratio}</span>
+                <span className="type-caption font-normal opacity-70">{ratio}</span>
               </ToggleGroupItem>
             )
           })}

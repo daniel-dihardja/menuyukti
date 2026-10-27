@@ -1,0 +1,7 @@
+{
+  "upload": {
+    "NO_FILE_UPLOADED": "Silakan unggah file.",
+    "INVALID_FILE_TYPE": "Hanya file .xlsx yang diizinkan.",
+    "UPLOAD_FAILED": "Unggahan gagal. Silakan coba lagi."
+  }
+}

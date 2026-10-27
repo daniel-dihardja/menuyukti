@@ -1,0 +1,11 @@
+{
+  "accountMenu": {
+    "triggerAria": "Buka menu akun",
+    "profile": "Profil",
+    "workspace": "Workspace",
+    "signOut": "Keluar",
+    "language": "Bahasa",
+    "languageEn": "English",
+    "languageId": "Indonesia"
+  }
+}

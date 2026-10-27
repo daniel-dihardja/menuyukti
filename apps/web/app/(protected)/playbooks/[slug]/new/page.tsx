@@ -8,7 +8,7 @@ import { PlaybookForm } from '@/app/(protected)/playbooks/_components/playbook-f
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { PageHeading } from '@/components/page-heading'
 import { getCachedLocationsListData } from '@/lib/graphql/cached-queries'
-import { getPlaybookBySlug } from '@/lib/playbooks/catalog'
+import { getPlaybookBySlug, isPlaybookCatalogEntryEnabled } from '@/lib/playbooks/catalog'
 import { routes } from '@/lib/routes'
 
 type PlaybookInstancePageProps = {
@@ -18,7 +18,7 @@ type PlaybookInstancePageProps = {
 export async function generateMetadata({ params }: PlaybookInstancePageProps): Promise<Metadata> {
   const { slug } = await params
   const playbook = getPlaybookBySlug(slug)
-  if (!playbook || !playbook.supportsCreate) {
+  if (!playbook || !playbook.supportsCreate || !isPlaybookCatalogEntryEnabled(playbook)) {
     return {}
   }
 
@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: PlaybookInstancePageProps): P
 export default async function PlaybookInstanceNewPage({ params }: PlaybookInstancePageProps) {
   const { slug } = await params
   const playbook = getPlaybookBySlug(slug)
-  if (!playbook || !playbook.supportsCreate) {
+  if (!playbook || !playbook.supportsCreate || !isPlaybookCatalogEntryEnabled(playbook)) {
     notFound()
   }
 

@@ -74,11 +74,12 @@ const data = await graphqlQuery<ResponseType>(QUERY_STRING, variables, userId);
 
 ## i18n (next-intl)
 
-- Config: `i18n/request.ts` resolves locale from `Accept-Language` and loads `messages/<locale>.json`.
+- Config: `i18n/request.ts` resolves locale from `NEXT_LOCALE` cookie (preferred) or `Accept-Language`; catalogs load via `i18n/load-messages.ts` (`en` base; `de` / `id` deep-merge overlays under `messages/<locale>/`).
+- Supported UI locales: `en`, `de`, `id`. Account menu offers EN|ID preference.
 - Root layout wraps children in `NextIntlClientProvider` with `getMessages()` / `getLocale()`.
 - **Server**: `getTranslations('namespace')` (async).
 - **Client**: `useTranslations('namespace')`.
-- All user-facing copy — including button labels, error messages, and empty states — must be in `messages/en.json`. Do **not** hardcode English strings in components.
+- All user-facing copy — including button labels, error messages, and empty states — must be in `messages/en/<namespace>.json`. Do **not** hardcode English strings in components.
 
 ## UX / UI quality (apply on every UI change)
 

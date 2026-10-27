@@ -170,7 +170,7 @@ export function DigitalMenuFeedbackInbox({
                       <ThumbsDown className="size-3.5 shrink-0" aria-hidden />
                     ) : null}
                     <p className="truncate text-sm font-medium">{row.menuItemName}</p>
-                    <Badge variant={statusBadgeVariant(row.status)} className="text-[10px]">
+                    <Badge variant={statusBadgeVariant(row.status)} className="type-caption">
                       {row.status === 'PENDING'
                         ? t('statusPending')
                         : row.status === 'PUBLISHED'

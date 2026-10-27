@@ -1,0 +1,53 @@
+{
+  "igStudio": {
+    "subnav": {
+      "ariaLabel": "Bagian IG Studio",
+      "posts": "Postingan",
+      "styles": "Gaya"
+    },
+    "styles": {
+      "title": "Gaya",
+      "description": "Tampilan yang dapat digunakan ulang untuk pembuatan postingan: Style Spec JSON plus satu gambar referensi dari media.",
+      "createDescription": "Tulis Style Spec JSON, lampirkan satu gambar referensi, dan beri nama tampilan tersebut.",
+      "add": "Buat gaya",
+      "createTitle": "Gaya baru",
+      "editTitle": "Edit gaya",
+      "loading": "Memuat gaya…",
+      "notFound": "Gaya tidak ditemukan.",
+      "emptyTitle": "Belum ada gaya",
+      "emptyDescription": "Buat gaya dengan Style Spec JSON dan gambar referensi dari pustaka media Anda.",
+      "defaultBadge": "Default",
+      "edit": "Edit gaya",
+      "editNamed": "Edit gaya {name}",
+      "openNamed": "Buka gaya {name}",
+      "delete": "Hapus gaya",
+      "deleteConfirm": "Hapus gaya \"{name}\"? Tindakan ini tidak dapat dibatalkan.",
+      "specJsonLabel": "Style Spec JSON",
+      "specJsonAria": "Editor Style Spec JSON",
+      "specJsonHint": "schemaVersion harus 2. Properti mendukung enum, boolean, number, dan text.",
+      "nameLabel": "Nama",
+      "namePlaceholder": "Makan siang editorial hangat",
+      "imageLabel": "Gambar referensi",
+      "imagePick": "Pilih dari media",
+      "imagePickerAria": "Pilih gambar referensi gaya",
+      "imageEmpty": "Belum ada media. Unggah foto di Media terlebih dahulu.",
+      "imageRemove": "Hapus gambar referensi",
+      "imageFromMedia": "Dari pustaka media",
+      "defaultLabel": "Jadikan default untuk workspace ini",
+      "save": "Simpan gaya",
+      "saving": "Menyimpan…",
+      "cancel": "Batal",
+      "toast": {
+        "loadError": "Gagal memuat gaya.",
+        "validation": "Nama, Style Spec JSON, dan gambar referensi wajib diisi.",
+        "invalidJson": "JSON tidak valid.",
+        "invalidSpec": "Style Spec tidak sesuai schemaVersion 2.",
+        "created": "Gaya dibuat.",
+        "updated": "Gaya diperbarui.",
+        "deleted": "Gaya dihapus.",
+        "saveError": "Gagal menyimpan gaya.",
+        "deleteError": "Gagal menghapus gaya."
+      }
+    }
+  }
+}
