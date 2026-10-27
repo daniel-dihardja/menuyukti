@@ -1,6 +1,6 @@
 """menu.ordering_enabled for browse-only public digital menus
 
-Revision ID: a0b1c2d3e4f5
+Revision ID: f5a6b7c8d9e0
 Revises: e4f5a6b7c8d9
 Create Date: 2026-10-26
 
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 from alembic import op
 
-revision: str = "a0b1c2d3e4f5"
+revision: str = "f5a6b7c8d9e0"
 down_revision: str | Sequence[str] | None = "e4f5a6b7c8d9"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
