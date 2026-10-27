@@ -1,21 +1,27 @@
 /**
- * Restaurant client sidebar order: locations, guest experience, then AI tools.
+ * Restaurant client sidebar order: AI Analytics → Locations → Guests → Playbooks → AI usage.
  * Unexpected keys keep relative order after these.
  */
-export const CLIENT_NAV_ORDER = ['home', 'services', 'chat', 'playbooks', 'usage'] as const
+export const CLIENT_NAV_ORDER = ['chat', 'home', 'services', 'playbooks', 'usage'] as const
 
-/** Keys rendered in the AI tools section (after the first separator). */
-export const CLIENT_AI_NAV_KEYS = new Set<string>(['chat', 'playbooks'])
+/** Keys paired first: AI Analytics + Locations. */
+export const CLIENT_ANALYTICS_NAV_KEYS = new Set<string>(['chat', 'home'])
 
-/** Keys rendered after Playbooks (second separator) — account / metering. */
+/** Keys paired next: Guests + Playbooks. */
+export const CLIENT_GUESTS_NAV_KEYS = new Set<string>(['services', 'playbooks'])
+
+/** Keys rendered after Guests/Playbooks (AI usage metering). */
 export const CLIENT_USAGE_NAV_KEYS = new Set<string>(['usage'])
+
+/** @deprecated Use {@link CLIENT_ANALYTICS_NAV_KEYS}. */
+export const CLIENT_AI_NAV_KEYS = CLIENT_ANALYTICS_NAV_KEYS
 
 type FlatNavItem = { key: string }
 
 const NAV_RANK = new Map<string, number>(CLIENT_NAV_ORDER.map((key, index) => [key, index]))
 
 /**
- * Sort client sidebar into Locations → Guest experience → AI → Playbooks → AI usage.
+ * Sort client sidebar into AI Analytics → Locations → Guests → Playbooks → AI usage.
  * Other keys keep their relative input order after those.
  */
 export function orderClientFlatNav<T extends FlatNavItem>(items: readonly T[]): T[] {
@@ -30,21 +36,22 @@ export function orderClientFlatNav<T extends FlatNavItem>(items: readonly T[]): 
 }
 
 /**
- * Split ordered client nav into primary, AI tools, and AI usage groups
- * (separators between primary → AI and Playbooks → usage).
+ * Split ordered client nav into analytics (AI + Locations), guests (Guests + Playbooks),
+ * and usage groups (separators between each section).
  */
 export function splitClientNavAtAi<T extends FlatNavItem>(
   items: readonly T[],
-): { primary: T[]; ai: T[]; usage: T[] } {
+): { primary: T[]; guests: T[]; usage: T[] } {
   const primary: T[] = []
-  const ai: T[] = []
+  const guests: T[] = []
   const usage: T[] = []
   for (const item of items) {
-    if (CLIENT_AI_NAV_KEYS.has(item.key)) ai.push(item)
+    if (CLIENT_ANALYTICS_NAV_KEYS.has(item.key)) primary.push(item)
+    else if (CLIENT_GUESTS_NAV_KEYS.has(item.key)) guests.push(item)
     else if (CLIENT_USAGE_NAV_KEYS.has(item.key)) usage.push(item)
     else primary.push(item)
   }
-  return { primary, ai, usage }
+  return { primary, guests, usage }
 }
 
 /**
