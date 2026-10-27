@@ -1,0 +1,233 @@
+{
+  "postCreator": {
+    "title": "Post Creator",
+    "description": "Hasilkan gambar postingan dengan AI dari prompt teks.",
+    "thumbnailsPane": "Thumbnail halaman postingan",
+    "thumbnails": {
+      "ariaLabel": "Thumbnail halaman postingan",
+      "pageLabel": "Halaman {number}",
+      "empty": "Belum ada halaman",
+      "addPage": "Tambah halaman",
+      "addingPage": "Menambahkan halaman…",
+      "duplicatePage": "Duplikat",
+      "duplicatingPage": "Menduplikasi…"
+    },
+    "tabs": {
+      "prompt": "Prompt",
+      "chat": "Chat",
+      "settings": "Pengaturan",
+      "history": "Riwayat"
+    },
+    "chat": {
+      "emptyTitle": "Analisis pratinjau ini",
+      "emptyDescription": "Ketik @ untuk melampirkan pratinjau besar atau gambar dari pustaka media, lalu tanyakan tentang komposisi, gaya, atau perubahan berikutnya. Anda juga dapat meminta asisten untuk menghasilkan gambar postingan baru.",
+      "placeholder": "Tanyakan tentang gambar terlampir atau hasilkan postingan baru… Ketik @ untuk melampirkan pratinjau atau media",
+      "thinking": "Berpikir…",
+      "errorTitle": "Terjadi kesalahan",
+      "errorDescription": "Permintaan tidak dapat diselesaikan. Silakan coba lagi.",
+      "retry": "Coba lagi",
+      "clearChatAriaLabel": "Hapus chat",
+      "clearChatLabel": "Hapus chat",
+      "clearChatTooltip": "Hapus pesan dan mulai thread chat baru",
+      "previewChipLabel": "Pratinjau saat ini",
+      "previewChipAriaLabel": "Gambar terlampir untuk chat",
+      "sentWithAttachments": "Dikirim dengan lampiran",
+      "mentionMenu": {
+        "ariaLabel": "Lampirkan pratinjau atau gambar media",
+        "empty": "Tidak ada pratinjau atau media yang cocok untuk dilampirkan",
+        "previewGroup": "Pratinjau",
+        "mediaGroup": "Media",
+        "mediaAriaLabel": "Lampirkan gambar dari pustaka Media",
+        "mediaLoading": "Memuat media…",
+        "mediaEmpty": "Belum ada file media. Unggah gambar di halaman Media.",
+        "collectionsGroup": "Koleksi",
+        "collectionsAriaLabel": "Jelajahi koleksi media",
+        "collectionMemberCount": "{count, plural, one {# item} other {# item}}",
+        "backToMedia": "Kembali ke semua media",
+        "collectionLoading": "Memuat koleksi…",
+        "collectionEmpty": "Tidak ada gambar di koleksi ini."
+      }
+    },
+    "settings": {
+      "title": "Pengaturan pembuatan",
+      "format": "Format",
+      "model": "Model",
+      "modelValue": "Leonardo",
+      "safeZoneTitle": "Panduan zona aman",
+      "safeZoneHelper": "Hanya margin pratinjau — tidak diterapkan pada gambar yang dihasilkan. Aktifkan panduan di footer pratinjau.",
+      "safeZoneHorizontal": "Jarak horizontal (px)",
+      "safeZoneVertical": "Jarak vertikal (px)",
+      "solidBackgroundTitle": "Kanvas latar belakang solid",
+      "solidBackgroundHelper": "Jika diaktifkan dan tidak ada gambar sebelumnya yang digunakan, kanvas warna datar pada ukuran output saat ini dikirim sebagai referensi pertama.",
+      "solidBackgroundToggle": "Gunakan latar belakang solid",
+      "solidBackgroundColor": "Warna latar belakang"
+    },
+    "history": {
+      "emptyTitle": "Belum ada riwayat di sini",
+      "emptyDescription": "Riwayat pembuatan untuk halaman ini muncul di pratinjau saat Anda memiliki beberapa versi."
+    },
+    "previewPane": "Gambar postingan yang dihasilkan",
+    "promptPane": "Prompt",
+    "prompt": {
+      "label": "Arah kreatif",
+      "placeholder": "headline: Setiap Hari\nproducts: Ref 2 → Roti Bluder, Ref 3 → Ice Americano\n\nKetik @ untuk melampirkan foto produk berurutan.",
+      "generate": "Hasilkan gambar",
+      "generating": "Menghasilkan…",
+      "style": {
+        "label": "Paket gaya",
+        "placeholder": "Pilih gaya",
+        "none": "Tanpa gaya",
+        "defaultSuffix": "default",
+        "description": "Diterapkan otomatis pada pembuatan ini — Anda tidak perlu mengulangi aturan gaya di prompt.",
+        "create": "Buat gaya",
+        "manage": "Kelola gaya",
+        "loadError": "Gagal memuat paket gaya.",
+        "usage": {
+          "title": "Cara menggunakan gaya ini",
+          "intro": "Ganti properti di brief dengan tag seperti [property=value]. Parameter multi-kata gunakan tanda kutip.",
+          "copyExample": "Salin contoh",
+          "copied": "Contoh disalin",
+          "copyFailed": "Tidak dapat menyalin contoh",
+          "valuesLabel": "Nilai",
+          "fallbackEnum": "Pilih salah satu nilai yang tercantum.",
+          "fallbackBoolean": "Aktifkan atau nonaktifkan.",
+          "fallbackNumber": "Tetapkan nilai numerik.",
+          "fallbackText": "Tetapkan token teks singkat (tanpa spasi pada nilai utama)."
+        }
+      },
+      "model": {
+        "label": "Model gambar",
+        "description": "Model Leonardo yang digunakan untuk pembuatan ini.",
+        "options": {
+          "flash": {
+            "name": "Nano Banana",
+            "blurb": "Cepat dan hemat biaya. Kuat untuk edit multi-referensi; pilihan default yang baik untuk iterasi."
+          },
+          "nanoBanana2": {
+            "name": "Nano Banana 2",
+            "blurb": "Kecepatan dan kualitas seimbang. Tekstur, teks, dan konsistensi lebih baik daripada Nano Banana asli."
+          },
+          "pro": {
+            "name": "Nano Banana Pro",
+            "blurb": "Mengikuti instruksi terbaik untuk edit multi-referensi yang kompleks. Lebih lambat dan memakai lebih banyak token."
+          }
+        }
+      },
+      "format": {
+        "label": "Format",
+        "description": "Rasio aspek untuk pembuatan ini.",
+        "options": {
+          "feed": {
+            "name": "Feed",
+            "ratio": "4:5"
+          },
+          "tall": {
+            "name": "Tall",
+            "ratio": "3:4"
+          },
+          "square": {
+            "name": "Square",
+            "ratio": "1:1"
+          },
+          "story": {
+            "name": "Story",
+            "ratio": "9:16"
+          },
+          "wide": {
+            "name": "Wide",
+            "ratio": "16:9"
+          }
+        }
+      },
+      "quality": {
+        "label": "Kualitas",
+        "resolvedHint": "{width} × {height} · ~{cost}× biaya untuk model ini",
+        "options": {
+          "standard": {
+            "name": "Standard"
+          },
+          "high": {
+            "name": "High"
+          },
+          "ultra": {
+            "name": "Ultra"
+          }
+        }
+      },
+      "picker": {
+        "ariaLabel": "Pemilih foto referensi",
+        "empty": "Tidak ada media yang cocok. Unggah satu atau tambahkan file di Media.",
+        "upload": "Unggah file",
+        "uploading": "Mengunggah…",
+        "uploadError": "Tidak dapat mengunggah file tersebut. Coba lagi.",
+        "maxReached": "Jumlah maksimum foto referensi tercapai (5). Hapus satu untuk menambahkan yang lain."
+      },
+      "references": {
+        "ariaLabel": "Gambar referensi untuk pembuatan",
+        "remove": "Hapus gambar referensi",
+        "include": "Sertakan dalam pembuatan",
+        "indexLabel": "Ref {index}"
+      },
+      "generation": {
+        "referenceSummaryTextOnly": "Pembuatan berikutnya: arah kreatif saja (tanpa referensi).",
+        "referenceSummaryFilledEdit": "Pembuatan berikutnya: edit gambar di pratinjau saja.",
+        "referenceSummaryPreviousOnly": "Pembuatan berikutnya: edit gambar di pratinjau.",
+        "referenceSummaryPhotosOnly": "Pembuatan berikutnya: {count, plural, one {# foto tercentang} other {# foto tercentang}}.",
+        "referenceSummaryPreviousAndPhotos": "Pembuatan berikutnya: gambar di pratinjau + {count, plural, one {# foto tercentang} other {# foto tercentang}}.",
+        "referenceSummarySolidBackgroundOnly": "Pembuatan berikutnya: kanvas latar belakang solid ({color}).",
+        "referenceSummarySolidBackgroundAndPhotos": "Pembuatan berikutnya: latar belakang solid ({color}) + {count, plural, one {# foto tercentang} other {# foto tercentang}}.",
+        "tooManyReferences": "Terlalu banyak referensi dipilih. Gunakan paling banyak 5 foto produk tercentang (plus gambar sebelumnya atau latar belakang solid jika digunakan)."
+      },
+      "tip": {
+        "title": "Tip",
+        "description": "Gambar di pratinjau digunakan sebagai referensi edit. Pilih versi yang dihasilkan untuk mengedit hasil tersebut. Opsional, tambahkan foto produk dengan @, lalu deskripsikan perubahan di arah kreatif."
+      }
+    },
+    "preview": {
+      "ariaLabel": "Pratinjau gambar postingan yang dihasilkan",
+      "emptyTitle": "Belum ada gambar postingan",
+      "emptyDescription": "Masukkan prompt di panel sebelah kanan dan hasilkan gambar.",
+      "formatLabel": "{format}",
+      "dimensionsLabel": "Ukuran output",
+      "dimensions": "{width} × {height}",
+      "formatQualitySummary": "{format} · {quality} · {width} × {height}",
+      "safeZoneToggle": "Panduan zona aman",
+      "safeZoneDescription": "Menampilkan margin pratinjau {insetX}px dari tepi kiri dan kanan serta {insetY}px dari tepi atas dan bawah agar Anda dapat memastikan konten penting tetap berada di dalam area aman.",
+      "previousVersion": "Gambar yang dihasilkan sebelumnya",
+      "nextVersion": "Gambar yang dihasilkan berikutnya",
+      "versionIndicator": "{current} dari {total}",
+      "versionsAriaLabel": "Versi gambar yang dihasilkan",
+      "versionOptionLabel": "Gambar yang dihasilkan {current} dari {total}",
+      "versionOptionPreviewLabel": "Gambar yang dihasilkan {current} dari {total}, sedang dipratinjau",
+      "versionOptionPostImageLabel": "Gambar yang dihasilkan {current} dari {total}, gambar postingan",
+      "versionOptionPostImagePreviewLabel": "Gambar yang dihasilkan {current} dari {total}, gambar postingan dan sedang dipratinjau",
+      "useAsPostImage": "Gunakan sebagai gambar postingan",
+      "useAsPostImageCommitting": "Mengatur gambar postingan…",
+      "committingPostImage": "Mengatur gambar postingan…",
+      "previewImageAlt": "Pratinjau postingan yang dihasilkan",
+      "generating": "Menghasilkan…",
+      "deleteImage": "Hapus gambar",
+      "removePage": "Hapus halaman",
+      "deleteConfirmTitle": "Hapus gambar yang dihasilkan ini?",
+      "deleteConfirmDescription": "Ini menghapus gambar dari riwayat versi halaman ini. Tindakan ini tidak dapat dibatalkan.",
+      "removePageConfirmTitle": "Hapus halaman ini?",
+      "removePageConfirmDescription": "Ini menghapus halaman kosong dari postingan Anda. Tindakan ini tidak dapat dibatalkan.",
+      "removePageConfirmAction": "Hapus halaman",
+      "deleteConfirmCancel": "Batal",
+      "deleteConfirmAction": "Hapus gambar",
+      "deleteImageDeleting": "Menghapus…"
+    },
+    "toast": {
+      "loadError": "Gagal memuat postingan. Silakan segarkan dan coba lagi.",
+      "generateError": "Gagal menghasilkan gambar postingan. Silakan coba lagi.",
+      "leonardoError": "Pemrosesan AI gagal. Periksa kunci API Leonardo dan model Anda, lalu coba lagi.",
+      "leonardoInsufficientTokens": "Leonardo melaporkan kredit atau token API tidak mencukupi. Tambahkan kredit di akun Leonardo atau penagihan API Anda, lalu coba lagi.",
+      "imageSelectError": "Gagal memperbarui gambar postingan. Silakan coba lagi.",
+      "saveSettingsError": "Gagal menyimpan pengaturan postingan. Silakan coba lagi.",
+      "deleteImageError": "Gagal menghapus gambar. Silakan coba lagi.",
+      "deletePageError": "Gagal menghapus halaman. Silakan coba lagi.",
+      "addPageError": "Gagal menambahkan halaman. Silakan coba lagi.",
+      "maxPagesReached": "Carousel Instagram mendukung hingga 10 gambar."
+    }
+  }
+}

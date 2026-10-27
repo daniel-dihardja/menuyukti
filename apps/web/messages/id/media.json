@@ -1,0 +1,82 @@
+{
+  "media": {
+    "title": "Media",
+    "description": "Unggah foto restoran dan kampanye dalam format aslinya. File disimpan di satu pustaka; gunakan koleksi untuk mengelompokkannya (misalnya referensi gaya) tanpa menduplikasi unggahan.",
+    "descriptionShort": "Unggah foto sekali, lalu kelompokkan ke dalam koleksi tanpa menduplikasi file.",
+    "collections": {
+      "help": "Buat koleksi untuk mengelompokkan foto terkait (misalnya “Referensi gaya”). Pilih foto di kisi, lalu tambahkan atau hapus dari koleksi. Foto yang sama dapat berada di lebih dari satu koleksi.",
+      "helpToggle": "Cara kerja koleksi",
+      "selectHint": "Pilih foto untuk menambahkannya ke koleksi. Gunakan kontrol perluas untuk melihatnya lebih besar.",
+      "filterAll": "Semua",
+      "create": "Koleksi baru",
+      "createTitle": "Buat koleksi",
+      "manage": "Kelola",
+      "rename": "Ganti nama",
+      "renameTitle": "Ganti nama koleksi",
+      "delete": "Hapus",
+      "deleteTitle": "Hapus koleksi",
+      "deleteConfirm": "Hapus “{name}”? Foto tetap di pustaka Anda; hanya pengelompokannya yang dihapus.",
+      "namePlaceholder": "Nama koleksi",
+      "cancel": "Batal",
+      "save": "Simpan",
+      "organizeRegion": "Atur foto yang dipilih",
+      "selectedTitle": "Foto yang dipilih",
+      "selectedPhotoFallback": "Foto",
+      "clearSelection": "Hapus pilihan",
+      "createFirstHint": "Buat koleksi terlebih dahulu, lalu tambahkan foto ini.",
+      "addPlaceholder": "Pilih koleksi",
+      "addToCollection": "Tambahkan ke koleksi",
+      "removeFromCollection": "Hapus dari koleksi",
+      "removeFromNamed": "Hapus dari {name}",
+      "emptyCollectionTitle": "Tidak ada foto di koleksi ini",
+      "emptyCollectionDescription": "Beralih ke Semua, pilih foto, lalu tambahkan di sini."
+    },
+    "upload": {
+      "title": "Unggah media",
+      "hint": "Seret dan lepaskan atau telusuri — PNG, JPEG, WebP, GIF, AVIF",
+      "hintMobile": "Telusuri pustaka Anda — PNG, JPEG, WebP, GIF, AVIF",
+      "browse": "Telusuri file",
+      "uploading": "Mengunggah…",
+      "invalidType": "Silakan pilih file gambar."
+    },
+    "grid": {
+      "empty": {
+        "title": "Belum ada media",
+        "description": "Unggah file pertama Anda untuk membangun pustaka media."
+      },
+      "loadErrorTitle": "Tidak dapat memuat media",
+      "loadErrorDescription": "Periksa koneksi Anda, lalu coba lagi.",
+      "retry": "Coba lagi",
+      "delete": "Hapus",
+      "deleteConfirm": "Hapus file ini?",
+      "deleteAction": "Hapus",
+      "cancel": "Batal",
+      "viewLarge": "Lihat lebih besar",
+      "download": "Unduh",
+      "moreActions": "Tindakan lainnya",
+      "select": "Pilih foto"
+    },
+    "preview": {
+      "close": "Tutup pratinjau"
+    },
+    "toast": {
+      "uploaded": "File diunggah",
+      "uploadError": "Tidak dapat mengunggah file tersebut. Coba lagi.",
+      "uploadPartial": "Beberapa file tidak dapat diunggah. Periksa file Anda dan coba lagi.",
+      "loadError": "Tidak dapat memuat media Anda. Coba lagi.",
+      "deleted": "File dihapus",
+      "deleteError": "Tidak dapat menghapus file tersebut. Coba lagi.",
+      "collectionsLoadError": "Tidak dapat memuat koleksi. Segarkan halaman.",
+      "collectionCreated": "Koleksi dibuat",
+      "collectionCreateError": "Tidak dapat membuat koleksi tersebut. Coba lagi.",
+      "collectionRenamed": "Koleksi diganti nama",
+      "collectionRenameError": "Tidak dapat mengganti nama koleksi tersebut. Coba lagi.",
+      "collectionDeleted": "Koleksi dihapus",
+      "collectionDeleteError": "Tidak dapat menghapus koleksi tersebut. Coba lagi.",
+      "addedToCollection": "Ditambahkan ke koleksi",
+      "addToCollectionError": "Tidak dapat menambahkan foto tersebut ke koleksi.",
+      "removedFromCollection": "Dihapus dari koleksi",
+      "removeFromCollectionError": "Tidak dapat menghapus foto tersebut dari koleksi."
+    }
+  }
+}

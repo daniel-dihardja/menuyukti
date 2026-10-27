@@ -1,0 +1,33 @@
+{
+  "login": {
+    "title": "Menuyukti",
+    "slogan": "Dari pesanan ke wawasan — untuk setiap hidangan",
+    "betaNote": "Menuyukti saat ini dalam versi beta dan tersedia untuk penguji yang diundang.",
+    "accessNote": "Kami akan mengirim kode sekali pakai ke email Anda — tanpa kata sandi.",
+    "backToHome": "Kembali ke beranda",
+    "emailLabel": "Email",
+    "emailPlaceholder": "m@example.com",
+    "continueWithGoogle": "Lanjutkan dengan Google",
+    "signingInWithGoogle": "Melanjutkan dengan Google…",
+    "orContinueWithEmail": "atau lanjutkan dengan email",
+    "continueWithEmail": "Lanjutkan dengan email",
+    "sendingCode": "Mengirim kode…",
+    "otpHintEmail": "Masukkan kode yang kami kirim ke {email}.",
+    "loginButton": "Masuk",
+    "signingIn": "Sedang masuk…",
+    "signUpPasswordStillRequired": "Email terverifikasi, tetapi Clerk masih memerlukan kata sandi. Di Clerk Dashboard, nonaktifkan Password dan aktifkan Email verification code untuk pendaftaran.",
+    "verificationCodeLabel": "Kode verifikasi",
+    "verificationCodePlaceholder": "Masukkan kode yang dikirim ke email Anda",
+    "verify": "Verifikasi",
+    "resendCode": "Kirim kode baru",
+    "additionalVerificationRequired": "Verifikasi tambahan diperlukan untuk menyelesaikan masuk.",
+    "mfaHintSms": "Masukkan kode yang kami kirim ke telepon Anda.",
+    "mfaHintEmail": "Masukkan kode yang kami kirim ke email Anda.",
+    "mfaHintTotp": "Masukkan kode dari aplikasi autentikator Anda.",
+    "useBackupCode": "Gunakan kode cadangan",
+    "genericError": "Terjadi kesalahan. Silakan coba lagi.",
+    "captchaError": "Verifikasi gagal. Nonaktifkan pemblokir untuk situs ini, lalu coba Google lagi.",
+    "noSignInMethods": "Masuk sementara tidak tersedia. Silakan coba lagi nanti.",
+    "startOver": "Mulai ulang"
+  }
+}

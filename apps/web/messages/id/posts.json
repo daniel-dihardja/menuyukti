@@ -1,0 +1,41 @@
+{
+  "posts": {
+    "title": "IG Studio",
+    "description": "Buat dan kelola draf postingan Instagram mandiri.",
+    "create": "Buat postingan baru",
+    "creating": "Membuat…",
+    "createError": "Gagal membuat postingan",
+    "empty": {
+      "title": "Belum ada postingan",
+      "description": "Buat draf postingan pertama Anda untuk mulai merancang di Post Creator."
+    },
+    "table": {
+      "index": "#",
+      "title": "Judul",
+      "status": "Status",
+      "updatedAt": "Terakhir diperbarui",
+      "updated": "Diperbarui {date}",
+      "untitled": "Postingan tanpa judul",
+      "action": "Tindakan",
+      "actionsForRow": "Tindakan untuk {name}",
+      "edit": "Edit",
+      "delete": "Hapus",
+      "deleteConfirmTitle": "Hapus postingan ini?",
+      "deleteConfirmDescription": "Ini menghapus draf postingan secara permanen. Anda tidak dapat membatalkan tindakan ini.",
+      "deleteConfirmCancel": "Batal",
+      "deleteConfirmAction": "Hapus postingan",
+      "deleteError": "Tidak dapat menghapus postingan. Silakan coba lagi.",
+      "editTitleAria": "Edit judul postingan",
+      "saveTitleAria": "Simpan judul postingan",
+      "renameError": "Tidak dapat menyimpan judul. Silakan coba lagi.",
+      "statusLabels": {
+        "draft": "Draf",
+        "published": "Dipublikasikan"
+      },
+      "mobile": {
+        "actionsTrigger": "Tindakan",
+        "sheetDescription": "Edit atau hapus postingan ini"
+      }
+    }
+  }
+}

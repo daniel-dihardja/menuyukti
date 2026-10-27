@@ -1,0 +1,1201 @@
+{
+  "analytics": {
+    "branches": {
+      "title": "Lokasi",
+      "description": "Kelola pengaturan yang dihadapi tamu dan menu untuk setiap tempat. Mulai dengan menu digital, lalu tambahkan analitik dan POS saat Anda membutuhkannya.",
+      "createDescription": "Beri nama tempat Anda, dapatkan tautan menu tamu, lalu tambahkan hidangan. Jam buka bersifat opsional.",
+      "table": {
+        "index": "#",
+        "branchName": "Nama Lokasi",
+        "city": "Kota",
+        "action": "Tindakan",
+        "view": "Edit Lokasi",
+        "delete": "Hapus",
+        "deleteConfirmTitle": "Hapus lokasi ini?",
+        "deleteConfirmDescription": "Ini akan menghapus secara permanen “{name}” beserta analitik penjualan, stok inventaris, dan entri kalendernya. Tindakan ini tidak dapat dibatalkan.",
+        "deleteConfirmCancel": "Batal",
+        "deleteConfirmAction": "Hapus lokasi",
+        "deleting": "Menghapus…",
+        "deleteSuccessToast": "Lokasi dihapus",
+        "deleteErrorToast": "Tidak dapat menghapus lokasi",
+        "empty": "Belum ada lokasi.",
+        "mobile": {
+          "actionsTrigger": "Tindakan",
+          "sheetDescription": "Pilih tindakan untuk lokasi ini."
+        },
+        "status": {
+          "incomplete": "Penyiapan belum lengkap",
+          "readyForSales": "Siap untuk penjualan",
+          "analyticsActive": "Analitik aktif"
+        }
+      },
+      "empty": {
+        "title": "Tambahkan lokasi pertama Anda",
+        "description": "Buat lokasi untuk memublikasikan menu digital dan mengelola pengaturan yang dihadapi tamu.",
+        "createCta": "Buat Lokasi Baru",
+        "salesCta": "Buka Laporan Penjualan"
+      },
+      "create": "Buat Lokasi Baru",
+      "freePlanLocationLimit": "Lokasi termasuk dalam Pro (klien restoran). Akun tamu hanya menggunakan Beranda dan profil.",
+      "manageMenu": "Kelola menu",
+      "manageDigitalMenu": "Menu Digital",
+      "manageOrderBoard": "Papan pesanan",
+      "manageCogs": "Kelola COGS",
+      "manageReports": "Laporan penjualan",
+      "moreActions": "Lainnya",
+      "moreActionsAria": "Tindakan lokasi lainnya",
+      "moreActionsSheetTitle": "Tindakan lokasi",
+      "moreActionsSheetDescription": "Menu, menu digital, dan papan pesanan untuk lokasi ini.",
+      "form": {
+        "createTitle": "Buat Lokasi",
+        "createDescription": "Beri nama tempat Anda untuk mendapatkan tautan menu tamu. Tambahkan jam buka jika ingin — Anda dapat mengubahnya nanti.",
+        "nameLabel": "Nama lokasi",
+        "namePlaceholder": "Berlin Mitte",
+        "publicSlugLabel": "Tautan menu",
+        "publicSlugPlaceholder": "berlin-mitte",
+        "publicSlugHint": "Huruf kecil, angka, dan tanda hubung. Digunakan untuk URL menu tamu Anda.",
+        "menuLinkPreviewAria": "Pratinjau tautan menu tamu",
+        "menuLinkPreviewEmpty": "Masukkan nama untuk melihat pratinjau tautan menu",
+        "editLink": "Edit tautan",
+        "hideEditLink": "Selesai",
+        "locationDetails": "Detail lokasi",
+        "locationDetailsDescription": "Alamat, negara, dan mata uang untuk tempat ini.",
+        "streetLabel": "Alamat jalan",
+        "streetPlaceholder": "Rosenthaler Str. 1",
+        "cityLabel": "Kota",
+        "cityPlaceholder": "Berlin",
+        "countryLabel": "Negara",
+        "countrySelectPlaceholder": "Pilih negara",
+        "currencyLabel": "Mata uang",
+        "currencySelectPlaceholder": "Pilih mata uang",
+        "noneOption": "Belum diatur",
+        "countryOptions": {
+          "id": "Indonesia",
+          "de": "Jerman"
+        },
+        "currencyOptions": {
+          "IDR": "IDR",
+          "EUR": "Euro (EUR)"
+        },
+        "openingHoursTitle": "Jam buka",
+        "openingHoursDescription": "Atur kapan tamu dapat berkunjung, lalu sesuaikan hari individual jika diperlukan.",
+        "addOpeningHours": "Tambah jam buka",
+        "hoursSummaryClosedAll": "Tutup sepanjang minggu",
+        "hoursSummaryWeekdays": "Sen–Jum {open}–{close}",
+        "hoursSummaryEveryDay": "Setiap hari {open}–{close}",
+        "hoursSummaryCustom": "Jadwal khusus",
+        "hoursSummaryEdit": "Edit hari",
+        "hoursSummaryHide": "Sembunyikan editor hari",
+        "tabs": {
+          "basics": "Info tamu",
+          "hours": "Jam",
+          "areas": "Area",
+          "marketing": "Profil"
+        },
+        "areas": {
+          "title": "Area",
+          "description": "Ruangan atau stasiun opsional (mis. Ruang utama, Bar). Saat Anda menggunakan stok, Anda dapat menandai area mana yang menggunakannya.",
+          "empty": "Belum ada area. Tambahkan satu jika Anda ingin melacak di mana stok digunakan.",
+          "nameLabel": "Nama area",
+          "namePlaceholder": "Bar",
+          "addAction": "Tambah area",
+          "saveName": "Simpan",
+          "cancelEdit": "Batal",
+          "deleteConfirm": "Hapus area “{name}”? Penggunaan stok sebelumnya tetap menyimpan riwayat tanpa area ini.",
+          "moveUpAria": "Pindahkan {name} ke atas",
+          "moveDownAria": "Pindahkan {name} ke bawah",
+          "deleteAria": "Hapus {name}",
+          "toast": {
+            "created": "Area ditambahkan",
+            "updated": "Area diperbarui",
+            "deleted": "Area dihapus"
+          },
+          "errors": {
+            "nameRequired": "Masukkan nama area",
+            "saveFailed": "Tidak dapat menyimpan area",
+            "deleteFailed": "Tidak dapat menghapus area"
+          }
+        },
+        "currencyAutoHint": "Mata uang diatur dari negara — ubah jika diperlukan.",
+        "toast": {
+          "savedTitle": "Lokasi disimpan",
+          "savedDescription": "Pengaturan yang dihadapi tamu sudah diperbarui.",
+          "createdTitle": "Lokasi dibuat",
+          "createdDescription": "Tambahkan menu Anda agar tamu dapat menjelajah dan memesan.",
+          "openDigitalMenuAction": "Menu Digital",
+          "uploadSalesAction": "Unggah laporan penjualan"
+        },
+        "stickySaveAria": "Simpan formulir lokasi",
+        "profileCompleteness": "{filled} dari {total} bidang profil lengkap",
+        "profileNextSuggested": "Berikutnya: tambahkan {field}",
+        "profileNextFields": {
+          "phone": "nomor telepon",
+          "instagramHandle": "akun Instagram",
+          "websiteUrl": "situs web",
+          "neighborhood": "lingkungan/distrik",
+          "contactEmail": "email kontak",
+          "notes": "catatan singkat tentang tempat",
+          "reservationUrl": "tautan reservasi",
+          "onlineOrderUrl": "tautan pemesanan online",
+          "menuUrl": "tautan menu eksternal",
+          "googleMapsUrl": "tautan Google Maps"
+        },
+        "collapsible": {
+          "bookAndOrder": "Tautan pesan & pesan antar",
+          "socialAndWeb": "Sosial & web",
+          "maps": "Peta & petunjuk arah"
+        },
+        "dayClosed": "Tutup",
+        "dayOpen": "Buka",
+        "opensAt": "Buka pukul",
+        "closesAt": "Tutup pukul",
+        "openDaySwitchAria": "Buka pada {day}",
+        "createAction": "Buat Lokasi",
+        "saveAction": "Simpan Perubahan",
+        "creating": "Membuat…",
+        "saving": "Menyimpan…",
+        "errors": {
+          "saveFailed": "Gagal menyimpan lokasi.",
+          "openingHoursIncomplete": "Pada {day}, tambahkan jam buka dan tutup, atau tandai hari tersebut tutup.",
+          "openingHoursOrder": "Pada {day}, jam tutup harus setelah jam buka."
+        },
+        "weekdays": {
+          "monday": "Senin",
+          "tuesday": "Selasa",
+          "wednesday": "Rabu",
+          "thursday": "Kamis",
+          "friday": "Jumat",
+          "saturday": "Sabtu",
+          "sunday": "Minggu"
+        },
+        "manualBrief": {
+          "resetHints": "Hapus semua petunjuk brief",
+          "sections": {
+            "profile": {
+              "title": "Profil & tautan kontak",
+              "description": "Cara tamu dan tim Anda menjangkau tempat ini secara online."
+            }
+          },
+          "notesLabel": "Catatan",
+          "notesPlaceholder": "Hal lain yang perlu diketahui tim Anda tentang tempat ini.",
+          "instagramHandleLabel": "Akun Instagram",
+          "instagramHandlePlaceholder": "menuyukti (tanpa @)",
+          "neighborhoodLabel": "Lingkungan / distrik",
+          "neighborhoodPlaceholder": "Mitte, Menteng, …",
+          "phoneLabel": "Telepon",
+          "phonePlaceholder": "+49 30 1234 567",
+          "contactEmailLabel": "Email kontak",
+          "contactEmailPlaceholder": "hello@yourvenue.com",
+          "websiteUrlLabel": "Situs web",
+          "websiteUrlPlaceholder": "https://yourvenue.com",
+          "reservationUrlLabel": "Tautan reservasi",
+          "reservationUrlPlaceholder": "https://book.yourvenue.com",
+          "onlineOrderUrlLabel": "Tautan pemesanan online",
+          "onlineOrderUrlPlaceholder": "https://order.yourvenue.com",
+          "menuUrlLabel": "Tautan menu",
+          "menuUrlPlaceholder": "https://yourvenue.com/menu",
+          "googleMapsUrlLabel": "Google Maps / petunjuk arah",
+          "googleMapsUrlPlaceholder": "https://maps.google.com/?q=Your+Venue"
+        }
+      }
+    },
+    "sales": {
+      "title": "Laporan Penjualan",
+      "description": "Impor tiket berbayar dari Menuyukti POS atau unggah file Excel penjualan untuk mengaktifkan analitik di setiap lokasi.",
+      "uploadInfo": {
+        "title": "Unggahan Excel POS yang didukung",
+        "description": "Sistem POS berikut didukung saat ini. Unggah jenis laporan yang sesuai agar kami dapat mendeteksi dan mengurai file Anda.",
+        "supportedLabel": "Didukung sekarang",
+        "reportLabel": "Laporan yang diperlukan",
+        "reports": {
+          "esb": {
+            "pos": "ESB",
+            "report": "Sales Recapitulation Detail Report"
+          },
+          "quino": {
+            "pos": "Quino",
+            "report": "Transaction Item Detail Report"
+          },
+          "moka": {
+            "pos": "Moka",
+            "report": "Export Item Details"
+          }
+        }
+      },
+      "branchLabel": "Lokasi",
+      "branchPlaceholder": "Pilih lokasi",
+      "branchDescription": "Pilih lokasi untuk memuat dan mengelola laporan penjualannya.",
+      "selectBranch": "Silakan pilih lokasi untuk melihat laporan penjualan.",
+      "loading": "Memuat laporan penjualan…",
+      "table": {
+        "index": "#",
+        "fileName": "Nama File",
+        "action": "Tindakan",
+        "askAi": "Chat",
+        "cogs": "COGS",
+        "report": "Laporan",
+        "delete": "Hapus",
+        "matrix": "Matriks",
+        "attribution": "Atribusi",
+        "scheduler": "Penjadwal",
+        "finance": "Keuangan",
+        "heatmap": "Heatmap",
+        "menuCombos": "Kombo Menu",
+        "menuItems": "Item Menu",
+        "orderMetrics": "Metrik Pesanan",
+        "campaignSignals": "Sinyal Kampanye",
+        "mobile": {
+          "actionsTrigger": "Laporan & tindakan",
+          "sheetDescription": "Pilih laporan atau tindakan untuk unggahan penjualan ini."
+        },
+        "readiness": {
+          "badges": {
+            "ready": "Siap",
+            "needs_cogs": "Perlu COGS",
+            "needs_attribution_data": "Perlu Atribusi",
+            "degraded": "Terdegradasi",
+            "blocked": "Diblokir"
+          }
+        }
+      },
+      "importPos": {
+        "title": "Impor dari Menuyukti POS",
+        "description": "Buat snapshot laporan penjualan dari tiket berbayar dalam rentang tanggal (UTC).",
+        "startLabel": "Tanggal mulai",
+        "endLabel": "Tanggal selesai",
+        "datePlaceholder": "Pilih tanggal",
+        "cta": "Impor data",
+        "importing": "Mengimpor…",
+        "success": "Diimpor {orderCount, plural, one {# tiket berbayar} other {# tiket berbayar}} ({lineCount, plural, one {# baris} other {# baris}}) sebagai “{name}”.",
+        "errors": {
+          "missingLocation": "Silakan pilih lokasi terlebih dahulu.",
+          "missingDates": "Silakan pilih tanggal mulai dan selesai.",
+          "invalidRange": "Tanggal mulai harus pada atau sebelum tanggal selesai."
+        }
+      },
+      "upload": {
+        "cta": "Unggah Laporan Penjualan Baru",
+        "uploading": "Mengunggah…",
+        "detectedPos": "POS terdeteksi:",
+        "fileInputLabel": "Unggah file Excel analitik",
+        "supportedPos": "POS yang didukung: ESB, Moka"
+      },
+      "noBranches": {
+        "title": "Belum ada lokasi",
+        "description": "Silakan buat lokasi sebelum mengimpor atau mengunggah laporan penjualan.",
+        "cta": "Buat Lokasi"
+      },
+      "noAnalytics": {
+        "title": "Belum ada laporan penjualan",
+        "description": "Impor tiket berbayar dari Menuyukti POS, atau unggah file Excel penjualan, untuk mulai menganalisis kinerja menu.",
+        "cta": "Unggah Laporan Penjualan Baru"
+      },
+      "delete": {
+        "title": "Hapus laporan penjualan ini?",
+        "description": "Ini akan menghapus secara permanen laporan dan wawasan terkait yang dihasilkan. Anda tidak dapat membatalkan tindakan ini.",
+        "confirm": "Hapus laporan",
+        "cancel": "Batal",
+        "error": "Tidak dapat menghapus laporan penjualan. Silakan coba lagi."
+      }
+    },
+    "cogs": {
+      "title": "COGS",
+      "pageLoadingTitle": "Memuat COGS…",
+      "description": "Kelola biaya bahan dan data COGS untuk setiap snapshot analitik.",
+      "menuName": "Nama Menu",
+      "menuCost": "Biaya Menu",
+      "create": "Buat COGS Baru",
+      "edit": "Edit COGS",
+      "delete": "Hapus"
+    },
+    "cogsForm": {
+      "heading": "Editor COGS",
+      "description": "Perbarui biaya pokok penjualan per item menu. Anda dapat mengimpor nilai COGS dari file analitik lain di lokasi yang sama.",
+      "completeness": {
+        "title": "Kelengkapan COGS",
+        "kpi": {
+          "totalItems": "Total item menu",
+          "validItems": "Item dengan COGS valid",
+          "itemCoverage": "Cakupan item",
+          "revenueCoverage": "Cakupan pendapatan"
+        },
+        "watchlist": {
+          "title": "Daftar pantauan COGS yang hilang/tidak valid prioritas",
+          "empty": "Semua item menu saat ini memiliki nilai COGS yang valid."
+        }
+      },
+      "import": {
+        "label": "Impor COGS dari analitik",
+        "placeholder": "Pilih analitik",
+        "noOptions": "Tidak ada analitik lain yang tersedia",
+        "action": "Impor",
+        "importing": "Mengimpor…"
+      },
+      "table": {
+        "title": "Edit COGS per item menu",
+        "menuName": "Item Menu",
+        "cogs": "COGS",
+        "we": "Rasio COGS (we)",
+        "weAria": "Rasio COGS untuk {menu}",
+        "categoryWe": {
+          "enable": "Aktifkan slider WE kategori",
+          "aria": "Slider WE kategori untuk {category}",
+          "hint": "Saat diaktifkan, menggeser slider ini memperbarui WE dan COGS untuk semua item menu dalam kategori ini."
+        },
+        "uncategorizedTitle": "Item Menu Tanpa Kategori",
+        "sortNameAsc": "Nama A–Z",
+        "sortNameDesc": "Nama Z–A",
+        "sortNameHint": "Urutkan item menu berdasarkan nama",
+        "sortNameButtonAriaAsc": "Item menu diurutkan A ke Z. Aktifkan untuk mengurutkan Z ke A.",
+        "sortNameButtonAriaDesc": "Item menu diurutkan Z ke A. Aktifkan untuk mengurutkan A ke Z."
+      },
+      "actions": {
+        "save": "Simpan COGS",
+        "saving": "Menyimpan…"
+      },
+      "locationSync": {
+        "loadFromLocation": "Muat dari katalog lokasi",
+        "saveToLocation": "Simpan ke katalog lokasi",
+        "manageCatalog": "Kelola COGS lokasi",
+        "working": "Menyinkronkan…"
+      },
+      "errors": {
+        "updateFailed": "Gagal memperbarui COGS",
+        "loadImportFailed": "Gagal memuat COGS dari analitik",
+        "loadFromLocationFailed": "Gagal memuat COGS dari katalog lokasi",
+        "saveToLocationFailed": "Gagal menyimpan COGS ke katalog lokasi",
+        "unknown": "Kesalahan tidak diketahui"
+      }
+    },
+    "locationCogs": {
+      "heading": "COGS Lokasi",
+      "description": "Kelola biaya menu untuk lokasi ini. Laporan penjualan baru secara otomatis mengisi COGS yang cocok dari katalog ini.",
+      "currencyHint": "Jumlah menggunakan mata uang lokasi ini ({currency}).",
+      "empty": "Belum ada COGS. Impor dari proses analitik atau tunggu laporan penjualan untuk mencantumkan item menu.",
+      "import": {
+        "label": "Impor COGS dari proses analitik",
+        "placeholder": "Pilih analitik",
+        "action": "Impor ke katalog",
+        "importing": "Mengimpor…"
+      },
+      "table": {
+        "menuName": "Item menu",
+        "cogs": "COGS",
+        "cogsWithCurrency": "COGS ({currency})"
+      },
+      "actions": {
+        "save": "Simpan katalog",
+        "saving": "Menyimpan…"
+      },
+      "errors": {
+        "saveFailed": "Gagal menyimpan COGS lokasi",
+        "importFailed": "Gagal mengimpor COGS dari analitik",
+        "unknown": "Kesalahan tidak diketahui"
+      }
+    },
+    "locationMenu": {
+      "heading": "Menu",
+      "description": "Buat dan edit menu tamu untuk lokasi ini. Susun hidangan ke dalam kategori seperti Makanan dan Minuman, lalu tambahkan nama, harga, deskripsi opsional, dan grup pengubah (ukuran, susu, ekstra).",
+      "currencyHint": "Harga menggunakan mata uang lokasi ini ({currency}).",
+      "categoryLabel": "Kategori {number}",
+      "itemLabel": "Item {number}",
+      "serviceBanner": {
+        "offTitle": "Menu Digital belum aktif untuk lokasi ini",
+        "offHint": "Aktifkan di Pengalaman tamu untuk memublikasikan tautan tamu dan gambar header. Pengeditan hidangan tetap di sini.",
+        "turnOnCta": "Buka Menu Digital",
+        "onTitle": "Menu publik sudah aktif",
+        "onHint": "Tautan tamu, slug, dan gambar header dikelola di Menu Digital.",
+        "manageCta": "Kelola Menu Digital"
+      },
+      "fields": {
+        "categoryName": "Kategori",
+        "categoryNamePlaceholder": "Makanan",
+        "name": "Nama",
+        "namePlaceholder": "Espresso",
+        "priceWithCurrency": "Harga ({currency})",
+        "pricePlaceholder": "0.00",
+        "taxClass": "Kelas PPN",
+        "taxClassStandard": "Standar (19%)",
+        "taxClassReduced": "Diturunkan (7%)",
+        "available": "Tersedia",
+        "availableHint": "Item yang tidak tersedia tetap tidak muncul di menu publik dan grid POS.",
+        "unavailableBadge": "Tidak tersedia",
+        "description": "Deskripsi",
+        "descriptionPlaceholder": "Deskripsi singkat opsional",
+        "dietaryTags": "Diet",
+        "allergens": "Mengandung alergen",
+        "image": "Gambar",
+        "pickImage": "Pilih dari media",
+        "pickerAria": "Pilih foto dari pustaka media Anda",
+        "emptyMedia": "Belum ada foto di pustaka media Anda.",
+        "removeImage": "Hapus gambar",
+        "fromMedia": "Dari pustaka media",
+        "modifiers": "Pengubah",
+        "modifiersHint": "Pilihan opsional yang dipilih tamu di POS — misalnya Ukuran, Susu, atau Ekstra.",
+        "modifiersEmptyTitle": "Belum ada pengubah",
+        "modifiersEmpty": "Tambahkan grup seperti Ukuran atau Susu, lalu cantumkan opsi yang dapat dipilih tamu.",
+        "modifierGroupName": "Nama grup",
+        "modifierGroupNamePlaceholder": "Ukuran",
+        "modifierGroupUntitled": "Grup tanpa judul",
+        "modifierMinSelect": "Min",
+        "modifierMaxSelect": "Maks",
+        "modifierSelectRangeHint": "Berapa banyak opsi yang harus dipilih tamu dari grup ini (min ≤ maks).",
+        "modifierOptions": "Opsi",
+        "modifierOptionName": "Opsi",
+        "modifierOptionNamePlaceholder": "Besar",
+        "modifierPriceDelta": "Tambahan ({currency})"
+      },
+      "actions": {
+        "add": "Tambah item",
+        "addCategory": "Tambah kategori",
+        "addModifierGroup": "Tambah grup",
+        "addModifierOption": "Tambah opsi",
+        "remove": "Hapus item",
+        "removeCategory": "Hapus kategori",
+        "removeModifierGroup": "Hapus grup",
+        "removeModifierOption": "Hapus opsi",
+        "expandItem": "Perluas item",
+        "collapseItem": "Ciutkan item",
+        "save": "Simpan menu",
+        "saving": "Menyimpan…"
+      },
+      "untitledItem": "Item tanpa judul",
+      "dietary": {
+        "vegan": "Vegan",
+        "vegetarian": "Vegetarian",
+        "pescatarian": "Pescatarian",
+        "gluten_free": "Bebas gluten",
+        "dairy_free": "Bebas susu",
+        "halal": "Halal",
+        "spicy": "Pedas"
+      },
+      "allergens": {
+        "gluten": "Gluten",
+        "dairy": "Susu",
+        "eggs": "Telur",
+        "fish": "Ikan",
+        "shellfish": "Kerang",
+        "peanuts": "Kacang tanah",
+        "tree_nuts": "Kacang pohon",
+        "soy": "Kedelai",
+        "sesame": "Wijen"
+      },
+      "toast": {
+        "saved": "Menu disimpan"
+      },
+      "errors": {
+        "nameRequired": "Setiap item memerlukan nama",
+        "categoryNameRequired": "Setiap kategori memerlukan nama",
+        "invalidPrice": "Masukkan harga valid yang tidak negatif",
+        "modifierGroupNameRequired": "Setiap grup pengubah memerlukan nama",
+        "modifierOptionNameRequired": "Setiap opsi pengubah memerlukan nama",
+        "modifierOptionsRequired": "Setiap grup pengubah memerlukan setidaknya satu opsi",
+        "invalidModifierPriceDelta": "Masukkan delta harga yang valid untuk setiap opsi",
+        "invalidModifierSelect": "Pilihan min/maks harus bilangan bulat dengan min ≤ maks dan maks ≥ 1",
+        "saveFailed": "Gagal menyimpan menu",
+        "unknown": "Kesalahan tidak diketahui"
+      }
+    },
+    "shared": {
+      "backToSales": "Kembali ke penjualan",
+      "createWorkflowFromReport": "Buat alur kerja",
+      "createWorkflowFromReportHint": "Buka alur kerja dengan konteks laporan ini untuk merencanakan promo dari wawasan ini.",
+      "breadcrumbRunLoading": "Laporan",
+      "orderMetrics": {
+        "avgOrderSize": "Rata-rata Ukuran Pesanan",
+        "avgOrderRevenue": "Rata-rata Pendapatan Pesanan",
+        "days": {
+          "mon": "Sen",
+          "tue": "Sel",
+          "wed": "Rab",
+          "thu": "Kam",
+          "fri": "Jum",
+          "sat": "Sab",
+          "sun": "Min"
+        }
+      }
+    },
+    "campaignSignals": {
+      "reportTitle": "Sinyal Kampanye",
+      "pageLoadingTitle": "Memuat sinyal kampanye…",
+      "breadcrumb": "Sinyal Kampanye",
+      "heading": "Sinyal Kampanye",
+      "description": "Input analitik deterministik yang digunakan saat membuat brief kampanye — fundamental penjualan, waktu, guardrail menu, dan rekomendasi perencanaan untuk lokasi ini.",
+      "emptyTitle": "Belum ada sinyal kampanye",
+      "emptyDescription": "Laporan ini tidak memiliki data pesanan yang diurai. Unggah file penjualan dengan item baris agar sinyal dapat dihitung.",
+      "reportPeriod": "Periode laporan",
+      "reportPos": "POS",
+      "coverageNotesTitle": "Catatan cakupan data",
+      "sections": {
+        "coverage": "Cakupan data",
+        "fundamental": "Sinyal fundamental",
+        "order": "Sinyal pesanan",
+        "timing": "Waktu & posting",
+        "matrix": "Guardrail matriks menu",
+        "planning": "Perencanaan kampanye"
+      },
+      "capabilities": {
+        "orderId": "Data tingkat pesanan",
+        "noOrderId": "Tidak ada data tingkat pesanan",
+        "datetime": "Data tanggal-waktu",
+        "noDatetime": "Tidak ada data tanggal-waktu",
+        "enabledBlocks": "Blok yang diaktifkan: {blocks}"
+      },
+      "confidence": {
+        "high": "Kepercayaan tinggi",
+        "medium": "Kepercayaan sedang",
+        "low": "Kepercayaan rendah"
+      },
+      "sales": {
+        "totalRevenue": "Total pendapatan",
+        "totalItemsSold": "Item terjual",
+        "uniqueMenuItems": "Item menu unik",
+        "avgItemPrice": "Rata-rata harga item"
+      },
+      "categoryFocus": {
+        "title": "Kategori pendapatan teratas",
+        "revenueShare": "Pangsa pendapatan",
+        "quantityShare": "Pangsa kuantitas"
+      },
+      "trending": {
+        "title": "Item yang naik",
+        "description": "Item menu dengan pendapatan yang naik dibanding periode sebelumnya",
+        "menuColumn": "Item menu",
+        "currentRevenue": "Pendapatan saat ini",
+        "changePct": "Perubahan",
+        "rank": "Peringkat",
+        "wasRank": "sebelumnya {rank}"
+      },
+      "order": {
+        "totalOrders": "Total pesanan",
+        "avgOrderRevenue": "Rata-rata pendapatan pesanan",
+        "avgOrderItems": "Rata-rata item per pesanan",
+        "revenueRange": "Rentang pendapatan pesanan"
+      },
+      "timing": {
+        "peakDay": "Hari permintaan puncak",
+        "peakRevenueDay": "Hari pendapatan puncak",
+        "primaryMealPeriod": "Periode makan utama",
+        "peakRevenueMealPeriod": "Periode makan pendapatan puncak",
+        "peakHour": "Jam puncak",
+        "periodHeadline": "Periode pelaporan",
+        "periodRevenue": "Pendapatan periode",
+        "previousRevenue": "Periode sebelumnya",
+        "vsPrevious": "Vs periode sebelumnya"
+      },
+      "matrix": {
+        "heroesTitle": "Hero konten",
+        "heroesDescription": "Item bintang yang direkomendasikan untuk konten sorotan",
+        "heroesEmpty": "Tidak ada item hero yang teridentifikasi",
+        "avoidTitle": "Gunakan dengan hati-hati",
+        "avoidDescription": "Item matriks Low End yang sebaiknya tidak dipromosikan berlebihan",
+        "avoidEmpty": "Tidak ada item yang ditandai untuk dihindari",
+        "empty": "Sinyal menu engineering memerlukan data COGS. Tambahkan biaya untuk membuka daftar hero dan avoid.",
+        "menuColumn": "Item menu",
+        "categoryColumn": "Matriks",
+        "revenueColumn": "Pendapatan"
+      },
+      "planning": {
+        "title": "Rekomendasi perencanaan",
+        "description": "Petunjuk posting dan objektif turunan untuk brief kampanye",
+        "objective": "Objektif yang direkomendasikan",
+        "primaryCta": "Saluran CTA utama",
+        "postingDays": "Hari posting yang direkomendasikan",
+        "dayparts": "Bagian hari yang direkomendasikan"
+      },
+      "objectives": {
+        "awareness": "Kesadaran",
+        "consideration": "Pertimbangan",
+        "conversion": "Konversi",
+        "unknown": "Objektif tidak diketahui"
+      },
+      "cta": {
+        "profileVisit": "Kunjungan profil",
+        "dm": "Pesan langsung",
+        "orderOrReservation": "Pesanan atau reservasi",
+        "unknown": "CTA tidak diketahui"
+      },
+      "unavailable": {
+        "orderSignals": "Sinyal tingkat pesanan tidak tersedia karena laporan ini tidak memiliki pengenal pesanan.",
+        "datetimeSignals": "Sinyal waktu tidak tersedia karena laporan ini tidak memiliki stempel waktu pesanan."
+      },
+      "links": {
+        "heatmap": "Lihat heatmap",
+        "cogs": "Tambah COGS",
+        "matrix": "Lihat matriks"
+      }
+    },
+    "orderMetrics": {
+      "reportTitle": "Metrik Pesanan",
+      "pageLoadingTitle": "Memuat metrik pesanan…",
+      "breadcrumb": "Metrik Pesanan",
+      "heading": "Metrik Pesanan",
+      "description": "Rata-rata ukuran pesanan dan pendapatan untuk laporan penjualan ini, dengan permintaan tempat berdasarkan hari dan periode makan.",
+      "empty": "Tidak ada metrik pesanan untuk proses ini.",
+      "emptyTitle": "Belum ada metrik pesanan",
+      "emptyDescription": "Laporan ini tidak menyertakan cukup data pesanan untuk menghitung rata-rata. Coba unggahan lain atau pastikan file penjualan berisi detail tingkat pesanan.",
+      "reportPeriod": "Periode laporan",
+      "reportPos": "POS",
+      "kpi": {
+        "orderSizeHint": "Item per pesanan secara rata-rata",
+        "orderRevenueHint": "Nilai tiket rata-rata"
+      },
+      "venueHeatmap": {
+        "title": "Kekuatan slot tempat",
+        "description": "Seberapa sibuk setiap hari kerja dan periode makan di lokasi ini, berdasarkan jumlah pesanan (struk unik), dibandingkan dengan slot rata-rata.",
+        "collapsibleTrigger": "Kekuatan slot tempat",
+        "menuColumn": "Periode makan",
+        "legendLow": "Lebih lemah (terang)",
+        "legendHigh": "Lebih kuat (gelap)",
+        "unitsLabel": "Indeks permintaan — setiap sel menampilkan pesanan di slot itu vs rata-rata (1.0× = rata-rata)",
+        "totalsRowLabel": "Total",
+        "sortHint": "Klik header kolom untuk mengurutkan periode makan berdasarkan hari.",
+        "scrollHint": "Geser ke samping untuk melihat semua hari →",
+        "explainTitle": "Cara menghitung kekuatan slot tempat",
+        "explainBody": "Grid memiliki 35 slot (7 hari kerja × 5 periode makan). Setiap pesanan dihitung sekali berdasarkan nomor struk dan ditempatkan di slot waktu pesanannya. Indeks permintaan adalah pangsa pesanan slot itu dari semua pesanan dibagi pangsa slot rata-rata (1/35). 1.0× adalah lalu lintas rata-rata; di bawah 1.0 lebih sepi; di atas 1.0 lebih ramai. Sel yang lebih gelap berarti lebih banyak pesanan relatif terhadap slot lain. Ini hanya menggunakan jumlah pesanan — bukan pendapatan atau kuantitas item.",
+        "cellAriaLabel": "{mealPeriod} pada {day} · {orderCount, plural, one {# pesanan} other {# pesanan}} · permintaan {index}×",
+        "cellTooltip": "{mealPeriod} pada {day} · {orderCount, plural, one {# pesanan} other {# pesanan}} · permintaan {index}× · {tier}",
+        "gauge": {
+          "tierLow": "Di bawah rata-rata",
+          "tierAverage": "Rata-rata",
+          "tierHigh": "Di atas rata-rata"
+        }
+      }
+    },
+    "menuCombos": {
+      "reportTitle": "Kombo Menu",
+      "pageLoadingTitle": "Memuat kombo menu…",
+      "breadcrumb": "Kombo Menu",
+      "heading": "Kombo Menu",
+      "description": "Lihat hidangan mana yang dipesan tamu bersama untuk menginspirasi paket dan promosi.",
+      "reportPeriod": "Periode laporan",
+      "reportPos": "POS",
+      "linkToMatrix": "Lihat matriks menu engineering",
+      "linkToCogs": "Tambah COGS untuk filter bintang",
+      "linkToCampaignSignals": "Lihat sinyal kampanye",
+      "createCampaignCta": "Jadikan kampanye",
+      "matrixUnavailable": "Tambahkan COGS untuk mengklasifikasikan item bintang dan fokuskan analisis kombo pada performa terbaik Anda. Penjual teratas digunakan sementara itu.",
+      "insightTitle": "Wawasan utama",
+      "insightTopPair": "Tamu yang memesan {menuA} sering menambahkan {menuB} — lift {lift}× di atas peluang acak. Pertimbangkan paket atau promo \"lengkapi makanan Anda\".",
+      "hero": {
+        "liftLabel": "Lift {lift}×"
+      },
+      "relatedReports": {
+        "trigger": "Laporan terkait"
+      },
+      "mobile": {
+        "sortLabel": "Urutkan berdasarkan",
+        "sortAriaLabel": "Urutkan pasangan kombo",
+        "sortLift": "Lift",
+        "sortCoOrders": "Pesanan bersama",
+        "sortSupport": "Support",
+        "sortAscending": "Urutkan menaik",
+        "sortDescending": "Urutkan menurun",
+        "confidenceSummary": "Hingga {percent} tamu yang memesan {menu} juga menambahkan {other}",
+        "showConfidence": "Mengapa pasangan ini",
+        "hideConfidence": "Sembunyikan detail"
+      },
+      "tabs": {
+        "pairs": "Kombo teratas",
+        "matrix": "Matriks lift",
+        "timing": "Waktu",
+        "scrollHint": "Geser ke samping untuk melihat semua tab →"
+      },
+      "kpi": {
+        "totalOrders": "Total pesanan",
+        "totalOrdersHint": "Pesanan dengan nomor struk dalam periode ini",
+        "multiItemShare": "Pesanan multi-item",
+        "multiItemShareHint": "Tamu yang memesan lebih dari satu hidangan",
+        "avgItems": "Rata-rata item per pesanan",
+        "avgItemsHint": "Rata-rata yang lebih tinggi menunjukkan potensi paket lebih besar",
+        "scope": "Cakupan analisis",
+        "scopeStarsHint": "Pasangan berfokus pada performa bintang dari matriks menu Anda",
+        "scopeTopSellersHint": "Pasangan berfokus pada item terlaris hingga COGS ditambahkan"
+      },
+      "insights": {
+        "totalOrders": "{count, plural, one {# pesanan} other {# pesanan}}",
+        "multiItemShare": "{percent} pesanan multi-item",
+        "avgItems": "Rata-rata {count} item per pesanan",
+        "scopeStars": "Item bintang",
+        "scopeTopSellers": "Penjual teratas"
+      },
+      "filters": {
+        "categoryLabel": "Kategori menu",
+        "categoryAriaLabel": "Filter pasangan berdasarkan kategori menu",
+        "categoryPlaceholder": "Pilih kategori…",
+        "allCategories": "Semua kategori",
+        "minLiftLabel": "Lift minimum",
+        "minLiftAriaLabel": "Filter pasangan berdasarkan lift minimum",
+        "minLiftAll": "Semua pasangan",
+        "minLiftAbove1": "Lift 1.0+",
+        "minLiftAbove1_5": "Lift 1.5+",
+        "showingCount": "Menampilkan {count, plural, one {# pasangan} other {# pasangan}}"
+      },
+      "bundleIdeas": {
+        "title": "Ide paket",
+        "description": "Pasangan yang disarankan berdasarkan kategori menu engineering",
+        "premiumTitle": "Kandidat paket premium",
+        "premiumDescription": "Pasangan bintang + bintang — performa terbaik Anda yang sudah digabungkan tamu",
+        "upsellTitle": "Peluang upsell",
+        "upsellDescription": "Pasangan bintang + puzzle — promosikan bintang bermargin tinggi bersama item yang lebih lambat"
+      },
+      "table": {
+        "title": "Peluang kombo teratas",
+        "description": "Diurutkan berdasarkan seberapa sering tamu memesan item bersama vs. peluang acak saja",
+        "pair": "Pasangan",
+        "coOrders": "Pesanan bersama",
+        "lift": "Lift",
+        "support": "Support",
+        "confidence": "Kepercayaan",
+        "confidenceLineA": "Ketika tamu memesan {menu}, {percent} juga memesan {other}",
+        "confidenceLineB": "Ketika tamu memesan {menu}, {percent} juga memesan {other}",
+        "liftTooltip": "Seberapa lebih sering pasangan ini muncul bersama vs. peluang acak. Di atas 1 = lebih kuat dari yang diharapkan.",
+        "supportTooltip": "Pangsa semua pesanan yang menyertakan kedua item",
+        "confidenceTooltip": "Tingkat add-on arah untuk setiap item dalam pasangan",
+        "strongLiftBadge": "Afinitas kuat"
+      },
+      "matrix": {
+        "title": "Matriks lift pasangan",
+        "menuColumn": "Menu",
+        "legendLow": "Lift lebih rendah",
+        "legendHigh": "Lift lebih tinggi",
+        "unitsLabel": "Lift (kekuatan asosiasi vs peluang)",
+        "totalsRowLabel": "Total",
+        "sortHint": "Klik header kolom untuk mengurutkan baris berdasarkan lift dengan item tersebut.",
+        "scrollHint": "Geser ke samping untuk melihat lebih banyak →",
+        "explainTitle": "Cara membaca matriks ini",
+        "explainBody": "Lift di atas 1 berarti pasangan muncul bersama lebih sering daripada yang diprediksi popularitas saja. Sel diagonal disembunyikan. Nilai di bawah ambang minimum pesanan bersama mungkin kosong.",
+        "showExplanation": "Cara membaca matriks ini",
+        "hideExplanation": "Sembunyikan penjelasan",
+        "cellAriaLabel": "{menu} dengan {other} · lift {lift}",
+        "cellTooltip": "{menu} + {other} · lift {lift}"
+      },
+      "empty": {
+        "title": "Belum ada data kombo",
+        "description": "Laporan ini tidak menyertakan baris pesanan dengan nomor struk. Unggah file penjualan dengan detail tingkat pesanan untuk menganalisis pasangan menu."
+      },
+      "emptyMultiItem": {
+        "title": "Pesanan multi-item tidak cukup",
+        "description": "Tamu sebagian besar memesan item tunggal dalam periode ini. Coba rentang tanggal yang lebih panjang atau pastikan item baris dikelompokkan dengan benar berdasarkan nomor struk."
+      },
+      "emptyMatrix": {
+        "title": "Matriks memerlukan lebih banyak item",
+        "description": "Setidaknya dua item menu fokus diperlukan untuk menampilkan matriks lift."
+      },
+      "emptyFiltered": {
+        "title": "Tidak ada pasangan yang cocok dengan filter Anda",
+        "description": "Coba kategori lain atau lift minimum yang lebih rendah."
+      },
+      "timing": {
+        "panelTitle": "Waktu kombo",
+        "panelDescription": "Kapan tamu memesan setiap pasangan bersama, berdasarkan hari, periode makan, dan jam.",
+        "pairSelectorLabel": "Pasangan kombo",
+        "pairSelectorAriaLabel": "Pilih pasangan kombo untuk analisis waktu",
+        "pairSelectorPlaceholder": "Pilih pasangan kombo",
+        "pairSelectorOption": "{pair} · lift {lift}×",
+        "peakSummary": "Puncak: {day} · {mealPeriod} · jam tersibuk {hour}",
+        "peakSummaryNoHour": "Puncak: {day} · {mealPeriod}",
+        "peakSummaryHourOnly": "Jam tersibuk: {hour}",
+        "noPeakData": "Tidak ada pesanan bersama yang tercatat untuk pasangan ini dalam periode laporan.",
+        "peakExplanationIntro": "Garis puncak di atas menggabungkan dua tampilan: hari dan periode makan terkuat untuk pasangan ini, dan jam tunggal dengan paling banyak pesanan bersama di seluruh laporan. Keduanya dapat berbeda — misalnya, Rab · Makan siang mungkin menonjol relatif terhadap lalu lintas makan siang sementara 18:00 memiliki volume total tertinggi ketika semua hari dijumlahkan.",
+        "peakExplanationDayMeal": "Menampilkan seberapa sering pasangan ini muncul di setiap hari dan periode makan dibandingkan dengan lalu lintas keseluruhan di slot itu. Nilai di atas 1× berarti pasangan muncul lebih sering dari rata-rata. Sel yang lebih gelap menyoroti di mana pasangan over-index.",
+        "peakExplanationHourly": "Menampilkan jumlah mentah cek yang menyertakan kedua item di setiap jam, dijumlahkan di setiap hari dalam laporan. Jam tersibuk di sini tidak terbatas pada hari atau periode makan puncak di atas.",
+        "weekdays": {
+          "mon": "Sen",
+          "tue": "Sel",
+          "wed": "Rab",
+          "thu": "Kam",
+          "fri": "Jum",
+          "sat": "Sab",
+          "sun": "Min"
+        },
+        "empty": {
+          "title": "Tidak ada pasangan afinitas kuat untuk waktu",
+          "description": "Hanya pasangan dengan lift 1.5× atau lebih tinggi (afinitas kuat) yang muncul di sini. Periksa tab Kombo teratas untuk pasangan lain."
+        },
+        "strategy": {
+          "pairIndexLabel": "Indeks pasangan",
+          "venueDemandLabel": "Permintaan tempat",
+          "posture": {
+            "support": "Dukung",
+            "promote": "Promosikan",
+            "maintain": "Pertahankan"
+          },
+          "gauge": {
+            "pairAtPeak": "Kecocokan pasangan di puncak",
+            "venueAtPeak": "Beban tempat di puncak",
+            "tierLow": "Di bawah rata-rata",
+            "tierAverage": "Rata-rata",
+            "tierHigh": "Di atas rata-rata"
+          },
+          "venueHeatmap": {
+            "title": "Kekuatan slot tempat",
+            "description": "Seberapa sibuk setiap hari kerja dan periode makan di lokasi ini, berdasarkan jumlah pesanan (struk unik), dibandingkan dengan slot rata-rata. Cincin menandai jendela puncak pasangan yang dipilih.",
+            "collapsibleTrigger": "Kekuatan slot tempat",
+            "menuColumn": "Periode makan",
+            "legendLow": "Lebih lemah (terang)",
+            "legendHigh": "Lebih kuat (gelap)",
+            "unitsLabel": "Indeks permintaan — setiap sel menampilkan pesanan di slot itu vs rata-rata (1.0× = rata-rata)",
+            "totalsRowLabel": "Total",
+            "sortHint": "Klik header kolom untuk mengurutkan periode makan berdasarkan hari.",
+            "scrollHint": "Geser ke samping untuk melihat semua hari →",
+            "explainTitle": "Cara menghitung kekuatan slot tempat",
+            "explainBody": "Grid memiliki 35 slot (7 hari kerja × 5 periode makan). Setiap pesanan dihitung sekali berdasarkan nomor struk dan ditempatkan di slot waktu pesanannya. Indeks permintaan adalah pangsa pesanan slot itu dari semua pesanan dibagi pangsa slot rata-rata (1/35). 1.0× adalah lalu lintas rata-rata; di bawah 1.0 lebih sepi; di atas 1.0 lebih ramai. Sel yang lebih gelap berarti lebih banyak pesanan relatif terhadap slot lain. Ini hanya menggunakan jumlah pesanan — bukan pendapatan atau kuantitas item.",
+            "cellAriaLabel": "{mealPeriod} pada {day} · {orderCount, plural, one {# pesanan} other {# pesanan}} · permintaan {index}×",
+            "cellTooltip": "{mealPeriod} pada {day} · {orderCount, plural, one {# pesanan} other {# pesanan}} · permintaan {index}× · {tier}"
+          },
+          "dayExplorer": {
+            "title": "Penjelajah hari slot",
+            "description": "Pilih hari untuk membandingkan waktu pasangan dan permintaan tempat untuk setiap periode makan.",
+            "noData": "Tidak ada aktivitas di slot ini.",
+            "sheetDescription": "Waktu pasangan dan permintaan tempat untuk slot ini.",
+            "coOrdersLabel": "Pesanan bersama",
+            "venueDemandTierLabel": "Tingkat tempat"
+          }
+        }
+      }
+    },
+    "heatmap": {
+      "reportTitle": "Heatmap",
+      "pageLoadingTitle": "Memuat heatmap…",
+      "breadcrumb": "Heatmap",
+      "heading": "Heatmap Penjualan Menu",
+      "description": "Visualisasikan volume penjualan berdasarkan menu dan waktu",
+      "empty": "Tidak ada data heatmap untuk proses ini.",
+      "emptyDaily": "Tidak ada data heatmap harian.",
+      "emptyWeekly": "Tidak ada data heatmap mingguan.",
+      "emptyFiltered": "Tidak ada item heatmap yang cocok dengan kategori yang dipilih. Sesuaikan filter untuk melanjutkan.",
+      "filters": {
+        "categoryLabel": "Filter Kategori",
+        "categoryAriaLabel": "Filter item heatmap berdasarkan kategori menu",
+        "categoryPlaceholder": "Pilih kategori…",
+        "allCategories": "Semua Kategori",
+        "matrixLabel": "Filter menu engineering",
+        "matrixAriaLabel": "Filter item heatmap berdasarkan kategori matriks menu engineering",
+        "matrixHelp": "Pilih kuadran menu engineering mana yang muncul di heatmap. Saat semuanya dipilih, setiap item heatmap ditampilkan.",
+        "emptyMatrixFiltered": "Tidak ada item heatmap yang cocok dengan kategori menu engineering yang dipilih. Pilih setidaknya satu kuadran untuk melanjutkan."
+      },
+      "tabs": {
+        "daily": "Harian",
+        "weekly": "Mingguan"
+      },
+      "dailyTitle": "Penjualan Per Jam ({startHour}:00 – {endHour}:00)",
+      "weeklyTitle": "Penjualan Mingguan (Sen–Min)",
+      "uncategorized": "Tanpa kategori",
+      "linkToMatrix": "Lihat matriks menu engineering",
+      "insights": {
+        "peakHour": "Jam tersibuk: {window}",
+        "peakDay": "Hari tersibuk: {window}",
+        "topItem": "Item teratas: {item} ({count, plural, one {# unit} other {# unit}})",
+        "itemCount": "Menampilkan {count, plural, one {# item} other {# item}}",
+        "reportingPeriod": "Periode: {period}"
+      },
+      "matrix": {
+        "menuColumn": "Menu"
+      },
+      "legend": {
+        "low": "Rendah",
+        "high": "Tinggi",
+        "units": "Unit terjual"
+      },
+      "totals": {
+        "label": "Total"
+      },
+      "sort": {
+        "hint": "Klik header kolom untuk mengurutkan berdasarkan jam atau hari tersebut. Klik lagi untuk membalik; klik ketiga menghapus kolom dan mengurutkan item berdasarkan total unit terjual."
+      },
+      "scroll": {
+        "hint": "Geser ke samping untuk melihat semua jam →"
+      },
+      "cellAriaLabel": "{menu} · {window} · {count, plural, one {# unit} other {# unit}}",
+      "tooltip": "{menu} · {window} · {count, plural, one {# unit} other {# unit}}",
+      "explain": {
+        "title": "Cara membaca heatmap ini",
+        "body": "Warna sel menunjukkan unit terjual relatif dalam tampilan saat ini. Angka adalah kuantitas baris pesanan berdasarkan jam atau hari kerja dari data penjualan Anda—bukan prakiraan. Tampilan harian menampilkan jam buka lokasi Anda ({startHour}:00–{endHour}:00)."
+      }
+    },
+    "ai": {
+      "reportTitle": "Perencana Alur Kerja",
+      "breadcrumb": "Perencana Alur Kerja",
+      "heading": "Perencana Alur Kerja",
+      "description": "Ajukan pertanyaan tentang snapshot analitik ini."
+    },
+    "finance": {
+      "reportTitle": "Laporan Keuangan",
+      "breadcrumb": "Keuangan",
+      "heading": "Ringkasan Keuangan",
+      "description": "Perhitungan laba berdasarkan snapshot analitik dan biaya tetap lokasi",
+      "overview": {
+        "title": "Ringkasan Periode & Penjualan",
+        "period": {
+          "title": "Periode",
+          "start": "Mulai:",
+          "end": "Selesai:"
+        },
+        "orders": {
+          "title": "Pesanan",
+          "total": "Total:"
+        },
+        "itemsSold": {
+          "title": "Item Terjual",
+          "total": "Total:"
+        },
+        "avgRevenuePerOrder": "Rata-rata Pendapatan / Pesanan",
+        "avgItemsPerOrder": "Rata-rata Item / Pesanan"
+      },
+      "profit": {
+        "title": "Perhitungan Laba",
+        "table": {
+          "metric": "Metrik",
+          "amount": "Jumlah",
+          "totalRevenue": "Total Pendapatan",
+          "totalCogs": "Total COGS",
+          "totalProfit": "Total Laba",
+          "netProfit": "Laba Bersih"
+        }
+      }
+    },
+    "matrix": {
+      "reportTitle": "Laporan Menu Engineering",
+      "pageLoadingTitle": "Memuat matriks…",
+      "breadcrumb": "Matriks",
+      "heading": "Matriks Menu Engineering",
+      "description": "Lihat item menu mana yang perlu dipromosikan, ditingkatkan, atau dihentikan dengan sinyal penjualan dan profitabilitas yang jelas dari data Anda.",
+      "actionsLabel": "Tindakan yang direkomendasikan:",
+      "actions": {
+        "promote": "Promosikan",
+        "improve": "Tingkatkan",
+        "remove": "Hapus"
+      },
+      "empty": {
+        "title": "Matriks belum siap",
+        "description": "Data matriks belum tersedia untuk file analitik ini. Silakan perbarui COGS terlebih dahulu untuk menghasilkan hasil matriks.",
+        "cta": "Buka penyiapan COGS"
+      },
+      "reportPeriod": "Periode laporan",
+      "reportPos": "POS",
+      "tabs": {
+        "matrix": "Grafik matriks",
+        "items": "Daftar item"
+      },
+      "kpi": {
+        "totalProfit": "Total laba",
+        "totalProfitHint": "Pendapatan dikurangi COGS di seluruh menu",
+        "portfolioMargin": "Margin portofolio",
+        "portfolioMarginHint": "Laba sebagai pangsa total pendapatan",
+        "itemsAnalyzed": "Item dianalisis",
+        "itemsAnalyzedHint": "Item menu dengan COGS dan pendapatan dalam proses ini",
+        "avgPopularity": "Ambang popularitas rata-rata",
+        "avgPopularityHint": "Item pada atau di atas kuantitas terjual ini dihitung sebagai populer"
+      },
+      "quadrantHelp": {
+        "star": "Popularitas tinggi dan margin tinggi — lindungi dan tampilkan pemenang ini.",
+        "plow_horse": "Popularitas tinggi tetapi margin lebih rendah — optimalkan biaya atau harga dengan hati-hati.",
+        "puzzle": "Margin kuat tetapi volume lebih rendah — promosikan dan tingkatkan visibilitas.",
+        "low_end": "Popularitas dan margin lebih rendah — tinjau, ubah harga, atau hentikan."
+      },
+      "uncategorized": "Tanpa kategori",
+      "links": {
+        "heatmap": "Lihat heatmap",
+        "menuCombos": "Lihat kombo menu",
+        "lowEnd": "Tinjau Low End",
+        "cogs": "Penyiapan COGS"
+      },
+      "chart": {
+        "ariaLabel": "Scatter plot matriks menu engineering yang menampilkan popularitas versus contribution margin",
+        "xAxis": "Popularitas (unit terjual)",
+        "yAxis": "Contribution margin",
+        "thresholdPopularity": "Popularitas rata-rata",
+        "thresholdMargin": "Margin rata-rata",
+        "empty": "Tidak ada item untuk diplot pada filter saat ini."
+      },
+      "distributionGrid": {
+        "title": "Distribusi kinerja menu",
+        "marginShareLabel": "Pangsa margin",
+        "toggleAriaLabel": "Alihkan visibilitas kuadran {category}"
+      },
+      "filteredStatsAlert": "Pangsa portofolio di bawah mencerminkan kategori menu yang dipilih, bukan seluruh proses.",
+      "quadrantFilterEmpty": "Pilih setidaknya satu kuadran untuk melihat matriks.",
+      "overview": {
+        "title": "Ringkasan Penjualan",
+        "period": {
+          "title": "Periode",
+          "start": "Mulai:",
+          "end": "Selesai:"
+        },
+        "ordersAndItems": {
+          "title": "Pesanan & Item",
+          "orders": "Pesanan:",
+          "itemsSold": "Item Terjual:"
+        },
+        "averages": {
+          "title": "Rata-rata",
+          "avgRevenue": "Rata-rata Pendapatan:",
+          "avgItems": "Rata-rata Item:"
+        }
+      },
+      "distribution": {
+        "title": "Distribusi Kinerja Menu",
+        "items": "Item:",
+        "share": "Pangsa:",
+        "margin": "Margin:"
+      },
+      "analysis": {
+        "title": "Analisis Item Menu"
+      },
+      "portfolio": {
+        "itemCount": "{count, plural, one {# item} other {# item}}",
+        "itemShare": "{value} dari item",
+        "marginShare": "{value} dari margin",
+        "filteredShowing": "Menampilkan {visible} dari {total}",
+        "noItems": "Tidak ada item dalam kategori ini."
+      },
+      "emptyFiltered": "Tidak ada item matriks yang cocok dengan kategori yang dipilih. Sesuaikan filter untuk melanjutkan.",
+      "filters": {
+        "categoryLabel": "Filter Kategori",
+        "categoryAriaLabel": "Filter item matriks berdasarkan kategori menu",
+        "categoryPlaceholder": "Pilih kategori…",
+        "allCategories": "Semua Kategori",
+        "matrixLabel": "Kuadran",
+        "matrixAriaLabel": "Filter berdasarkan kuadran menu engineering",
+        "matrixHelp": "Tampilkan atau sembunyikan item Stars, Plow Horses, Puzzles, dan Low End.",
+        "showingCount": "Menampilkan {count, plural, one {# item} other {# item}}"
+      },
+      "categories": {
+        "star": "Stars",
+        "plow_horse": "Plow Horses",
+        "puzzle": "Puzzles",
+        "low_end": "Low End"
+      },
+      "categoriesShort": {
+        "star": "Star",
+        "plow_horse": "Plow",
+        "puzzle": "Puzzle",
+        "low_end": "Low"
+      },
+      "lowEndHighlight": {
+        "sliderLabel": "Ambang pangsa margin",
+        "sliderAriaLabel": "Sorot pangsa margin terbawah hingga {value}% dari total margin",
+        "sliderHelp": "Menyoroti item Low End (pangsa margin terendah terlebih dahulu) yang pangsa margin kumulatifnya berada dalam ambang ini.",
+        "sliderValue": "{value}% dari total margin",
+        "rowIncludedInBand": "Dalam ambang pangsa margin kumulatif.",
+        "shareCellDescription": "{percent}% dari total margin, dalam pita ambang pangsa margin kumulatif."
+      },
+      "table": {
+        "menu": "Menu",
+        "category": "Kategori",
+        "qty": "Jml",
+        "revenue": "Pendapatan",
+        "cogs": "COGS",
+        "margin": "Margin",
+        "shareOfTotalMargin": "% dari total margin",
+        "caption": "Item menu {category}: Menu, Unit terjual, Margin, Pangsa dari total margin.",
+        "action": "Tindakan",
+        "actionReasonLabel": "Mengapa tindakan ini",
+        "actions": {
+          "remove": "HAPUS",
+          "reprice": "UBAH HARGA",
+          "promote": "PROMOSIKAN",
+          "keep": "PERTAHANKAN"
+        }
+      }
+    },
+    "menuItems": {
+      "reportTitle": "Laporan Item Menu",
+      "breadcrumb": "Item Menu",
+      "heading": "Item Menu",
+      "description": "Tinjau item menu yang dikelompokkan berdasarkan nama dengan sinyal kuantitas dan pendapatan dari proses analitik ini.",
+      "backToSales": "Kembali ke Laporan Penjualan",
+      "tabs": {
+        "table": "Tabel",
+        "bubbleChart": "Grafik Gelembung"
+      },
+      "qty": "Jml",
+      "empty": "Tidak ada data item menu untuk proses ini.",
+      "emptyFiltered": "Tidak ada item menu yang cocok dengan kategori yang dipilih. Sesuaikan filter untuk melanjutkan.",
+      "filters": {
+        "categoryLabel": "Filter Kategori",
+        "categoryAriaLabel": "Filter item menu berdasarkan kategori",
+        "categoryPlaceholder": "Pilih kategori…",
+        "allCategories": "Semua Kategori"
+      },
+      "table": {
+        "menuItem": "Item Menu",
+        "category": "Kategori",
+        "subCategory": "Subkategori",
+        "qty": "Jml",
+        "revenue": "Pendapatan",
+        "empty": "Tidak ada item menu ditemukan.",
+        "caption": "Tabel item menu dengan kategori, subkategori, kuantitas, dan pendapatan."
+      },
+      "chart": {
+        "sizeMetricLabel": "Ukuran gelembung berdasarkan",
+        "sizeMetricQuantity": "Kuantitas",
+        "sizeMetricRevenue": "Pendapatan",
+        "ariaLabelQuantity": "Grafik gelembung item menu berukuran berdasarkan kuantitas terjual",
+        "ariaLabelRevenue": "Grafik gelembung item menu berukuran berdasarkan total pendapatan",
+        "captionQuantity": "Ukuran gelembung mewakili kuantitas terjual. Warna menunjukkan kategori menu.",
+        "captionRevenue": "Ukuran gelembung mewakili total pendapatan. Warna menunjukkan kategori menu.",
+        "empty": "Tidak ada item menu tersedia untuk kategori yang dipilih."
+      }
+    },
+    "lowEnd": {
+      "reportTitle": "Tinjauan Low End",
+      "pageLoadingTitle": "Memuat Low End…",
+      "breadcrumb": "Low End",
+      "heading": "Item Low End",
+      "description": "Tinjau item dengan popularitas rendah dan margin rendah, lalu putuskan mana yang perlu diubah harganya, ditingkatkan, atau dihapus dari menu.",
+      "reportPeriod": "Periode laporan",
+      "reportPos": "POS",
+      "empty": {
+        "title": "Tinjauan Low End belum siap",
+        "description": "Data menu engineering belum tersedia untuk file analitik ini. Perbarui COGS terlebih dahulu untuk mengklasifikasikan item Low End.",
+        "cta": "Buka penyiapan COGS",
+        "noItems": "Tidak ada item Low End dalam proses ini. Setiap item yang diklasifikasikan berada di luar kuadran Low End."
+      },
+      "links": {
+        "matrix": "Matriks menu engineering lengkap",
+        "cogs": "Penyiapan COGS"
+      },
+      "kpi": {
+        "itemCount": "Item Low End",
+        "itemCountHint": "{count} dari {total} item menu ({share})",
+        "itemShare": "Pangsa menu",
+        "itemShareHint": "SKU Low End sebagai pangsa semua item yang diklasifikasikan",
+        "marginShare": "Margin dari Low End",
+        "marginShareHint": "Pangsa contribution margin portofolio dari item Low End",
+        "marginAmount": "Margin Low End",
+        "marginAmountHint": "Total contribution margin dari item Low End dalam periode ini"
+      },
+      "avgQtyUnavailable": "Tanggal periode hilang — rata-rata jml/hari tidak tersedia",
+      "impact": {
+        "title": "Pratinjau dampak penghapusan",
+        "description": "Sorot item Low End terlemah (pangsa margin terendah terlebih dahulu) hingga pangsa total margin portofolio. Gunakan ini untuk memperkirakan biaya menghentikan pita item.",
+        "sliderLabel": "Ambang pangsa margin kumulatif",
+        "sliderAriaLabel": "Sorot pangsa margin terbawah hingga {value}% dari total margin",
+        "sliderValue": "{value}% dari total margin",
+        "summary": "Jika dihapus: {count, plural, one {# item} other {# item}}, {share} dari margin portofolio ({amount})",
+        "summaryEmpty": "Geser slider untuk melihat pratinjau pita penghapusan.",
+        "rowIncludedInBand": "Dalam ambang pangsa margin kumulatif.",
+        "shareCellDescription": "{percent}% dari total margin, dalam pita ambang pangsa margin kumulatif."
+      },
+      "table": {
+        "menu": "Menu",
+        "avgQtyPerDay": "Rata-rata jml/hari",
+        "avgQtyPerDayUnavailable": "—",
+        "periodQty": "Jml periode",
+        "margin": "Margin",
+        "shareOfTotalMargin": "% dari total margin",
+        "action": "Tindakan",
+        "caption": "Item menu Low End: Menu, Rata-rata jml/hari, Jml periode, Margin, Pangsa dari total margin, Tindakan.",
+        "empty": "Tidak ada item Low End untuk ditinjau.",
+        "actions": {
+          "remove": "HAPUS",
+          "reprice": "UBAH HARGA",
+          "promote": "PROMOSIKAN",
+          "keep": "PERTAHANKAN"
+        }
+      }
+    }
+  }
+}

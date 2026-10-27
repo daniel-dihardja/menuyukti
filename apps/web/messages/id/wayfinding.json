@@ -1,0 +1,11 @@
+{
+  "wayfinding": {
+    "shopFromWorkflow": {
+      "title": "Anda membuka toko dari sebuah alur kerja.",
+      "backToWorkflow": "Kembali ke alur kerja itu"
+    },
+    "shopPdp": {
+      "signInToContinue": "Masuk untuk membuka aplikasi"
+    }
+  }
+}

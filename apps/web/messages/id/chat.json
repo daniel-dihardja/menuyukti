@@ -1,0 +1,183 @@
+{
+  "chat": {
+    "pageLoadingTitle": "Memuat chat…",
+    "pageTitle": "Chat #{id}",
+    "emptyTitle": "Tanyakan tentang lokasi ini",
+    "emptyDescription": "Lihat bagaimana permintaan, menu, dan jam operasional saat ini — atau beralih ke Image assistant untuk membuat gambar.",
+    "waitHint": "Biasanya memakan waktu sekitar 30 detik.",
+    "quickPrompts": {
+      "locationOverview": {
+        "label": "Ringkasan lokasi",
+        "prompt": "Mulai dengan deskripsi umum lokasi ini: nama, masakan, alamat, dan jam buka. Lalu ringkas situasi saat ini dari grafik penjualan jika tersedia: permintaan kuat dan lemah berdasarkan hari × periode makan, hidangan mana yang ditampilkan (evergreen vs sorotan harian vs spesial hari), dan combo menu yang menarik. Akhiri dengan paling banyak dua langkah praktis berikutnya. Gunakan brief markdown singkat (Permintaan, Menu, Combo, Jam, Berikutnya). Jangan buat jadwal Instagram mingguan kecuali saya meminta."
+      },
+      "weeklyPlan": {
+        "label": "Rencana Instagram mingguan",
+        "prompt": "Buat rencana Instagram mingguan untuk tempat usaha ini. Pertama muat jam buka lokasi, lalu tulis rencana hari demi hari yang jelas dalam markdown (satu slot per posting). Utamakan hari buka dan waktu posting selama atau sedikit sebelum layanan. Untuk setiap slot sertakan waktu posting yang disarankan, format (Story, post, carousel, atau Reel), item menu yang ditampilkan, sudut caption singkat, dan alasan satu baris berdasarkan jam buka serta penjualan atau permintaan jika tersedia."
+      },
+      "featureTopDishes": {
+        "label": "Tampilkan hidangan teratas",
+        "prompt": "Dari kinerja menu lokasi ini saat ini, hidangan mana yang sebaiknya kita tampilkan dan mengapa? Sebutkan waktu (hari atau periode makan) jika grafik mendukungnya, dan jadikan Instagram opsional — bukan rencana penuh seminggu."
+      },
+      "storiesAndReels": {
+        "label": "Campuran Stories & Reels",
+        "prompt": "Susun campuran mingguan Instagram Stories dan Reels dengan item menu spesifik untuk setiap slot serta arah kreatif singkat."
+      }
+    },
+    "placeholder": "Tanyakan tentang permintaan, menu, jam, atau rencana mingguan…",
+    "placeholderImageAssistant": "Jelaskan gambar: hidangan, penawaran, suasana, dan teks apa pun pada gambar…",
+    "placeholderStoryAssistant": "Jelaskan gambar: hidangan, penawaran, suasana, dan teks apa pun pada gambar…",
+    "thinking": "Berpikir…",
+    "errorTitle": "Terjadi kesalahan",
+    "errorDescription": "Permintaan tidak dapat diselesaikan. Silakan coba lagi.",
+    "retry": "Coba lagi",
+    "sentWithAttachments": "Dikirim dengan lampiran",
+    "clearChatAriaLabel": "Hapus chat",
+    "clearChatLabel": "Hapus chat",
+    "clearChatTooltip": "Hapus pesan dan mulai thread chat baru",
+    "clearChatConfirmTitle": "Hapus chat ini?",
+    "clearChatConfirmDescription": "Pesan dalam thread ini akan dihapus dan thread chat baru akan dimulai. Tindakan ini tidak dapat dibatalkan.",
+    "clearChatConfirmCancel": "Batal",
+    "clearChatConfirmAction": "Hapus chat",
+    "composerMoreAriaLabel": "Opsi chat lainnya",
+    "composerMoreTooltip": "Mode, model, dan hapus chat",
+    "stopChatAriaLabel": "Hentikan pembuatan",
+    "submitChatAriaLabel": "Kirim pesan",
+    "attachImageAriaLabel": "Lampirkan gambar",
+    "attachImageTooltip": "Lampirkan gambar dari perangkat Anda",
+    "attachImageMaxReachedTooltip": "Anda dapat melampirkan hingga 4 gambar per pesan",
+    "mobileArtifactOpenLabel": "Pratinjau",
+    "mobileArtifactOpenAriaLabel": "Buka pratinjau",
+    "mobileArtifactCloseAriaLabel": "Tutup pratinjau",
+    "mobileArtifactSheetTitle": "Pratinjau",
+    "mobileArtifactSheetDescription": "Lihat pratinjau gambar Instagram yang dihasilkan.",
+    "mobileArtifactEmptyHint": "Lihat konten yang dihasilkan",
+    "modes": {
+      "ariaLabel": "Mode chat",
+      "general": "Chat umum",
+      "image_assistant": "Image assistant"
+    },
+    "salesReport": {
+      "ariaLabel": "Laporan penjualan",
+      "placeholder": "Laporan penjualan",
+      "none": "Tidak ada laporan penjualan",
+      "attachHint": "Lampirkan laporan penjualan untuk menggunakan grafik dan saran berbasis penjualan."
+    },
+    "storyArtifact": {
+      "ariaLabel": "Pratinjau gambar Instagram",
+      "placeholderLabel": "Belum ada gambar",
+      "formatAriaLabel": "Ukuran gambar"
+    },
+    "storyAssets": {
+      "title": "Disimpan untuk gambar ini",
+      "roleStyle": "Gaya",
+      "roleContent": "Konten",
+      "roleResult": "Hasil",
+      "resultLabel": "Terakhir dihasilkan",
+      "removeAriaLabel": "Hapus referensi {role}"
+    },
+    "slashCommands": {
+      "ariaLabel": "Perintah slash",
+      "image": {
+        "label": "image",
+        "description": "Beralih ke mode Image assistant."
+      },
+      "story": {
+        "label": "story",
+        "description": "Beralih ke Image assistant dengan ukuran Story (9:16)."
+      }
+    },
+    "mentionMenu": {
+      "ariaLabel": "Sisipkan referensi grafik atau media",
+      "empty": "Tidak ada grafik atau media yang cocok dengan filter Anda.",
+      "visualizationsGroup": "Grafik terlampir",
+      "visualizationsAriaLabel": "Sisipkan data grafik terlampir",
+      "noAttachedCharts": "Tidak ada grafik terlampir yang cocok dengan filter Anda. Tambahkan grafik di tab Visualisasi terlebih dahulu.",
+      "mediaGroup": "Media",
+      "mediaAriaLabel": "Lampirkan gambar dari pustaka Media",
+      "mediaLoading": "Memuat media…",
+      "mediaEmpty": "Belum ada file media. Unggah gambar di halaman Media, atau gunakan ikon paperclip untuk melampirkan dari perangkat Anda.",
+      "collectionsGroup": "Koleksi",
+      "collectionsAriaLabel": "Jelajahi koleksi media",
+      "collectionMemberCount": "{count, plural, one {# item} other {# item}}",
+      "backToMedia": "Kembali ke semua media",
+      "collectionLoading": "Memuat koleksi…",
+      "collectionEmpty": "Tidak ada gambar dalam koleksi ini."
+    },
+    "artifactTitle": "Artefak",
+    "milestoneSchedulerPreviewHolidayBadge": "Libur",
+    "milestoneDataLabel": "Data untuk milestone ini",
+    "milestoneDataFullscreen": "Perluas ke tampilan penuh",
+    "milestoneDataCloseFullscreen": "Tutup tampilan penuh",
+    "formatMarkdownButton": "Format Markdown",
+    "formatMarkdownFormatting": "Memformat…",
+    "formatMarkdownError": "Tidak dapat memformat teks. Silakan coba lagi.",
+    "fieldSaveStatusSaving": "Menyimpan…",
+    "fieldSaveStatusSaved": "Tersimpan",
+    "fieldSaveStatusUnsaved": "Berubah",
+    "fieldSaveButton": "Simpan",
+    "contentImageDialog": {
+      "title": "Desain baru",
+      "descriptionSelect": "Pilih gambar produk dan latar belakang, lalu lanjutkan.",
+      "descriptionReview": "Tinjau pilihan Anda sebelum menghasilkan.",
+      "loadError": "Tidak dapat memuat gambar. Coba lagi.",
+      "productsLabel": "Gambar produk",
+      "productsSelectedCount": "{count, plural, =0 {Belum dipilih} one {# dipilih} other {# dipilih}}",
+      "productsEmpty": "Belum ada gambar produk. Unggah satu di Studio.",
+      "backgroundLabel": "Latar belakang",
+      "backgroundSelected": "Dipilih",
+      "backgroundNotSelected": "Tidak ada",
+      "backgroundsEmpty": "Tidak ada latar belakang tersedia.",
+      "flowLabel": "Alur AI",
+      "flowPlaceholder": "Pilih alur AI",
+      "flowsEmpty": "Tidak ada alur AI desain tersedia.",
+      "formatLabel": "Format",
+      "formatPlaceholder": "Pilih format",
+      "reviewHeading": "Pilihan Anda",
+      "cancel": "Batal",
+      "continue": "Lanjutkan",
+      "back": "Kembali",
+      "generating": "Menghasilkan…",
+      "generate": "Hasilkan",
+      "generateError": "Tidak dapat menghasilkan gambar. Coba lagi."
+    },
+    "visualizations": {
+      "panelTitle": "Grafik",
+      "artifactTitle": "Grafik",
+      "artifactHint": "Buka grafik analitik penjualan",
+      "artifactDescription": "Tambahkan dan jelajahi grafik analitik penjualan bersama chat Anda.",
+      "emptyTitle": "Belum ada grafik",
+      "emptyDescription": "Tambahkan grafik dari katalog untuk menjelajahi analitik penjualan bersama rencana Anda.",
+      "addButton": "Tambah visualisasi",
+      "addMenuAriaLabel": "Tambah visualisasi",
+      "removeAriaLabel": "Hapus {title}",
+      "noAnalyticsRunTitle": "Tautkan laporan penjualan",
+      "noAnalyticsRunDescription": "Lampirkan laporan penjualan di composer chat untuk menjelajahi grafik dan saran berbasis penjualan.",
+      "loadErrorTitle": "Tidak dapat memuat grafik",
+      "loadErrorDescription": "Data grafik tidak dapat dimuat. Silakan coba lagi.",
+      "retry": "Coba lagi",
+      "emptyDataDescription": "Tidak ada data permintaan slot tersedia untuk laporan penjualan ini.",
+      "emptyMenuHeatmapDescription": "Tidak ada data heatmap menu tersedia untuk laporan penjualan ini.",
+      "emptyPairLiftMatrixDescription": "Setidaknya dua item menu fokus diperlukan untuk menampilkan matriks lift.",
+      "emptyLowEndDescription": "Tidak ada item Low End tersedia untuk laporan penjualan ini. Perbarui COGS jika matriks hilang.",
+      "fallbackRunHint": "Menampilkan data dari laporan penjualan yang lebih baru untuk lokasi ini karena laporan yang ditautkan alur kerja tidak memiliki data permintaan slot.",
+      "catalog": {
+        "venue_slot_strength_heatmap": {
+          "title": "Kekuatan slot tempat usaha",
+          "description": "Heatmap permintaan hari kerja dan periode makan untuk lokasi ini."
+        },
+        "menu_item_heatmap": {
+          "title": "Heatmap item menu",
+          "description": "Kapan setiap item menu terjual berdasarkan jam dan hari dalam minggu."
+        },
+        "pair_lift_matrix_heatmap": {
+          "title": "Matriks pair lift",
+          "description": "Seberapa kuat item menu dipesan bersama dibanding kebetulan saja."
+        },
+        "low_end_review": {
+          "title": "Tinjauan item lemah",
+          "description": "Item popularitas rendah dan margin rendah untuk dinilai ulang harga, diperbaiki, atau dihapus."
+        }
+      }
+    }
+  }
+}

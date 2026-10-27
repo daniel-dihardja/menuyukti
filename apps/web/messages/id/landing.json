@@ -1,0 +1,199 @@
+{
+  "landing": {
+    "skipToContent": "Lewati ke konten",
+    "hero": {
+      "headline": "Kami membaca di antara gigitan.",
+      "subtitle": "Lampirkan laporan penjualan. Lihat permintaan dan hidangan tersorot. Tanya langkah berikutnya.",
+      "mobileCta": "Buka menu contoh",
+      "qr": {
+        "ariaLabel": "Kode QR yang membuka menu digital contoh Menuyukti",
+        "caption": "Arahkan kamera Anda · tanpa aplikasi",
+        "sampleHint": "Membuka menu tamu contoh",
+        "linkLabel": "Buka menu contoh di browser ini"
+      },
+      "mock": {
+        "ariaLabel": "Ilustrasi menu digital tempat usaha",
+        "eyebrow": "Menu",
+        "venueName": "Dapur contoh",
+        "tagline": "Yang disukai tamu saat ini",
+        "guestFavorite": "Favorit tamu",
+        "category": "Malam ini",
+        "dish1Name": "Roti panggang labu",
+        "dish1Price": "€12",
+        "dish1Desc": "Mentega coklat, sage, biji panggang",
+        "dish2Name": "Salad fennel sitrus",
+        "dish2Price": "€14",
+        "dish2Desc": "Jeruk darah, pistachio, herba lembut",
+        "dish3Name": "House spritz",
+        "dish3Price": "€9",
+        "dish3Desc": "Sitrus pahit, soda, zaitun"
+      }
+    },
+    "why": {
+      "title": "Mengapa Menuyukti ada",
+      "subtitle": "Restoran menjual di ruang makan—bukan keranjang checkout. Operator mengelola pemasaran, lantai restoran, dan inventaris. AI Menuyukti mengambil keputusan berulang dari Anda agar Anda tetap fokus pada makanan.",
+      "item1Title": "Bisnis offline butuh playbook yang berbeda",
+      "item1Description": "Merek online mengoptimalkan klik dan keranjang. Restoran mengoptimalkan lalu lintas kaki, meja, dan reputasi—sehingga perangkat lunak generik dan playbook media sosial melewatkan cara hospitality benar-benar tumbuh.",
+      "item2Title": "Pemasaran dan operasional bersaing untuk perhatian yang sama",
+      "item2Description": "Apa yang diposting, apa yang distok, dan apa yang didorong di menu—berulang kali. Beban kognitif itu bersaing dengan dapur dan lantai restoran.",
+      "item3Title": "AI untuk keputusan berulang",
+      "item3Description": "Menuyukti menggunakan data penjualan dan inventaris Anda untuk memilih waktu, topik, dan item menu yang tepat—agar pemasaran tetap tajam sementara tim Anda tetap fokus pada makanan."
+    },
+    "foundation": {
+      "title": "Dibangun di atas fondasi unik",
+      "subtitle": "Menuyukti dibangun di atas rekayasa enterprise dan AI proprietari—menggabungkan chat Advisor, laporan penjualan, POS, inventaris, dan wawasan lokasi dalam satu workspace.",
+      "item1Title": "Rekayasa setara enterprise",
+      "item1Description": "Lebih dari satu dekade membangun platform untuk perbankan, perusahaan industri, dan sektor publik—rekayasa perangkat lunak setara enterprise di balik cara restoran Anda beroperasi.",
+      "item2Title": "Platform AI proprietari",
+      "item2Description": "Platform AI yang dibangun untuk restoran: analisis penjualan, perencanaan di Advisor, alur kerja konten, dan penemuan peluang pertumbuhan yang berpijak pada pesanan Anda—bukan alat media sosial generik.",
+      "item3Title": "Dibangun untuk operator dan tim",
+      "item3Description": "Pemilik, pemasar, dan mitra bekerja dalam satu workspace—undang Tim Anda, bagikan lokasi, dan jaga pemasaran serta operasional selaras di seluruh lantai restoran."
+    },
+    "differentiators": {
+      "title": "Yang membuat Menuyukti berbeda",
+      "items": [
+        {
+          "value": "Terintegrasi",
+          "label": "Advisor, Laporan, Lokasi, POS, dan inventaris dalam satu workspace—perencanaan dan kinerja di bawah atap yang sama."
+        },
+        {
+          "value": "Konsisten",
+          "label": "Alur kerja Advisor yang didukung AI menjaga perencanaan tetap berpijak pada sinyal penjualan yang sama setiap kali."
+        },
+        {
+          "value": "Berbasis data",
+          "label": "Pemasaran dan operasional berpijak pada analitik penjualan, inventaris, dan lokasi Anda."
+        },
+        {
+          "value": "Fokus",
+          "label": "Perangkat lunak khusus restoran—setiap rencana dibuat untuk kafe, bar, dan ruang makan."
+        },
+        {
+          "value": "Berkembang",
+          "label": "Workspace Anda mendapatkan manfaat seiring platform berkembang—kemampuan baru tanpa menambah kompleksitas."
+        }
+      ]
+    },
+    "services": {
+      "title": "Apa yang ada di workspace",
+      "subtitle": "Aplikasi Menuyukti hari ini—Advisor untuk perencanaan, Laporan dan Lokasi untuk wawasan penjualan, plus Tim untuk siapa yang dapat mengaksesnya.",
+      "items": {
+        "analysis": {
+          "title": "Laporan",
+          "description": "Ubah data penjualan menjadi laporan yang jelas—lihat apa yang laku, kapan permintaan memuncak, dan di mana peluang pertumbuhan tersembunyi di setiap pesanan.",
+          "bullets": [
+            "Laporan kinerja penjualan",
+            "Pola menu dan permintaan",
+            "Wawasan slot puncak",
+            "Identifikasi peluang pertumbuhan",
+            "Rekomendasi berbasis data"
+          ]
+        },
+        "content": {
+          "title": "Advisor",
+          "description": "Rencanakan pemasaran dan operasional dengan chat AI yang berpijak pada data restoran Anda—dari brief hingga langkah berikutnya, tanpa memulai dari halaman kosong.",
+          "bullets": [
+            "Perencanaan di chat Advisor",
+            "Brief berbasis data",
+            "Ide promosi dari sinyal penjualan",
+            "Sudut storytelling berpusat menu",
+            "Iterasi dengan tim Anda dalam satu thread"
+          ]
+        },
+        "social": {
+          "title": "Lokasi",
+          "description": "Kelola tempat usaha dan bandingkan kinerja antar lokasi—agar tim multi-situs melihat gambaran yang sama.",
+          "bullets": [
+            "Direktori lokasi",
+            "Konteks penjualan per tempat usaha",
+            "Bandingkan cabang berdampingan",
+            "Jaga pekerjaan terikat pada situs yang tepat",
+            "Bagikan akses dengan Tim Anda"
+          ]
+        },
+        "strategy": {
+          "title": "Operasional",
+          "description": "Papan Pesanan menu digital dan alat inventaris yang berawal dari realitas penjualan—agar lantai restoran dan gudang berbagi sinyal yang sama dengan pemasaran Anda.",
+          "bullets": [
+            "Papan Pesanan menu digital",
+            "Prakiraan isi ulang inventaris",
+            "Perencanaan sadar lokasi",
+            "Prioritaskan yang sudah laku",
+            "Selaraskan Tim pada gambaran yang sama"
+          ]
+        },
+        "technical": {
+          "title": "Tim",
+          "description": "Undang orang ke workspace Anda dan kelola siapa yang dapat bekerja dengan Advisor, Laporan, dan Lokasi.",
+          "bullets": [
+            "Undang anggota workspace",
+            "Peran pemilik dan anggota",
+            "Akses bersama ke rencana dan laporan",
+            "Jaga operator dan pemasar tetap selaras",
+            "Satu workspace per grup restoran"
+          ]
+        }
+      }
+    },
+    "platform": {
+      "title": "Platform AI di balik workspace",
+      "subtitle": "Setiap sesi berjalan di atas teknologi internal—Advisor, Laporan, dan Lokasi didukung perangkat lunak proprietari untuk restoran.",
+      "bullets": {
+        "analysis": {
+          "title": "Laporan yang menampilkan peluang",
+          "description": "Analisis penjualan yang menyoroti pola permintaan, kekuatan menu, dan peluang pertumbuhan dari pesanan Anda."
+        },
+        "content": {
+          "title": "Advisor secepat layanan",
+          "description": "Rencanakan dan sempurnakan pekerjaan di Advisor dengan AI yang tetap berpijak pada konteks restoran Anda—Anda tetap mengendalikan apa yang diterbitkan."
+        },
+        "campaigns": {
+          "title": "Perencanaan lebih cerdas per lokasi",
+          "description": "Ikatkan pemasaran dan operasional ke Lokasi yang tepat serta Laporan yang menunjukkan kapan tamu benar-benar membeli."
+        }
+      }
+    },
+    "vision": {
+      "title": "Perangkat lunak restoran agentik untuk operator",
+      "description": "Menuyukti mengubah data penjualan menjadi rencana Advisor dan Laporan yang jelas—agar restoran, kafe, dan bar bertindak berdasarkan apa yang sudah laku, di setiap Lokasi, bersama Tim yang mengelola lantai restoran."
+    },
+    "faq": {
+      "title": "Pertanyaan umum",
+      "q1": "Untuk siapa Menuyukti?",
+      "a1": "Pemilik restoran, operator, dan pemasar di restoran, kafe, dan bar yang ingin rencana dan laporan berpijak pada data penjualan mereka—bukan agensi Instagram terpisah.",
+      "q2": "Bagaimana Menuyukti berbeda dari alat pemasaran biasa?",
+      "a2": "Menuyukti adalah perangkat lunak khusus restoran dengan AI proprietari. Advisor, Laporan, Lokasi, POS, inventaris, dan Tim berada dalam satu workspace—dibangun untuk hospitality, bukan posting media sosial generik.",
+      "q3": "Apa arti “dibantu AI” dalam praktik?",
+      "a3": "Advisor membantu merencanakan dari konteks penjualan Anda; Laporan menampilkan pola dan peluang di pesanan Anda. Anda meninjau dan memutuskan—AI mempercepat pekerjaan; penilaian Anda membentuk strategi.",
+      "q4": "Apa yang bisa saya lakukan di aplikasi hari ini?",
+      "a4": "Gunakan Advisor untuk perencanaan, Laporan untuk wawasan penjualan, Lokasi untuk mengelola tempat usaha, POS dan inventaris untuk operasional, serta Tim untuk mengundang orang ke workspace Anda. Tamu mendapatkan menu digital yang hidup.",
+      "q5": "Bagaimana kami memulai?",
+      "a5": "Menuyukti sedang mempersiapkan peluncuran. Jika Anda sudah memiliki akses platform, masuk dari header atau tombol di halaman ini.",
+      "q6": "Saya sudah menggunakan platform Menuyukti. Di mana saya masuk?",
+      "a6": "Pengguna platform yang sudah ada dapat masuk dari header untuk mengakses Advisor, Laporan, Lokasi, dan Tim.",
+      "q7": "Bagaimana Menuyukti dibandingkan dari segi biaya?",
+      "a7": "Menuyukti berfokus secara eksklusif pada restoran dan berjalan di atas platform AI proprietari yang dibangun untuk hospitality. Paket dirancang untuk ekonomi restoran; detail harga akan dibagikan saat onboarding dibuka untuk klien baru.",
+      "q8": "Siapa yang dapat masuk hari ini?",
+      "a8": "Platform saat ini hanya tersedia untuk pelanggan yang sudah ada dan mitra awal. Peluncuran publik yang lebih luas sedang dipersiapkan—kembali lagi segera untuk mengetahui kapan pendaftaran dibuka lebih luas."
+    },
+    "cta": {
+      "title": "Siap untuk perangkat lunak restoran yang berawal dari data penjualan Anda?",
+      "description": "Temukan bagaimana Advisor, Laporan, dan Lokasi dapat membantu Anda mengubah setiap pesanan menjadi keputusan berikutnya.",
+      "secondary": "Masuk"
+    },
+    "footer": {
+      "navLabel": "Footer",
+      "why": "Mengapa Menuyukti",
+      "services": "Workspace",
+      "platform": "Platform",
+      "faq": "FAQ",
+      "privacyPolicy": "Kebijakan Privasi",
+      "terms": "Ketentuan Layanan",
+      "copyrightName": "Menuyukti"
+    },
+    "mobileCta": {
+      "primary": "Masuk",
+      "secondary": "Workspace"
+    }
+  }
+}

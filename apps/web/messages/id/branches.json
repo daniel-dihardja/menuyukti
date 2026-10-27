@@ -1,0 +1,31 @@
+{
+  "branches": {
+    "fixedCosts": {
+      "title": "Biaya Tetap",
+      "description": "Kelola biaya tetap untuk lokasi ini.",
+      "breadcrumbs": {
+        "branches": "Lokasi",
+        "fixedCosts": "Biaya Tetap"
+      },
+      "table": {
+        "name": "Nama",
+        "amount": "Jumlah",
+        "category": "Kategori",
+        "notes": "Catatan",
+        "active": "Aktif",
+        "actions": "Tindakan",
+        "empty": "Belum ada biaya tetap."
+      },
+      "form": {
+        "addTitle": "Tambah Biaya Tetap",
+        "namePlaceholder": "Nama biaya (mis. Sewa)",
+        "amountPlaceholder": "Jumlah",
+        "categoryPlaceholder": "Kategori (mis. Gaji)",
+        "notesPlaceholder": "Catatan",
+        "addButton": "Tambah",
+        "saveButton": "Simpan",
+        "deleteButton": "Hapus"
+      }
+    }
+  }
+}

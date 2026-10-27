@@ -1,0 +1,21 @@
+{
+  "mainHeader": {
+    "brand": "Menuyukti",
+    "brandAria": "Beranda Menuyukti",
+    "navAria": "Navigasi utama",
+    "navExplore": "Jelajahi",
+    "navStudio": "IG Studio",
+    "navChat": "Advisor",
+    "navShop": "Toko Cetak",
+    "landingNav": {
+      "services": "Workspace",
+      "why": "Mengapa Menuyukti",
+      "mobileDescription": "AI untuk restoran — Advisor, analitik, POS, inventaris, dan menu digital tamu."
+    },
+    "mobileMenuTriggerAria": "Buka menu navigasi utama",
+    "mobileMenuTitle": "Navigasi",
+    "mobileMenuDescription": "Studio untuk visual merek AI dan Toko Cetak untuk merchandise.",
+    "mobileMenuSignIn": "Masuk",
+    "signInMenuTriggerAria": "Opsi masuk"
+  }
+}

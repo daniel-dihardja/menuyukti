@@ -1,0 +1,7 @@
+{
+  "appShell": {
+    "skipToContent": "Lewati ke konten",
+    "toggleSidebarAria": "Buka atau tutup sidebar",
+    "openBreadcrumbNavAria": "Buka navigasi breadcrumb"
+  }
+}

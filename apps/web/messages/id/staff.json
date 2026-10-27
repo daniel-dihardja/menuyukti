@@ -1,0 +1,89 @@
+{
+  "staff": {
+    "title": "Konsol staf",
+    "description": "Alat platform Menuyukti untuk anggota tim. Pelanggan tidak melihat area ini.",
+    "tabsAria": "Bagian konsol staf",
+    "tabs": {
+      "workspaces": "Workspace",
+      "mockData": "Data mock",
+      "clearServiceData": "Hapus data layanan"
+    },
+    "provisionWorkspace": {
+      "title": "Provision workspace",
+      "description": "Buat workspace operator untuk pengguna Clerk. Tamu mendaftar tanpa workspace; staf melakukan provision pro (klien restoran) agar mereka dapat menambah lokasi dan mengundang anggota tim.",
+      "ownerClerkUserIdLabel": "ID pengguna Clerk pemilik",
+      "ownerClerkUserIdPlaceholder": "user_…",
+      "nameLabel": "Nama workspace",
+      "namePlaceholder": "mis. Café Nord",
+      "planLabel": "Paket",
+      "planFree": "Free",
+      "planPro": "Pro",
+      "save": "Provision workspace",
+      "saving": "Sedang provision…",
+      "success": "Workspace {id} dibuat pada paket {plan}.",
+      "error": "Tidak dapat melakukan provision workspace."
+    },
+    "workspacePlan": {
+      "title": "Paket workspace",
+      "description": "Atur workspace secara manual ke free (tamu / pelanggan PWA) atau pro (klien restoran — produk operator penuh). Free mendapat beranda dan profil tamu; pro membuka lokasi, inventaris, advisor, dan bagian lain aplikasi.",
+      "workspaceIdLabel": "ID workspace",
+      "workspaceIdPlaceholder": "mis. 42",
+      "yourWorkspaceId": "ID workspace Anda: {id}",
+      "useYourWorkspaceId": "Gunakan ID ini",
+      "noWorkspaceYet": "Anda belum memiliki workspace. Lakukan provision di atas, atau masukkan ID workspace lain.",
+      "planLabel": "Paket",
+      "planFree": "Free",
+      "planPro": "Pro",
+      "save": "Perbarui paket",
+      "saving": "Memperbarui…",
+      "success": "Paket workspace diperbarui ke {plan}.",
+      "error": "Tidak dapat memperbarui paket workspace."
+    },
+    "devData": {
+      "title": "Seed data mock",
+      "description": "Masukkan seed selektif yang sama seperti make dev-data ke workspace pengguna Clerk. Menggunakan fixture yang dikomit (inventaris Warung, analitik Kaffeestube). Tidak menghapus CRM, media, atau gaya. Dinonaktifkan di production kecuali ALLOW_DEV_DATA_INGEST=1.",
+      "targetClerkUserIdLabel": "ID pengguna Clerk target",
+      "targetClerkUserIdPlaceholder": "user_…",
+      "yourUserId": "ID pengguna Anda: {id}",
+      "useYourUserId": "Gunakan ID ini",
+      "scopeLabel": "Cakupan",
+      "scopes": {
+        "inventar": "Inventaris (Warung Sunda)",
+        "analytics": "Analitik (Kaffeestube Mitte)",
+        "all": "Semua (inventaris + analitik)",
+        "clear-inventar": "Hapus inventaris saja"
+      },
+      "confirm": "Jalankan “{scope}” untuk pengguna ini? Ini dapat mereset inventaris atau mengganti run analitik seed pengembang.",
+      "save": "Masukkan data seed",
+      "saving": "Sedang seeding…",
+      "successInventar": "Inventaris di-seed untuk workspace {workspaceId} ({catalog} katalog, {stock} stok).",
+      "successAnalytics": "Analitik di-seed untuk workspace {workspaceId} ({orders} pesanan, run {runId}).",
+      "successAll": "Inventaris + analitik di-seed untuk workspace {workspaceId} ({catalog} katalog, {orders} pesanan).",
+      "successClear": "Inventaris dihapus untuk workspace {workspaceId}. Lokasi dibiarkan utuh.",
+      "error": "Tidak dapat memasukkan data seed mock."
+    },
+    "clearServiceData": {
+      "title": "Hapus data layanan",
+      "description": "Hapus data domain per lokasi untuk satu layanan di seluruh workspace pengguna Clerk dan batalkan langganan aktif layanan tersebut. Lokasi dan workspace tidak dihapus. Cashback berskala CRM dan akan ditolak. Dinonaktifkan di production kecuali ALLOW_DEV_DATA_INGEST=1.",
+      "targetClerkUserIdLabel": "ID pengguna Clerk target",
+      "targetClerkUserIdPlaceholder": "user_…",
+      "yourUserId": "ID pengguna Anda: {id}",
+      "useYourUserId": "Gunakan ID ini",
+      "serviceKeyLabel": "Layanan",
+      "services": {
+        "digital_menu": "Digital Menu",
+        "point_system": "Point System",
+        "stamp_card": "Stamp Card",
+        "cashback": "Cashback",
+        "pick_and_win": "Pick & Win",
+        "voting": "Voting",
+        "pickup_offer": "Pickup Offer"
+      },
+      "confirm": "Hapus semua data “{service}” untuk workspace pengguna ini? Tindakan ini tidak dapat dibatalkan.",
+      "save": "Hapus data layanan",
+      "saving": "Menghapus…",
+      "success": "Menghapus {service} untuk workspace {workspaceId} ({locations} lokasi): prediksi {predictions}, voting {votings}, ledger {ledger}, aturan earn {rules}, POS {posOrders}, kategori menu {menuCategories}, langganan {subscriptions}.",
+      "error": "Tidak dapat menghapus data layanan."
+    }
+  }
+}
