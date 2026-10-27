@@ -1,4 +1,4 @@
-import { routes } from '@/lib/routes'
+import { getDefaultAuthenticatedPath } from '@/lib/feature-flags'
 
 export const WORKSPACE_PLAN_FREE = 'free' as const
 export const WORKSPACE_PLAN_PRO = 'pro' as const
@@ -8,15 +8,14 @@ export type WorkspacePlan = typeof WORKSPACE_PLAN_FREE | typeof WORKSPACE_PLAN_P
 /**
  * Product tiers (Menuyukti = AI platform for restaurant marketing & operations):
  *
- * Authenticated users share one product surface: post-auth home is `/home`, and
+ * Authenticated operators land on Advisor by default (`config/feature-flags.json`);
  * plan is **not** used for capability gating (staff may still store free/pro on
  * `workspace.plan` for provisioning metadata).
  *
  * - Sign-up is Clerk-only until staff provisions a workspace (`provisionWorkspace`).
- * - Restaurant MVP surfaces (Locations, Services / digital menu, AI, playbooks,
- *   usage) are available to signed-in operators via `config/feature-flags.json`.
- *   Media, calendar, CRM, and print shop use `audience: "admin"`. Self-serve
- *   workspace creation is disabled.
+ * - Restaurant MVP surfaces (Locations, Advisor, usage) are available to signed-in
+ *   operators via `config/feature-flags.json`. Media, calendar, CRM, and print shop
+ *   use `audience: "admin"`. Self-serve workspace creation is disabled.
  */
 
 /**
@@ -79,7 +78,7 @@ export function isPathnameAllowedForPlan(): boolean {
   return true
 }
 
-/** Post-login / brand home: shared customer hub (`/home`) for all authenticated users. */
+/** Post-login / brand home from feature-flag `defaultAuthenticatedPath` (Advisor). */
 export function getDefaultPathForPlan(): string {
-  return routes.home
+  return getDefaultAuthenticatedPath()
 }

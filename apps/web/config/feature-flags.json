@@ -1,13 +1,13 @@
 {
-  "defaultAuthenticatedPath": "/home",
+  "defaultAuthenticatedPath": "/advisor",
   "features": [
     {
       "id": "home",
-      "description": "Customer home hub.",
-      "enabled": true,
+      "description": "Customer home hub (MVP off; operators land on Advisor).",
+      "enabled": false,
       "audience": "all",
       "routePrefixes": ["/home"],
-      "navKeys": ["home"],
+      "navKeys": [],
       "actionMenuKeys": []
     },
     {
@@ -57,8 +57,8 @@
     },
     {
       "id": "playbooks",
-      "description": "Playbook library.",
-      "enabled": true,
+      "description": "Playbook library (MVP off; code retained).",
+      "enabled": false,
       "audience": "all",
       "routePrefixes": ["/playbooks"],
       "navKeys": ["playbooks"],
@@ -70,13 +70,13 @@
       "enabled": true,
       "audience": "all",
       "routePrefixes": ["/analytics"],
-      "navKeys": ["branches"],
-      "actionMenuKeys": []
+      "navKeys": ["home", "branches"],
+      "actionMenuKeys": ["menu"]
     },
     {
       "id": "services",
-      "description": "Cloud services catalog shell.",
-      "enabled": true,
+      "description": "Guests catalog shell (/services) — MVP off; digital menu and other guest services gated separately.",
+      "enabled": false,
       "audience": "all",
       "routePrefixes": ["/services"],
       "navKeys": ["services"],
@@ -89,7 +89,7 @@
       "audience": "all",
       "routePrefixes": ["/services/digital-menu"],
       "navKeys": [],
-      "actionMenuKeys": [],
+      "actionMenuKeys": ["digital-menu", "order-board"],
       "serviceKeys": ["digital_menu"]
     },
     {

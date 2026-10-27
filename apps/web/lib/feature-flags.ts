@@ -25,7 +25,7 @@ const flags = manifest as FeatureFlagsManifest
 const features: readonly FeatureFlag[] = flags.features
 
 /** Fallbacks when `defaultAuthenticatedPath` is disabled or missing. */
-const DEFAULT_AUTH_FALLBACKS = ['/analytics/locations', '/advisor', '/profile'] as const
+const DEFAULT_AUTH_FALLBACKS = ['/advisor', '/analytics/locations', '/profile'] as const
 
 function normalizePathname(pathname: string): string {
   const q = pathname.indexOf('?')
@@ -215,7 +215,7 @@ export function isServiceKeyFeatureEnabled(serviceKey: string): boolean {
 /**
  * Post-login / signed-in home path from config.
  * If that path is feature-disabled, returns the first enabled fallback among
- * `/analytics/locations`, `/advisor`, `/profile`, else `/profile`.
+ * `/advisor`, `/analytics/locations`, `/profile`, else `/profile`.
  */
 export function getDefaultAuthenticatedPath(): string {
   const configured = flags.defaultAuthenticatedPath || '/dashboard'

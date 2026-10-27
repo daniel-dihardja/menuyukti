@@ -47,7 +47,7 @@ describe('workspace-plan', () => {
     expect(isPathnameAllowedForPlan()).toBe(true)
   })
 
-  it('uses shared customer home', () => {
-    expect(getDefaultPathForPlan()).toBe('/home')
+  it('uses Advisor as the default authenticated path', () => {
+    expect(getDefaultPathForPlan()).toBe('/advisor')
   })
 })

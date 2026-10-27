@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 
 import { getSafeAuthReturnPath } from '@/lib/auth-return-path'
-import { routes } from '@/lib/routes'
+import { getDefaultAuthenticatedPath } from '@/lib/feature-flags'
 
 type ContinuePageProps = {
   searchParams: Promise<{ next?: string | string[] }>
@@ -15,11 +15,11 @@ function firstParam(value: string | string[] | undefined): string | null {
 
 /**
  * Post-auth landing used by Clerk finish URLs and feature-flag bounces.
- * Optional `?next=` returns to a safe public menu; otherwise → `/home` immediately
- * (no workspace GraphQL — ensure runs on the destination layout).
+ * Optional `?next=` returns to a safe public menu; otherwise → Advisor
+ * (`defaultAuthenticatedPath`; no workspace GraphQL — ensure runs on the destination layout).
  */
 export default async function ContinuePage({ searchParams }: ContinuePageProps) {
   const params = await searchParams
   const returnTo = getSafeAuthReturnPath(firstParam(params.next))
-  redirect(returnTo ?? routes.home)
+  redirect(returnTo ?? getDefaultAuthenticatedPath())
 }

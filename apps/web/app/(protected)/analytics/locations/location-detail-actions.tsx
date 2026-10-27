@@ -18,17 +18,19 @@ type LocationDetailActionsProps = {
   locationId: string
 }
 
+function isLocationActionVisible(actionId: string, showAdminActions: boolean): boolean {
+  if (!isActionMenuKeyEnabled(actionId)) return false
+  if (!showAdminActions && isActionMenuItemHiddenFromNonAdmin(actionId)) return false
+  return true
+}
+
 export function LocationDetailActions({ locationId }: LocationDetailActionsProps) {
   const t = useTranslations('analytics.branches')
   const { role, isLoaded } = useMenuyuktiRole()
   const showAdminActions = isLoaded && isMenuyuktiAdmin(role)
 
-  const showReports =
-    isActionMenuKeyEnabled('reports') &&
-    (showAdminActions || !isActionMenuItemHiddenFromNonAdmin('reports'))
-  const showCogs =
-    isActionMenuKeyEnabled('cogs') &&
-    (showAdminActions || !isActionMenuItemHiddenFromNonAdmin('cogs'))
+  const showReports = isLocationActionVisible('reports', showAdminActions)
+  const showCogs = isLocationActionVisible('cogs', showAdminActions)
 
   const overflowItems: ResponsiveActionMenuItem[] = [
     {
@@ -49,7 +51,7 @@ export function LocationDetailActions({ locationId }: LocationDetailActionsProps
       icon: ClipboardList,
       href: routes.servicesDigitalMenuOrders(locationId),
     },
-  ]
+  ].filter((item) => isLocationActionVisible(item.id, showAdminActions))
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -63,14 +65,16 @@ export function LocationDetailActions({ locationId }: LocationDetailActionsProps
           <Link href={routes.analytics.branchesCogs(locationId)}>{t('manageCogs')}</Link>
         </Button>
       ) : null}
-      <ResponsiveActionMenu
-        items={overflowItems}
-        sheetTitle={t('moreActionsSheetTitle')}
-        sheetDescription={t('moreActionsSheetDescription')}
-        desktopTriggerAriaLabel={t('moreActionsAria')}
-        mobileTriggerLabel={t('moreActions')}
-        sheetId={`location-detail-actions-${locationId}`}
-      />
+      {overflowItems.length > 0 ? (
+        <ResponsiveActionMenu
+          items={overflowItems}
+          sheetTitle={t('moreActionsSheetTitle')}
+          sheetDescription={t('moreActionsSheetDescription')}
+          desktopTriggerAriaLabel={t('moreActionsAria')}
+          mobileTriggerLabel={t('moreActions')}
+          sheetId={`location-detail-actions-${locationId}`}
+        />
+      ) : null}
     </div>
   )
 }

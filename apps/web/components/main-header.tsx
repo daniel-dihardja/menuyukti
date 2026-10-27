@@ -1,16 +1,16 @@
 'use client'
 
 import { Show, useAuth } from '@clerk/nextjs'
-import { Activity, Coins } from 'lucide-react'
+import { Coins } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
 
 import { AccountMenu } from '@/components/account/account-menu'
+import { MenuyuktiBrandIcon } from '@/components/menuyukti-brand-icon'
 import { GuestSignInMenu } from '@/components/guest-sign-in-menu'
 import { usePublicGuestPoints } from '@/components/public-guest-points-context'
-import { useOptionalWorkspacePlan } from '@/components/workspace-plan-provider'
 import { isFeatureEnabled, isServiceKeyFeatureEnabled } from '@/lib/feature-flags'
 import { SERVICE_KEY_POINT_SYSTEM } from '@/lib/graphql/queries/service-subscriptions'
 import { isMarketingSignInEnabled } from '@/lib/marketing-sign-in'
@@ -22,7 +22,6 @@ export function MainHeader() {
   const pathname = usePathname()
   const t = useTranslations('mainHeader')
   const { isSignedIn, isLoaded: authLoaded } = useAuth()
-  const planCtx = useOptionalWorkspacePlan()
   const { balance: guestPointBalance } = usePublicGuestPoints()
   const tPublic = useTranslations('public.locationHome')
   const isLogin = pathname === routes.login || (pathname?.startsWith(`${routes.login}/`) ?? false)
@@ -46,8 +45,8 @@ export function MainHeader() {
   const showExplore = Boolean(isSignedIn) && isFeatureEnabled('explore')
   const [isScrolled, setIsScrolled] = React.useState(false)
 
-  /** Signed-out → marketing `/`; signed-in → plan home (fallback `/home` outside provider). */
-  const brandHref = !isSignedIn ? routes.root : planCtx ? getDefaultPathForPlan() : routes.home
+  /** Signed-out → marketing `/`; signed-in → feature default (Advisor). */
+  const brandHref = !isSignedIn ? routes.root : getDefaultPathForPlan()
 
   React.useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 8)
@@ -73,7 +72,7 @@ export function MainHeader() {
             )}
             aria-label={t('brandAria')}
           >
-            <Activity className="size-5 shrink-0 text-foreground" aria-hidden />
+            <MenuyuktiBrandIcon className="size-5 text-foreground" />
             <span className="text-sm font-semibold tracking-tight md:text-base">{t('brand')}</span>
           </Link>
 

@@ -7,6 +7,7 @@ import { PublicGuestHeader, PublicGuestShell } from '@/app/(public)/_components/
 import { PublicGuestPointsSync } from '@/components/public-guest-points-context'
 import { isPublicPointSystemAvailable } from '@/lib/public-location/load-guest-point-balance'
 import { buildLoginUrl } from '@/lib/auth-return-path'
+import { getDefaultAuthenticatedPath } from '@/lib/feature-flags'
 import type { Prediction } from '@/lib/graphql/queries/predictions'
 import type { Voting } from '@/lib/graphql/queries/votings'
 import type { PublicLocationView } from '@/lib/public-location/load-public-location'
@@ -96,7 +97,7 @@ export function PublicLocationHub({
   const votingHref = routes.public.locationVoting(location.publicSlug)
   const pickupOfferHref = routes.public.locationPickupOffer(location.publicSlug)
   const rewardsHref = isSignedIn
-    ? routes.home
+    ? getDefaultAuthenticatedPath()
     : buildLoginUrl(routes.public.locationHome(location.publicSlug))
 
   const menuSubtitle =
