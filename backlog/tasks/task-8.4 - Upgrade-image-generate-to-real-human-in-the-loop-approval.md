@@ -1,9 +1,10 @@
 ---
 id: TASK-8.4
-title: Upgrade image generate to real human-in-the-loop approval
+title: 'Deferred: real HITL for advisor Leonardo / Image Assistant generate'
 status: To Do
 assignee: []
 created_date: '2026-10-28T08:55:00Z'
+updated_date: '2026-10-28T09:03:00Z'
 labels:
   - security
   - chat
@@ -15,7 +16,7 @@ references:
 documentation:
   - backlog/docs/security/doc-1 - Chat-advisor-security-overview.md
 parent_task_id: TASK-8
-priority: medium
+priority: low
 type: enhancement
 ordinal: 4
 ---
@@ -24,9 +25,13 @@ ordinal: 4
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
 
-Image assistant uses a code-level phrase gate (for example typed “generate”) rather than LangGraph interrupt() or a signed one-time approve token. General mode can still reach generate without that gate.
+**Deferred** until `chatImageAssistant` is re-enabled in `apps/web/config/feature-flags.json`.
 
-Closes doc-1 finding D: costly side effects need a real approval boundary, not prompt etiquette.
+When Image Assistant returns, the soft phrase gate (`generate_confirmation_gate.py`) should be upgraded to LangGraph `interrupt()` or a signed one-time approve token. General mode historically could reach `generate_instagram_post_image` without that gate.
+
+Do not implement as part of the current MVP advisor-security path. Resume this task when re-enabling Image Assistant / Leonardo in advisor chat.
+
+Closes doc-1 finding D (deferred).
 
 <!-- SECTION:DESCRIPTION:END -->
 
@@ -34,7 +39,22 @@ Closes doc-1 finding D: costly side effects need a real approval boundary, not p
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 First image generation (and other configured costly generates) cannot proceed without an explicit user approval signal that is not satisfied by free-form chat alone, or is cryptographically/session-bound (interrupt resume or equivalent)
-- [ ] #2 General advisor mode either shares the same gate or documents why generate remains ungated there with compensating controls
-- [ ] #3 Automated tests cover refuse-without-approval and allow-after-approval paths
+- [ ] #1 Blocked on chatImageAssistant (or equivalent) being enabled for product again
+- [ ] #2 When unblocked: first advisor image generation cannot proceed without an explicit user approval signal that is not free-form chat alone, or is session-bound (interrupt resume or equivalent)
+- [ ] #3 When unblocked: automated tests cover refuse-without-approval and allow-after-approval
+- [ ] #4 IG Studio Post Creator HITL (if any) is scoped separately and not assumed by this task
 <!-- AC:END -->
+
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+
+created: 2026-10-28T09:03:00Z
+
+---
+
+Deferred: no Leonardo support required in advisor while chatImageAssistant is off.
+
+---
+
+<!-- COMMENTS:END -->

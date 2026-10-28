@@ -56,6 +56,15 @@
       "actionMenuKeys": []
     },
     {
+      "id": "chatImageAssistant",
+      "description": "Advisor Image Assistant chat mode (MVP off; code retained). When disabled, only general advisor chat is offered.",
+      "enabled": false,
+      "audience": "all",
+      "routePrefixes": [],
+      "navKeys": [],
+      "actionMenuKeys": []
+    },
+    {
       "id": "playbooks",
       "description": "Playbook library (MVP on).",
       "enabled": true,

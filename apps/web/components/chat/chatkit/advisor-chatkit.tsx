@@ -13,6 +13,7 @@ import {
   touchAgentThread,
 } from '@/lib/chat/agent-thread-registry'
 import { searchAdvisorChatKitEntities } from '@/lib/chat/chatkit-entity-search'
+import { isChatImageAssistantEnabled } from '@/lib/chat/chat-modes'
 import { apiFetch } from '@/lib/api/client-fetch'
 
 /** ChatKit startScreen prompts only render in the new-thread view (threadId === null). */
@@ -161,26 +162,29 @@ export function AdvisorChatKit() {
       attachments: {
         enabled: false,
       },
-      tools: [
-        {
-          id: 'slash_image',
-          label: `/${t('slashCommands.image.label')}`,
-          shortLabel: 'Image',
-          icon: 'images',
-          placeholderOverride: t('placeholderImageAssistant'),
-        },
-        {
-          id: 'slash_story',
-          label: `/${t('slashCommands.story.label')}`,
-          shortLabel: 'Story',
-          icon: 'square-image',
-          placeholderOverride: t('placeholderImageAssistant'),
-        },
-      ],
+      tools: isChatImageAssistantEnabled()
+        ? [
+            {
+              id: 'slash_image',
+              label: `/${t('slashCommands.image.label')}`,
+              shortLabel: 'Image',
+              icon: 'images',
+              placeholderOverride: t('placeholderImageAssistant'),
+            },
+            {
+              id: 'slash_story',
+              label: `/${t('slashCommands.story.label')}`,
+              shortLabel: 'Story',
+              icon: 'square-image',
+              placeholderOverride: t('placeholderImageAssistant'),
+            },
+          ]
+        : [],
     },
     commands: {
-      enabled: true,
+      enabled: isChatImageAssistantEnabled(),
       onSearch: async (query: string) => {
+        if (!isChatImageAssistantEnabled()) return []
         const q = query.trim().toLowerCase()
         const all = [
           {
@@ -202,6 +206,7 @@ export function AdvisorChatKit() {
         )
       },
       onSelect: async (command) => {
+        if (!isChatImageAssistantEnabled()) return
         if (command.id === 'mode_image' || command.id === 'mode_story') {
           shellRef.current.setChatMode('image_assistant')
           if (command.id === 'mode_story') {

@@ -53,7 +53,7 @@ describe('feature-flags', () => {
     expect(isPathnameFeatureEnabled('/usage')).toBe(true)
   })
 
-  it('disables MVP-off inventar, team, guests, customer home, pos, and explore', () => {
+  it('disables MVP-off inventar, team, guests, customer home, pos, explore, and image assistant', () => {
     expect(isPathnameFeatureEnabled('/inventar')).toBe(false)
     expect(isPathnameFeatureEnabled('/inventar/catalog')).toBe(false)
     expect(isPathnameFeatureEnabled('/team')).toBe(false)
@@ -65,6 +65,7 @@ describe('feature-flags', () => {
     expect(isActionMenuKeyEnabled('pos')).toBe(false)
     expect(isFeatureEnabled('explore')).toBe(false)
     expect(isPathnameFeatureEnabled('/explore')).toBe(false)
+    expect(isFeatureEnabled('chatImageAssistant')).toBe(false)
   })
 
   it('enables playbooks routes and nav', () => {

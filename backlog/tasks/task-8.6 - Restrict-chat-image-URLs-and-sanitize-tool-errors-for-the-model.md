@@ -4,6 +4,7 @@ title: Restrict chat image URLs and sanitize tool errors for the model
 status: To Do
 assignee: []
 created_date: '2026-10-28T08:55:00Z'
+updated_date: '2026-10-28T09:03:00Z'
 labels:
   - security
   - chat
@@ -24,7 +25,9 @@ ordinal: 6
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
 
-Agents accept https:// image URLs even though the BFF normally sends data:image payloads; arbitrary HTTPS can become provider-side fetch / tracking risk if agents are called outside the BFF. Tool exceptions are also stringified into ToolMessages, which can leak internals and feed indirect injection.
+Agents accept https:// image URLs even though the BFF normally sends data:image payloads for @ media / vision inputs; arbitrary HTTPS can become provider-side fetch / tracking risk if agents are called outside the BFF. Tool exceptions are also stringified into ToolMessages, which can leak internals and feed indirect injection.
+
+**Not about Leonardo:** this task is multimodal **input** URL allowlisting and tool-error sanitization for the general advisor. Leonardo generate HITL remains deferred (TASK-8.4).
 
 Closes doc-1 findings F (error channel) and G (URL allowlist).
 
@@ -38,3 +41,17 @@ Closes doc-1 findings F (error channel) and G (URL allowlist).
 - [ ] #2 Tool failure messages returned to the model are sanitized (no raw stack traces / internal URLs / secrets); client-facing SSE errors stay similarly non-leaky
 - [ ] #3 Tests cover rejected image URL schemes and sanitized tool error shaping
 <!-- AC:END -->
+
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+
+created: 2026-10-28T09:03:00Z
+
+---
+
+Clarified: multimodal input hardening only; no Leonardo generate work.
+
+---
+
+<!-- COMMENTS:END -->

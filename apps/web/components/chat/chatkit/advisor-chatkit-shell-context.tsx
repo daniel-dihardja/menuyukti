@@ -2,7 +2,12 @@
 
 import { createContext, use, useCallback, useMemo, useState, type ReactNode } from 'react'
 
-import { DEFAULT_CHAT_MODE, type ChatModeId } from '@/lib/chat/chat-modes'
+import {
+  coerceEnabledChatMode,
+  DEFAULT_CHAT_MODE,
+  isChatModeEnabled,
+  type ChatModeId,
+} from '@/lib/chat/chat-modes'
 import { DEFAULT_CHAT_GATEWAY_MODEL, type ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
 import {
   DEFAULT_LEONARDO_POST_MODEL,
@@ -50,7 +55,7 @@ export function AdvisorChatKitShellProvider({
   onThreadRotated,
   children,
 }: AdvisorChatKitShellProviderProps) {
-  const [chatMode, setChatMode] = useState<ChatModeId>(DEFAULT_CHAT_MODE)
+  const [chatMode, setChatModeState] = useState<ChatModeId>(DEFAULT_CHAT_MODE)
   const [selectedChatModel, setSelectedChatModel] = useState<ChatGatewayModelId>(
     DEFAULT_CHAT_GATEWAY_MODEL,
   )
@@ -62,6 +67,10 @@ export function AdvisorChatKitShellProvider({
   )
   const [latestStoryImageUrl, setLatestStoryImageUrl] = useState<string | null>(null)
 
+  const setChatMode = useCallback((mode: ChatModeId) => {
+    setChatModeState(isChatModeEnabled(mode) ? mode : DEFAULT_CHAT_MODE)
+  }, [])
+
   const setAnalyticsRunId = useCallback(
     (id: number | null) => {
       onAnalyticsRunIdChange(id)
@@ -69,13 +78,15 @@ export function AdvisorChatKitShellProvider({
     [onAnalyticsRunIdChange],
   )
 
+  const effectiveChatMode = coerceEnabledChatMode(chatMode)
+
   const value = useMemo<AdvisorChatKitShellState>(
     () => ({
       agentThreadId,
       locationId,
       analyticsRunId,
       setAnalyticsRunId,
-      chatMode,
+      chatMode: effectiveChatMode,
       setChatMode,
       selectedChatModel,
       setSelectedChatModel,
@@ -92,7 +103,8 @@ export function AdvisorChatKitShellProvider({
       locationId,
       analyticsRunId,
       setAnalyticsRunId,
-      chatMode,
+      effectiveChatMode,
+      setChatMode,
       selectedChatModel,
       selectedGenerationModel,
       selectedImageFormat,

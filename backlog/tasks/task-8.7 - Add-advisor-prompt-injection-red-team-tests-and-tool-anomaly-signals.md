@@ -4,6 +4,7 @@ title: Add advisor prompt-injection red-team tests and tool anomaly signals
 status: To Do
 assignee: []
 created_date: '2026-10-28T08:55:00Z'
+updated_date: '2026-10-28T09:03:00Z'
 labels:
   - security
   - chat
@@ -25,9 +26,11 @@ ordinal: 7
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
 
-Guardrails drift without regression tests. doc-1 P2 items H–J call for advisor-specific injection/confused-deputy coverage and basic observability for anomalous tool use (generate spikes, web-search bursts).
+Guardrails drift without regression tests. doc-1 P2 items call for advisor-specific injection/confused-deputy coverage and basic observability for anomalous tool use (e.g. web-search bursts).
 
-Depends on untrusted-context labeling and URL/error hardening so tests assert the new controls rather than today’s softer baseline.
+**Scope:** general advisor only while `chatImageAssistant` is off — no Leonardo generate approval tests or generate-rate metrics required.
+
+Depends on untrusted-context labeling and URL/error hardening so tests assert the new controls.
 
 <!-- SECTION:DESCRIPTION:END -->
 
@@ -35,7 +38,22 @@ Depends on untrusted-context labeling and URL/error hardening so tests assert th
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 Automated tests (or a documented golden prompt suite runnable in CI) cover at least: jailbreak-style override attempt, attempt to pass foreign location via tool args (must fail via injection/config), and refuse generate without approval when applicable
-- [ ] #2 Minimal observability exists for anomalous advisor tool patterns (logging and/or metrics for generate and search_web rates per user or thread)
-- [ ] #3 doc-1 or the parent task notes what is covered vs still out of band (full DLP / dual-LLM)
+- [ ] #1 Automated tests (or a documented golden prompt suite runnable in CI) cover at least: jailbreak-style override attempt, and attempt to pass foreign location via tool args (must fail via injected config / authz)
+- [ ] #2 Minimal observability exists for anomalous advisor tool patterns (logging and/or metrics for search_web or equivalent high-risk tools per user or thread)
+- [ ] #3 No Leonardo generate approval or generate-spike metrics required while chatImageAssistant is off
+- [ ] #4 doc-1 or the parent task notes what is covered vs still out of band (full DLP / dual-LLM / Image Assistant resume)
 <!-- AC:END -->
+
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+
+created: 2026-10-28T09:03:00Z
+
+---
+
+Dropped Leonardo generate red-team and generate metrics from active AC.
+
+---
+
+<!-- COMMENTS:END -->

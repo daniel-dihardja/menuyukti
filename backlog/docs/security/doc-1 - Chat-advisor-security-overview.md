@@ -3,7 +3,7 @@ id: doc-1
 title: Chat advisor security overview
 type: guide
 created_date: '2026-10-28T08:49:00Z'
-updated_date: '2026-10-28T08:55:00Z'
+updated_date: '2026-10-28T09:04:00Z'
 tags:
   - security
   - chat
@@ -259,17 +259,20 @@ Prioritized for remediation planning. Items are findings, not committed tasks �
 
 Parent: **TASK-8** — Harden chat advisor security
 
-| Step | Task         | Priority | Focus                                                       |
-| ---- | ------------ | -------- | ----------------------------------------------------------- |
-| 1    | **TASK-8.1** | High     | Agents service trust / key hygiene (ops + docs)             |
-| 2    | **TASK-8.2** | High     | Untrusted-context labeling + system security policy         |
-| 3    | **TASK-8.3** | High     | Per-user chat spend / rate limits                           |
-| 4    | **TASK-8.4** | Medium   | Real HITL for image generate                                |
-| 5    | **TASK-8.5** | Medium   | FOCUSED GraphQL authz review (spike)                        |
-| 6    | **TASK-8.6** | Medium   | Restrict image URLs + sanitize tool errors                  |
-| 7    | **TASK-8.7** | Low      | Red-team tests + tool anomaly signals (depends on 8.2, 8.6) |
+**Scope (2026-10-28):** `chatImageAssistant` is MVP-off. Active security work targets **general** advisor only. Leonardo / Image Assistant HITL is deferred (**TASK-8.4**).
 
-Preferred order matches the remediation list below; **TASK-8.1–8.3** can proceed in parallel. **TASK-8.7** waits on 8.2 and 8.6.
+| Step | Task         | Priority | Focus                                                                      |
+| ---- | ------------ | -------- | -------------------------------------------------------------------------- |
+| 1    | **TASK-8.1** | High     | Agents service trust / key hygiene (ops + docs)                            |
+| 2    | **TASK-8.2** | High     | Untrusted-context labeling + system security policy                        |
+| 3    | **TASK-8.3** | High     | Per-user **chat LLM** spend / rate limits (no Leonardo quotas)             |
+| 3b   | **TASK-8.8** | High     | Unbind Leonardo generate from general advisor while Image Assistant is off |
+| 4    | **TASK-8.4** | Low      | **Deferred:** real HITL for advisor Leonardo / Image Assistant             |
+| 5    | **TASK-8.5** | Medium   | FOCUSED GraphQL authz (general tools only; no post-generate)               |
+| 6    | **TASK-8.6** | Medium   | Multimodal **input** URL allowlist + sanitize tool errors                  |
+| 7    | **TASK-8.7** | Low      | Red-team / observability for general advisor (depends on 8.2, 8.6)         |
+
+Preferred order: **8.1–8.3** and **8.8** can proceed in parallel. **8.7** waits on 8.2 and 8.6. Resume **8.4** only when re-enabling `chatImageAssistant`.
 
 ## Suggested remediation order
 

@@ -54,7 +54,7 @@ import {
   gatewayModelToMessageKey,
   type ChatGatewayModelId,
 } from '@/lib/chat/gateway-chat-models'
-import { ADVISOR_CHAT_MODE_IDS, type ChatModeId } from '@/lib/chat/chat-modes'
+import { getEnabledAdvisorChatModeIds, type ChatModeId } from '@/lib/chat/chat-modes'
 import {
   getLeonardoPostModelMessageKey,
   LEONARDO_POST_MODEL_IDS,
@@ -244,6 +244,9 @@ function ComposerModeSelect() {
   const { chatMode } = useChatComposerState()
   const { isChatBusy } = useChatMeta()
   const { setChatMode } = useChatActions()
+  if (getEnabledAdvisorChatModeIds().length <= 1) {
+    return null
+  }
 
   return <ChatModeSelect disabled={isChatBusy} onValueChange={setChatMode} value={chatMode} />
 }
@@ -334,22 +337,24 @@ function GeneralOverflowMenu({ onRequestClear }: { onRequestClear: () => void })
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="min-w-52">
         <DropdownMenuGroup>
-          <DropdownMenuSub>
-            <DropdownMenuSubTrigger>{tModes('ariaLabel')}</DropdownMenuSubTrigger>
-            <DropdownMenuSubContent>
-              <DropdownMenuLabel>{tModes('ariaLabel')}</DropdownMenuLabel>
-              <DropdownMenuRadioGroup
-                onValueChange={(v) => setChatMode(v as ChatModeId)}
-                value={chatMode}
-              >
-                {ADVISOR_CHAT_MODE_IDS.map((id) => (
-                  <DropdownMenuRadioItem key={id} value={id}>
-                    {tModes(id)}
-                  </DropdownMenuRadioItem>
-                ))}
-              </DropdownMenuRadioGroup>
-            </DropdownMenuSubContent>
-          </DropdownMenuSub>
+          {getEnabledAdvisorChatModeIds().length > 1 ? (
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>{tModes('ariaLabel')}</DropdownMenuSubTrigger>
+              <DropdownMenuSubContent>
+                <DropdownMenuLabel>{tModes('ariaLabel')}</DropdownMenuLabel>
+                <DropdownMenuRadioGroup
+                  onValueChange={(v) => setChatMode(v as ChatModeId)}
+                  value={chatMode}
+                >
+                  {getEnabledAdvisorChatModeIds().map((id) => (
+                    <DropdownMenuRadioItem key={id} value={id}>
+                      {tModes(id)}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+          ) : null}
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>{tGateway('ariaLabel')}</DropdownMenuSubTrigger>
             <DropdownMenuSubContent className="max-h-72 overflow-y-auto">
@@ -402,22 +407,24 @@ function ImageOverflowMenu({ onRequestClear }: { onRequestClear: () => void }) {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="min-w-52">
         <DropdownMenuGroup>
-          <DropdownMenuSub>
-            <DropdownMenuSubTrigger>{tModes('ariaLabel')}</DropdownMenuSubTrigger>
-            <DropdownMenuSubContent>
-              <DropdownMenuLabel>{tModes('ariaLabel')}</DropdownMenuLabel>
-              <DropdownMenuRadioGroup
-                onValueChange={(v) => setChatMode(v as ChatModeId)}
-                value={chatMode}
-              >
-                {ADVISOR_CHAT_MODE_IDS.map((id) => (
-                  <DropdownMenuRadioItem key={id} value={id}>
-                    {tModes(id)}
-                  </DropdownMenuRadioItem>
-                ))}
-              </DropdownMenuRadioGroup>
-            </DropdownMenuSubContent>
-          </DropdownMenuSub>
+          {getEnabledAdvisorChatModeIds().length > 1 ? (
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>{tModes('ariaLabel')}</DropdownMenuSubTrigger>
+              <DropdownMenuSubContent>
+                <DropdownMenuLabel>{tModes('ariaLabel')}</DropdownMenuLabel>
+                <DropdownMenuRadioGroup
+                  onValueChange={(v) => setChatMode(v as ChatModeId)}
+                  value={chatMode}
+                >
+                  {getEnabledAdvisorChatModeIds().map((id) => (
+                    <DropdownMenuRadioItem key={id} value={id}>
+                      {tModes(id)}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+          ) : null}
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>{tGateway('ariaLabel')}</DropdownMenuSubTrigger>
             <DropdownMenuSubContent className="max-h-72 overflow-y-auto">

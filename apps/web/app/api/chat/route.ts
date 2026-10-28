@@ -8,6 +8,7 @@ import { getPythonAgentsUrl } from '@/lib/config'
 import { requireProPlanApi } from '@/lib/pro-plan-api'
 import { pushPendingToolCallId, resolveToolEndCallId } from '@/lib/chat/pending-tool-call-ids'
 import { pythonStreamErrorText } from '@/lib/chat/python-stream-error'
+import { isChatModeEnabled } from '@/lib/chat/chat-modes'
 import { chatRequestBodySchema } from './schema'
 
 // Streaming can run for a while (LLM + network).
@@ -249,6 +250,10 @@ export async function POST(req: Request) {
     storyAssetAction,
   } = parsed.data
   const messages = rawMessages as UIMessage[]
+
+  if (chatMode !== undefined && !isChatModeEnabled(chatMode)) {
+    return jsonError(`Chat mode "${chatMode}" is disabled`, 403)
+  }
 
   const actionOnly = storyAssetAction !== undefined && messages.length === 0
 

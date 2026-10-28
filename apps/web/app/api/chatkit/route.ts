@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 
 import { buildAgentsHeaders } from '@/lib/agents/headers'
+import { isChatImageAssistantEnabled, normalizeChatModeId } from '@/lib/chat/chat-modes'
 import { getPythonAgentsUrl } from '@/lib/config'
 import { requireProPlanApi } from '@/lib/pro-plan-api'
 
@@ -28,6 +29,12 @@ export async function POST(request: NextRequest) {
   const agentsBase = getPythonAgentsUrl()
   if (!agentsBase) {
     return NextResponse.json({ error: 'Agents URL is not configured' }, { status: 503 })
+  }
+
+  const rawChatMode = request.headers.get('x-chatkit-chat-mode')
+  const chatMode = rawChatMode ? normalizeChatModeId(rawChatMode) : null
+  if (chatMode === 'image_assistant' && !isChatImageAssistantEnabled()) {
+    return NextResponse.json({ error: 'Chat mode "image_assistant" is disabled' }, { status: 403 })
   }
 
   const body = await request.arrayBuffer()

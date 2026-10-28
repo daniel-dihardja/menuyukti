@@ -10,7 +10,7 @@ import {
 import { useTranslations } from 'next-intl'
 
 import {
-  ADVISOR_CHAT_MODE_IDS,
+  getEnabledAdvisorChatModeIds,
   type AdvisorChatModeId,
   type ChatModeId,
 } from '@/lib/chat/chat-modes'
@@ -33,7 +33,12 @@ const CHAT_MODE_TRIGGER_CLASS: Partial<Record<ChatModeId, string | undefined>> =
 
 export function ChatModeSelect({ value, onValueChange, disabled, className }: ChatModeSelectProps) {
   const t = useTranslations('chat.modes')
-  const allowed = new Set<string>(ADVISOR_CHAT_MODE_IDS)
+  const enabledModes = getEnabledAdvisorChatModeIds()
+  if (enabledModes.length <= 1) {
+    return null
+  }
+
+  const allowed = new Set<string>(enabledModes)
   const selectValue: AdvisorChatModeId = allowed.has(value)
     ? (value as AdvisorChatModeId)
     : 'general'
@@ -59,7 +64,7 @@ export function ChatModeSelect({ value, onValueChange, disabled, className }: Ch
         <PromptInputSelectValue placeholder={t('ariaLabel')} />
       </PromptInputSelectTrigger>
       <PromptInputSelectContent>
-        {ADVISOR_CHAT_MODE_IDS.map((id) => (
+        {enabledModes.map((id) => (
           <PromptInputSelectItem key={id} value={id}>
             {t(id)}
           </PromptInputSelectItem>
