@@ -1,9 +1,11 @@
 ---
 id: TASK-7.3
 title: Connect search_knowledge tool to advisor chat
-status: To Do
-assignee: []
+status: Done
+assignee:
+  - '@danieldihardja'
 created_date: '2026-10-28T06:23:00Z'
+updated_date: '2026-10-28T06:43:00Z'
 labels:
   - agents
   - chatkit
@@ -36,9 +38,35 @@ Add a search_knowledge tool that calls GraphQL, gate it like other general-mode 
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 general chat mode exposes a search_knowledge tool that calls the GraphQL knowledge search over HTTP
-- [ ] #2 image_assistant and inventar modes do not bind search_knowledge for MVP
-- [ ] #3 System prompt instructs when to use knowledge vs chart/location tools and forbids inventing sales numbers from knowledge alone
-- [ ] #4 Existing get_chart_data and get_location_data behavior remains unchanged
-- [ ] #5 ChatKit tool status labeling covers the new tool without breaking existing tool widgets
+- [x] #1 general chat mode exposes a search_knowledge tool that calls the GraphQL knowledge search over HTTP
+- [x] #2 image_assistant and inventar modes do not bind search_knowledge for MVP
+- [x] #3 System prompt instructs when to use knowledge vs chart/location tools and forbids inventing sales numbers from knowledge alone
+- [x] #4 Existing get_chart_data and get_location_data behavior remains unchanged
+- [x] #5 ChatKit tool status labeling covers the new tool without breaking existing tool widgets
 <!-- AC:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+
+1. Add SEARCH_KNOWLEDGE_QUERY + search_knowledge tool.
+2. Gate to general mode in tools_registry.
+3. Prompt KNOWLEDGE_SECTION + ChatKit status labels.
+4. Tests for tool list / prompts.
+<!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+
+Tool calls GraphQL over HTTP; inventar/image_assistant omit it; prompts forbid inventing sales numbers from knowledge alone.
+
+<!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+
+Added search_knowledge ReAct tool (general mode), GraphQL op, system-prompt knowledge section, and ChatKit compact status. Verified with agents tests/core/test_chat_tools_list.py and test_chat_prompts.py.
+
+<!-- SECTION:FINAL_SUMMARY:END -->

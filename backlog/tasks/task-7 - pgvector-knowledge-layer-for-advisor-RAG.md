@@ -1,9 +1,11 @@
 ---
 id: TASK-7
 title: pgvector knowledge layer for advisor RAG
-status: To Do
-assignee: []
+status: Done
+assignee:
+  - '@danieldihardja'
 created_date: '2026-10-28T06:23:00Z'
+updated_date: '2026-10-28T06:43:00Z'
 labels:
   - agents
   - graphql
@@ -36,9 +38,17 @@ Out of scope for MVP: knowledge admin UI; location/workspace-scoped documents (b
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 Advisor can retrieve published global knowledge alongside existing chart and location tools without changing analytics compute
-- [ ] #2 Knowledge storage and search live in apps/graphql (Postgres + pgvector); agents call GraphQL over HTTP only
-- [ ] #3 Cross-tenant leakage is prevented by server-side scope and ownership filters on search
-- [ ] #4 MVP ships without a knowledge admin UI; seed/CLI ingest is sufficient
-- [ ] #5 Admin UI, location-scoped docs, and historical insights are explicitly deferred
+- [x] #1 Advisor can retrieve published global knowledge alongside existing chart and location tools without changing analytics compute
+- [x] #2 Knowledge storage and search live in apps/graphql (Postgres + pgvector); agents call GraphQL over HTTP only
+- [x] #3 Cross-tenant leakage is prevented by server-side scope and ownership filters on search
+- [x] #4 MVP ships without a knowledge admin UI; seed/CLI ingest is sufficient
+- [x] #5 Admin UI, location-scoped docs, and historical insights are explicitly deferred
 <!-- AC:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+
+MVP knowledge RAG shipped: pgvector schema + seed ingest in GraphQL, searchKnowledge API with authz, advisor search_knowledge tool + prompts. TASK-7.5 (admin UI / location docs) remains deferred. Deploy steps: alembic upgrade head on Neon (vector extension), run ingest_knowledge.py, restart graphql/agents.
+
+<!-- SECTION:FINAL_SUMMARY:END -->

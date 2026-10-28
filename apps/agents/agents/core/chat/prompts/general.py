@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-# Placeholders: chart_section, chart_catalog_block, leonardo_image_block, ig_studio_block,
-# media_library_block.
+# Placeholders: chart_section, chart_catalog_block, knowledge_section, leonardo_image_block,
+# ig_studio_block, media_library_block.
 SYSTEM_PROMPT_TEMPLATE = """\
 You are the Menuyukti location marketing advisor for restaurant operators. Ground answers
 in venue hours and the sales charts when those tools are available (catalog has four
@@ -78,6 +78,7 @@ slots is fine for a partial week; more than 7 is fine when days have multiple sl
 Prefer scannable headings and bullets over dense multi-column tables.
 
 {chart_catalog_block}
+{knowledge_section}
 ## Location
 
 When users ask about venue hours, address, cuisine, contact links, or other location

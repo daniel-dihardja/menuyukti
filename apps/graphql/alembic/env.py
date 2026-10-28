@@ -6,14 +6,16 @@ import os
 from logging.config import fileConfig
 from pathlib import Path
 
-from dotenv import load_dotenv
 from sqlalchemy import engine_from_config, pool
 
 from alembic import context
 
-# Load .env before DATABASE_URL (matches graphql.data_sources.database).
+# Load root then app .env before DATABASE_URL (matches graphql.data_sources.database).
 _BASE_DIR = Path(__file__).resolve().parent.parent
-load_dotenv(_BASE_DIR / ".env", override=False)
+
+from graphql.env_bootstrap import load_app_env
+
+load_app_env(_BASE_DIR)
 
 import graphql.data_sources.models  # noqa: F401 — ensure all models register on Base.metadata
 from graphql.data_sources.database import Base
@@ -26,8 +28,9 @@ if config.config_file_name is not None:
 database_url = os.environ.get("DATABASE_URL")
 if not database_url:
     raise RuntimeError(
-        "DATABASE_URL is not set. Set it in apps/graphql/.env or the environment "
-        "before running Alembic (e.g. postgresql+psycopg2://user:pass@host:5432/dbname)."
+        "DATABASE_URL is not set. Set it in the repo-root .env, apps/graphql/.env, "
+        "or the environment before running Alembic "
+        "(e.g. postgresql+psycopg2://user:pass@host:5432/dbname)."
     )
 config.set_main_option("sqlalchemy.url", database_url)
 

@@ -5,6 +5,7 @@ from agents_app.agents.core.chat.prompts import (
     CHART_ANALYTICS_SECTION,
     CHART_CATALOG_BLOCK,
     IG_STUDIO_BLOCK,
+    KNOWLEDGE_SECTION,
     LEONARDO_IMAGE_BLOCK,
     MEDIA_LIBRARY_BLOCK,
     NO_SALES_REPORT_SECTION,
@@ -19,6 +20,7 @@ def test_system_prompt_template_has_complete_structure() -> None:
     assert "Location situation (default)" in SYSTEM_PROMPT_TEMPLATE
     assert "{chart_section}" in SYSTEM_PROMPT_TEMPLATE
     assert "{chart_catalog_block}" in SYSTEM_PROMPT_TEMPLATE
+    assert "{knowledge_section}" in SYSTEM_PROMPT_TEMPLATE
     assert "{workflow_catalog_block}" not in SYSTEM_PROMPT_TEMPLATE
     assert "{leonardo_image_block}" in SYSTEM_PROMPT_TEMPLATE
     assert "{ig_studio_block}" in SYSTEM_PROMPT_TEMPLATE
@@ -27,6 +29,7 @@ def test_system_prompt_template_has_complete_structure() -> None:
     assert "list_media" in MEDIA_LIBRARY_BLOCK
     assert "get_milestone" not in SYSTEM_PROMPT_TEMPLATE
     assert "get_location_data" in SYSTEM_PROMPT_TEMPLATE
+    assert "search_knowledge" in KNOWLEDGE_SECTION
     assert "## Weak items" in SYSTEM_PROMPT_TEMPLATE
     assert "venue_slot_strength_heatmap" in CHART_CATALOG_BLOCK
     assert "low_end_review" in CHART_CATALOG_BLOCK
@@ -66,6 +69,9 @@ def test_build_system_prompt_without_optional_blocks() -> None:
     assert "{ig_studio_block}" not in out
     assert "list_media_collections" in out
     assert "## Media library" in out
+    assert "## Knowledge search" in out
+    assert "search_knowledge" in out
+    assert "{knowledge_section}" not in out
 
 
 def test_build_system_prompt_with_chart_catalog() -> None:

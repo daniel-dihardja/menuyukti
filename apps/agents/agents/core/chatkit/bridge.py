@@ -48,6 +48,7 @@ _COMPACT_STATUS_TOOLS = frozenset(
     {
         "get_chart_data",
         "get_location_data",
+        "search_knowledge",
         "search_web",
         "save_story_asset",
         "clear_story_assets",
@@ -167,6 +168,8 @@ def _progress_for_tool_start(
         return ("Loading chart data…", "chart")
     if tool_name == "get_location_data":
         return ("Loading location context…", "map-pin")
+    if tool_name == "search_knowledge":
+        return ("Searching knowledge…", "book-open")
     if tool_name == "search_web":
         return ("Searching the web…", "globe")
     if tool_name == "save_story_asset":
@@ -195,6 +198,12 @@ def _progress_for_tool_end(
             "Could not load location"
             if _tool_output_looks_like_error(output)
             else "Loaded location context"
+        )
+    if tool_name == "search_knowledge":
+        return (
+            "Knowledge search failed"
+            if _tool_output_looks_like_error(output)
+            else "Knowledge search complete"
         )
     if tool_name == "search_web":
         return (
@@ -242,6 +251,8 @@ def _running_status_for_tool(tool_name: str, tool_input: object) -> Card | None:
         return tool_status_widget(title="Loading chart data…", tone="info")
     if tool_name == "get_location_data":
         return tool_status_widget(title="Loading location context…", tone="info")
+    if tool_name == "search_knowledge":
+        return tool_status_widget(title="Searching knowledge…", tone="info")
     if tool_name == "search_web":
         return tool_status_widget(title="Searching the web…", tone="info")
     if tool_name == "save_story_asset":
@@ -267,6 +278,11 @@ def _compact_status_for_tool(
     if tool_name == "get_location_data":
         return tool_status_widget(
             title="Could not load location" if is_err else "Loaded location context",
+            tone=tone,
+        )
+    if tool_name == "search_knowledge":
+        return tool_status_widget(
+            title="Knowledge search failed" if is_err else "Knowledge search complete",
             tone=tone,
         )
     if tool_name == "search_web":

@@ -24,6 +24,7 @@ def test_chat_tools_list_excludes_search_web_without_key() -> None:
     assert "get_milestone" not in names
     assert "update_milestone_input" not in names
     assert "get_location_data" in names
+    assert "search_knowledge" in names
     assert "get_chart_data" not in names
     assert "present_weekly_instagram_schedule" not in names
 
@@ -34,6 +35,7 @@ def test_chat_tools_list_includes_charts_when_analytics_run() -> None:
     names = [getattr(t, "name", "") for t in chat_tools_list(analytics_run=True)]
     assert "get_chart_data" in names
     assert "get_location_data" in names
+    assert "search_knowledge" in names
 
 
 def test_chat_tools_list_includes_search_web_with_key(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -69,6 +71,7 @@ def test_chat_tools_list_inventar_mode() -> None:
 
     names = [getattr(t, "name", "") for t in chat_tools_list(inventar=True, location_id=True)]
     assert names == ["get_inventory_refill_forecast", "get_location_data"]
+    assert "search_knowledge" not in names
     assert "present_weekly_instagram_schedule" not in names
     assert "generate_instagram_post_image" not in names
 
@@ -166,6 +169,7 @@ def test_compile_chat_graph_registers_scratchpad_tools_and_tool_error_middleware
     assert "clear_story_assets" in tool_node.tools_by_name
     assert "request_story_generate_confirmation" in tool_node.tools_by_name
     assert "get_inventory_refill_forecast" in tool_node.tools_by_name
+    assert "search_knowledge" in tool_node.tools_by_name
     assert "story_assets" in ChatAgentState.__annotations__
     # Error handling is middleware-based (not private ToolNode._handle_tool_errors).
     assert hasattr(_handle_tool_errors, "awrap_tool_call")

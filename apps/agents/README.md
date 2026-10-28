@@ -4,12 +4,15 @@ FastAPI service for **LangChain / LangGraph streaming chat** via **[Vercel AI Ga
 
 ## Setup
 
+Shared keys (`AI_GATEWAY_API_KEY`, `GRAPHQL_ENDPOINT`, internal API keys, checkpoint DB URL) belong in the **repo-root** `.env` (see `/.env.example`). This service loads root first, then optional `apps/agents/.env` overrides (`agents_app.env_bootstrap`).
+
 From this directory (requires [uv](https://docs.astral.sh/uv/)):
 
 ```bash
 make install
-cp .env.example .env
-# Set AI_GATEWAY_API_KEY in .env (see https://vercel.com/docs/ai-gateway#using-the-ai-gateway-with-an-api-key)
+# Ensure AI_GATEWAY_API_KEY is set in the monorepo root `.env`
+# Optional agents-only keys: cp .env.example .env  (TAVILY_API_KEY, GOOGLE_MAPS_API_KEY, …)
+# Gateway docs: https://vercel.com/docs/ai-gateway#using-the-ai-gateway-with-an-api-key
 ```
 
 ## Run

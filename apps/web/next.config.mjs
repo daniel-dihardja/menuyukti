@@ -1,7 +1,12 @@
 /** @type {import('next').NextConfig} */
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
 import bundleAnalyzer from '@next/bundle-analyzer'
 import createNextIntlPlugin from 'next-intl/plugin'
 import withSerwistInit from '@serwist/next'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === 'true',
@@ -17,6 +22,8 @@ const withSerwist = withSerwistInit({
 })
 
 const nextConfig = {
+  // Load repo-root `.env` / `.env.local` (same canonical file as Docker Compose).
+  envDir: path.join(__dirname, '../..'),
   // Required for `'use cache'` in lib/graphql/cached-queries.ts (and related helpers).
   cacheComponents: true,
   output: 'standalone',

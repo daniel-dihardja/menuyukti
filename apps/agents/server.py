@@ -18,7 +18,7 @@ from agents_app.routers.holiday_style_analysis import router as holiday_style_an
 from agents_app.routers.holiday_visual_brief import router as holiday_visual_brief_router
 from agents_app.routers.nearby_locations_scan import router as nearby_locations_scan_router
 from agents_app.routers.style_specs import router as style_specs_router
-from dotenv import load_dotenv
+from agents_app.env_bootstrap import load_app_env
 from fastapi import FastAPI
 from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.checkpoint.memory import InMemorySaver
@@ -26,7 +26,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
-load_dotenv()
+load_app_env()
 
 _logger = logging.getLogger(__name__)
 

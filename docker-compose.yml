@@ -4,7 +4,7 @@
 # In `.env` next to this file, set:
 #   DATABASE_URL   — Neon Postgres URL (web + GraphQL + agents LangGraph checkpoints),
 #                    e.g. postgresql://user:pass@...neon.tech/neondb?sslmode=require
-#   AI_GATEWAY_API_KEY — for agents (LangGraph via Vercel AI Gateway)
+#   AI_GATEWAY_API_KEY — agents chat + GraphQL knowledge ingest/embeddings
 #   CLERK_SECRET_KEY — Clerk secret key (also passed into the web container via `environment:`)
 #   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY — Clerk publishable key (pk_…); used at `next build` and, for the web
 #       container, mapped to env var CLERK_PUBLISHABLE_KEY at runtime (see `web` service `environment:`)
@@ -32,6 +32,9 @@ services:
     environment:
       DATABASE_URL: ${DATABASE_URL}
       INTERNAL_API_KEY: ${GRAPHQL_INTERNAL_API_KEY:-}
+      # Knowledge ingest / embeddings (same key as agents chat via AI Gateway).
+      AI_GATEWAY_API_KEY: ${AI_GATEWAY_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
     ports:
       - "8000:8000"
 

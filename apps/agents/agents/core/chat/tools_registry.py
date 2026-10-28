@@ -19,6 +19,7 @@ from agents_app.agents.core.chat.tools import (
     get_location_data,
     list_media,
     list_media_collections,
+    search_knowledge,
 )
 from agents_app.agents.core.tavily_search_tool import make_search_web_tool
 
@@ -105,6 +106,7 @@ def chat_tools_list(
     tools = []
     tools.append(list_media_collections)
     tools.append(list_media)
+    tools.append(search_knowledge)
     if location_id:
         tools.append(get_location_data)
     if analytics_run:

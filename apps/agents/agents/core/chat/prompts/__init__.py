@@ -12,6 +12,7 @@ from agents_app.agents.core.chat.prompts.blocks import (
     CHART_ANALYTICS_SECTION,
     CHART_CATALOG_BLOCK,
     IG_STUDIO_BLOCK,
+    KNOWLEDGE_SECTION,
     LEONARDO_IMAGE_BLOCK,
     MEDIA_LIBRARY_BLOCK,
     NO_SALES_REPORT_SECTION,
@@ -30,6 +31,7 @@ __all__ = [
     "IG_STUDIO_BLOCK",
     "IMAGE_ASSISTANT_PROMPT_TEMPLATE",
     "INVENTAR_ASSISTANT_PROMPT",
+    "KNOWLEDGE_SECTION",
     "LEONARDO_IMAGE_BLOCK",
     "MEDIA_LIBRARY_BLOCK",
     "NO_SALES_REPORT_SECTION",
@@ -86,10 +88,12 @@ def build_system_prompt(
     )
     ig_studio_block = f"{IG_STUDIO_BLOCK.strip()}\n" if ig_studio_post_image else ""
     media_library_block = f"{MEDIA_LIBRARY_BLOCK.strip()}\n\n"
+    knowledge_section = f"{KNOWLEDGE_SECTION.strip()}\n\n"
     return (
         SYSTEM_PROMPT_TEMPLATE.format(
             chart_section=chart_section,
             chart_catalog_block=chart_catalog_block,
+            knowledge_section=knowledge_section,
             media_library_block=media_library_block,
             leonardo_image_block=leonardo_image_block,
             ig_studio_block=ig_studio_block,

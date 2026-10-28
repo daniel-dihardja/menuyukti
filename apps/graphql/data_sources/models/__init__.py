@@ -20,6 +20,11 @@ from graphql.data_sources.models.instagram import (
     InstagramPostPage,
     InstagramPostPageMediaVersion,
 )
+from graphql.data_sources.models.knowledge import (
+    KnowledgeChunk,
+    KnowledgeDocument,
+    KnowledgeEmbedding,
+)
 from graphql.data_sources.models.inventory_catalog_item import InventoryCatalogItem
 from graphql.data_sources.models.inventory_stock import InventoryStock
 from graphql.data_sources.models.inventory_stock_movement import InventoryStockMovement
@@ -86,6 +91,9 @@ __all__ = [
     "InstagramPost",
     "InstagramPostPage",
     "InstagramPostPageMediaVersion",
+    "KnowledgeChunk",
+    "KnowledgeDocument",
+    "KnowledgeEmbedding",
     "Location",
     "LocationArea",
     "LocationOpeningHour",

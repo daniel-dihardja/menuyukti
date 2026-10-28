@@ -6,6 +6,7 @@ from .crm_apps import CrmAppsQuery
 from .crm_customers import CrmCustomersQuery
 from .instagram_signals import InstagramSignalsQuery
 from .inventory_catalog import InventoryCatalogQuery
+from .knowledge_search import KnowledgeSearchQuery
 from .inventory_refill_forecast import InventoryRefillForecastQuery
 from .inventory_stock import InventoryStockQuery
 from .inventory_stock_movement import InventoryStockMovementQuery
@@ -47,6 +48,7 @@ __all__ = [
     "CrmCustomersQuery",
     "InstagramSignalsQuery",
     "InventoryCatalogQuery",
+    "KnowledgeSearchQuery",
     "InventoryRefillForecastQuery",
     "InventoryStockQuery",
     "InventoryStockMovementQuery",

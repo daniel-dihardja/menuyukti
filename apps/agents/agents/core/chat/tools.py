@@ -18,7 +18,7 @@ from agents_app.agents.core.chat.media_collections_client import (
 )
 from agents_app.agents.core.location_page_format import format_location_page_markdown
 from agents_app.agents.graphql_base import graphql_post
-from agents_app.agents.graphql_operations import LOCATION_QUERY
+from agents_app.agents.graphql_operations import LOCATION_QUERY, SEARCH_KNOWLEDGE_QUERY
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import InjectedToolArg, tool
 
@@ -106,6 +106,65 @@ async def get_chart_data(
         )
     except Exception as exc:  # noqa: BLE001 — return to model; do not crash the ReAct turn
         return f"Error loading chart data for {chart_id}: {exc}"
+
+
+@tool
+async def search_knowledge(
+    query: str,
+    categories: list[str] | None = None,
+    chart_ids: list[str] | None = None,
+    limit: int = 6,
+    config: Annotated[RunnableConfig, InjectedToolArg()] = None,  # type: ignore[assignment]
+) -> str:
+    """Search domain knowledge, KPI definitions, and recommendation playbooks.
+
+    Use for explanations and playbooks that complement chart numbers — not as a
+    substitute for ``get_chart_data``. Never invent venue sales figures from
+    knowledge alone. Optional ``categories``: domain, kpi, playbook. Optional
+    ``chart_ids`` filters docs tagged to catalog chart ids.
+    """
+    user_id = _user_id_from_config(config)
+    if not user_id:
+        return "User context is missing. Cannot search knowledge."
+    q = (query or "").strip()
+    if not q:
+        return "Provide a non-empty query for knowledge search."
+    c = (config or {}).get("configurable") or {}
+    location_id = c.get("location_id")
+    vars: dict = {
+        "query": q,
+        "limit": max(1, min(int(limit or 6), 20)),
+    }
+    if categories:
+        vars["categories"] = [str(x).strip().lower() for x in categories if str(x).strip()]
+    if chart_ids:
+        vars["chartIds"] = [str(x).strip() for x in chart_ids if str(x).strip()]
+    if isinstance(location_id, int):
+        vars["locationId"] = location_id
+    elif isinstance(location_id, str) and location_id.strip().isdigit():
+        vars["locationId"] = int(location_id.strip())
+
+    client = get_chat_http_client()
+    try:
+        data = await graphql_post(client, SEARCH_KNOWLEDGE_QUERY, vars, user_id)
+    except Exception as exc:  # noqa: BLE001
+        return f"Error searching knowledge: {exc}"
+    rows = data.get("searchKnowledge")
+    if not isinstance(rows, list) or not rows:
+        return "No relevant knowledge chunks found."
+    lines = [f"Knowledge hits ({len(rows)}):"]
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        title = row.get("title") or row.get("slug") or "untitled"
+        category = row.get("category") or ""
+        score = row.get("score")
+        content = (row.get("content") or "").strip()
+        score_s = f"{float(score):.3f}" if isinstance(score, (int, float)) else "?"
+        lines.append(f"### {title} ({category}, score={score_s})")
+        lines.append(content)
+        lines.append("")
+    return "\n".join(lines).rstrip() + "\n"
 
 
 @tool

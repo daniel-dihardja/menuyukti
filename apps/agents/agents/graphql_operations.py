@@ -156,3 +156,31 @@ query InventoryRefillForecast($locationId: ID!, $windowDays: Int) {
   }
 }
 """
+
+SEARCH_KNOWLEDGE_QUERY = """
+query SearchKnowledge(
+  $query: String!
+  $categories: [String!]
+  $chartIds: [String!]
+  $locationId: Int
+  $limit: Int
+) {
+  searchKnowledge(
+    query: $query
+    categories: $categories
+    chartIds: $chartIds
+    locationId: $locationId
+    limit: $limit
+  ) {
+    chunkId
+    documentId
+    slug
+    title
+    category
+    scopeType
+    content
+    score
+    metadata
+  }
+}
+"""

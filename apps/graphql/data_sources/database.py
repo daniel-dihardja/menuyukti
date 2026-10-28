@@ -13,12 +13,12 @@ import os
 import sys
 from pathlib import Path
 
-from dotenv import load_dotenv
+from graphql.env_bootstrap import load_app_env
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-load_dotenv(BASE_DIR / ".env", override=False)
+load_app_env(BASE_DIR)
 
 DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite+pysqlite:///./graphql.db")
 

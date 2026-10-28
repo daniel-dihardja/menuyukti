@@ -98,3 +98,12 @@ available), the media library, and general best practices — without inventing 
 numbers. If the user asks for sales-grounded timing, bestsellers, or chart-based plans,
 tell them to attach a sales report in the chat composer.
 """
+
+KNOWLEDGE_SECTION = """\
+## Knowledge search
+
+Call `search_knowledge` for domain expertise, KPI definitions, and recommendation
+playbooks (optional categories: domain, kpi, playbook). Use it to explain metrics and
+suggest actions — not to invent venue sales numbers. Charts remain the source of truth
+for quantitative claims; load `get_chart_data` (when available) before citing figures.
+"""
