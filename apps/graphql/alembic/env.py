@@ -17,8 +17,14 @@ from graphql.env_bootstrap import load_app_env
 
 load_app_env(_BASE_DIR)
 
+from pgvector.sqlalchemy import Vector
+from sqlalchemy.dialects.postgresql.base import ischema_names
+
 import graphql.data_sources.models  # noqa: F401 — ensure all models register on Base.metadata
 from graphql.data_sources.database import Base
+
+# So reflection/autogenerate recognize pgvector columns (embedding_vec).
+ischema_names["vector"] = Vector
 
 config = context.config
 
@@ -37,6 +43,11 @@ config.set_main_option("sqlalchemy.url", database_url)
 target_metadata = Base.metadata
 
 
+def include_object(object_, name, type_, reflected, compare_to):
+    """Keep alembic check stable for pgvector HNSW (ops often do not round-trip)."""
+    return not (type_ == "index" and name == "ix_knowledge_embedding_vec_hnsw")
+
+
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode (SQL script output, no live DB connection)."""
 
@@ -48,6 +59,7 @@ def run_migrations_offline() -> None:
         dialect_opts={"paramstyle": "named"},
         compare_type=True,
         compare_server_default=True,
+        include_object=include_object,
     )
 
     with context.begin_transaction():
@@ -70,6 +82,7 @@ def run_migrations_online() -> None:
             target_metadata=target_metadata,
             compare_type=True,
             compare_server_default=True,
+            include_object=include_object,
         )
 
         with context.begin_transaction():

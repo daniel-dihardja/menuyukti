@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
+from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
     DateTime,
     ForeignKey,
@@ -36,6 +37,8 @@ class KnowledgeDocument(Base):
 
     __tablename__ = "knowledge_document"
     __table_args__ = (
+        # Matches alembic UniqueConstraint("slug") → knowledge_document_slug_key
+        UniqueConstraint("slug", name="knowledge_document_slug_key"),
         Index("ix_knowledge_document_category", "category"),
         Index("ix_knowledge_document_status", "status"),
         Index("ix_knowledge_document_scope_type", "scope_type"),
@@ -147,6 +150,14 @@ class KnowledgeEmbedding(Base):
     """
 
     __tablename__ = "knowledge_embedding"
+    __table_args__ = (
+        Index(
+            "ix_knowledge_embedding_vec_hnsw",
+            "embedding_vec",
+            postgresql_using="hnsw",
+            postgresql_ops={"embedding_vec": "vector_cosine_ops"},
+        ),
+    )
 
     chunk_id: Mapped[int] = mapped_column(
         Integer,
@@ -156,6 +167,11 @@ class KnowledgeEmbedding(Base):
     embedding: Mapped[list[Any]] = mapped_column(
         JSONB().with_variant(JSON(), "sqlite"),
         nullable=False,
+    )
+    # Postgres ANN column (nullable so SQLite / rows without sync still work).
+    embedding_vec: Mapped[list[float] | None] = mapped_column(
+        Vector(DEFAULT_EMBEDDING_DIMS),
+        nullable=True,
     )
     embedding_model: Mapped[str] = mapped_column(String(128), nullable=False)
     embedded_at: Mapped[datetime] = mapped_column(
