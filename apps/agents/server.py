@@ -9,6 +9,7 @@ from typing import Any
 import httpx
 from agents_app.agents.core.chat.graph import compile_chat_graph
 from agents_app.agents.core.chatkit.memory_store import MemoryChatKitStore
+from agents_app.env_bootstrap import load_app_env
 from agents_app.routers.chat import router as chat_router
 from agents_app.routers.chatkit import router as chatkit_router
 from agents_app.routers.format_markdown import router as format_markdown_router
@@ -18,7 +19,6 @@ from agents_app.routers.holiday_style_analysis import router as holiday_style_an
 from agents_app.routers.holiday_visual_brief import router as holiday_visual_brief_router
 from agents_app.routers.nearby_locations_scan import router as nearby_locations_scan_router
 from agents_app.routers.style_specs import router as style_specs_router
-from agents_app.env_bootstrap import load_app_env
 from fastapi import FastAPI
 from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.checkpoint.memory import InMemorySaver
