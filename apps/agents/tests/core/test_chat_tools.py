@@ -109,8 +109,9 @@ async def test_get_chart_data_soft_fails_on_load_error(
         {"chart_id": "venue_slot_strength_heatmap"},
         config={"configurable": {"location_id": 7, "user_id": "u1"}},
     )
-    assert out.startswith("Error loading chart data for venue_slot_strength_heatmap:")
-    assert "graphql boom" in out
+    # Soft-fail path must not leak raw backend errors to the model (TASK-8.6).
+    assert out == "Error running get_chart_data: tool failed"
+    assert "graphql boom" not in out
 
 
 @pytest.mark.asyncio
