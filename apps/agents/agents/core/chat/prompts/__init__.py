@@ -16,6 +16,7 @@ from agents_app.agents.core.chat.prompts.blocks import (
     LEONARDO_IMAGE_BLOCK,
     MEDIA_LIBRARY_BLOCK,
     NO_SALES_REPORT_SECTION,
+    SECURITY_POLICY_SECTION,
 )
 from agents_app.agents.core.chat.prompts.general import SYSTEM_PROMPT_TEMPLATE
 from agents_app.agents.core.chat.prompts.image_assistant import (
@@ -35,6 +36,7 @@ __all__ = [
     "LEONARDO_IMAGE_BLOCK",
     "MEDIA_LIBRARY_BLOCK",
     "NO_SALES_REPORT_SECTION",
+    "SECURITY_POLICY_SECTION",
     "STORY_IMAGE_ASSISTANT_PROMPT",
     "SYSTEM_PROMPT_TEMPLATE",
     "build_system_prompt",
@@ -89,8 +91,10 @@ def build_system_prompt(
     ig_studio_block = f"{IG_STUDIO_BLOCK.strip()}\n" if ig_studio_post_image else ""
     media_library_block = f"{MEDIA_LIBRARY_BLOCK.strip()}\n\n"
     knowledge_section = f"{KNOWLEDGE_SECTION.strip()}\n\n"
+    security_policy_section = f"{SECURITY_POLICY_SECTION.strip()}\n\n"
     return (
         SYSTEM_PROMPT_TEMPLATE.format(
+            security_policy_section=security_policy_section,
             chart_section=chart_section,
             chart_catalog_block=chart_catalog_block,
             knowledge_section=knowledge_section,

@@ -1,10 +1,10 @@
 ---
 id: TASK-8.3
 title: Enforce per-user chat LLM spend and rate limits
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-10-28T08:54:00Z'
-updated_date: '2026-10-28T09:03:00Z'
+updated_date: '2026-10-28T10:28:00Z'
 labels:
   - security
   - chat
@@ -38,11 +38,26 @@ Closes doc-1 finding C for the general advisor path.
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 Authenticated users hitting advisor chat are subject to documented per-user limits (at least daily token and/or request caps, or equivalent cost controls for the chat LLM path)
-- [ ] #2 Over-limit requests fail closed with a clear client error before starting an unbounded stream when possible
-- [ ] #3 Limits are covered by automated tests (unit or route-level)
-- [ ] #4 Acceptance does not require Leonardo/image-generation quotas while chatImageAssistant is disabled
+- [x] #1 Authenticated users hitting advisor chat are subject to documented per-user limits (at least daily token and/or request caps, or equivalent cost controls for the chat LLM path)
+- [x] #2 Over-limit requests fail closed with a clear client error before starting an unbounded stream when possible
+- [x] #3 Limits are covered by automated tests (unit or route-level)
+- [x] #4 Acceptance does not require Leonardo/image-generation quotas while chatImageAssistant is disabled
 <!-- AC:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+
+1. Helper enforce-chat-spend-limits using myAiUsageSummary. 2. Wire into /api/chat and /api/chatkit before stream. 3. Defaults 100 req / 500k tokens; fail open on usage query errors. 4. Vitest.
+<!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+
+BFF checkAdvisorChatSpendLimits on /api/chat and /api/chatkit; 100 req / 500k tokens defaults; fail open on usage query error; Vitest 6 passed.
+
+<!-- SECTION:NOTES:END -->
 
 ## Comments
 
@@ -57,3 +72,11 @@ Narrowed: no Leonardo spend caps while Image Assistant is feature-flagged off.
 ---
 
 <!-- COMMENTS:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+
+Enforced per-user daily advisor chat caps (100 requests / 500k tokens, env-overridable) via myAiUsageSummary before streaming on /api/chat and /api/chatkit. Over-limit returns 429. Usage query failures fail open with a log. No Leonardo quotas.
+
+<!-- SECTION:FINAL_SUMMARY:END -->

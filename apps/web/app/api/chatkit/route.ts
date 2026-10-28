@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 import { buildAgentsHeaders } from '@/lib/agents/headers'
 import { isChatImageAssistantEnabled, normalizeChatModeId } from '@/lib/chat/chat-modes'
+import { checkAdvisorChatSpendLimits } from '@/lib/chat/enforce-chat-spend-limits'
 import { getPythonAgentsUrl } from '@/lib/config'
 import { requireProPlanApi } from '@/lib/pro-plan-api'
 
@@ -25,6 +26,11 @@ const CONTEXT_HEADERS = [
 export async function POST(request: NextRequest) {
   const auth = await requireProPlanApi()
   if (!auth.ok) return auth.response
+
+  const spend = await checkAdvisorChatSpendLimits(auth.userId)
+  if (!spend.ok) {
+    return NextResponse.json({ error: spend.message }, { status: 429 })
+  }
 
   const agentsBase = getPythonAgentsUrl()
   if (!agentsBase) {

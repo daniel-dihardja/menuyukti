@@ -29,10 +29,25 @@ make dev
 - **Helper:** `POST /format-markdown` — JSON body `{"content":"...","preset":"notes"}` returns `{"formatted":"..."}`. Legacy preset id `milestone-data` is an alias of `notes` (`agents/core/format_markdown/`); not a campaign pipeline.
 - **Style draft:** `POST /style-specs/draft-from-image` — IG Studio vision helper.
 
-## Auth
+## Auth and trust boundary (advisor chat)
 
-- Chat / style endpoints require **`X-Menuyukti-User-Id`**.
-- When **`INTERNAL_API_KEY`** or **`GRAPHQL_INTERNAL_API_KEY`** is set, inbound requests (except `GET /health`) must send matching **`X-Internal-Api-Key`**. The same shared-secret resolution is used for outbound GraphQL and web image-generate calls.
+**Active LLM path:** web advisor BFF (`POST /api/chat`, `POST /api/chatkit`) → this service (`POST /chat`, `POST /chatkit`) → GraphQL with the same user id.
+
+### Operator checklist
+
+1. **Do not expose agents on the public internet.** Bind to a private network / VPC / mesh that only the Next.js BFF (and other trusted server-side callers) can reach. `GET /health` is open for probes; every other route is privileged when a key is configured.
+2. **Set a shared secret in production.** Require **`INTERNAL_API_KEY`** or **`GRAPHQL_INTERNAL_API_KEY`** (same value the web BFF sends as **`X-Internal-Api-Key`** via `apps/web/lib/agents/headers.ts`). Production / `AGENTS_REQUIRE_INTERNAL_API_KEY=1` fail-fast at startup without a key; production also requires **`LANGGRAPH_CHECKPOINT_DATABASE_URL`**.
+3. **Rotate the key with GraphQL.** Prefer one shared internal key rotated together for BFF → agents and agents → GraphQL. Share it only with trusted server components — never with browsers or client bundles.
+4. **Treat key + network reachability as full impersonation.** Anyone who can call agents with a valid key can set any **`X-Menuyukti-User-Id`** and act as that user on chat. Identity for advisor chat must come only from the Clerk-authenticated BFF, which stamps the session user into that header.
+
+### Request headers
+
+- Advisor chat endpoints require **`X-Menuyukti-User-Id`** (missing → 401).
+- When an internal API key is set, inbound requests (except `GET /health`) must send matching **`X-Internal-Api-Key`** (wrong/missing → 403). The same shared-secret resolution is used for outbound GraphQL calls.
+
+### Follow-up (not implemented)
+
+Short-lived BFF→agents tokens that bind `sub` to the Clerk user id would reduce blast radius if the long-lived shared secret leaks. That migration is optional and separate from this checklist.
 
 ## Quality
 

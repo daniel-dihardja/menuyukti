@@ -58,14 +58,14 @@ def is_inventar_mode(conf: dict[str, Any]) -> bool:
     return conf.get("chat_mode") == "inventar"
 
 
-def has_agent_thread_id(conf: dict[str, Any]) -> bool:
-    raw = conf.get("agent_thread_id")
-    return isinstance(raw, str) and bool(raw.strip())
+def has_leonardo_image_generation(_conf: dict[str, Any]) -> bool:
+    """Whether general-mode chat binds ``generate_instagram_post_image``.
 
-
-def has_leonardo_image_generation(conf: dict[str, Any]) -> bool:
-    """Leonardo generate tool: IG Studio or agent-thread chat."""
-    return has_ig_studio_post_context(conf) or has_agent_thread_id(conf)
+    Always false: advisor Image Assistant is product-off, and IG Studio /
+    deprecated surfaces are out of the active LLM path. Image Assistant mode
+    still binds generate via ``chat_tools_list(image_assistant=True)``.
+    """
+    return False
 
 
 def chat_tools_list(

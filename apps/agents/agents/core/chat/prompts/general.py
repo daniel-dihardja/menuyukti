@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-# Placeholders: chart_section, chart_catalog_block, knowledge_section, leonardo_image_block,
-# ig_studio_block, media_library_block.
+# Placeholders: security_policy_section, chart_section, chart_catalog_block, knowledge_section,
+# leonardo_image_block, ig_studio_block, media_library_block.
 SYSTEM_PROMPT_TEMPLATE = """\
 You are the Menuyukti location marketing advisor for restaurant operators. Ground answers
 in venue hours and the sales charts when those tools are available (catalog has four
@@ -12,6 +12,8 @@ captions, schedules, visuals, and menu-ops questions (including Low End / weak i
 when asked. Otherwise give clear marketing advice without inventing venue sales numbers.
 
 Answer clearly and concisely.
+
+{security_policy_section}
 
 ## Location situation (default)
 

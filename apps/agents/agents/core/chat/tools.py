@@ -16,6 +16,8 @@ from agents_app.agents.core.chat.media_collections_client import (
 from agents_app.agents.core.chat.media_collections_client import (
     list_media_collections as fetch_media_collections,
 )
+from agents_app.agents.core.chat.sanitize_tool_errors import sanitize_tool_error_message
+from agents_app.agents.core.chat.untrusted_context import wrap_untrusted
 from agents_app.agents.core.location_page_format import format_location_page_markdown
 from agents_app.agents.graphql_base import graphql_post
 from agents_app.agents.graphql_operations import LOCATION_QUERY, SEARCH_KNOWLEDGE_QUERY
@@ -55,7 +57,7 @@ async def get_location_data(config: Annotated[RunnableConfig, InjectedToolArg()]
             str(user_id),
         )
     except Exception as exc:  # noqa: BLE001 — return to model; do not crash the ReAct turn
-        return f"Error loading location data: {exc}"
+        return sanitize_tool_error_message("get_location_data", exc)
     raw_loc = loc_data.get("location")
     if not isinstance(raw_loc, dict):
         return "Location not found or access denied."
@@ -105,7 +107,7 @@ async def get_chart_data(
             analytics_run_id=analytics_run_id,
         )
     except Exception as exc:  # noqa: BLE001 — return to model; do not crash the ReAct turn
-        return f"Error loading chart data for {chart_id}: {exc}"
+        return sanitize_tool_error_message("get_chart_data", exc)
 
 
 @tool
@@ -148,7 +150,7 @@ async def search_knowledge(
     try:
         data = await graphql_post(client, SEARCH_KNOWLEDGE_QUERY, vars, user_id)
     except Exception as exc:  # noqa: BLE001
-        return f"Error searching knowledge: {exc}"
+        return sanitize_tool_error_message("search_knowledge", exc)
     rows = data.get("searchKnowledge")
     if not isinstance(rows, list) or not rows:
         return "No relevant knowledge chunks found."
@@ -164,7 +166,7 @@ async def search_knowledge(
         lines.append(f"### {title} ({category}, score={score_s})")
         lines.append(content)
         lines.append("")
-    return "\n".join(lines).rstrip() + "\n"
+    return wrap_untrusted("knowledge", "\n".join(lines).rstrip()) + "\n"
 
 
 @tool
@@ -183,7 +185,7 @@ async def list_media_collections(
     try:
         rows = await fetch_media_collections(user_id, client=client)
     except Exception as exc:  # noqa: BLE001 — return to model; do not crash the ReAct turn
-        return f"Error listing media collections: {exc}"
+        return sanitize_tool_error_message("list_media_collections", exc)
     if not rows:
         return "No media collections in this workspace."
     lines = [f"Media collections ({len(rows)}):"]
@@ -215,7 +217,7 @@ async def list_media(
     try:
         rows = await fetch_media_assets(user_id, collection_id=collection_id, client=client)
     except Exception as exc:  # noqa: BLE001 — return to model; do not crash the ReAct turn
-        return f"Error listing media: {exc}"
+        return sanitize_tool_error_message("list_media", exc)
     scope = (
         f"collection id={collection_id}" if collection_id is not None else "all cataloged photos"
     )

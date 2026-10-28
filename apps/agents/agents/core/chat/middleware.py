@@ -183,6 +183,8 @@ async def handle_tool_errors(
     handler: Any,
 ) -> ToolMessage | Command[Any]:
     """Surface tool exceptions as error ToolMessages (replaces ToolNode private patch)."""
+    from agents_app.agents.core.chat.sanitize_tool_errors import sanitize_tool_error_for_model
+
     try:
         return await handler(request)
     except Exception as exc:  # noqa: BLE001 — keep ReAct loop alive
@@ -190,7 +192,7 @@ async def handle_tool_errors(
         tool_call_id = tool_call.get("id") or ""
         name = tool_call.get("name") or "tool"
         return ToolMessage(
-            content=f"Error running {name}: {exc}",
+            content=sanitize_tool_error_for_model(str(name), exc),
             tool_call_id=str(tool_call_id),
             status="error",
         )

@@ -26,7 +26,9 @@ async def test_handle_tool_errors_returns_tool_message() -> None:
     result = await _handle_tool_errors.awrap_tool_call(request, boom)
     assert isinstance(result, ToolMessage)
     assert result.tool_call_id == "call-1"
-    assert "graphql down" in str(result.content)
+    assert "graphql down" not in str(result.content)
+    assert "tool failed" in str(result.content)
+    assert "get_location_data" in str(result.content)
 
 
 @pytest.mark.asyncio

@@ -1,10 +1,10 @@
 ---
 id: TASK-8.6
 title: Restrict chat image URLs and sanitize tool errors for the model
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-10-28T08:55:00Z'
-updated_date: '2026-10-28T09:03:00Z'
+updated_date: '2026-10-28T10:29:00Z'
 labels:
   - security
   - chat
@@ -37,10 +37,25 @@ Closes doc-1 findings F (error channel) and G (URL allowlist).
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 Chat multimodal input rejects non-data image URLs (or an explicit documented allowlist of trusted hosts) at the agents boundary
-- [ ] #2 Tool failure messages returned to the model are sanitized (no raw stack traces / internal URLs / secrets); client-facing SSE errors stay similarly non-leaky
-- [ ] #3 Tests cover rejected image URL schemes and sanitized tool error shaping
+- [x] #1 Chat multimodal input rejects non-data image URLs (or an explicit documented allowlist of trusted hosts) at the agents boundary
+- [x] #2 Tool failure messages returned to the model are sanitized (no raw stack traces / internal URLs / secrets); client-facing SSE errors stay similarly non-leaky
+- [x] #3 Tests cover rejected image URL schemes and sanitized tool error shaping
 <!-- AC:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+
+1. data:image only in \_normalize_user_content. 2. Sanitize handle_tool_errors + in-tool errors. 3. Tighten structured_error_payload if needed. 4. Update multimodal + wrap_tool_errors tests.
+<!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+
+data:image only; sanitize_tool_error_for_model on middleware + advisor tools; structured_error_payload generic for unknown errors. multimodal + wrap_tool_errors tests pass.
+
+<!-- SECTION:NOTES:END -->
 
 ## Comments
 
@@ -55,3 +70,11 @@ Clarified: multimodal input hardening only; no Leonardo generate work.
 ---
 
 <!-- COMMENTS:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+
+Agents multimodal input now accepts only data:image URLs. Tool failures return generic 'tool failed' text to the model (full exception logged server-side); client SSE generic message for unexpected errors. Tests updated for https rejection and sanitized ToolMessages.
+
+<!-- SECTION:FINAL_SUMMARY:END -->

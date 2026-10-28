@@ -133,14 +133,15 @@ def test_chat_tools_list_from_config_gates_by_context() -> None:
         }
     )
     agent_thread_names = [getattr(t, "name", "") for t in agent_thread]
-    assert "generate_instagram_post_image" in agent_thread_names
+    assert "generate_instagram_post_image" not in agent_thread_names
     assert "get_location_data" in agent_thread_names
     assert "get_chart_data" in agent_thread_names
     assert "get_milestone" not in agent_thread_names
 
+    # Deprecated IG Studio post context must not bind Leonardo on the advisor path.
     ig_studio = chat_tools_list_from_config({"user_id": "u1", "post_id": "10", "page_id": "20"})
     ig_names = [getattr(t, "name", "") for t in ig_studio]
-    assert "generate_instagram_post_image" in ig_names
+    assert "generate_instagram_post_image" not in ig_names
     assert "get_milestone" not in ig_names
     assert "get_chart_data" not in ig_names
 

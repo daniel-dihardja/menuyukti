@@ -63,3 +63,21 @@ def test_incremental_user_message_rejects_bad_image_url() -> None:
                 }
             ]
         )
+
+
+def test_incremental_user_message_rejects_https_image_url() -> None:
+    with pytest.raises(ValueError, match="data:image"):
+        incremental_user_message(
+            [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": "hi"},
+                        {
+                            "type": "image_url",
+                            "image_url": {"url": "https://example.com/x.png"},
+                        },
+                    ],
+                }
+            ]
+        )

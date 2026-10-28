@@ -9,6 +9,7 @@ import { requireProPlanApi } from '@/lib/pro-plan-api'
 import { pushPendingToolCallId, resolveToolEndCallId } from '@/lib/chat/pending-tool-call-ids'
 import { pythonStreamErrorText } from '@/lib/chat/python-stream-error'
 import { isChatModeEnabled } from '@/lib/chat/chat-modes'
+import { checkAdvisorChatSpendLimits } from '@/lib/chat/enforce-chat-spend-limits'
 import { chatRequestBodySchema } from './schema'
 
 // Streaming can run for a while (LLM + network).
@@ -216,6 +217,11 @@ export async function POST(req: Request) {
     return authz.response
   }
   const { userId } = authz
+
+  const spend = await checkAdvisorChatSpendLimits(userId)
+  if (!spend.ok) {
+    return jsonError(spend.message, 429)
+  }
 
   const baseUrl = getPythonAgentsUrl()
 

@@ -3,7 +3,7 @@ id: doc-1
 title: Chat advisor security overview
 type: guide
 created_date: '2026-10-28T08:49:00Z'
-updated_date: '2026-10-28T09:04:00Z'
+updated_date: '2026-10-28T10:30:00Z'
 tags:
   - security
   - chat
@@ -197,6 +197,8 @@ Prioritized for remediation planning. Items are findings, not committed tasks �
 
 **Direction:** Private network; rotate keys; prefer short-lived BFF→agents tokens binding `sub=userId`.
 
+**Operator runbook:** See **Auth and trust boundary (advisor chat)** in `apps/agents/README.md` (TASK-8.1). Short-lived BFF→agents tokens remain an optional follow-up.
+
 #### C. No hard abuse / spend limits on chat
 
 **Gap:** Usage is recorded (`record_chat_llm_usage`); plan check removed from `requireProPlanApi`. Recursion/trim/Tavily bounds help but are not per-user budgets.
@@ -216,6 +218,8 @@ Prioritized for remediation planning. Items are findings, not committed tasks �
 **Gap:** Client `locationId` / `analyticsRunId` / `postId` are intent under the real user — safe only if GraphQL always enforces ownership.
 
 **Direction:** FOCUSED GraphQL audit on chat-touched operations.
+
+**Status (TASK-8.5):** FOCUSED audit snapshot at `docs/audits/graphql-security/history/2026-10-28_10-29_515e7dbd/` — no P0 IDOR on general advisor ops; CONDITIONAL on shared-key trust (see TASK-8.1).
 
 #### F. Indirect injection via web / tool errors / attached context
 
