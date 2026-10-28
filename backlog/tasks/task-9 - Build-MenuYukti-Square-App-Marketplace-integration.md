@@ -4,7 +4,7 @@ title: Make MenuYukti Square application-ready with POS API analytics
 status: To Do
 assignee: []
 created_date: '2026-10-28T13:27:00Z'
-updated_date: '2026-10-28T13:53:00Z'
+updated_date: '2026-10-28T16:01:00Z'
 labels:
   - square
   - marketplace
@@ -17,6 +17,8 @@ references:
   - https://developer.squareup.com/docs/oauth-api/movetoprod
   - https://developer.squareup.com/docs/oauth-api/square-permissions
   - https://developer.squareup.com/docs/reporting-api
+documentation:
+  - backlog/docs/square/doc-2 - Square-POS-analytics-integration-spike.md
 priority: high
 type: feature
 ordinal: 29000

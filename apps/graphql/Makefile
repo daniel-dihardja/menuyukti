@@ -3,7 +3,7 @@ UV=uv run
 UVICORN=uv run uvicorn
 ALEMBIC=PYTHONPATH=../.. uv run alembic
 
-.PHONY: install run dev db-upgrade db-downgrade db-generate db-history db-current db-stamp db-stamp-head db-check drop-db db-reset-dev test test-qa test-upload test-order-metrics test-menu-item-cogs test-menu-heatmaps test-menu-engineering-matrix load-report generate-dev-mock-excel knowledge-ingest dev-data lint format typecheck clean
+.PHONY: install run dev db-upgrade db-downgrade db-generate db-history db-current db-stamp db-stamp-head db-check drop-db db-reset-dev test test-qa test-upload test-order-metrics test-menu-item-cogs test-menu-heatmaps test-menu-engineering-matrix load-report generate-dev-mock-excel knowledge-ingest square-smoke dev-data lint format typecheck clean
 
 install:
 	uv sync --all-groups
@@ -85,6 +85,11 @@ knowledge-ingest:
 		$(if $(DIR),--dir "$(DIR)",) \
 		$(if $(FORCE),--force,) \
 		$(if $(DRY_RUN),--dry-run,)
+
+# Square sandbox smoke: ListLocations via SQUARE_ACCESS_TOKEN (repo-root .env).
+#   make square-smoke
+square-smoke:
+	PYTHONPATH=../.. $(PYTHON) scripts/square_smoke_list_locations.py
 
 # Regenerate Berlin cafe analytics mock (ESB shell from SNABB; Kaffeestube Mitte menu).
 #   make generate-dev-mock-excel

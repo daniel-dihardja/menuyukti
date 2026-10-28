@@ -21,6 +21,22 @@ A minimal starter for the Strawberry GraphQL endpoint. The service currently exp
 
 Keep this app **light**: resolvers should load data, enforce ownership/auth, and map results to GraphQL types. **Sales and menu analytics** (aggregations, metrics, matrix/heatmap logic, etc.) live in the shared Python package **`packages/menuyukti`** — add new calculations there and call them from here. Database schema and migrations remain in this app; see [`packages/menuyukti/README.md`](../../packages/menuyukti/README.md) for boundaries and layout.
 
+## Square sandbox (Connect / POS sync)
+
+Square client ownership lives in this app (`squareup` SDK). Product **OAuth Connect** for sellers is TASK-9.2; until then use a Sandbox access token for smoke tests only.
+
+1. Set Square keys in the **repo-root** `.env` (see `/.env.example`): `SQUARE_ENVIRONMENT=sandbox`, `SQUARE_APPLICATION_ID`, `SQUARE_APPLICATION_SECRET`, and for smoke `SQUARE_ACCESS_TOKEN`. Optional later: `SQUARE_OAUTH_REDIRECT_URL`, `SQUARE_TOKEN_ENCRYPTION_KEY`.
+2. Spike decisions: [backlog doc-2](../../backlog/docs/square/doc-2%20-%20Square-POS-analytics-integration-spike.md).
+3. Smoke (lists location id/name; does not print tokens):
+
+```bash
+cd apps/graphql
+make square-smoke
+# equivalent: PYTHONPATH=../.. uv run python scripts/square_smoke_list_locations.py
+```
+
+Misconfigured env fails with a clear `CONFIG ERROR` message (exit code 2).
+
 ## Database schema and migrations (Alembic)
 
 Schema changes are **versioned** under [`alembic/`](./alembic/) (revision scripts in `alembic/versions/`). Production and shared PostgreSQL databases should use Alembic, not ad-hoc `ALTER` scripts, for DDL.
