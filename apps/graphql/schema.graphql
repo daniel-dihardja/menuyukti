@@ -595,6 +595,15 @@ type KnowledgeSearchHitType {
   metadata: String
 }
 
+"""
+Durable advisor-written notes for a location (preferences, constraints, outcomes). Separate from owner manualBriefInput.quickProfile.
+"""
+type LocationAdvisorMemoryType {
+  locationId: Int!
+  content: String!
+  updatedAt: DateTime
+}
+
 """Summary of analytics runs for one location."""
 type LocationAnalyticsRunSummaryType {
   id: ID!
@@ -677,6 +686,11 @@ type LocationType {
 
   """Owner-provided click-first brief hints. Not AI-generated."""
   manualBriefInput: LocationManualBriefInputType
+
+  """
+  Durable advisor-written notes for this venue. Separate from owner manualBriefInput.
+  """
+  advisorMemory: LocationAdvisorMemoryType
 }
 
 type MatrixSignalItemType {
@@ -1354,6 +1368,11 @@ type Mutation {
   """Update a CRM app by id."""
   updateCrmApp(id: Int!, title: String!, cashbackThresholdAmount: Int = null, cashbackPercent: Int = null): CrmAppType!
   updateLocation(id: ID!, name: String, street: String, city: String, country: String, currency: String, legalName: String, taxNumber: String, vatId: String, publicSlug: String, openingHours: [OpeningHourInput!]): LocationType!
+
+  """
+  Replace advisor memory for a location. Pass empty content to clear. Does not modify owner manualBriefInput / quickProfile.
+  """
+  updateLocationAdvisorMemory(locationId: Int!, content: String!): LocationAdvisorMemoryType!
 
   """
   Replace owner manual brief hints for a location. Pass quickProfile {} to clear. Does not modify AI-generated location_social_settings.

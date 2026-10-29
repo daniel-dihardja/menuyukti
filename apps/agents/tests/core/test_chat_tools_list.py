@@ -24,6 +24,8 @@ def test_chat_tools_list_excludes_search_web_without_key() -> None:
     assert "get_milestone" not in names
     assert "update_milestone_input" not in names
     assert "get_location_data" in names
+    assert "get_advisor_memory" in names
+    assert "update_advisor_memory" in names
     assert "search_knowledge" in names
     assert "get_chart_data" not in names
     assert "list_menu_item_cogs" not in names
@@ -64,6 +66,8 @@ def test_chat_tools_list_omits_location_without_location_id() -> None:
 
     names = [getattr(t, "name", "") for t in chat_tools_list(location_id=False)]
     assert "get_location_data" not in names
+    assert "get_advisor_memory" not in names
+    assert "update_advisor_memory" not in names
     assert "get_chart_data" not in names
     assert "list_media_collections" in names
     assert "list_media" in names
@@ -75,6 +79,8 @@ def test_chat_tools_list_inventar_mode() -> None:
 
     names = [getattr(t, "name", "") for t in chat_tools_list(inventar=True, location_id=True)]
     assert names == ["get_inventory_refill_forecast", "get_location_data"]
+    assert "get_advisor_memory" not in names
+    assert "update_advisor_memory" not in names
     assert "search_knowledge" not in names
     assert "present_weekly_instagram_schedule" not in names
     assert "generate_instagram_post_image" not in names
@@ -120,6 +126,8 @@ def test_chat_tools_list_from_config_gates_by_context() -> None:
     assert "get_milestone" not in with_location_names
     assert "update_milestone_input" not in with_location_names
     assert "get_location_data" in with_location_names
+    assert "get_advisor_memory" in with_location_names
+    assert "update_advisor_memory" in with_location_names
     assert "get_chart_data" not in with_location_names
     assert "list_menu_item_cogs" not in with_location_names
     assert "request_cogs_edit" not in with_location_names

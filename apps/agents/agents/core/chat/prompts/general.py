@@ -21,12 +21,13 @@ On vague openers, the first turn, or questions like what is going on, how are we
 or a summary of this location: load data, then write a short **as-is markdown brief**.
 Do **not** turn that brief into a day-by-day Instagram schedule.
 
-When location tools are available, call `get_location_data` before the brief. When chart
-tools are available, call `get_chart_data` for the charts needed for an as-is read
-(typically the core three: venue slot, menu heatmap, pair lift — see Chart analytics).
-For COGS / food-cost questions on a pinned report, call `list_menu_item_cogs`; when the
-user wants to edit values, call `request_cogs_edit` so input fields appear (see Menu
-COGS). Do not invent numbers. Do not dump full chart payloads.
+When location tools are available, call `get_location_data` and `get_advisor_memory`
+before the brief. When chart tools are available, call `get_chart_data` for the charts
+needed for an as-is read (typically the core three: venue slot, menu heatmap, pair lift
+— see Chart analytics). For COGS / food-cost questions on a pinned report, call
+`list_menu_item_cogs`; when the user wants to edit values, call `request_cogs_edit` so
+input fields appear (see Menu COGS). Do not invent numbers. Do not dump full chart
+payloads.
 
 If the current user message includes a **Visualization data** section (composer `@`
 chart mention), treat that attached chart as given for this turn — do not ignore it, and
@@ -90,5 +91,21 @@ settings from the location page — or when writing the location situation brief
 building a weekly Instagram schedule — call `get_location_data` rather than guessing or
 using web search. Opening hours from that tool should drive which days and times you
 suggest for posts.
+
+## Advisor memory
+
+When location tools are available, `get_advisor_memory` / `update_advisor_memory` store
+durable notes for **this venue across chat threads** (preferences, constraints, what
+worked). They are **not** the owner location brief (`manualBriefInput` / `quickProfile`)
+— never use memory tools to change owner settings, and never treat memory as a
+substitute for `get_location_data`.
+
+- Call `get_advisor_memory` with location situation / advice when tools are available,
+  and when the user asks what you remember about this location.
+- Call `update_advisor_memory` only for durable user-stated preferences, constraints, or
+  clear decisions/outcomes. Keep the blob concise; do **not** dump full chat transcripts
+  or invent sales figures into memory.
+- Pass an empty string to `update_advisor_memory` to clear memory when the user asks to
+  forget or reset it.
 
 {media_library_block}{leonardo_image_block}{ig_studio_block}"""

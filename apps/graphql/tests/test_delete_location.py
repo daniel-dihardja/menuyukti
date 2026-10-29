@@ -14,6 +14,7 @@ from graphql.data_sources import (
     InventoryStock,
     InventoryStockMovement,
     Location,
+    LocationAdvisorMemory,
     LocationManualBriefInput,
     LocationMenuItemCogs,
     LocationOpeningHour,
@@ -116,6 +117,12 @@ def delete_location_workspace():
             LocationManualBriefInput(
                 location_id=loc.id,
                 quick_profile={"venueConcepts": ["cafe"]},
+            )
+        )
+        session.add(
+            LocationAdvisorMemory(
+                location_id=loc.id,
+                content="Remember weekend brunch focus.",
             )
         )
         session.add(
@@ -275,6 +282,9 @@ def delete_location_workspace():
         ).delete()
         session.query(LocationManualBriefInput).filter(
             LocationManualBriefInput.location_id == location_id
+        ).delete()
+        session.query(LocationAdvisorMemory).filter(
+            LocationAdvisorMemory.location_id == location_id
         ).delete()
         loc = session.get(Location, location_id)
         if loc is not None:

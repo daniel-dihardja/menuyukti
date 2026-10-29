@@ -29,6 +29,7 @@ from graphql.data_sources.models.knowledge import (
     KnowledgeEmbedding,
 )
 from graphql.data_sources.models.location import Location
+from graphql.data_sources.models.location_advisor_memory import LocationAdvisorMemory
 from graphql.data_sources.models.location_area import LocationArea
 from graphql.data_sources.models.location_manual_brief_input import LocationManualBriefInput
 from graphql.data_sources.models.location_menu_item_cogs import LocationMenuItemCogs
@@ -95,6 +96,7 @@ __all__ = [
     "KnowledgeDocument",
     "KnowledgeEmbedding",
     "Location",
+    "LocationAdvisorMemory",
     "LocationArea",
     "LocationOpeningHour",
     "LocationManualBriefInput",

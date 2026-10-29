@@ -5,6 +5,7 @@ __all__ = [
     "Workspace",
     "WorkspaceMembership",
     "Location",
+    "LocationAdvisorMemory",
     "LocationArea",
     "LocationOpeningHour",
     "LocationManualBriefInput",

@@ -61,6 +61,7 @@ from .submit_public_menu_order import SubmitPublicMenuOrderMutation
 from .update_calendar_entry import UpdateCalendarEntryMutation
 from .update_crm_app import UpdateCrmAppMutation
 from .update_location import UpdateLocationMutation
+from .update_location_advisor_memory import UpdateLocationAdvisorMemoryMutation
 from .update_location_manual_brief_input import UpdateLocationManualBriefInputMutation
 from .update_location_public_menu import UpdateLocationPublicMenuMutation
 from .update_location_public_slug import UpdateLocationPublicSlugMutation
@@ -136,6 +137,7 @@ __all__ = [
     "UpdateCalendarEntryMutation",
     "UpdateCrmAppMutation",
     "UpdateLocationMutation",
+    "UpdateLocationAdvisorMemoryMutation",
     "UpdateLocationManualBriefInputMutation",
     "UpdateLocationPublicMenuMutation",
     "UpdateLocationPublicSlugMutation",

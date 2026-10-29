@@ -1,7 +1,12 @@
 import strawberry
 
-from graphql.context import get_manual_brief_cache, request_session_scope
+from graphql.context import (
+    get_advisor_memory_cache,
+    get_manual_brief_cache,
+    request_session_scope,
+)
 from graphql.schema.auth import is_location_owner, user_id_from_info
+from graphql.schema.types.location_advisor_memory import LocationAdvisorMemoryType
 from graphql.schema.types.location_area import LocationAreaType
 from graphql.schema.types.location_manual_brief_input import LocationManualBriefInputType
 
@@ -51,3 +56,26 @@ class LocationType:
             manual = load_manual_brief_type(session, location_id)
             cache[location_id] = manual
             return manual
+
+    @strawberry.field(
+        description=(
+            "Durable advisor-written notes for this venue. Separate from owner manualBriefInput."
+        )
+    )
+    def advisor_memory(self, info: strawberry.Info) -> LocationAdvisorMemoryType | None:
+        from graphql.schema.queries.location_advisor_memory import load_advisor_memory_type
+
+        user_id = user_id_from_info(info)
+        if not user_id:
+            return None
+        location_id = int(self.id)
+        cache = get_advisor_memory_cache(info)
+        if location_id in cache:
+            return cache[location_id]
+        with request_session_scope(info) as session:
+            is_owner = is_location_owner(session, location_id, user_id, info=info)
+            if not is_owner:
+                return None
+            memory = load_advisor_memory_type(session, location_id)
+            cache[location_id] = memory
+            return memory

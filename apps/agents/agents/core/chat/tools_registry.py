@@ -17,11 +17,13 @@ from agents_app.agents.core.chat.story_assets import clear_story_assets, save_st
 from agents_app.agents.core.chat.list_menu_item_cogs import list_menu_item_cogs
 from agents_app.agents.core.chat.request_cogs_edit import request_cogs_edit
 from agents_app.agents.core.chat.tools import (
+    get_advisor_memory,
     get_chart_data,
     get_location_data,
     list_media,
     list_media_collections,
     search_knowledge,
+    update_advisor_memory,
 )
 from agents_app.agents.core.tavily_search_tool import make_search_web_tool
 
@@ -111,6 +113,8 @@ def chat_tools_list(
     tools.append(search_knowledge)
     if location_id:
         tools.append(get_location_data)
+        tools.append(get_advisor_memory)
+        tools.append(update_advisor_memory)
     if analytics_run:
         tools.append(get_chart_data)
         tools.append(list_menu_item_cogs)

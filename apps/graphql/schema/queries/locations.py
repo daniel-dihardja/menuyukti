@@ -7,6 +7,7 @@ from graphql.data_sources import AnalyticsRun, Location, WorkspaceMembership
 from graphql.limits import DEFAULT_LIST_FIRST, MAX_LIST_FIRST, clamp_page_size
 from graphql.schema.auth import is_location_owner, user_id_from_info
 from graphql.schema.mappers.location import location_to_gql
+from graphql.schema.queries.location_advisor_memory import prefetch_advisor_memories
 from graphql.schema.queries.location_manual_brief_input import prefetch_manual_briefs
 from graphql.schema.types import LocationType
 
@@ -61,7 +62,9 @@ class LocationsQuery:
                     .limit(limit)
                 ).all()
             )
-            prefetch_manual_briefs(session, info, [row.id for row in rows])
+            lids = [row.id for row in rows]
+            prefetch_manual_briefs(session, info, lids)
+            prefetch_advisor_memories(session, info, lids)
             return [location_to_gql(row) for row in rows]
 
     @strawberry.field(
@@ -140,4 +143,5 @@ class LocationsQuery:
             if row is None or not is_location_owner(session, row.id, user_id, info=info):
                 return None
             prefetch_manual_briefs(session, info, [row.id])
+            prefetch_advisor_memories(session, info, [row.id])
             return location_to_gql(row)

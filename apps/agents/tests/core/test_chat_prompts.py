@@ -37,6 +37,9 @@ def test_system_prompt_template_has_complete_structure() -> None:
     assert "list_media" in MEDIA_LIBRARY_BLOCK
     assert "get_milestone" not in SYSTEM_PROMPT_TEMPLATE
     assert "get_location_data" in SYSTEM_PROMPT_TEMPLATE
+    assert "get_advisor_memory" in SYSTEM_PROMPT_TEMPLATE
+    assert "update_advisor_memory" in SYSTEM_PROMPT_TEMPLATE
+    assert "## Advisor memory" in SYSTEM_PROMPT_TEMPLATE
     assert "search_knowledge" in KNOWLEDGE_SECTION
     assert "## Weak items" in SYSTEM_PROMPT_TEMPLATE
     assert "venue_slot_strength_heatmap" in CHART_CATALOG_BLOCK
@@ -94,6 +97,10 @@ def test_build_system_prompt_without_optional_blocks() -> None:
     assert "## Media library" in out
     assert "## Knowledge search" in out
     assert "search_knowledge" in out
+    assert "## Advisor memory" in out
+    assert "get_advisor_memory" in out
+    assert "update_advisor_memory" in out
+    assert "quickProfile" in out
     assert "{knowledge_section}" not in out
 
 

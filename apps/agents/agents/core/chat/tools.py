@@ -20,7 +20,12 @@ from agents_app.agents.core.chat.sanitize_tool_errors import sanitize_tool_error
 from agents_app.agents.core.chat.untrusted_context import wrap_untrusted
 from agents_app.agents.core.location_page_format import format_location_page_markdown
 from agents_app.agents.graphql_base import graphql_post
-from agents_app.agents.graphql_operations import LOCATION_QUERY, SEARCH_KNOWLEDGE_QUERY
+from agents_app.agents.graphql_operations import (
+    LOCATION_ADVISOR_MEMORY_QUERY,
+    LOCATION_QUERY,
+    SEARCH_KNOWLEDGE_QUERY,
+    UPDATE_LOCATION_ADVISOR_MEMORY_MUTATION,
+)
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import InjectedToolArg, tool
 
@@ -62,6 +67,103 @@ async def get_location_data(config: Annotated[RunnableConfig, InjectedToolArg()]
     if not isinstance(raw_loc, dict):
         return "Location not found or access denied."
     return format_location_page_markdown(raw_loc)
+
+
+@tool
+async def get_advisor_memory(
+    config: Annotated[RunnableConfig, InjectedToolArg()],
+) -> str:
+    """Load durable advisor memory for the current venue.
+
+    Call when advising or when the user asks what you remember about this location.
+    Memory holds preferences, constraints, and outcomes — not owner location-page
+    settings (use ``get_location_data`` for those).
+    """
+    c = (config or {}).get("configurable") or {}
+    location_id = c.get("location_id")
+    user_id = c.get("user_id")
+    if location_id is None or not user_id:
+        return (
+            "Location context is not available (missing location). "
+            "Open advisor chat with a linked location."
+        )
+    client = get_chat_http_client()
+    try:
+        data = await graphql_post(
+            client,
+            LOCATION_ADVISOR_MEMORY_QUERY,
+            {"id": str(location_id)},
+            str(user_id),
+        )
+    except Exception as exc:  # noqa: BLE001 — return to model; do not crash the ReAct turn
+        return sanitize_tool_error_message("get_advisor_memory", exc)
+    raw_loc = data.get("location")
+    if not isinstance(raw_loc, dict):
+        return "Location not found or access denied."
+    memory = raw_loc.get("advisorMemory")
+    if not isinstance(memory, dict):
+        return wrap_untrusted(
+            "advisor_memory",
+            "Advisor memory is empty for this location.",
+        )
+    content = memory.get("content")
+    text = content.strip() if isinstance(content, str) else ""
+    if not text:
+        return wrap_untrusted(
+            "advisor_memory",
+            "Advisor memory is empty for this location.",
+        )
+    updated = memory.get("updatedAt")
+    header = "Advisor memory for this location"
+    if isinstance(updated, str) and updated.strip():
+        header = f"{header} (updated {updated.strip()})"
+    body = f"{header}:\n\n{text}"
+    return wrap_untrusted("advisor_memory", body)
+
+
+@tool
+async def update_advisor_memory(
+    content: str,
+    config: Annotated[RunnableConfig, InjectedToolArg()] = None,  # type: ignore[assignment]
+) -> str:
+    """Replace durable advisor memory for the current venue.
+
+    Pass a concise summary of durable preferences, constraints, or outcomes.
+    Pass an empty string to clear memory. Do not write owner quickProfile fields
+    or invent sales figures.
+    """
+    c = (config or {}).get("configurable") or {}
+    location_id = c.get("location_id")
+    user_id = c.get("user_id")
+    if location_id is None or not user_id:
+        return (
+            "Location context is not available (missing location). "
+            "Open advisor chat with a linked location."
+        )
+    if not isinstance(content, str):
+        return "content must be a string (use empty string to clear)."
+    text = content.strip()
+    client = get_chat_http_client()
+    try:
+        data = await graphql_post(
+            client,
+            UPDATE_LOCATION_ADVISOR_MEMORY_MUTATION,
+            {"locationId": int(location_id), "content": text},
+            str(user_id),
+        )
+    except Exception as exc:  # noqa: BLE001 — return to model; do not crash the ReAct turn
+        return sanitize_tool_error_message("update_advisor_memory", exc)
+    payload = data.get("updateLocationAdvisorMemory")
+    if not isinstance(payload, dict):
+        return "Failed to update advisor memory."
+    saved = payload.get("content")
+    saved_text = saved.strip() if isinstance(saved, str) else ""
+    if not saved_text:
+        return "Advisor memory cleared for this location."
+    return (
+        f"Advisor memory updated for this location ({len(saved_text)} characters). "
+        "It will be available in future chat threads for this venue."
+    )
 
 
 @tool
