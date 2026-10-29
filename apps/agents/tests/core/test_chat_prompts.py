@@ -2,15 +2,19 @@
 
 from agents_app.agents.core.chat.graph import chat_tools_list_from_config
 from agents_app.agents.core.chat.prompts import (
+    ADVISOR_MEMORY_SECTION,
     CHART_ANALYTICS_SECTION,
     CHART_CATALOG_BLOCK,
     COGS_SECTION,
     IG_STUDIO_BLOCK,
     KNOWLEDGE_SECTION,
     LEONARDO_IMAGE_BLOCK,
+    LOCATION_SECTION,
     MEDIA_LIBRARY_BLOCK,
     NO_SALES_REPORT_SECTION,
+    SCHEDULE_LOCATION_GUIDANCE,
     SECURITY_POLICY_SECTION,
+    SITUATION_LOCATION_LOAD,
     STORY_IMAGE_ASSISTANT_PROMPT,
     SYSTEM_PROMPT_TEMPLATE,
     build_system_prompt,
@@ -26,9 +30,13 @@ def test_system_prompt_template_has_complete_structure() -> None:
     assert "location marketing advisor" in SYSTEM_PROMPT_TEMPLATE
     assert "Location situation (default)" in SYSTEM_PROMPT_TEMPLATE
     assert "{security_policy_section}" in SYSTEM_PROMPT_TEMPLATE
+    assert "{situation_location_load}" in SYSTEM_PROMPT_TEMPLATE
     assert "{chart_section}" in SYSTEM_PROMPT_TEMPLATE
+    assert "{schedule_location_guidance}" in SYSTEM_PROMPT_TEMPLATE
     assert "{chart_catalog_block}" in SYSTEM_PROMPT_TEMPLATE
     assert "{knowledge_section}" in SYSTEM_PROMPT_TEMPLATE
+    assert "{location_section}" in SYSTEM_PROMPT_TEMPLATE
+    assert "{advisor_memory_section}" in SYSTEM_PROMPT_TEMPLATE
     assert "{workflow_catalog_block}" not in SYSTEM_PROMPT_TEMPLATE
     assert "{leonardo_image_block}" in SYSTEM_PROMPT_TEMPLATE
     assert "{ig_studio_block}" in SYSTEM_PROMPT_TEMPLATE
@@ -36,11 +44,21 @@ def test_system_prompt_template_has_complete_structure() -> None:
     assert "list_media_collections" in MEDIA_LIBRARY_BLOCK
     assert "list_media" in MEDIA_LIBRARY_BLOCK
     assert "get_milestone" not in SYSTEM_PROMPT_TEMPLATE
-    assert "get_location_data" in SYSTEM_PROMPT_TEMPLATE
-    assert "get_advisor_memory" in SYSTEM_PROMPT_TEMPLATE
-    assert "update_advisor_memory" in SYSTEM_PROMPT_TEMPLATE
-    assert "## Advisor memory" in SYSTEM_PROMPT_TEMPLATE
-    assert "search_knowledge" in KNOWLEDGE_SECTION
+    assert "get_location_data" in LOCATION_SECTION
+    assert "get_advisor_memory" in ADVISOR_MEMORY_SECTION
+    assert "update_advisor_memory" in ADVISOR_MEMORY_SECTION
+    assert "## Advisor memory" in ADVISOR_MEMORY_SECTION
+    assert "Call `search_knowledge` when" in KNOWLEDGE_SECTION
+    assert "Skip `search_knowledge` when" in KNOWLEDGE_SECTION
+    assert "Call `get_advisor_memory` when" in ADVISOR_MEMORY_SECTION
+    assert "Skip `get_advisor_memory` when" in ADVISOR_MEMORY_SECTION
+    assert "untrusted data" in KNOWLEDGE_SECTION.lower()
+    assert "untrusted data" in ADVISOR_MEMORY_SECTION.lower()
+    assert "invent" in KNOWLEDGE_SECTION.lower() and "sales" in KNOWLEDGE_SECTION.lower()
+    assert "invent sales figures" in ADVISOR_MEMORY_SECTION
+    assert "get_location_data" in SITUATION_LOCATION_LOAD
+    assert "get_advisor_memory" in SITUATION_LOCATION_LOAD
+    assert "get_location_data" in SCHEDULE_LOCATION_GUIDANCE
     assert "## Weak items" in SYSTEM_PROMPT_TEMPLATE
     assert "venue_slot_strength_heatmap" in CHART_CATALOG_BLOCK
     assert "low_end_review" in CHART_CATALOG_BLOCK
@@ -97,11 +115,30 @@ def test_build_system_prompt_without_optional_blocks() -> None:
     assert "## Media library" in out
     assert "## Knowledge search" in out
     assert "search_knowledge" in out
+    assert "Call `search_knowledge` when" in out
+    assert "Skip `search_knowledge` when" in out
+    # Location tools unbound by default — do not name gated tools.
+    assert "## Advisor memory" not in out
+    assert "get_advisor_memory" not in out
+    assert "update_advisor_memory" not in out
+    assert "get_location_data" not in out
+    assert "## Location\n" not in out
+    assert "{knowledge_section}" not in out
+
+
+def test_build_system_prompt_with_location_tools() -> None:
+    out = build_system_prompt(include_location_tools=True)
+    assert "## Location" in out
     assert "## Advisor memory" in out
+    assert "get_location_data" in out
     assert "get_advisor_memory" in out
     assert "update_advisor_memory" in out
+    assert "Call `get_advisor_memory` when" in out
+    assert "Skip `get_advisor_memory` when" in out
     assert "quickProfile" in out
-    assert "{knowledge_section}" not in out
+    assert SITUATION_LOCATION_LOAD.strip() in out
+    assert SCHEDULE_LOCATION_GUIDANCE.strip() in out
+    assert "already loaded" in out.lower()
 
 
 def test_build_system_prompt_with_chart_catalog() -> None:

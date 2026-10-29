@@ -73,11 +73,14 @@ async def get_location_data(config: Annotated[RunnableConfig, InjectedToolArg()]
 async def get_advisor_memory(
     config: Annotated[RunnableConfig, InjectedToolArg()],
 ) -> str:
-    """Load durable advisor memory for the current venue.
+    """Load durable advisor memory for the current venue across chat threads.
 
-    Call when advising or when the user asks what you remember about this location.
-    Memory holds preferences, constraints, and outcomes — not owner location-page
-    settings (use ``get_location_data`` for those).
+    Call for location situation briefs / venue-scoped advice (first load in the
+    thread), when the user asks what you remember, or before a weekly schedule if
+    preferences may apply. Skip when only owner location-page facts are needed
+    (use ``get_location_data``), or when a successful result is already in this
+    thread unless the user asks to refresh. Memory holds preferences, constraints,
+    and outcomes — never invent sales figures from it.
     """
     c = (config or {}).get("configurable") or {}
     location_id = c.get("location_id")
@@ -222,10 +225,12 @@ async def search_knowledge(
 ) -> str:
     """Search domain knowledge, KPI definitions, and recommendation playbooks.
 
-    Use for explanations and playbooks that complement chart numbers — not as a
-    substitute for ``get_chart_data``. Never invent venue sales figures from
-    knowledge alone. Optional ``categories``: domain, kpi, playbook. Optional
-    ``chart_ids`` filters docs tagged to catalog chart ids.
+    Call when explaining what a KPI/chart means, interpreting metrics, or loading
+    playbook actions. Pass ``chart_ids`` when the question is about a catalog chart.
+    Skip when numbers are already in ``get_chart_data`` / Visualization data, for
+    pure copy/media turns, or when a relevant hit is already in this thread.
+    Never invent venue sales figures from knowledge alone. Optional ``categories``:
+    domain, kpi, playbook.
     """
     user_id = _user_id_from_config(config)
     if not user_id:

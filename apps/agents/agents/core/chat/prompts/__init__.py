@@ -9,15 +9,19 @@ outside the template.
 from __future__ import annotations
 
 from agents_app.agents.core.chat.prompts.blocks import (
+    ADVISOR_MEMORY_SECTION,
     CHART_ANALYTICS_SECTION,
     CHART_CATALOG_BLOCK,
     COGS_SECTION,
     IG_STUDIO_BLOCK,
     KNOWLEDGE_SECTION,
     LEONARDO_IMAGE_BLOCK,
+    LOCATION_SECTION,
     MEDIA_LIBRARY_BLOCK,
     NO_SALES_REPORT_SECTION,
+    SCHEDULE_LOCATION_GUIDANCE,
     SECURITY_POLICY_SECTION,
+    SITUATION_LOCATION_LOAD,
 )
 from agents_app.agents.core.chat.prompts.general import SYSTEM_PROMPT_TEMPLATE
 from agents_app.agents.core.chat.prompts.image_assistant import (
@@ -28,6 +32,7 @@ from agents_app.agents.core.chat.prompts.image_assistant import (
 from agents_app.agents.core.chat.prompts.inventar import INVENTAR_ASSISTANT_PROMPT
 
 __all__ = [
+    "ADVISOR_MEMORY_SECTION",
     "CHART_ANALYTICS_SECTION",
     "CHART_CATALOG_BLOCK",
     "COGS_SECTION",
@@ -36,9 +41,12 @@ __all__ = [
     "INVENTAR_ASSISTANT_PROMPT",
     "KNOWLEDGE_SECTION",
     "LEONARDO_IMAGE_BLOCK",
+    "LOCATION_SECTION",
     "MEDIA_LIBRARY_BLOCK",
     "NO_SALES_REPORT_SECTION",
+    "SCHEDULE_LOCATION_GUIDANCE",
     "SECURITY_POLICY_SECTION",
+    "SITUATION_LOCATION_LOAD",
     "STORY_IMAGE_ASSISTANT_PROMPT",
     "SYSTEM_PROMPT_TEMPLATE",
     "build_system_prompt",
@@ -70,10 +78,16 @@ def build_system_prompt(
     ig_studio_post_image: bool = False,
     leonardo_image_generation: bool = False,
     include_chart_catalog: bool = False,
+    include_location_tools: bool = False,
     chat_mode: str | None = None,
     image_format: str | None = None,
 ) -> str:
-    """Return the system prompt for the chat graph, filling template placeholders only."""
+    """Return the system prompt for the chat graph, filling template placeholders only.
+
+    ``include_location_tools`` must match ``tools_registry``: when False, omit
+    ``get_location_data`` / advisor-memory instructions so the prompt does not name
+    unbound tools.
+    """
     mode = _normalize_chat_mode(chat_mode)
     if mode == "image_assistant":
         fields = _image_format_prompt_fields(image_format)
@@ -96,12 +110,26 @@ def build_system_prompt(
     media_library_block = f"{MEDIA_LIBRARY_BLOCK.strip()}\n\n"
     knowledge_section = f"{KNOWLEDGE_SECTION.strip()}\n\n"
     security_policy_section = f"{SECURITY_POLICY_SECTION.strip()}\n\n"
+    if include_location_tools:
+        situation_location_load = f"{SITUATION_LOCATION_LOAD.strip()}\n\n"
+        schedule_location_guidance = f"{SCHEDULE_LOCATION_GUIDANCE.strip()}\n\n"
+        location_section = f"{LOCATION_SECTION.strip()}\n\n"
+        advisor_memory_section = f"{ADVISOR_MEMORY_SECTION.strip()}\n\n"
+    else:
+        situation_location_load = ""
+        schedule_location_guidance = ""
+        location_section = ""
+        advisor_memory_section = ""
     return (
         SYSTEM_PROMPT_TEMPLATE.format(
             security_policy_section=security_policy_section,
+            situation_location_load=situation_location_load,
             chart_section=chart_section,
+            schedule_location_guidance=schedule_location_guidance,
             chart_catalog_block=chart_catalog_block,
             knowledge_section=knowledge_section,
+            location_section=location_section,
+            advisor_memory_section=advisor_memory_section,
             media_library_block=media_library_block,
             leonardo_image_block=leonardo_image_block,
             ig_studio_block=ig_studio_block,

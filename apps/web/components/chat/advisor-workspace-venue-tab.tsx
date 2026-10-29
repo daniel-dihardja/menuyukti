@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl'
 
 import { LocationForm } from '@/app/(protected)/analytics/locations/location-form'
 import type { LocationFormValues } from '@/app/(protected)/analytics/locations/location-form-types'
+import { AdvisorWorkspaceMemoryPanel } from '@/components/chat/advisor-workspace-memory-panel'
 import {
   mapLocationToFormValues,
   type LocationDetailPayload,
@@ -77,6 +78,7 @@ export function AdvisorWorkspaceVenueTab({ locationId }: Props) {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3">
+      <AdvisorWorkspaceMemoryPanel locationId={locationId} />
       <LocationForm
         key={`${locationId}-${formKey}`}
         mode="edit"

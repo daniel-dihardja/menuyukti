@@ -18,6 +18,10 @@ def test_chat_prompt_without_catalog_config() -> None:
     assert "location marketing advisor" in content
     assert "## Location situation (default)" in content
     assert "No sales report is attached" in content
+    assert "## Knowledge search" in content
+    assert "search_knowledge" in content
+    assert "get_advisor_memory" not in content
+    assert "get_location_data" not in content
 
 
 def test_chat_prompt_omits_chart_catalog_when_only_location_present() -> None:
@@ -29,6 +33,11 @@ def test_chat_prompt_omits_chart_catalog_when_only_location_present() -> None:
 
     assert "## Workflow chart catalog" not in content
     assert "No sales report is attached" in content
+    assert "## Advisor memory" in content
+    assert "get_advisor_memory" in content
+    assert "get_location_data" in content
+    assert "Call `get_advisor_memory` when" in content
+    assert "Skip `get_advisor_memory` when" in content
 
 
 def test_chat_prompt_injects_chart_catalog_when_analytics_run_present() -> None:
@@ -48,3 +57,5 @@ def test_chat_prompt_injects_chart_catalog_when_analytics_run_present() -> None:
     assert "poor dogs" in content
     assert "core three" in content
     assert "No sales report is attached" not in content
+    assert "## Advisor memory" in content
+    assert "Call `search_knowledge` when" in content

@@ -388,3 +388,43 @@ export const DELETE_LOCATION_AREA_MUTATION = `
 export type DeleteLocationAreaData = {
   deleteLocationArea: boolean
 }
+
+export type LocationAdvisorMemory = {
+  locationId: number
+  content: string
+  updatedAt: string | null
+}
+
+export const LOCATION_ADVISOR_MEMORY_QUERY = `
+  query LocationAdvisorMemory($id: ID!) {
+    location(id: $id) {
+      id
+      advisorMemory {
+        locationId
+        content
+        updatedAt
+      }
+    }
+  }
+`
+
+export type LocationAdvisorMemoryData = {
+  location: {
+    id: string
+    advisorMemory: LocationAdvisorMemory | null
+  } | null
+}
+
+export const UPDATE_LOCATION_ADVISOR_MEMORY_MUTATION = `
+  mutation UpdateLocationAdvisorMemory($locationId: Int!, $content: String!) {
+    updateLocationAdvisorMemory(locationId: $locationId, content: $content) {
+      locationId
+      content
+      updatedAt
+    }
+  }
+`
+
+export type UpdateLocationAdvisorMemoryData = {
+  updateLocationAdvisorMemory: LocationAdvisorMemory
+}

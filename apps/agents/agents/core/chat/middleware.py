@@ -18,6 +18,7 @@ from agents_app.agents.core.chat.tools_registry import (
     has_analytics_run_id,
     has_ig_studio_post_context,
     has_leonardo_image_generation,
+    has_location_id,
 )
 from agents_app.agents.core.llm_invoke import (
     DEFAULT_BASE_DELAY_S,
@@ -53,6 +54,7 @@ def chat_system_prompt_from_config() -> str:
         ig_studio_post_image=has_ig_studio_post_context(conf_dict),
         leonardo_image_generation=has_leonardo_image_generation(conf_dict),
         include_chart_catalog=has_analytics_run_id(conf_dict),
+        include_location_tools=has_location_id(conf_dict),
         chat_mode=chat_mode,
         image_format=image_format,
     )
