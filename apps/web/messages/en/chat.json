@@ -62,6 +62,33 @@
       "none": "No sales report",
       "attachHint": "Attach a sales report to use charts and sales-grounded advice."
     },
+    "workspace": {
+      "venueLabel": "Venue",
+      "venuePlaceholder": "Select a venue",
+      "salesReportLabel": "Sales report",
+      "tabs": {
+        "insights": "Insights",
+        "story": "Story",
+        "venue": "Venue",
+        "reports": "Sales reports"
+      },
+      "venueLoadError": "Could not load venue details.",
+      "venueRetry": "Retry",
+      "venueAdvancedLink": "Open full venue settings",
+      "reportsDisabled": "Sales reports are not enabled for this workspace.",
+      "reportsEmpty": "No sales reports yet. Upload one to ground insights and chat.",
+      "reportsNameColumn": "Report",
+      "reportsActionsColumn": "Actions",
+      "reportsUseInChat": "Use in chat",
+      "reportsInChat": "In chat",
+      "reportsActive": "Active",
+      "reportsDelete": "Delete",
+      "openWorkspaceAria": "Open venue workspace",
+      "openWorkspaceTooltip": "Venue, insights, and sales reports",
+      "mobileSheetTitle": "Venue workspace",
+      "mobileSheetDescription": "Choose venue and sales report, then edit venue details or manage reports.",
+      "mobileSheetHint": "Workspace"
+    },
     "storyArtifact": {
       "ariaLabel": "Instagram image preview",
       "placeholderLabel": "No image yet",

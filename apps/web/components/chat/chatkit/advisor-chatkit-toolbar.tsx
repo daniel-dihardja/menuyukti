@@ -1,14 +1,14 @@
 'use client'
 
-import { Trash2 } from 'lucide-react'
+import { PanelRight, Trash2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 
 import { ChatModeSelect } from '@/components/chat-mode-select'
 import { ChatGatewayModelSelect } from '@/components/chat-gateway-model-select'
 import { LeonardoPostModelSelect } from '@/components/leonardo-post-model-select'
-import { ChatSalesReportSelect } from '@/components/chat/chat-sales-report-select'
 import { useAdvisorChatKitShell } from '@/components/chat/chatkit/advisor-chatkit-shell-context'
+import { useDesktopLayout } from '@/hooks/use-desktop-layout'
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -22,6 +22,7 @@ import { Button } from '@workspace/ui/components/button'
 
 export function AdvisorChatKitToolbar({ onClearChat }: { onClearChat: () => void }) {
   const t = useTranslations('chat')
+  const tw = useTranslations('chat.workspace')
   const {
     chatMode,
     setChatMode,
@@ -29,23 +30,15 @@ export function AdvisorChatKitToolbar({ onClearChat }: { onClearChat: () => void
     setSelectedChatModel,
     selectedGenerationModel,
     setSelectedGenerationModel,
-    locationId,
-    analyticsRunId,
-    setAnalyticsRunId,
+    openMobileWorkspace,
   } = useAdvisorChatKitShell()
   const [clearOpen, setClearOpen] = useState(false)
+  const isDesktop = useDesktopLayout()
   const isImage = chatMode === 'image_assistant'
 
   return (
     <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border px-3 py-2">
       <ChatModeSelect onValueChange={setChatMode} value={chatMode} />
-      {chatMode === 'general' ? (
-        <ChatSalesReportSelect
-          locationId={locationId}
-          onValueChange={setAnalyticsRunId}
-          value={analyticsRunId}
-        />
-      ) : null}
       <ChatGatewayModelSelect
         className="max-w-[min(100%,11rem)]"
         onValueChange={setSelectedChatModel}
@@ -58,7 +51,19 @@ export function AdvisorChatKitToolbar({ onClearChat }: { onClearChat: () => void
           value={selectedGenerationModel}
         />
       ) : null}
-      <div className="ml-auto">
+      <div className="ml-auto flex items-center gap-1">
+        {isDesktop ? null : (
+          <Button
+            aria-label={tw('openWorkspaceAria')}
+            size="icon"
+            title={tw('openWorkspaceTooltip')}
+            type="button"
+            variant="ghost"
+            onClick={openMobileWorkspace}
+          >
+            <PanelRight aria-hidden className="size-4" />
+          </Button>
+        )}
         <Button
           aria-label={t('clearChatAriaLabel')}
           size="icon"

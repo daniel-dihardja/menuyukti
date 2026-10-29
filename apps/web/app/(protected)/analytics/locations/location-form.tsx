@@ -60,6 +60,9 @@ type LocationFormProps = {
   locationId?: string
   initialValues?: LocationFormValues
   initialManualQuickProfile?: Record<string, unknown> | null
+  /** Compact embed in advisor right rail (sticky save stays in-panel). */
+  variant?: 'page' | 'rail'
+  onSaved?: () => void
 }
 
 const FORM_ID = 'location-form'
@@ -69,6 +72,8 @@ export function LocationForm({
   locationId,
   initialValues,
   initialManualQuickProfile,
+  variant = 'page',
+  onSaved,
 }: LocationFormProps) {
   const t = useTranslations('analytics.branches.form')
   const router = useRouter()
@@ -275,6 +280,7 @@ export function LocationForm({
       toast.success(t('toast.savedTitle'), {
         description: t('toast.savedDescription'),
       })
+      onSaved?.()
     } catch (err) {
       setError(err instanceof Error ? err.message : t('errors.saveFailed'))
     } finally {
@@ -366,6 +372,7 @@ export function LocationForm({
         setCreateHoursOpen={setCreateHoursOpen}
         hoursFocusDay={hoursFocusDay}
         hoursForceEditorOpen={hoursForceEditorOpen}
+        variant={variant}
       />
     </LocationFormContextProvider>
   )
@@ -376,23 +383,28 @@ function LocationFormShell({
   setCreateHoursOpen,
   hoursFocusDay,
   hoursForceEditorOpen,
+  variant,
 }: {
   createHoursOpen: boolean
   setCreateHoursOpen: (open: boolean) => void
   hoursFocusDay: Weekday | null
   hoursForceEditorOpen: boolean
+  variant: 'page' | 'rail'
 }) {
   const t = useTranslations('analytics.branches.form')
   const { mode, loading, error, activeTab, submitLabel } = useLocationFormState()
   const { setActiveTab, onSubmit } = useLocationFormActions()
   const { formId, formRef } = useLocationFormMeta()
+  const isRail = variant === 'rail'
 
   return (
     <>
       <form
         id={formId}
         ref={formRef}
-        className="flex flex-col gap-4 pb-24 sm:gap-6 sm:pb-0"
+        className={
+          isRail ? 'flex flex-col gap-4 pb-20' : 'flex flex-col gap-4 pb-24 sm:gap-6 sm:pb-0'
+        }
         onSubmit={onSubmit}
       >
         <div className="flex flex-col gap-4 sm:gap-6">
@@ -448,7 +460,7 @@ function LocationFormShell({
           ) : null}
         </div>
 
-        <div className="hidden justify-end sm:flex">
+        <div className={isRail ? 'flex justify-end' : 'hidden justify-end sm:flex'}>
           <Button type="submit" disabled={loading} className="min-w-[140px]">
             {loading ? (
               <>
@@ -462,26 +474,28 @@ function LocationFormShell({
         </div>
       </form>
 
-      <div
-        aria-label={t('stickySaveAria')}
-        className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-md sm:hidden"
-      >
-        <Button
-          type="submit"
-          disabled={loading}
-          className="h-12 w-full touch-manipulation"
-          form={formId}
+      {isRail ? null : (
+        <div
+          aria-label={t('stickySaveAria')}
+          className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-md sm:hidden"
         >
-          {loading ? (
-            <>
-              <Spinner data-icon="inline-start" />
-              {submitLabel}
-            </>
-          ) : (
-            submitLabel
-          )}
-        </Button>
-      </div>
+          <Button
+            type="submit"
+            disabled={loading}
+            className="h-12 w-full touch-manipulation"
+            form={formId}
+          >
+            {loading ? (
+              <>
+                <Spinner data-icon="inline-start" />
+                {submitLabel}
+              </>
+            ) : (
+              submitLabel
+            )}
+          </Button>
+        </div>
+      )}
     </>
   )
 }

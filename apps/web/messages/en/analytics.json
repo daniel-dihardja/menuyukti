@@ -1,8 +1,8 @@
 {
   "analytics": {
     "branches": {
-      "title": "Locations",
-      "description": "Manage guest-facing settings and menus for each venue. Start with a digital menu, then add analytics and POS when you need them.",
+      "title": "Venue settings",
+      "description": "Advanced venue setup that feeds AI Analytics—menus, guest links, and deeper configuration. Day-to-day venue context and sales reports live in the advisor.",
       "createDescription": "Name your venue, get a guest menu link, then add dishes. Opening hours are optional.",
       "table": {
         "index": "#",

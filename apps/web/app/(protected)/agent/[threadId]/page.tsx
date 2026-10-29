@@ -1,10 +1,12 @@
 import { getTranslations } from 'next-intl/server'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import { auth } from '@clerk/nextjs/server'
 import { z } from 'zod'
 
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { ANALYTICS_REPORT_SHELL_MAIN_CLASS } from '@/lib/app-layout'
+import { getCachedLocationsListData } from '@/lib/graphql/cached-queries'
 import { routes } from '@/lib/routes'
 import { cn } from '@workspace/ui/lib/utils'
 
@@ -40,6 +42,17 @@ export default async function AgentThreadPage({ params }: PageProps) {
   const t = await getTranslations('agentChat')
   const title = t('threadPageTitle', { id: threadId.slice(0, 8) })
 
+  const { isAuthenticated, userId } = await auth()
+  if (!isAuthenticated || !userId) {
+    throw new Error('Invariant: expected authenticated session under (protected) layout')
+  }
+
+  const locationsData = await getCachedLocationsListData(userId)
+  const branches = locationsData.locations.map((loc) => ({
+    id: Number(loc.id),
+    name: loc.name,
+  }))
+
   return (
     <AnalyticsPageShell
       breadcrumbs={[{ label: t('metaTitle'), href: routes.agent }]}
@@ -51,7 +64,7 @@ export default async function AgentThreadPage({ params }: PageProps) {
       )}
       title={title}
     >
-      <AgentThreadWorkspace threadId={threadId} />
+      <AgentThreadWorkspace branches={branches} threadId={threadId} />
     </AnalyticsPageShell>
   )
 }

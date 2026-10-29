@@ -73,9 +73,9 @@ export function ChatVisualizationsPane() {
 
   if (!hasSalesReport) {
     return (
-      <div className="flex min-h-0 flex-1 flex-col gap-4 p-4">
-        <h2 className="text-balance font-medium text-sm">{t('panelTitle')}</h2>
-        <Empty className="flex-1 border border-dashed">
+      <div className="flex h-full min-h-0 flex-1 flex-col gap-4 overflow-hidden p-4">
+        <h2 className="shrink-0 text-balance font-medium text-sm">{t('panelTitle')}</h2>
+        <Empty className="min-h-0 flex-1 border border-dashed">
           <EmptyHeader>
             <EmptyTitle>{t('noAnalyticsRunTitle')}</EmptyTitle>
             <EmptyDescription>{tSales('attachHint')}</EmptyDescription>
@@ -86,7 +86,7 @@ export function ChatVisualizationsPane() {
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4 p-4">
+    <div className="flex h-full min-h-0 flex-1 flex-col gap-4 overflow-hidden p-4">
       <div className="flex shrink-0 items-center justify-between gap-2">
         <h2 className="text-balance font-medium text-sm">{t('panelTitle')}</h2>
         <DropdownMenu>
@@ -118,7 +118,7 @@ export function ChatVisualizationsPane() {
       </div>
 
       {addedIds.length === 0 ? (
-        <Empty className="flex-1 border border-dashed">
+        <Empty className="min-h-0 flex-1 border border-dashed">
           <EmptyHeader>
             <EmptyTitle>{t('emptyTitle')}</EmptyTitle>
             <EmptyDescription>{t('emptyDescription')}</EmptyDescription>
@@ -131,33 +131,35 @@ export function ChatVisualizationsPane() {
           ) : null}
         </Empty>
       ) : (
-        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">
-          {addedIds.map((id) => (
-            <Card className="shrink-0" key={id}>
-              <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0 pb-2">
-                <CardTitle className="min-w-0 flex-1 truncate text-sm">
-                  {t(`catalog.${id}.title`)}
-                </CardTitle>
-                <Button
-                  aria-label={t('removeAriaLabel', { title: t(`catalog.${id}.title`) })}
-                  className="size-8 shrink-0"
-                  onClick={() => removeVisualization(id)}
-                  size="icon"
-                  type="button"
-                  variant="ghost"
-                >
-                  <X aria-hidden className="size-4" />
-                </Button>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <VisualizationCardBody
-                  analyticsRunId={analyticsRunId}
-                  id={id}
-                  locationId={locationId}
-                />
-              </CardContent>
-            </Card>
-          ))}
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+          <div className="flex flex-col gap-4 pb-2">
+            {addedIds.map((id) => (
+              <Card className="shrink-0" key={id}>
+                <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0 pb-2">
+                  <CardTitle className="min-w-0 flex-1 truncate text-sm">
+                    {t(`catalog.${id}.title`)}
+                  </CardTitle>
+                  <Button
+                    aria-label={t('removeAriaLabel', { title: t(`catalog.${id}.title`) })}
+                    className="size-8 shrink-0"
+                    onClick={() => removeVisualization(id)}
+                    size="icon"
+                    type="button"
+                    variant="ghost"
+                  >
+                    <X aria-hidden className="size-4" />
+                  </Button>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <VisualizationCardBody
+                    analyticsRunId={analyticsRunId}
+                    id={id}
+                    locationId={locationId}
+                  />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       )}
     </div>
