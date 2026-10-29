@@ -1,4 +1,4 @@
-export const ADVISOR_WORKSPACE_TAB_IDS = ['insights', 'story', 'venue', 'reports'] as const
+export const ADVISOR_WORKSPACE_TAB_IDS = ['insights', 'story', 'venue', 'cogs'] as const
 
 export type AdvisorWorkspaceTabId = (typeof ADVISOR_WORKSPACE_TAB_IDS)[number]
 

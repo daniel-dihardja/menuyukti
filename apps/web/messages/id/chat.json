@@ -39,6 +39,18 @@
     "clearChatConfirmCancel": "Batal",
     "clearChatConfirmAction": "Hapus chat",
     "workspace": {
+      "tabs": {
+        "cogs": "COGS"
+      },
+      "cogsDisabled": "Pengeditan COGS tidak diaktifkan untuk workspace ini.",
+      "cogsSectionTitle": "Biaya menu",
+      "cogsSelectReportHint": "Pilih atau unggah laporan penjualan di atas untuk mengedit biaya menu.",
+      "cogsEmptyItems": "Tidak ada item menu untuk laporan ini.",
+      "cogsSave": "Simpan",
+      "cogsSaving": "Menyimpan…",
+      "cogsSaveSuccess": "COGS disimpan.",
+      "cogsSaveError": "Tidak dapat menyimpan COGS.",
+      "cogsLoadError": "Tidak dapat memuat COGS.",
       "advisorMemory": {
         "title": "Memori advisor",
         "description": "Catatan yang disimpan advisor chat untuk venue ini lintas thread (preferensi dan keputusan). Terpisah dari brief venue pemilik di bawah — menghapus memori tidak mengubah jam, alamat, atau quick profile.",

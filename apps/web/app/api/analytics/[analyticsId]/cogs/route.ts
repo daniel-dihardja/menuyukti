@@ -1,23 +1,8 @@
 import { NextResponse, connection } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
+import { buildCogsEditorItems } from '@/lib/analytics/build-cogs-editor-items'
 import { graphqlQuery } from '@/lib/graphql/client'
 import { revalidateAnalyticsRunComputationsCache } from '@/lib/graphql/revalidate-analytics-cache'
-
-const ANALYTICS_RUN_COGS_QUERY = `
-  query AnalyticsRunCogs($id: ID!) {
-    analyticsRun(id: $id) {
-      id
-      menuItemCogs {
-        id
-        menu
-        menuCategory
-        menuCategoryDetail
-        cogs
-        currency
-      }
-    }
-  }
-`
 
 const UPSERT_MENU_ITEM_COGS_BULK_MUTATION = `
   mutation UpsertMenuItemCogsBulk($analyticsRunId: ID!, $items: [MenuItemCogsUpsertInput!]!) {
@@ -52,20 +37,6 @@ const SAVE_RUN_COGS_TO_LOCATION_MUTATION = `
   }
 `
 
-type AnalyticsRunCogsData = {
-  analyticsRun: {
-    id: string
-    menuItemCogs: Array<{
-      id: number
-      menu: string
-      menuCategory: string | null
-      menuCategoryDetail: string | null
-      cogs: number
-      currency: string | null
-    }>
-  } | null
-}
-
 type UpsertMenuItemCogsData = {
   upsertMenuItemCogsBulk: Array<{
     id: number
@@ -93,19 +64,19 @@ export async function GET(_: Request, { params }: { params: Promise<{ analyticsI
       return NextResponse.json({ error: 'Invalid analyticsId' }, { status: 400 })
     }
 
-    const data = await graphqlQuery<AnalyticsRunCogsData>(
-      ANALYTICS_RUN_COGS_QUERY,
-      { id: String(runId) },
-      userId,
-      'AnalyticsRunCogs',
-    )
+    const built = await buildCogsEditorItems(userId, runId)
+    if (!built) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    }
 
-    const rows = data.analyticsRun?.menuItemCogs ?? []
     return NextResponse.json({
-      items: rows.map((row) => ({
+      currencyCode: built.currencyCode,
+      items: built.items.map((row) => ({
         id: row.id,
-        menuName: row.menu,
+        menuName: row.menuName,
         cogs: row.cogs,
+        menuCategory: row.menuCategory,
+        quantity: row.quantity,
       })),
     })
   } catch (err) {

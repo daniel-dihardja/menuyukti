@@ -18,7 +18,10 @@ interface JobStatusResponse {
 
 export type UploadStatus = 'idle' | 'success' | 'error'
 
-export function useUploadAnalytics(locationId: number | null, onSuccess?: () => void) {
+export function useUploadAnalytics(
+  locationId: number | null,
+  onSuccess?: (analyticsId: number | null) => void,
+) {
   const [uploading, setUploading] = useState(false)
   const [status, setStatus] = useState<UploadStatus>('idle')
   const [message, setMessage] = useState<string | null>(null)
@@ -85,17 +88,19 @@ export function useUploadAnalytics(locationId: number | null, onSuccess?: () => 
       }
 
       const data = (await res.json()) as UploadResponse
+      let analyticsId: number | null = null
 
       if ((data.status === 'accepted' || data.status === 'duplicate') && data.jobId) {
         setMessage(`Upload accepted: ${file.name}. Processing...`)
-        await pollJobUntilDone(data.jobId)
+        const job = await pollJobUntilDone(data.jobId)
+        analyticsId = job.analytics_id
       }
 
       setStatus('success')
       setMessage(`Uploaded: ${file.name}`)
       setPos(data.pos ?? null)
 
-      onSuccess?.()
+      onSuccess?.(analyticsId)
     } catch (err) {
       console.error('Upload error:', err)
       setStatus('error')

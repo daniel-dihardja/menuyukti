@@ -1,8 +1,9 @@
 'use client'
 
-import { useRef } from 'react'
+import { useId, useRef } from 'react'
 import { Button } from '@workspace/ui/components/button'
 import { useTranslations } from 'next-intl'
+import { cn } from '@workspace/ui/lib/utils'
 
 export type UploadStatus = 'idle' | 'success' | 'error'
 
@@ -14,6 +15,11 @@ interface UploadExcelClientProps {
   message?: string | null
   pos?: string | null
 
+  /** Compact: button only (for advisor rail). Default includes supported-POS hint. */
+  variant?: 'default' | 'compact'
+  className?: string
+  buttonClassName?: string
+
   onFileSelected: (file: File) => void
 }
 
@@ -23,11 +29,15 @@ export default function UploadExcelClient({
   status = 'idle',
   message = null,
   pos = null,
+  variant = 'default',
+  className,
+  buttonClassName,
   onFileSelected,
 }: UploadExcelClientProps) {
   const t = useTranslations('analytics.sales.upload')
   const fileInputRef = useRef<HTMLInputElement | null>(null)
-  const fileInputId = 'analytics-upload-xlsx'
+  const fileInputId = useId()
+  const compact = variant === 'compact'
 
   function openFileDialog() {
     fileInputRef.current?.click()
@@ -45,7 +55,7 @@ export default function UploadExcelClient({
   }
 
   return (
-    <div className="flex w-full flex-col items-start gap-2">
+    <div className={cn('flex w-full flex-col items-start gap-2', compact && 'w-auto', className)}>
       <label htmlFor={fileInputId} className="sr-only">
         {t('fileInputLabel')}
       </label>
@@ -60,34 +70,38 @@ export default function UploadExcelClient({
 
       <Button
         type="button"
+        size={compact ? 'sm' : 'default'}
         onClick={openFileDialog}
         disabled={disabled || uploading}
-        className="w-full sm:w-auto"
+        className={cn(compact ? 'shrink-0 whitespace-nowrap' : 'w-full sm:w-auto', buttonClassName)}
       >
         {uploading ? t('uploading') : t('cta')}
       </Button>
-      <p className="text-xs text-muted-foreground">{t('supportedPos')}</p>
 
-      {message && (
+      {!compact ? <p className="text-xs text-muted-foreground">{t('supportedPos')}</p> : null}
+
+      {message ? (
         <p
           role="status"
           aria-live={status === 'error' ? 'assertive' : 'polite'}
-          className={`text-left text-sm ${
-            status === 'success' ? 'text-green-600' : 'text-red-600'
-          }`}
+          className={cn(
+            'text-left text-sm',
+            compact && 'max-w-[14rem] text-xs',
+            status === 'success' ? 'text-green-600' : 'text-red-600',
+          )}
         >
           {message}
 
-          {status === 'success' && pos && (
+          {status === 'success' && pos ? (
             <>
               <br />
               <span className="text-muted-foreground">
                 {t('detectedPos')} <strong>{pos.toUpperCase()}</strong>
               </span>
             </>
-          )}
+          ) : null}
         </p>
-      )}
+      ) : null}
     </div>
   )
 }

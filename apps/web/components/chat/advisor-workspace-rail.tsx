@@ -5,20 +5,24 @@ import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useRef } from 'react'
 
 import { LocationSelect } from '@/app/(protected)/analytics/sales/location-select'
+import UploadExcelClient from '@/app/(protected)/analytics/sales/upload-xcel-client'
+import { useUploadAnalytics } from '@/app/(protected)/analytics/sales/use-upload-analytics'
 import { AdvisorChatKitPreview } from '@/components/chat/chatkit/advisor-chatkit-preview'
 import { useAdvisorChatKitShell } from '@/components/chat/chatkit/advisor-chatkit-shell-context'
 import { ChatSalesReportSelect } from '@/components/chat/chat-sales-report-select'
 import { ChatPreviewPanelSkeleton } from '@/components/chat/chat-workspace-skeleton'
 import { useChatVisualizationsState } from '@/components/chat/visualizations/chat-visualizations-context'
+import { useAnalyticsList } from '@/hooks/use-analytics-list'
 import {
   defaultAdvisorWorkspaceTab,
   isAdvisorWorkspaceTabId,
   type AdvisorWorkspaceTabId,
 } from '@/lib/chat/advisor-workspace-tabs'
+import { isFeatureEnabled } from '@/lib/feature-flags'
 import { Field, FieldLabel } from '@workspace/ui/components/field'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
 
-import { AdvisorWorkspaceReportsTab } from './advisor-workspace-reports-tab'
+import { AdvisorWorkspaceCogsTab } from './advisor-workspace-cogs-tab'
 import { AdvisorWorkspaceVenueTab } from './advisor-workspace-venue-tab'
 
 const ChatVisualizationsPaneLazy = dynamic(
@@ -46,6 +50,17 @@ export function AdvisorWorkspaceRail() {
   } = useAdvisorChatKitShell()
   const { addedIds, hydrated } = useChatVisualizationsState()
   const prevAddedCountRef = useRef<number | null>(null)
+  const salesReportsEnabled = isFeatureEnabled('salesReports')
+  const { mutate: mutateAnalyticsList } = useAnalyticsList(locationId)
+  const { uploadFile, uploading, status, message, pos } = useUploadAnalytics(
+    locationId,
+    (uploadedAnalyticsId) => {
+      void mutateAnalyticsList()
+      if (uploadedAnalyticsId != null) {
+        setAnalyticsRunId(uploadedAnalyticsId)
+      }
+    },
+  )
 
   const isImage = chatMode === 'image_assistant'
 
@@ -63,8 +78,8 @@ export function AdvisorWorkspaceRail() {
 
   useEffect(() => {
     const allowed: AdvisorWorkspaceTabId[] = isImage
-      ? ['story', 'venue', 'reports']
-      : ['insights', 'venue', 'reports']
+      ? ['story', 'venue', 'cogs']
+      : ['insights', 'venue', 'cogs']
     if (!allowed.includes(workspaceTab)) {
       setWorkspaceTab(defaultAdvisorWorkspaceTab(chatMode))
     }
@@ -103,12 +118,39 @@ export function AdvisorWorkspaceRail() {
         </Field>
         <Field className="flex w-full max-w-none flex-col gap-1.5">
           <FieldLabel>{t('salesReportLabel')}</FieldLabel>
-          <ChatSalesReportSelect
-            className="w-full max-w-none"
-            locationId={locationId}
-            value={analyticsRunId}
-            onValueChange={setAnalyticsRunId}
-          />
+          <div className="flex w-full min-w-0 flex-col gap-2">
+            <div className="flex w-full min-w-0 items-start gap-2">
+              <div className="min-w-0 flex-1">
+                <ChatSalesReportSelect
+                  className="w-full max-w-none"
+                  locationId={locationId}
+                  value={analyticsRunId}
+                  onValueChange={setAnalyticsRunId}
+                />
+              </div>
+              {salesReportsEnabled ? (
+                <UploadExcelClient
+                  variant="compact"
+                  disabled={!locationId}
+                  uploading={uploading}
+                  status={status}
+                  message={null}
+                  pos={null}
+                  onFileSelected={uploadFile}
+                />
+              ) : null}
+            </div>
+            {salesReportsEnabled && message ? (
+              <p
+                role="status"
+                aria-live={status === 'error' ? 'assertive' : 'polite'}
+                className={`text-xs ${status === 'success' ? 'text-green-600' : 'text-red-600'}`}
+              >
+                {message}
+                {status === 'success' && pos ? ` · ${pos.toUpperCase()}` : null}
+              </p>
+            ) : null}
+          </div>
         </Field>
       </div>
 
@@ -130,8 +172,8 @@ export function AdvisorWorkspaceRail() {
           <TabsTrigger value="venue" className="min-h-8 touch-manipulation">
             {t('tabs.venue')}
           </TabsTrigger>
-          <TabsTrigger value="reports" className="min-h-8 touch-manipulation">
-            {t('tabs.reports')}
+          <TabsTrigger value="cogs" className="min-h-8 touch-manipulation">
+            {t('tabs.cogs')}
           </TabsTrigger>
         </TabsList>
 
@@ -166,13 +208,9 @@ export function AdvisorWorkspaceRail() {
 
         <TabsContent
           className="mt-0 flex min-h-0 flex-1 flex-col overflow-hidden data-[state=inactive]:hidden"
-          value="reports"
+          value="cogs"
         >
-          <AdvisorWorkspaceReportsTab
-            activeAnalyticsRunId={analyticsRunId}
-            locationId={locationId}
-            onActivateRun={setAnalyticsRunId}
-          />
+          <AdvisorWorkspaceCogsTab activeAnalyticsRunId={analyticsRunId} />
         </TabsContent>
       </Tabs>
     </div>

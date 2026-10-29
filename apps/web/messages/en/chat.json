@@ -70,7 +70,7 @@
         "insights": "Insights",
         "story": "Story",
         "venue": "Venue",
-        "reports": "Sales reports"
+        "cogs": "COGS"
       },
       "venueLoadError": "Could not load venue details.",
       "venueRetry": "Retry",
@@ -89,18 +89,19 @@
         "clearError": "Could not clear advisor memory.",
         "retry": "Retry"
       },
-      "reportsDisabled": "Sales reports are not enabled for this workspace.",
-      "reportsEmpty": "No sales reports yet. Upload one to ground insights and chat.",
-      "reportsNameColumn": "Report",
-      "reportsActionsColumn": "Actions",
-      "reportsUseInChat": "Use in chat",
-      "reportsInChat": "In chat",
-      "reportsActive": "Active",
-      "reportsDelete": "Delete",
+      "cogsDisabled": "COGS editing is not enabled for this workspace.",
+      "cogsSectionTitle": "Menu costs",
+      "cogsSelectReportHint": "Select or upload a sales report above to edit menu costs.",
+      "cogsEmptyItems": "No menu items found for this report.",
+      "cogsSave": "Save",
+      "cogsSaving": "Saving…",
+      "cogsSaveSuccess": "COGS saved.",
+      "cogsSaveError": "Could not save COGS.",
+      "cogsLoadError": "Could not load COGS.",
       "openWorkspaceAria": "Open venue workspace",
-      "openWorkspaceTooltip": "Venue, insights, and sales reports",
+      "openWorkspaceTooltip": "Venue, insights, and COGS",
       "mobileSheetTitle": "Venue workspace",
-      "mobileSheetDescription": "Choose venue and sales report, then edit venue details or manage reports.",
+      "mobileSheetDescription": "Choose venue and sales report, then edit venue details or COGS.",
       "mobileSheetHint": "Workspace"
     },
     "storyArtifact": {
