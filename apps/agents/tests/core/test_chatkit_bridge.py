@@ -4,10 +4,18 @@ from __future__ import annotations
 
 import anyio
 import pytest
-from agents_app.agents.core.chatkit.bridge import _image_url_from_tool_output
+from agents_app.agents.core.chatkit.bridge import (
+    _cogs_edit_form_widget_from_tool_output,
+    _cogs_list_widget_from_tool_output,
+    _image_url_from_tool_output,
+)
 from agents_app.agents.core.chatkit.context import ChatKitRequestContext
 from agents_app.agents.core.chatkit.memory_store import MemoryChatKitStore
-from agents_app.agents.core.chatkit.widgets import story_confirm_widget
+from agents_app.agents.core.chatkit.widgets import (
+    cogs_edit_form_widget,
+    cogs_list_widget,
+    story_confirm_widget,
+)
 from chatkit.store import NotFoundError
 
 
@@ -36,6 +44,36 @@ def test_story_confirm_widget_has_actions() -> None:
     text = str(dumped)
     assert "story.generate" in text
     assert "story.change" in text
+
+
+def test_cogs_list_widget_card_from_bridge_helper() -> None:
+    card = cogs_list_widget(
+        [{"menu": "Pad Thai", "cogs": None, "status": "missing"}],
+        missing_count=1,
+        total_count=1,
+    )
+    assert card.model_dump(mode="json")["type"] == "Card"
+    parsed = _cogs_list_widget_from_tool_output(
+        '{"ok":true,"summary":{"total":1,"missing_count":1},'
+        '"items":[{"menu":"Pad Thai","cogs":null,"status":"missing"}]}'
+    )
+    assert parsed is not None
+    assert "Pad Thai" in str(parsed.model_dump(mode="json"))
+
+
+def test_cogs_edit_form_widget_card_from_bridge_helper() -> None:
+    card = cogs_edit_form_widget(
+        [{"menu": "Pad Thai", "cogs": None, "status": "missing"}],
+    )
+    assert card.model_dump(mode="json")["type"] == "Card"
+    parsed = _cogs_edit_form_widget_from_tool_output(
+        '{"ok":true,"action":"request_cogs_edit",'
+        '"items":[{"menu":"Pad Thai","cogs":null,"status":"missing"}]}'
+    )
+    assert parsed is not None
+    dumped = str(parsed.model_dump(mode="json"))
+    assert "Pad Thai" in dumped
+    assert "cogs.edit_ack" in dumped
 
 
 def test_memory_store_autocreates_agent_thread() -> None:

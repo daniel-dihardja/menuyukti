@@ -6,8 +6,11 @@ import {
   addVisualizationId,
   getAvailableCatalogEntries,
   isChatVisualizationId,
+  parseStoredCollapsedVisualizationIds,
   parseStoredVisualizationIds,
+  removeCollapsedVisualizationId,
   removeVisualizationId,
+  setCollapsedVisualizationId,
 } from '@/components/chat/visualizations/chat-visualization-catalog'
 import {
   CHAT_VISUALIZATION_ID_VALUES,
@@ -66,6 +69,30 @@ describe('chat-visualization-catalog', () => {
   it('parseStoredVisualizationIds returns empty array for invalid json', () => {
     expect(parseStoredVisualizationIds('not-json')).toEqual([])
     expect(parseStoredVisualizationIds(null)).toEqual([])
+  })
+
+  it('parseStoredCollapsedVisualizationIds keeps only known ids', () => {
+    expect(
+      parseStoredCollapsedVisualizationIds(
+        JSON.stringify(['menu_item_heatmap', 'unknown_chart', 7]),
+      ),
+    ).toEqual(['menu_item_heatmap'])
+    expect(parseStoredCollapsedVisualizationIds('not-json')).toEqual([])
+    expect(parseStoredCollapsedVisualizationIds(null)).toEqual([])
+  })
+
+  it('setCollapsedVisualizationId adds and removes without duplicates', () => {
+    const collapsed = setCollapsedVisualizationId([], 'menu_item_heatmap', true)
+    expect(collapsed).toEqual(['menu_item_heatmap'])
+    expect(setCollapsedVisualizationId(collapsed, 'menu_item_heatmap', true)).toBe(collapsed)
+    expect(setCollapsedVisualizationId(collapsed, 'menu_item_heatmap', false)).toEqual([])
+    expect(setCollapsedVisualizationId([], 'menu_item_heatmap', false)).toEqual([])
+  })
+
+  it('removeCollapsedVisualizationId drops the matching id', () => {
+    expect(
+      removeCollapsedVisualizationId(['menu_item_heatmap', 'low_end_review'], 'menu_item_heatmap'),
+    ).toEqual(['low_end_review'])
   })
 
   it('getAvailableCatalogEntries hides already-added charts', () => {

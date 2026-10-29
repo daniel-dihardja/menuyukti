@@ -1,0 +1,70 @@
+---
+id: TASK-9.8
+title: Install Square SDK and configure env scaffolding
+status: Done
+assignee:
+  - '@danieldihardja'
+created_date: '2026-10-28T13:57:00Z'
+updated_date: '2026-10-28T16:02:00Z'
+labels:
+  - square
+  - graphql
+  - config
+dependencies:
+  - TASK-9.1
+references:
+  - https://developer.squareup.com/docs/sdks/python
+  - apps/graphql/.env.example
+documentation:
+  - backlog/docs/square/doc-2 - Square-POS-analytics-integration-spike.md
+parent_task_id: TASK-9
+priority: high
+type: chore
+ordinal: 37000
+---
+
+## Description
+
+<!-- SECTION:DESCRIPTION:BEGIN -->
+
+No Square client library or env keys exist in the monorepo yet. OAuth and POS sync (TASK-9.2+) need a decided SDK, dependency install in the owning app(s), and documented sandbox/production configuration before feature work.
+
+Default ownership (confirm in TASK-9.1): Square HTTP/OAuth client and sync live in `apps/graphql` (Python). Web only needs public Application ID / authorize URL wiring and callback route — not a second SDK unless the spike says otherwise. Do not create a separate Square product app or share package until sync proves reuse.
+
+<!-- SECTION:DESCRIPTION:END -->
+
+## Acceptance Criteria
+
+<!-- AC:BEGIN -->
+
+- [x] #1 Official Square client dependency is added where TASK-9.1 decided (expected: Python SDK in apps/graphql via uv); lockfile updated
+- [x] #2 Env scaffolding documents required keys (e.g. application id/secret, environment sandbox|production, OAuth redirect base, token encryption key) in apps/graphql/.env.example and/or root .env.example without committing secrets
+- [x] #3 A minimal smoke path exists (script or test) that builds a Square client for sandbox using env config and fails clearly when misconfigured
+- [x] #4 README or short backlog note points implementers at sandbox vs production config; no production secrets required for local sandbox work
+<!-- AC:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+
+1. uv add Square Python SDK to apps/graphql
+2. Add square_client helper + smoke ListLocations script
+3. Document smoke in graphql README; verify env.example
+4. Run smoke + lint; mark Done
+<!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+
+Smoke: `PYTHONPATH=../.. uv run python scripts/square_smoke_list_locations.py` → locations=1 (Default Test Account). Env scaffolding already in root .env.example.
+
+<!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+
+Added squareup SDK to apps/graphql, square_client helper, and square_smoke_list_locations script. Documented sandbox env + smoke in graphql README (spike doc-2). Verified ListLocations against sandbox token; clear CONFIG ERROR without token. Unblocks TASK-9.2.
+
+<!-- SECTION:FINAL_SUMMARY:END -->

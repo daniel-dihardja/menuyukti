@@ -9,6 +9,7 @@ from typing import Any
 import httpx
 from agents_app.agents.core.chat.graph import compile_chat_graph
 from agents_app.agents.core.chatkit.memory_store import MemoryChatKitStore
+from agents_app.env_bootstrap import load_app_env
 from agents_app.routers.chat import router as chat_router
 from agents_app.routers.chatkit import router as chatkit_router
 from agents_app.routers.format_markdown import router as format_markdown_router
@@ -18,7 +19,6 @@ from agents_app.routers.holiday_style_analysis import router as holiday_style_an
 from agents_app.routers.holiday_visual_brief import router as holiday_visual_brief_router
 from agents_app.routers.nearby_locations_scan import router as nearby_locations_scan_router
 from agents_app.routers.style_specs import router as style_specs_router
-from dotenv import load_dotenv
 from fastapi import FastAPI
 from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.checkpoint.memory import InMemorySaver
@@ -26,7 +26,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
-load_dotenv()
+load_app_env()
 
 _logger = logging.getLogger(__name__)
 
@@ -113,16 +113,18 @@ async def _chat_runtime(
     app.state.chat_checkpointer = checkpointer
     app.state.chat_graph = compile_chat_graph(checkpointer)
     chatkit_pool = None
+    from agents_app.agents.core.chatkit.hydrating_store import HydratingChatKitStore
     from agents_app.agents.core.chatkit.server import build_chatkit_server
 
     if chatkit_db_url:
         from agents_app.agents.core.chatkit.postgres_store import open_chatkit_postgres_store
 
-        store, chatkit_pool = await open_chatkit_postgres_store(chatkit_db_url)
+        raw_store, chatkit_pool = await open_chatkit_postgres_store(chatkit_db_url)
+        store = HydratingChatKitStore(raw_store)
         app.state.chatkit_store = store
         app.state.chatkit_server = build_chatkit_server(store)
     else:
-        store = MemoryChatKitStore()
+        store = HydratingChatKitStore(MemoryChatKitStore())
         app.state.chatkit_store = store
         app.state.chatkit_server = build_chatkit_server(store)
         _logger.warning(

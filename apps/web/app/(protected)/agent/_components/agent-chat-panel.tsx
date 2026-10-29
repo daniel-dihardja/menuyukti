@@ -1,49 +1,40 @@
 'use client'
 
 import { usePanelRef } from '@workspace/ui/components/resizable'
-import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { useCallback, useEffect, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
+import { AdvisorWorkspaceRail } from '@/components/chat/advisor-workspace-rail'
 import { AdvisorChatKit } from '@/components/chat/chatkit/advisor-chatkit'
-import { AdvisorChatKitPreview } from '@/components/chat/chatkit/advisor-chatkit-preview'
 import {
   AdvisorChatKitShellProvider,
+  type AdvisorBranchOption,
   useAdvisorChatKitShell,
 } from '@/components/chat/chatkit/advisor-chatkit-shell-context'
 import { ChatWithMobileArtifactLayout, ChatWithPreviewLayout } from '@/components/chat/chat-layout'
 import { ChatVisualizationsProvider } from '@/components/chat/visualizations/chat-visualizations-context'
-import { ChatPreviewPanelSkeleton } from '@/components/chat/chat-workspace-skeleton'
 import { useDesktopLayout } from '@/hooks/use-desktop-layout'
 import { routes } from '@/lib/routes'
-
-const ChatVisualizationsPaneLazy = dynamic(
-  () =>
-    import('@/components/chat/visualizations/chat-visualizations-pane').then(
-      (m) => m.ChatVisualizationsPane,
-    ),
-  {
-    ssr: false,
-    loading: () => <ChatPreviewPanelSkeleton className="h-full w-full" />,
-  },
-)
 
 export type AgentChatPanelProps = {
   agentThreadId: string
   locationId: number
+  onLocationIdChange: (locationId: number) => void
   analyticsRunId: number | null
   onAnalyticsRunIdChange: (analyticsRunId: number | null) => void
+  branches: AdvisorBranchOption[]
 }
 
 export function AgentChatPanel({
   agentThreadId,
   locationId,
+  onLocationIdChange,
   analyticsRunId,
   onAnalyticsRunIdChange,
+  branches,
 }: AgentChatPanelProps) {
-  const t = useTranslations('chat')
-  const tViz = useTranslations('chat.visualizations')
+  const t = useTranslations('chat.workspace')
   const router = useRouter()
   const [mobileArtifactOpen, setMobileArtifactOpen] = useState(false)
   const previewPanelRef = usePanelRef()
@@ -55,12 +46,19 @@ export function AgentChatPanel({
     [router],
   )
 
+  const handleOpenMobileWorkspace = useCallback(() => {
+    setMobileArtifactOpen(true)
+  }, [])
+
   return (
     <AdvisorChatKitShellProvider
       agentThreadId={agentThreadId}
       analyticsRunId={analyticsRunId}
+      branches={branches}
       locationId={locationId}
       onAnalyticsRunIdChange={onAnalyticsRunIdChange}
+      onLocationIdChange={onLocationIdChange}
+      onOpenMobileWorkspace={handleOpenMobileWorkspace}
       onThreadRotated={handleThreadRotated}
     >
       <ChatVisualizationsProvider
@@ -69,14 +67,12 @@ export function AgentChatPanel({
         storageKeyId={agentThreadId}
       >
         <AgentChatPanelLayout
-          chartsArtifactDescription={tViz('artifactDescription')}
-          chartsArtifactHint={tViz('artifactHint')}
-          chartsArtifactTitle={tViz('artifactTitle')}
+          mobileArtifactDescription={t('mobileSheetDescription')}
+          mobileArtifactHint={t('mobileSheetHint')}
           mobileArtifactOpen={mobileArtifactOpen}
+          mobileArtifactTitle={t('mobileSheetTitle')}
           onMobileArtifactOpenChange={setMobileArtifactOpen}
           previewPanelRef={previewPanelRef}
-          storyArtifactHint={t('storyArtifact.ariaLabel')}
-          storyArtifactTitle={t('storyArtifact.ariaLabel')}
         />
       </ChatVisualizationsProvider>
     </AdvisorChatKitShellProvider>
@@ -87,66 +83,18 @@ type AgentChatPanelLayoutProps = {
   mobileArtifactOpen: boolean
   onMobileArtifactOpenChange: (open: boolean) => void
   previewPanelRef: ReturnType<typeof usePanelRef>
-  chartsArtifactDescription: string
-  chartsArtifactHint: string
-  chartsArtifactTitle: string
-  storyArtifactHint: string
-  storyArtifactTitle: string
-}
-
-function ModeDesktopLayout({
-  previewPane,
-  previewPanelRef,
-}: {
-  previewPane: ReactNode
-  previewPanelRef: ReturnType<typeof usePanelRef>
-}) {
-  return (
-    <ChatWithPreviewLayout
-      chatPane={<AdvisorChatKit />}
-      previewPane={previewPane}
-      previewPanelRef={previewPanelRef}
-    />
-  )
-}
-
-function ModeMobileLayout({
-  previewPane,
-  mobileArtifactOpen,
-  onMobileArtifactOpenChange,
-  artifactDescription,
-  artifactHint,
-  artifactTitle,
-}: {
-  previewPane: ReactNode
-  mobileArtifactOpen: boolean
-  onMobileArtifactOpenChange: (open: boolean) => void
-  artifactDescription?: string | null
-  artifactHint: string
-  artifactTitle: string
-}) {
-  return (
-    <ChatWithMobileArtifactLayout
-      chatPane={<AdvisorChatKit />}
-      mobileArtifactDescription={artifactDescription}
-      mobileArtifactHint={artifactHint}
-      mobileArtifactOpen={mobileArtifactOpen}
-      mobileArtifactTitle={artifactTitle}
-      onMobileArtifactOpenChange={onMobileArtifactOpenChange}
-      previewPane={previewPane}
-    />
-  )
+  mobileArtifactDescription: string
+  mobileArtifactHint: string
+  mobileArtifactTitle: string
 }
 
 function AgentChatPanelLayout({
   mobileArtifactOpen,
   onMobileArtifactOpenChange,
   previewPanelRef,
-  chartsArtifactDescription,
-  chartsArtifactHint,
-  chartsArtifactTitle,
-  storyArtifactHint,
-  storyArtifactTitle,
+  mobileArtifactDescription,
+  mobileArtifactHint,
+  mobileArtifactTitle,
 }: AgentChatPanelLayoutProps) {
   const { chatMode } = useAdvisorChatKitShell()
   const isDesktop = useDesktopLayout()
@@ -155,24 +103,27 @@ function AgentChatPanelLayout({
     onMobileArtifactOpenChange(false)
   }, [chatMode, onMobileArtifactOpenChange])
 
-  const isImageAssistant = chatMode === 'image_assistant'
-  const previewPane = isImageAssistant ? <AdvisorChatKitPreview /> : <ChatVisualizationsPaneLazy />
-  const artifactHint = isImageAssistant ? storyArtifactHint : chartsArtifactHint
-  const artifactTitle = isImageAssistant ? storyArtifactTitle : chartsArtifactTitle
-  const artifactDescription = isImageAssistant ? null : chartsArtifactDescription
+  const previewPane = <AdvisorWorkspaceRail />
 
   if (!isDesktop) {
     return (
-      <ModeMobileLayout
-        artifactDescription={artifactDescription}
-        artifactHint={artifactHint}
-        artifactTitle={artifactTitle}
+      <ChatWithMobileArtifactLayout
+        chatPane={<AdvisorChatKit />}
+        mobileArtifactDescription={mobileArtifactDescription}
+        mobileArtifactHint={mobileArtifactHint}
         mobileArtifactOpen={mobileArtifactOpen}
+        mobileArtifactTitle={mobileArtifactTitle}
         onMobileArtifactOpenChange={onMobileArtifactOpenChange}
         previewPane={previewPane}
       />
     )
   }
 
-  return <ModeDesktopLayout previewPane={previewPane} previewPanelRef={previewPanelRef} />
+  return (
+    <ChatWithPreviewLayout
+      chatPane={<AdvisorChatKit />}
+      previewPane={previewPane}
+      previewPanelRef={previewPanelRef}
+    />
+  )
 }

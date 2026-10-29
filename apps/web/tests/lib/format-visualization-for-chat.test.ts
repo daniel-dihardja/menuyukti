@@ -26,6 +26,8 @@ describe('formatVisualizationDataMarkdownSection', () => {
       },
     })
     expect(out).toContain('## Visualization data — Venue slot strength')
+    expect(out).toContain('BEGIN_UNTRUSTED_DATA channel=visualization')
+    expect(out).toContain('END_UNTRUSTED_DATA')
     expect(out).toContain('mon / Lunch')
     expect(out).toContain('42 orders')
   })

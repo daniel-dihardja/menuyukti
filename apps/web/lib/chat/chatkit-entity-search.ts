@@ -1,4 +1,3 @@
-import { loadMedia, type MediaCatalogItem } from '@/lib/media/client-api'
 import {
   CHAT_VISUALIZATION_ID_VALUES,
   type ChatVisualizationId,
@@ -18,22 +17,16 @@ function matchesQuery(haystack: string, query: string): boolean {
   return haystack.toLowerCase().includes(query.trim().toLowerCase())
 }
 
+/** @-mention options for advisor ChatKit: attached visualizations only (no media library). */
 export async function searchAdvisorChatKitEntities(options: {
   query: string
   attachedVisualizationIds: readonly ChatVisualizationId[]
   visualizationTitles: Record<string, string>
-  mediaGroupLabel: string
   chartsGroupLabel: string
 }): Promise<ChatKitEntity[]> {
-  const {
-    query,
-    attachedVisualizationIds,
-    visualizationTitles,
-    mediaGroupLabel,
-    chartsGroupLabel,
-  } = options
+  const { query, attachedVisualizationIds, visualizationTitles, chartsGroupLabel } = options
 
-  const chartEntities: ChatKitEntity[] = attachedVisualizationIds
+  return attachedVisualizationIds
     .filter((id) => {
       const title = visualizationTitles[id] ?? id
       return matchesQuery(`${id} ${title}`, query)
@@ -46,27 +39,6 @@ export async function searchAdvisorChatKitEntities(options: {
       interactive: true,
       data: { kind: 'visualization', visualizationId: id },
     }))
-
-  let mediaItems: MediaCatalogItem[] = []
-  try {
-    mediaItems = await loadMedia()
-  } catch {
-    mediaItems = []
-  }
-
-  const mediaEntities: ChatKitEntity[] = mediaItems
-    .filter((item) => matchesQuery(`${item.name} ${item.displayName ?? ''}`, query))
-    .slice(0, 40)
-    .map((item) => ({
-      id: `media:${item.name}`,
-      title: item.displayName?.trim() || item.name,
-      group: mediaGroupLabel,
-      icon: 'images',
-      interactive: true,
-      data: { kind: 'media', name: item.name },
-    }))
-
-  return [...chartEntities, ...mediaEntities]
 }
 
 /** All known viz ids — used when nothing is attached yet (empty @ charts). */

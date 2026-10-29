@@ -9,7 +9,7 @@ A minimal starter for the Strawberry GraphQL endpoint. The service currently exp
 
 **Public catalog reads.** `publicHolidays` is intentionally unauthenticated (static holiday JSON).
 
-**CRM customer JWT.** Device access tokens are HS256 JWTs signed with **`CRM_JWT_SECRET`** (required, at least 32 characters). Set it in `apps/graphql/.env` for local runs. Claims: `sub` (customer UUID), `did` (device UUID), `app_id` (public CRM app UUID), `exp` (~15 minutes). Refresh tokens are opaque secrets stored as SHA-256 hashes on `crm_device`.
+**CRM customer JWT.** Device access tokens are HS256 JWTs signed with **`CRM_JWT_SECRET`** (required, at least 32 characters). Set it in root `.env` or as an override in `apps/graphql/.env` for local runs. Claims: `sub` (customer UUID), `did` (device UUID), `app_id` (public CRM app UUID), `exp` (~15 minutes). Refresh tokens are opaque secrets stored as SHA-256 hashes on `crm_device`.
 
 **Query protections.** The schema enables depth, alias count, token count, and maximum field-selection limits (see [`limits.py`](./limits.py) and [`schema/__init__.py`](./schema/__init__.py)). Oversized documents fail validation before execution.
 
@@ -21,12 +21,28 @@ A minimal starter for the Strawberry GraphQL endpoint. The service currently exp
 
 Keep this app **light**: resolvers should load data, enforce ownership/auth, and map results to GraphQL types. **Sales and menu analytics** (aggregations, metrics, matrix/heatmap logic, etc.) live in the shared Python package **`packages/menuyukti`** — add new calculations there and call them from here. Database schema and migrations remain in this app; see [`packages/menuyukti/README.md`](../../packages/menuyukti/README.md) for boundaries and layout.
 
+## Square sandbox (Connect / POS sync)
+
+Square client ownership lives in this app (`squareup` SDK). Product **OAuth Connect** for sellers is TASK-9.2; until then use a Sandbox access token for smoke tests only.
+
+1. Set Square keys in the **repo-root** `.env` (see `/.env.example`): `SQUARE_ENVIRONMENT=sandbox`, `SQUARE_APPLICATION_ID`, `SQUARE_APPLICATION_SECRET`, and for smoke `SQUARE_ACCESS_TOKEN`. Optional later: `SQUARE_OAUTH_REDIRECT_URL`, `SQUARE_TOKEN_ENCRYPTION_KEY`.
+2. Spike decisions: [backlog doc-2](../../backlog/docs/square/doc-2%20-%20Square-POS-analytics-integration-spike.md).
+3. Smoke (lists location id/name; does not print tokens):
+
+```bash
+cd apps/graphql
+make square-smoke
+# equivalent: PYTHONPATH=../.. uv run python scripts/square_smoke_list_locations.py
+```
+
+Misconfigured env fails with a clear `CONFIG ERROR` message (exit code 2).
+
 ## Database schema and migrations (Alembic)
 
 Schema changes are **versioned** under [`alembic/`](./alembic/) (revision scripts in `alembic/versions/`). Production and shared PostgreSQL databases should use Alembic, not ad-hoc `ALTER` scripts, for DDL.
 
 1. Install dependencies with `make install` (`uv sync --all-groups`, including Ruff and mypy) or your normal workflow.
-2. Set `DATABASE_URL` in `apps/graphql/.env` (loaded by `python-dotenv` in `graphql.data_sources.database` and Alembic `env.py`). Use a PostgreSQL URL, e.g. `postgresql+psycopg2://user:pass@host:5432/dbname`.
+2. Set `DATABASE_URL` in the **repo-root** `.env` (canonical). GraphQL loads root `.env` then optional `apps/graphql/.env` overrides via `graphql.env_bootstrap` (database + Alembic). Use a PostgreSQL URL, e.g. `postgresql+psycopg2://user:pass@host:5432/dbname`. See `apps/graphql/.env.example` for GraphQL-only keys (`CRM_JWT_SECRET`, etc.).
 3. Apply migrations: `make db-upgrade` (or `PYTHONPATH=../.. uv run alembic upgrade head` from `apps/graphql`).
 4. After a model change, generate a revision: `make db-generate MSG=short_description`, then review the file under `alembic/versions/`, run `make db-upgrade`, and commit the new revision.
 5. **Existing databases** that were created with `create_all` before Alembic: if `make db-upgrade` fails with **DuplicateTable** (tables exist but Alembic has no version), the live schema likely already matches an older revision. Stamp that revision, then upgrade:
@@ -40,6 +56,24 @@ Schema changes are **versioned** under [`alembic/`](./alembic/) (revision script
 The app still falls back to the on-disk SQLite file (`sqlite+pysqlite:///./graphql.db`) when `DATABASE_URL` is unset (handy for quick local runs). The pytest suite forces a SQLite test DB in `tests/conftest.py` and uses `create_all` — it does not run Alembic.
 
 Import `SessionLocal` from `graphql.data_sources` inside resolvers to read or write rows via SQLAlchemy sessions.
+
+### Knowledge layer (pgvector RAG)
+
+Advisor RAG stores global domain / KPI / playbook docs in `knowledge_document`, `knowledge_chunk`, and `knowledge_embedding`. The Alembic revision enables the Postgres **`vector`** extension and an optional `embedding_vec` HNSW index (Neon must allow `CREATE EXTENSION vector`).
+
+Seed / update content (markdown under [`knowledge/`](./knowledge/)):
+
+```bash
+cd apps/graphql
+make knowledge-ingest
+# make knowledge-ingest FORCE=1      # re-embed even if unchanged
+# make knowledge-ingest DRY_RUN=1   # parse only
+# make knowledge-ingest DIR=/path/to/seeds
+```
+
+Embeddings use the Vercel AI Gateway when `AI_GATEWAY_API_KEY` (or `VERCEL_OIDC_TOKEN`) is set, otherwise `OPENAI_API_KEY`. Put the gateway key in the **repo-root** `.env` (same file as Docker Compose / agents). Ingest uses `load_app_env` — root then optional `apps/graphql/.env` — and does **not** read `apps/agents/.env`. Optional: `KNOWLEDGE_EMBEDDING_MODEL` (default `text-embedding-3-small`), `KNOWLEDGE_EMBEDDING_BASE_URL`.
+
+Agents call GraphQL `searchKnowledge` only — they do not open this database.
 
 ### Media library catalog
 
@@ -75,6 +109,7 @@ To import a specific Excel report directly into `order_fact`, run `make load-rep
 | `make dev-data SCOPE=analytics USER_ID=user_xxx EXCEL=/path/to/report.xlsx` | Same as above, but use a custom Excel instead of the default mock                                                                                                                                                                                               |
 | `make dev-data SCOPE=all USER_ID=user_xxx`                                  | Inventar (Warung) + analytics (Berlin cafe default mock) + MIDO Matcha Corner menu                                                                                                                                                                              |
 | `make generate-dev-mock-excel`                                              | Regenerate Berlin cafe `fixtures/dev_mock_….xlsx` + `dev_mock_menu_cogs.json` (ESB structure from SNABB; Kaffeestube Mitte menu)                                                                                                                                |
+| `make knowledge-ingest`                                                     | Upsert advisor RAG seeds from `knowledge/*.md` (needs embedding API key; `FORCE=1` / `DRY_RUN=1` / `DIR=…` optional)                                                                                                                                            |
 | `make db-reset-dev`                                                         | Destructive: `drop-db` + `db-upgrade` (Alembic)                                                                                                                                                                                                                 |
 | `make db-reset-dev SEED=1 USER_ID=user_xxx`                                 | Hard schema reset, then inventar seed                                                                                                                                                                                                                           |
 

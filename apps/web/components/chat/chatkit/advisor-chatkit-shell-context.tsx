@@ -1,8 +1,25 @@
 'use client'
 
-import { createContext, use, useCallback, useMemo, useState, type ReactNode } from 'react'
+import {
+  createContext,
+  use,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react'
 
-import { DEFAULT_CHAT_MODE, type ChatModeId } from '@/lib/chat/chat-modes'
+import {
+  coerceEnabledChatMode,
+  DEFAULT_CHAT_MODE,
+  isChatModeEnabled,
+  type ChatModeId,
+} from '@/lib/chat/chat-modes'
+import {
+  defaultAdvisorWorkspaceTab,
+  type AdvisorWorkspaceTabId,
+} from '@/lib/chat/advisor-workspace-tabs'
 import { DEFAULT_CHAT_GATEWAY_MODEL, type ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
 import {
   DEFAULT_LEONARDO_POST_MODEL,
@@ -13,11 +30,21 @@ import {
   type ChatImageAssistantFormatId,
 } from '@/lib/posts/leonardo-post-dimensions'
 
+export type AdvisorBranchOption = {
+  id: number
+  name: string
+}
+
 export type AdvisorChatKitShellState = {
   agentThreadId: string
   locationId: number
+  setLocationId: (id: number) => void
   analyticsRunId: number | null
   setAnalyticsRunId: (id: number | null) => void
+  branches: AdvisorBranchOption[]
+  workspaceTab: AdvisorWorkspaceTabId
+  setWorkspaceTab: (tab: AdvisorWorkspaceTabId) => void
+  openMobileWorkspace: () => void
   chatMode: ChatModeId
   setChatMode: (mode: ChatModeId) => void
   selectedChatModel: ChatGatewayModelId
@@ -36,8 +63,11 @@ const AdvisorChatKitShellContext = createContext<AdvisorChatKitShellState | null
 export type AdvisorChatKitShellProviderProps = {
   agentThreadId: string
   locationId: number
+  onLocationIdChange: (locationId: number) => void
   analyticsRunId: number | null
   onAnalyticsRunIdChange: (analyticsRunId: number | null) => void
+  branches: AdvisorBranchOption[]
+  onOpenMobileWorkspace?: () => void
   onThreadRotated?: (nextThreadId: string) => void
   children: ReactNode
 }
@@ -45,12 +75,15 @@ export type AdvisorChatKitShellProviderProps = {
 export function AdvisorChatKitShellProvider({
   agentThreadId,
   locationId,
+  onLocationIdChange,
   analyticsRunId,
   onAnalyticsRunIdChange,
+  branches,
+  onOpenMobileWorkspace,
   onThreadRotated,
   children,
 }: AdvisorChatKitShellProviderProps) {
-  const [chatMode, setChatMode] = useState<ChatModeId>(DEFAULT_CHAT_MODE)
+  const [chatMode, setChatModeState] = useState<ChatModeId>(DEFAULT_CHAT_MODE)
   const [selectedChatModel, setSelectedChatModel] = useState<ChatGatewayModelId>(
     DEFAULT_CHAT_GATEWAY_MODEL,
   )
@@ -61,6 +94,11 @@ export function AdvisorChatKitShellProvider({
     DEFAULT_CHAT_IMAGE_ASSISTANT_FORMAT,
   )
   const [latestStoryImageUrl, setLatestStoryImageUrl] = useState<string | null>(null)
+  const [workspaceTab, setWorkspaceTabState] = useState<AdvisorWorkspaceTabId>('insights')
+
+  const setChatMode = useCallback((mode: ChatModeId) => {
+    setChatModeState(isChatModeEnabled(mode) ? mode : DEFAULT_CHAT_MODE)
+  }, [])
 
   const setAnalyticsRunId = useCallback(
     (id: number | null) => {
@@ -69,13 +107,39 @@ export function AdvisorChatKitShellProvider({
     [onAnalyticsRunIdChange],
   )
 
+  const setLocationId = useCallback(
+    (id: number) => {
+      onLocationIdChange(id)
+    },
+    [onLocationIdChange],
+  )
+
+  const effectiveChatMode = coerceEnabledChatMode(chatMode)
+
+  useEffect(() => {
+    setWorkspaceTabState(defaultAdvisorWorkspaceTab(effectiveChatMode))
+  }, [effectiveChatMode])
+
+  const setWorkspaceTab = useCallback((tab: AdvisorWorkspaceTabId) => {
+    setWorkspaceTabState(tab)
+  }, [])
+
+  const openMobileWorkspace = useCallback(() => {
+    onOpenMobileWorkspace?.()
+  }, [onOpenMobileWorkspace])
+
   const value = useMemo<AdvisorChatKitShellState>(
     () => ({
       agentThreadId,
       locationId,
+      setLocationId,
       analyticsRunId,
       setAnalyticsRunId,
-      chatMode,
+      branches,
+      workspaceTab,
+      setWorkspaceTab,
+      openMobileWorkspace,
+      chatMode: effectiveChatMode,
       setChatMode,
       selectedChatModel,
       setSelectedChatModel,
@@ -90,9 +154,15 @@ export function AdvisorChatKitShellProvider({
     [
       agentThreadId,
       locationId,
+      setLocationId,
       analyticsRunId,
       setAnalyticsRunId,
-      chatMode,
+      branches,
+      workspaceTab,
+      setWorkspaceTab,
+      openMobileWorkspace,
+      effectiveChatMode,
+      setChatMode,
       selectedChatModel,
       selectedGenerationModel,
       selectedImageFormat,

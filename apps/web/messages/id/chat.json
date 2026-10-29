@@ -38,6 +38,34 @@
     "clearChatConfirmDescription": "Pesan dalam thread ini akan dihapus dan thread chat baru akan dimulai. Tindakan ini tidak dapat dibatalkan.",
     "clearChatConfirmCancel": "Batal",
     "clearChatConfirmAction": "Hapus chat",
+    "workspace": {
+      "tabs": {
+        "cogs": "COGS"
+      },
+      "cogsDisabled": "Pengeditan COGS tidak diaktifkan untuk workspace ini.",
+      "cogsSectionTitle": "Biaya menu",
+      "cogsSelectReportHint": "Pilih atau unggah laporan penjualan di atas untuk mengedit biaya menu.",
+      "cogsEmptyItems": "Tidak ada item menu untuk laporan ini.",
+      "cogsSave": "Simpan",
+      "cogsSaving": "Menyimpan…",
+      "cogsSaveSuccess": "COGS disimpan.",
+      "cogsSaveError": "Tidak dapat menyimpan COGS.",
+      "cogsLoadError": "Tidak dapat memuat COGS.",
+      "advisorMemory": {
+        "title": "Memori advisor",
+        "description": "Catatan yang disimpan advisor chat untuk venue ini lintas thread (preferensi dan keputusan). Terpisah dari brief venue pemilik di bawah — menghapus memori tidak mengubah jam, alamat, atau quick profile.",
+        "empty": "Belum ada memori advisor untuk venue ini.",
+        "clearButton": "Hapus memori advisor",
+        "clearing": "Menghapus…",
+        "clearConfirmTitle": "Hapus memori advisor?",
+        "clearConfirmDescription": "Ini menghapus apa yang diingat advisor tentang venue ini lintas thread chat. Tidak mengubah catatan venue pemilik atau brief lokasi. Tindakan ini tidak dapat dibatalkan.",
+        "clearConfirmCancel": "Batal",
+        "clearConfirmAction": "Hapus memori",
+        "loadError": "Tidak dapat memuat memori advisor.",
+        "clearError": "Tidak dapat menghapus memori advisor.",
+        "retry": "Coba lagi"
+      }
+    },
     "composerMoreAriaLabel": "Opsi chat lainnya",
     "composerMoreTooltip": "Mode, model, dan hapus chat",
     "stopChatAriaLabel": "Hentikan pembuatan",
@@ -149,6 +177,8 @@
       "emptyDescription": "Tambahkan grafik dari katalog untuk menjelajahi analitik penjualan bersama rencana Anda.",
       "addButton": "Tambah visualisasi",
       "addMenuAriaLabel": "Tambah visualisasi",
+      "expandAriaLabel": "Perluas {title}",
+      "collapseAriaLabel": "Ciutkan {title}",
       "removeAriaLabel": "Hapus {title}",
       "noAnalyticsRunTitle": "Tautkan laporan penjualan",
       "noAnalyticsRunDescription": "Lampirkan laporan penjualan di composer chat untuk menjelajahi grafik dan saran berbasis penjualan.",

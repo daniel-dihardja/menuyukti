@@ -18,6 +18,7 @@ from agents_app.agents.core.chat.tools_registry import (
     has_analytics_run_id,
     has_ig_studio_post_context,
     has_leonardo_image_generation,
+    has_location_id,
 )
 from agents_app.agents.core.llm_invoke import (
     DEFAULT_BASE_DELAY_S,
@@ -53,6 +54,7 @@ def chat_system_prompt_from_config() -> str:
         ig_studio_post_image=has_ig_studio_post_context(conf_dict),
         leonardo_image_generation=has_leonardo_image_generation(conf_dict),
         include_chart_catalog=has_analytics_run_id(conf_dict),
+        include_location_tools=has_location_id(conf_dict),
         chat_mode=chat_mode,
         image_format=image_format,
     )
@@ -183,6 +185,8 @@ async def handle_tool_errors(
     handler: Any,
 ) -> ToolMessage | Command[Any]:
     """Surface tool exceptions as error ToolMessages (replaces ToolNode private patch)."""
+    from agents_app.agents.core.chat.sanitize_tool_errors import sanitize_tool_error_for_model
+
     try:
         return await handler(request)
     except Exception as exc:  # noqa: BLE001 — keep ReAct loop alive
@@ -190,7 +194,7 @@ async def handle_tool_errors(
         tool_call_id = tool_call.get("id") or ""
         name = tool_call.get("name") or "tool"
         return ToolMessage(
-            content=f"Error running {name}: {exc}",
+            content=sanitize_tool_error_for_model(str(name), exc),
             tool_call_id=str(tool_call_id),
             status="error",
         )

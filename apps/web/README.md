@@ -2,6 +2,8 @@
 
 ## Local development
 
+Environment: Next.js `envDir` is the **monorepo root**, so `GRAPHQL_ENDPOINT`, Clerk keys, `AGENTS_URL`, etc. come from root `.env` / `.env.local` (same canonical file as Docker Compose). Optional overrides can still live under `apps/web/.env*` if you add a custom loader; prefer root. E2E keeps `apps/web/.env.e2e` (see `.env.e2e.example`).
+
 `pnpm dev` runs **`next dev --turbopack`** (Next 16.3+ filesystem cache on by default for faster warm restarts). Use **`pnpm dev:webpack`** if you need webpack. Message catalogs live under `messages/en/<namespace>.json` (merged by `i18n/load-messages.ts`). If message edits look stale, delete `apps/web/.next` once and restart.
 
 ## PWA (Serwist)
@@ -21,7 +23,7 @@ Web Vitals reporting is opt-in and disabled by default unless the flags below ar
 - `NEXT_PUBLIC_ENABLE_WEB_VITALS` - enables client-side metric reporting to `/api/web-vitals`
 - `ENABLE_WEB_VITALS_LOGS` - enables server-side `[web-vitals]` console logging in the API route
 
-Set these in your local `apps/web/.env` when needed:
+Set these in the repo-root `.env` (or `.env.local`) when needed:
 
 ```env
 NEXT_PUBLIC_ENABLE_WEB_VITALS=true

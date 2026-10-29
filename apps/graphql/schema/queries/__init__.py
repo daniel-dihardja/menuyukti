@@ -9,6 +9,7 @@ from .inventory_catalog import InventoryCatalogQuery
 from .inventory_refill_forecast import InventoryRefillForecastQuery
 from .inventory_stock import InventoryStockQuery
 from .inventory_stock_movement import InventoryStockMovementQuery
+from .knowledge_search import KnowledgeSearchQuery
 from .location_menu import LocationMenuQuery
 from .location_menu_item_cogs import LocationMenuItemCogsQuery
 from .locations import LocationsQuery
@@ -47,6 +48,7 @@ __all__ = [
     "CrmCustomersQuery",
     "InstagramSignalsQuery",
     "InventoryCatalogQuery",
+    "KnowledgeSearchQuery",
     "InventoryRefillForecastQuery",
     "InventoryStockQuery",
     "InventoryStockMovementQuery",

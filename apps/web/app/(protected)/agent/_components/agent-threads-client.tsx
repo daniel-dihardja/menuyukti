@@ -7,7 +7,6 @@ import { MessageSquare, Pencil, Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState, type KeyboardEvent } from 'react'
 
 import { useAnalytics } from '@/app/(protected)/analytics/use-analytics'
-import { LocationSelect } from '@/app/(protected)/analytics/sales/location-select'
 import {
   ResponsiveActionMenu,
   type ResponsiveActionMenuItem,
@@ -18,8 +17,6 @@ import {
   removeAgentThread,
   type AgentThreadRecord,
 } from '@/lib/chat/agent-thread-registry'
-import { resolveAnalyticsRunName } from '@/lib/chat/resolve-analytics-run-name'
-import { useAnalyticsList } from '@/hooks/use-analytics-list'
 import { routes } from '@/lib/routes'
 import {
   AlertDialog,
@@ -58,8 +55,6 @@ type Branch = {
 
 type Props = {
   branches: Branch[]
-  initialLocationId: number | null
-  initialAnalyticsRuns: Array<{ id: number; name: string }>
 }
 
 function buildThreadActionItems(args: {
@@ -86,16 +81,22 @@ function buildThreadActionItems(args: {
   ]
 }
 
-export function AgentThreadsClient({ branches, initialLocationId, initialAnalyticsRuns }: Props) {
+function resolveDefaultLocationId(
+  branches: Branch[],
+  lastLocationId: number | null,
+): number | null {
+  if (lastLocationId !== null && branches.some((branch) => branch.id === lastLocationId)) {
+    return lastLocationId
+  }
+  return branches[0]?.id ?? null
+}
+
+export function AgentThreadsClient({ branches }: Props) {
   const t = useTranslations('agentChat')
   const router = useRouter()
   const { locationId, setLocationId } = useAnalytics()
   const [threads, setThreads] = useState<AgentThreadRecord[]>([])
   const [hydrated, setHydrated] = useState(false)
-  const { runs: analyticsRuns } = useAnalyticsList(locationId, {
-    fallbackData:
-      locationId !== null && locationId === initialLocationId ? initialAnalyticsRuns : undefined,
-  })
   const [pendingRemoveId, setPendingRemoveId] = useState<string | null>(null)
   const {
     editingId,
@@ -108,65 +109,35 @@ export function AgentThreadsClient({ branches, initialLocationId, initialAnalyti
     setDraftTitle,
   } = useAgentThreadTitleEdit()
 
-  useEffect(() => {
-    if (initialLocationId !== null) {
-      setLocationId(initialLocationId)
+  const branchNameById = useMemo(() => {
+    const map = new Map<number, string>()
+    for (const branch of branches) {
+      map.set(branch.id, branch.name)
     }
-  }, [initialLocationId, setLocationId])
-
-  useEffect(() => {
-    if (initialLocationId !== null) return
-    if (locationId !== null) {
-      if (branches.length > 0 && !branches.some((b) => b.id === locationId)) {
-        setLocationId(null)
-      }
-      return
-    }
-    if (branches.length !== 1) return
-    const [onlyBranch] = branches
-    if (!onlyBranch) return
-    setLocationId(onlyBranch.id)
-  }, [locationId, initialLocationId, branches, setLocationId])
-
-  useEffect(() => {
-    if (locationId === null) return
-    if (locationId === initialLocationId) return
-    router.replace(routes.agentWithLocation(locationId))
-  }, [locationId, initialLocationId, router])
+    return map
+  }, [branches])
 
   useEffect(() => {
     setThreads(listAgentThreads())
     setHydrated(true)
   }, [])
 
-  const visibleThreads = useMemo(() => {
-    if (locationId === null) return []
-    return threads.filter((thread) => thread.locationId === locationId)
-  }, [threads, locationId])
-
-  const salesReportFallbacks = useMemo(
-    () => ({
-      none: t('noSalesReport'),
-      unavailable: t('salesReportUnavailable'),
-    }),
-    [t],
-  )
-
-  const threadSalesReportLabel = useCallback(
-    (thread: AgentThreadRecord) =>
-      resolveAnalyticsRunName(analyticsRuns, thread.analyticsRunId, salesReportFallbacks),
-    [analyticsRuns, salesReportFallbacks],
+  const threadVenueLabel = useCallback(
+    (thread: AgentThreadRecord) => branchNameById.get(thread.locationId) ?? t('venueUnavailable'),
+    [branchNameById, t],
   )
 
   const handleNewChat = useCallback(() => {
-    if (locationId === null) return
+    const nextLocationId = resolveDefaultLocationId(branches, locationId)
+    if (nextLocationId === null) return
+    setLocationId(nextLocationId)
     const record = createAgentThread({
-      locationId,
+      locationId: nextLocationId,
       analyticsRunId: null,
     })
     setThreads(listAgentThreads())
     router.push(routes.agentThread(record.id))
-  }, [locationId, router])
+  }, [branches, locationId, router, setLocationId])
 
   const handleRemove = useCallback(
     (id: string) => {
@@ -259,18 +230,14 @@ export function AgentThreadsClient({ branches, initialLocationId, initialAnalyti
     ],
   )
 
+  const canCreateChat = resolveDefaultLocationId(branches, locationId) !== null
+
   return (
     <div className="flex flex-col gap-8">
-      <section className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
-        <LocationSelect
-          branches={branches}
-          className="w-full max-w-none sm:max-w-xs"
-          label={t('locationLabel')}
-          placeholder={t('locationPlaceholder')}
-        />
+      <section className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-end">
         <Button
           className="w-full touch-manipulation sm:w-auto"
-          disabled={locationId === null}
+          disabled={!canCreateChat}
           onClick={handleNewChat}
           size="lg"
         >
@@ -286,17 +253,7 @@ export function AgentThreadsClient({ branches, initialLocationId, initialAnalyti
               <Skeleton className="h-24 w-full rounded-lg lg:h-12" key={`thread-skeleton-${i}`} />
             ))}
           </div>
-        ) : locationId === null ? (
-          <Empty className="border border-dashed">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <MessageSquare aria-hidden />
-              </EmptyMedia>
-              <EmptyTitle>{t('selectLocationTitle')}</EmptyTitle>
-              <EmptyDescription>{t('selectLocation')}</EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        ) : visibleThreads.length === 0 ? (
+        ) : threads.length === 0 ? (
           <Empty className="border border-dashed">
             <EmptyHeader>
               <EmptyMedia variant="icon">
@@ -309,9 +266,9 @@ export function AgentThreadsClient({ branches, initialLocationId, initialAnalyti
         ) : (
           <>
             <ul className="flex flex-col gap-3 lg:hidden">
-              {visibleThreads.map((thread) => {
+              {threads.map((thread) => {
                 const title = threadDisplayTitle(thread)
-                const salesLabel = threadSalesReportLabel(thread)
+                const venueLabel = threadVenueLabel(thread)
                 const isEditing = editingId === thread.id
 
                 return (
@@ -329,8 +286,8 @@ export function AgentThreadsClient({ branches, initialLocationId, initialAnalyti
                         <span className="truncate font-medium" title={title}>
                           {title}
                         </span>
-                        <span className="truncate text-sm text-muted-foreground" title={salesLabel}>
-                          {salesLabel}
+                        <span className="truncate text-sm text-muted-foreground" title={venueLabel}>
+                          {venueLabel}
                         </span>
                       </Link>
                     )}
@@ -355,18 +312,18 @@ export function AgentThreadsClient({ branches, initialLocationId, initialAnalyti
                 <TableHeader>
                   <TableRow>
                     <TableHead>{t('threadColumn')}</TableHead>
-                    <TableHead>{t('salesReportColumn')}</TableHead>
+                    <TableHead>{t('venueColumn')}</TableHead>
                     <TableHead className="w-28 text-right">{t('actionsColumn')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {visibleThreads.map((thread) => (
+                  {threads.map((thread) => (
                     <TableRow key={thread.id}>
                       <TableCell className="min-w-0 max-w-[min(100%,24rem)]">
                         <AgentThreadTitleEditor {...titleEditorProps(thread, false)} />
                       </TableCell>
                       <TableCell className="max-w-[min(100%,16rem)] truncate text-muted-foreground">
-                        {threadSalesReportLabel(thread)}
+                        {threadVenueLabel(thread)}
                       </TableCell>
                       <TableCell className="text-right">
                         <ResponsiveActionMenu

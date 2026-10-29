@@ -773,13 +773,16 @@ source = { editable = "apps/graphql" }
 dependencies = [
     { name = "alembic" },
     { name = "cryptography" },
+    { name = "httpx" },
     { name = "menuyukti" },
     { name = "openpyxl" },
+    { name = "pgvector" },
     { name = "psycopg2-binary" },
     { name = "pyjwt" },
     { name = "pytest" },
     { name = "python-dotenv" },
     { name = "sqlalchemy" },
+    { name = "squareup" },
     { name = "strawberry-graphql", extra = ["asgi"] },
     { name = "uvicorn" },
 ]
@@ -796,13 +799,16 @@ dev = [
 requires-dist = [
     { name = "alembic", specifier = ">=1.13.0" },
     { name = "cryptography", specifier = ">=49.0.0" },
+    { name = "httpx", specifier = ">=0.28.0" },
     { name = "menuyukti", editable = "packages/menuyukti" },
     { name = "openpyxl", specifier = ">=3.1.2" },
+    { name = "pgvector", specifier = ">=0.3.0" },
     { name = "psycopg2-binary", specifier = ">=2.9.5,<3.0" },
     { name = "pyjwt", specifier = ">=2.13.0" },
     { name = "pytest", specifier = ">=9.0.0" },
     { name = "python-dotenv", specifier = ">=1.2.1" },
     { name = "sqlalchemy", specifier = ">=2.0.46" },
+    { name = "squareup", specifier = ">=46.0.0.20260916" },
     { name = "strawberry-graphql", extras = ["asgi"], specifier = ">=0.308.2" },
     { name = "uvicorn", specifier = ">=0.40.0" },
 ]
@@ -2221,6 +2227,15 @@ wheels = [
 ]
 
 [[package]]
+name = "pgvector"
+version = "0.5.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/f8/23/96aa38899fbf8e103766db608d6e42acac269a96e08f3003fe9da3396fed/pgvector-0.5.1.tar.gz", hash = "sha256:94998a54b801b1075d623b8fa677fcb8210a7977b88f8e2203ab115c155af2e4", size = 35714, upload-time = "2026-10-09T01:50:22.779Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a2/8d/a9c2a531da0ebb54b4a7174450e8534a39db112a141ae3a437de28420111/pgvector-0.5.1-py3-none-any.whl", hash = "sha256:ec5bcd5ffaefe6ecb2dcc9564ca921d284564b969183bc837a144604773af8ea", size = 31056, upload-time = "2026-10-09T01:50:21.614Z" },
+]
+
+[[package]]
 name = "pillow"
 version = "12.1.1"
 source = { registry = "https://pypi.org/simple" }
@@ -3157,6 +3172,21 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/33/75/f28622ba6dde79cd545055ea7bd4062dc934e0621f7b3be2891f8563f8de/sqlalchemy-2.0.46-cp314-cp314t-musllinux_1_2_aarch64.whl", hash = "sha256:ff33c6e6ad006bbc0f34f5faf941cfc62c45841c64c0a058ac38c799f15b5ede", size = 3470008, upload-time = "2026-01-21T18:33:11.725Z" },
     { url = "https://files.pythonhosted.org/packages/a9/42/4afecbbc38d5e99b18acef446453c76eec6fbd03db0a457a12a056836e22/sqlalchemy-2.0.46-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:82ec52100ec1e6ec671563bbd02d7c7c8d0b9e71a0723c72f22ecf52d1755330", size = 3476137, upload-time = "2026-01-21T18:45:15.001Z" },
     { url = "https://files.pythonhosted.org/packages/fc/a1/9c4efa03300926601c19c18582531b45aededfb961ab3c3585f1e24f120b/sqlalchemy-2.0.46-py3-none-any.whl", hash = "sha256:f9c11766e7e7c0a2767dda5acb006a118640c9fc0a4104214b96269bfb78399e", size = 1937882, upload-time = "2026-01-21T18:22:10.456Z" },
+]
+
+[[package]]
+name = "squareup"
+version = "46.0.0.20260916"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "httpx" },
+    { name = "pydantic" },
+    { name = "pydantic-core" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/78/82/52567f9d7e1903014848a40a8197e1fc3fdbcbac3b45b094ef7f3585bbb2/squareup-46.0.0.20260916.tar.gz", hash = "sha256:7e0e6ca7ebb0eed86fb4a315ab12c8ef639480da174f8d70b9b659cfa27d44b0", size = 830781, upload-time = "2026-09-15T21:02:16.358Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/03/77/ccbe2697420486cd2d3df391ddad5bf7fa6828ef0f96026d08da34d4ee18/squareup-46.0.0.20260916-py3-none-any.whl", hash = "sha256:735fcd0efad66a25cf9c6c8557cdc342bd89dd1f629cbbbbced87e4b8cdcb742", size = 2319462, upload-time = "2026-09-15T21:02:14.284Z" },
 ]
 
 [[package]]

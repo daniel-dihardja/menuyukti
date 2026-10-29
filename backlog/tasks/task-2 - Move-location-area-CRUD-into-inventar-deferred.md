@@ -16,7 +16,7 @@ references:
   - apps/web/app/(protected)/inventar/_components/use-form.tsx
 priority: low
 type: chore
-ordinal: 7000
+ordinal: 27000
 ---
 
 ## Description

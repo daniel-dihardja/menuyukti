@@ -36,9 +36,10 @@ def structured_error_payload(
             "message": failure.message,
             "retryable": failure.retryable,
         }
+    # Avoid leaking raw exception / stack detail to SSE or HTTP clients.
     return {
         "error": True,
         "code": default_code,
-        "message": str(error),
+        "message": "An unexpected error occurred. Please try again.",
         "retryable": False,
     }

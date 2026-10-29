@@ -11,12 +11,12 @@ import {
   touchAgentThread,
   type AgentThreadRecord,
 } from '@/lib/chat/agent-thread-registry'
+import { rebindAgentThreadLocation } from '@/lib/chat/resolve-agent-thread-for-location'
 import { routes } from '@/lib/routes'
-import { useCompactLayout } from '@/hooks/use-desktop-layout'
-import { useSalesReportLabel } from '@/hooks/use-sales-report-label'
-import { cn } from '@workspace/ui/lib/utils'
+import { useAnalytics } from '@/app/(protected)/analytics/use-analytics'
 
 import { ChatWorkspaceSkeleton } from '@/components/chat/chat-workspace-skeleton'
+import type { AdvisorBranchOption } from '@/components/chat/chatkit/advisor-chatkit-shell-context'
 
 const AgentChatPanel = dynamic(
   () => import('../_components/agent-chat-panel').then((m) => m.AgentChatPanel),
@@ -37,36 +37,25 @@ function useIsClient(): boolean {
   )
 }
 
-function AgentThreadSalesReportStrip({
-  locationId,
-  analyticsRunId,
-  className,
+function AgentThreadWorkspaceInner({
+  threadId,
+  branches,
 }: {
-  locationId: number
-  analyticsRunId: number | null
-  className?: string
+  threadId: string
+  branches: AdvisorBranchOption[]
 }) {
   const t = useTranslations('agentChat')
-  const salesReportLabel = useSalesReportLabel(locationId, analyticsRunId)
-
-  return (
-    <p className={cn('shrink-0 truncate text-muted-foreground text-sm', className)}>
-      <span className="font-medium text-foreground">{t('salesReportDetailLabel')}:</span>{' '}
-      <span title={salesReportLabel}>{salesReportLabel}</span>
-    </p>
-  )
-}
-
-function AgentThreadWorkspaceInner({ threadId }: { threadId: string }) {
-  const t = useTranslations('agentChat')
   const router = useRouter()
-  const compact = useCompactLayout()
+  const { setLocationId: setAnalyticsLocationId } = useAnalytics()
   const isClient = useIsClient()
+  const [locationId, setLocationIdState] = useState<number | null>(null)
   const [analyticsRunId, setAnalyticsRunIdState] = useState<number | null>(null)
 
   useEffect(() => {
     if (!isClient || !isAgentThreadId(threadId)) return
-    setAnalyticsRunIdState(getAgentThread(threadId)?.analyticsRunId ?? null)
+    const record = getAgentThread(threadId)
+    setLocationIdState(record?.locationId ?? null)
+    setAnalyticsRunIdState(record?.analyticsRunId ?? null)
   }, [isClient, threadId])
 
   const handleAnalyticsRunIdChange = useCallback(
@@ -75,6 +64,17 @@ function AgentThreadWorkspaceInner({ threadId }: { threadId: string }) {
       touchAgentThread(threadId, { analyticsRunId: next })
     },
     [threadId],
+  )
+
+  const handleLocationIdChange = useCallback(
+    (next: number) => {
+      const updated = rebindAgentThreadLocation(threadId, next)
+      if (!updated) return
+      setLocationIdState(updated.locationId)
+      setAnalyticsRunIdState(updated.analyticsRunId)
+      setAnalyticsLocationId(updated.locationId)
+    },
+    [setAnalyticsLocationId, threadId],
   )
 
   if (!isAgentThreadId(threadId)) {
@@ -88,7 +88,7 @@ function AgentThreadWorkspaceInner({ threadId }: { threadId: string }) {
 
   const record: AgentThreadRecord | null = getAgentThread(threadId)
 
-  if (record === null) {
+  if (record === null || locationId === null) {
     return (
       <div className="flex flex-col gap-4 rounded-md border border-dashed p-8 text-center">
         <p className="text-muted-foreground text-sm">{t('threadNotFound')}</p>
@@ -104,24 +104,26 @@ function AgentThreadWorkspaceInner({ threadId }: { threadId: string }) {
   }
 
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
-      {!compact ? (
-        <AgentThreadSalesReportStrip
-          analyticsRunId={analyticsRunId}
-          locationId={record.locationId}
-        />
-      ) : null}
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       <AgentChatPanel
         agentThreadId={record.id}
         analyticsRunId={analyticsRunId}
-        locationId={record.locationId}
+        branches={branches}
+        locationId={locationId}
         onAnalyticsRunIdChange={handleAnalyticsRunIdChange}
+        onLocationIdChange={handleLocationIdChange}
       />
     </div>
   )
 }
 
 /** Remount on threadId so localStorage read re-runs cleanly. */
-export function AgentThreadWorkspace({ threadId }: { threadId: string }) {
-  return <AgentThreadWorkspaceInner key={threadId} threadId={threadId} />
+export function AgentThreadWorkspace({
+  threadId,
+  branches,
+}: {
+  threadId: string
+  branches: AdvisorBranchOption[]
+}) {
+  return <AgentThreadWorkspaceInner key={threadId} threadId={threadId} branches={branches} />
 }

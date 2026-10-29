@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from graphql.data_sources.models.calendar_entry import CalendarEntry
     from graphql.data_sources.models.instagram import InstagramPost
     from graphql.data_sources.models.inventory_stock import InventoryStock
+    from graphql.data_sources.models.location_advisor_memory import LocationAdvisorMemory
     from graphql.data_sources.models.location_area import LocationArea
     from graphql.data_sources.models.location_manual_brief_input import LocationManualBriefInput
     from graphql.data_sources.models.location_menu_item_cogs import LocationMenuItemCogs
@@ -84,6 +85,11 @@ class Location(Base):
     )
     manual_brief_input: Mapped[LocationManualBriefInput | None] = relationship(
         "LocationManualBriefInput",
+        back_populates="location",
+        uselist=False,
+    )
+    advisor_memory: Mapped[LocationAdvisorMemory | None] = relationship(
+        "LocationAdvisorMemory",
         back_populates="location",
         uselist=False,
     )

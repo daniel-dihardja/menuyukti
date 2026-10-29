@@ -7,8 +7,10 @@ import type { ChatVisualizationId } from './chat-visualization-catalog'
 
 export type ChatVisualizationsContextValue = {
   addedIds: ChatVisualizationId[]
+  collapsedIds: ChatVisualizationId[]
   addVisualization: (id: ChatVisualizationId) => void
   removeVisualization: (id: ChatVisualizationId) => void
+  setVisualizationExpanded: (id: ChatVisualizationId, open: boolean) => void
   hydrated: boolean
   locationId: number
   analyticsRunId: number | null

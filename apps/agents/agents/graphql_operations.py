@@ -25,6 +25,29 @@ query GetLocation($id: ID!) {
 }
 """
 
+LOCATION_ADVISOR_MEMORY_QUERY = """
+query GetLocationAdvisorMemory($id: ID!) {
+  location(id: $id) {
+    id
+    advisorMemory {
+      locationId
+      content
+      updatedAt
+    }
+  }
+}
+"""
+
+UPDATE_LOCATION_ADVISOR_MEMORY_MUTATION = """
+mutation UpdateLocationAdvisorMemory($locationId: Int!, $content: String!) {
+  updateLocationAdvisorMemory(locationId: $locationId, content: $content) {
+    locationId
+    content
+    updatedAt
+  }
+}
+"""
+
 ANALYTICS_RUNS_QUERY = """
 query AnalyticsRunsForLocation($locationId: Int!, $first: Int) {
   analyticsRuns(locationId: $locationId, first: $first) {
@@ -153,6 +176,67 @@ query InventoryRefillForecast($locationId: ID!, $windowDays: Int) {
     priorityRank
     confidence
     windowDays
+  }
+}
+"""
+
+SEARCH_KNOWLEDGE_QUERY = """
+query SearchKnowledge(
+  $query: String!
+  $categories: [String!]
+  $chartIds: [String!]
+  $locationId: Int
+  $limit: Int
+) {
+  searchKnowledge(
+    query: $query
+    categories: $categories
+    chartIds: $chartIds
+    locationId: $locationId
+    limit: $limit
+  ) {
+    chunkId
+    documentId
+    slug
+    title
+    category
+    scopeType
+    content
+    score
+    metadata
+  }
+}
+"""
+
+MENU_ITEMS_CATALOG_FOR_RUN_QUERY = """
+query MenuItemsCatalogForRun($analyticsRunId: ID!) {
+  menuItemsCatalogForRun(analyticsRunId: $analyticsRunId) {
+    analyticsRunId
+    items {
+      id
+      name
+      category
+      categoryDetail
+      price
+      quantity
+      isActive
+    }
+  }
+}
+"""
+
+ANALYTICS_RUN_COGS_QUERY = """
+query AnalyticsRunCogs($id: ID!) {
+  analyticsRun(id: $id) {
+    id
+    name
+    menuItemCogs {
+      menu
+      menuCategory
+      menuCategoryDetail
+      cogs
+      currency
+    }
   }
 }
 """

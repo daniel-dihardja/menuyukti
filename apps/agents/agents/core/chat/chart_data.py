@@ -483,15 +483,18 @@ def format_chart_markdown_section(
     payload: dict[str, Any],
     used_fallback_run: bool = False,
 ) -> str:
+    from agents_app.agents.core.chat.untrusted_context import wrap_untrusted
+
     title = CHART_TITLES[chart_id]
-    lines = [f"## Visualization data — {title}"]
+    heading = f"## Visualization data — {title}"
+    body_lines: list[str] = []
     if used_fallback_run:
-        lines.append(_FALLBACK_NOTE)
+        body_lines.append(_FALLBACK_NOTE)
 
     if chart_id == "venue_slot_strength_heatmap":
         cells_raw = payload.get("slotDemandProfile")
         cells = cells_raw if isinstance(cells_raw, list) else []
-        lines.append(format_slot_demand_profile([c for c in cells if isinstance(c, dict)]))
+        body_lines.append(format_slot_demand_profile([c for c in cells if isinstance(c, dict)]))
     elif chart_id == "menu_item_heatmap":
         items_raw = payload.get("menuHeatmaps")
         items = items_raw if isinstance(items_raw, list) else []
@@ -507,7 +510,7 @@ def format_chart_markdown_section(
             if isinstance(category_map_raw, dict)
             else None
         )
-        lines.append(
+        body_lines.append(
             format_menu_heatmap_summary(
                 [i for i in items if isinstance(i, dict)],
                 daily_start_hour=_as_int(start) if start is not None else None,
@@ -518,11 +521,11 @@ def format_chart_markdown_section(
             )
         )
     elif chart_id == "pair_lift_matrix_heatmap":
-        lines.append(format_pair_lift_matrix(payload))
+        body_lines.append(format_pair_lift_matrix(payload))
     else:
-        lines.append(format_low_end_review(payload))
+        body_lines.append(format_low_end_review(payload))
 
-    return "\n".join(lines)
+    return f"{heading}\n{wrap_untrusted('visualization', '\n'.join(body_lines))}"
 
 
 def format_low_end_review(payload: dict[str, Any]) -> str:

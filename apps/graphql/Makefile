@@ -3,7 +3,7 @@ UV=uv run
 UVICORN=uv run uvicorn
 ALEMBIC=PYTHONPATH=../.. uv run alembic
 
-.PHONY: install run dev db-upgrade db-downgrade db-generate db-history db-current db-stamp db-stamp-head db-check drop-db db-reset-dev test test-qa test-upload test-order-metrics test-menu-item-cogs test-menu-heatmaps test-menu-engineering-matrix load-report generate-dev-mock-excel dev-data lint format typecheck clean
+.PHONY: install run dev db-upgrade db-downgrade db-generate db-history db-current db-stamp db-stamp-head db-check drop-db db-reset-dev test test-qa test-upload test-order-metrics test-menu-item-cogs test-menu-heatmaps test-menu-engineering-matrix load-report generate-dev-mock-excel knowledge-ingest square-smoke dev-data lint format typecheck clean
 
 install:
 	uv sync --all-groups
@@ -71,6 +71,25 @@ test:
 load-report:
 	@if [ -z "$(REPORT_PATH)" ]; then echo "REPORT_PATH is required"; exit 1; fi
 	PYTHONPATH=../.. $(PYTHON) -m graphql.scripts.load_sales_report "$(REPORT_PATH)"
+
+# Ingest advisor knowledge seeds (apps/graphql/knowledge/*.md) into Postgres.
+# Loads repo-root .env then apps/graphql/.env. Needs DATABASE_URL +
+# AI_GATEWAY_API_KEY (or OPENAI_API_KEY) — prefer shared keys in root .env.
+# Examples:
+#   make knowledge-ingest
+#   make knowledge-ingest FORCE=1
+#   make knowledge-ingest DIR=/path/to/seeds
+#   make knowledge-ingest DRY_RUN=1
+knowledge-ingest:
+	PYTHONPATH=../.. $(PYTHON) scripts/ingest_knowledge.py \
+		$(if $(DIR),--dir "$(DIR)",) \
+		$(if $(FORCE),--force,) \
+		$(if $(DRY_RUN),--dry-run,)
+
+# Square sandbox smoke: ListLocations via SQUARE_ACCESS_TOKEN (repo-root .env).
+#   make square-smoke
+square-smoke:
+	PYTHONPATH=../.. $(PYTHON) scripts/square_smoke_list_locations.py
 
 # Regenerate Berlin cafe analytics mock (ESB shell from SNABB; Kaffeestube Mitte menu).
 #   make generate-dev-mock-excel

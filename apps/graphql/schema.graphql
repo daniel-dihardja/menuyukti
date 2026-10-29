@@ -156,6 +156,22 @@ type CategoryMixRowGqlType {
   topItem: String!
 }
 
+type ClearServiceDataResultType {
+  serviceKey: String!
+  clerkUserId: String!
+  workspaceId: ID!
+  locationIds: [ID!]!
+  predictionsDeleted: Int!
+  votingsDeleted: Int!
+  pickupOffersDeleted: Int!
+  ledgerEntriesDeleted: Int!
+  earnRulesDeleted: Int!
+  posOrdersDeleted: Int!
+  menuCategoriesCleared: Int!
+  subscriptionsCanceled: Int!
+  notes: [String!]!
+}
+
 """Recommended promo window for a combo pair."""
 type ComboPairRecommendedWindowType {
   bestDay: String
@@ -194,6 +210,36 @@ type ComboPromoPostureType {
   venueDemandIndex: Float
   venueRelativeDemand: String
   promoReason: String!
+}
+
+"""Create a pickup offer for a location."""
+input CreatePickupOfferInput {
+  locationId: Int!
+  title: String!
+  description: String!
+  availableFrom: DateTime!
+  availableUntil: DateTime!
+  price: Float = null
+}
+
+"""Create a prediction for a location."""
+input CreatePredictionInput {
+  locationId: Int!
+  question: String!
+  closesAt: DateTime!
+  outcomes: [String!]!
+  rewardMode: String! = "social"
+  pointsForVote: Int! = 0
+  pointsForCorrect: Int! = 0
+}
+
+"""Create a voting for a location."""
+input CreateVotingInput {
+  locationId: Int!
+  question: String!
+  options: [String!]!
+  rewardMode: String! = "points"
+  pointsForVote: Int! = 0
 }
 
 """
@@ -308,6 +354,43 @@ type DayTypeBreakdownType {
   revenueShare: Float!
 }
 
+"""Result of deleting the guest Food Profile."""
+type DeleteFoodProfileResultType {
+  deleted: Boolean!
+}
+
+type DevDataSeedResultType {
+  scope: String!
+  clerkUserId: String!
+  workspaceId: ID!
+  createdPrimary: Boolean!
+  inventarCleared: Boolean!
+  inventarLocationId: ID
+  inventarLocationName: String
+  analyticsLocationId: ID
+  analyticsLocationName: String
+  midoLocationId: ID
+  midoLocationName: String
+  inventarCatalogItems: Int
+  inventarStockRows: Int
+  inventarMovements: Int
+  inventarMenuCategories: Int
+  inventarMenuItems: Int
+  inventarClearedPosOrders: Int
+  analyticsRunId: ID
+  analyticsOrderRows: Int
+  analyticsLocationCogs: Int
+  analyticsDeletedSeedRuns: Int
+  analyticsPosSystem: String
+  analyticsMenuCategories: Int
+  analyticsMenuItems: Int
+  analyticsClearedPosOrders: Int
+  midoMenuCategories: Int
+  midoMenuItems: Int
+  midoClearedPosOrders: Int
+  notes: [String!]!
+}
+
 """
 Result of ingesting a sales report Excel file. Line-level `normalizedRows` and `orders` are omitted unless includeLineItems is true.
 """
@@ -319,6 +402,42 @@ type ExcelUploadResult {
   normalizedRows: [NormalizedLineItem!]!
   orders: [OrderType!]!
   salesAnalytics: JSON!
+}
+
+"""Active consent summary for the guest Food Profile."""
+type FoodPreferenceConsentType {
+  id: String!
+  purpose: String!
+  allowedSignalCategories: [String!]!
+  privacyNoticeVersion: String!
+  consentVersion: String!
+  grantedAt: DateTime!
+  withdrawnAt: DateTime
+}
+
+"""One Food Profile preference (guest-self)."""
+type FoodPreferenceType {
+  id: String!
+  preferenceType: String!
+  preferenceValue: String!
+  sourceType: String!
+  sourceRef: String!
+  confidence: Float!
+  originKind: String!
+  explanation: String
+  originLocationId: Int
+  originLocationName: String
+  portabilityEnabled: Boolean!
+  recordedAt: DateTime!
+  updatedAt: DateTime!
+  expiresAt: DateTime
+  removedAt: DateTime
+  consentId: String!
+}
+
+"""DSAR-style Food Profile export payload."""
+type FoodProfileExportType {
+  payloadJson: String!
 }
 
 type FundamentalSalesSignalsType {
@@ -333,6 +452,13 @@ type FundamentalSignalsType {
   sales: FundamentalSalesSignalsType!
   categoryFocus: CategoryFocusType
   trendingItems: [TrendingItemType!]!
+}
+
+type ImportPosSalesReportResult {
+  analyticsRunId: ID!
+  name: String!
+  orderCount: Int!
+  lineCount: Int!
 }
 
 """Tiered analytics payload for campaign_brief and growth agents."""
@@ -454,6 +580,30 @@ The `JSON` scalar type represents JSON values as specified by [ECMA-404](https:/
 """
 scalar JSON @specifiedBy(url: "https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf")
 
+"""A retrieved knowledge chunk for advisor RAG."""
+type KnowledgeSearchHitType {
+  chunkId: Int!
+  documentId: Int!
+  slug: String!
+  title: String!
+  category: String!
+  scopeType: String!
+  content: String!
+  score: Float!
+
+  """Optional JSON metadata (e.g. chart_ids) as a string."""
+  metadata: String
+}
+
+"""
+Durable advisor-written notes for a location (preferences, constraints, outcomes). Separate from owner manualBriefInput.quickProfile.
+"""
+type LocationAdvisorMemoryType {
+  locationId: Int!
+  content: String!
+  updatedAt: DateTime
+}
+
 """Summary of analytics runs for one location."""
 type LocationAnalyticsRunSummaryType {
   id: ID!
@@ -509,6 +659,12 @@ type LocationPublicMenuSettingsType {
   menu: MenuType!
 }
 
+"""Result of updating a location public slug."""
+type LocationPublicSlugType {
+  locationId: Int!
+  publicSlug: String
+}
+
 """
 A restaurant location; ties POS data and product entities to a workspace or legacy owner.
 """
@@ -520,6 +676,9 @@ type LocationType {
   city: String
   country: String
   currency: String
+  legalName: String
+  taxNumber: String
+  vatId: String
   nodeId: ID
   workspaceId: ID
   openingHours: [OpeningHourType!]!
@@ -527,6 +686,11 @@ type LocationType {
 
   """Owner-provided click-first brief hints. Not AI-generated."""
   manualBriefInput: LocationManualBriefInputType
+
+  """
+  Durable advisor-written notes for this venue. Separate from owner manualBriefInput.
+  """
+  advisorMemory: LocationAdvisorMemoryType
 }
 
 type MatrixSignalItemType {
@@ -570,6 +734,19 @@ type MediaCollectionType {
   members: [MediaAssetType!]!
 }
 
+"""Allergen present in a menu item."""
+enum MenuAllergen {
+  gluten
+  dairy
+  eggs
+  fish
+  shellfish
+  peanuts
+  tree_nuts
+  soy
+  sesame
+}
+
 """
 One distinct menu line from POS data with aggregated quantity and avg unit price.
 """
@@ -593,6 +770,7 @@ type MenuCatalogPayloadType {
 input MenuCategoryInput {
   name: String!
   items: [MenuItemInput!]!
+  id: Int = null
 }
 
 """Named section on a location menu (e.g. Food, Drink)."""
@@ -642,6 +820,17 @@ type MenuCombosPayloadType {
   matrixLift: [[Float]!]!
   slotDemandProfile: [SlotDemandCellType!]!
   topPairTiming: [MenuComboPairTimingType!]!
+}
+
+"""Dietary or lifestyle tag on a menu item."""
+enum MenuDietaryTag {
+  vegan
+  vegetarian
+  pescatarian
+  gluten_free
+  dairy_free
+  halal
+  spicy
 }
 
 """
@@ -725,14 +914,50 @@ input MenuItemCogsUpsertInput {
   currency: String = null
 }
 
+"""Guest thumbs sentiment on a menu item."""
+enum MenuItemFeedbackSentiment {
+  POSITIVE
+  NEGATIVE
+}
+
+"""Moderation status for menu item feedback."""
+enum MenuItemFeedbackStatus {
+  PENDING
+  PUBLISHED
+  HIDDEN
+}
+
+"""Owner inbox row for menu item feedback."""
+type MenuItemFeedbackType {
+  id: Int!
+  locationId: Int!
+  menuItemId: Int!
+  menuItemName: String!
+  posOrderId: Int
+  clerkUserId: String!
+  sentiment: MenuItemFeedbackSentiment
+  body: String!
+  guestDisplayName: String
+  ownerReply: String
+  ownerRepliedAt: DateTime
+  status: MenuItemFeedbackStatus!
+  publishedAt: DateTime
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
 """Item payload for replaceLocationMenuItems."""
 input MenuItemInput {
   name: String!
   price: Float!
   description: String = null
+  taxClass: String = null
   isAvailable: Boolean = null
   imageFilename: String = null
+  dietaryTags: [MenuDietaryTag!] = null
+  allergens: [MenuAllergen!] = null
   modifierGroups: [MenuModifierGroupInput!] = null
+  id: Int = null
 }
 
 """One dish line on a location menu."""
@@ -743,9 +968,12 @@ type MenuItemType {
   name: String!
   description: String!
   price: Float!
+  taxClass: String!
   sortOrder: Int!
   isAvailable: Boolean!
   imageFilename: String
+  dietaryTags: [MenuDietaryTag!]!
+  allergens: [MenuAllergen!]!
   modifierGroups: [MenuModifierGroupType!]!
 }
 
@@ -791,6 +1019,10 @@ type MenuType {
   locationId: Int!
   title: String!
   publicEnabled: Boolean!
+  orderingEnabled: Boolean!
+  allowDineIn: Boolean!
+  allowPickup: Boolean!
+  allowDelivery: Boolean!
   headerImageFilename: String
   categories: [MenuCategoryType!]!
 }
@@ -803,9 +1035,24 @@ type Mutation {
   uploadSalesReport(file: Upload!, locationId: ID!, includeLineItems: Boolean! = false): ExcelUploadResult!
 
   """
+  Activate (or re-activate) a service subscription for a location. Requires location ownership. Idempotent upsert to status=active.
+  """
+  activateServiceSubscription(locationId: Int!, serviceKey: String!): ServiceSubscriptionType!
+
+  """
   Award cashback from a payment total (applies app threshold/percent) or redeem a positive amount from the customer's balance. Pass exactly one of paymentAmount or redeemAmount.
   """
   awardCrmCashback(customerId: UUID!, paymentAmount: Int = null, redeemAmount: Int = null, label: String = null): CrmCashbackEntryType!
+
+  """
+  Cancel a service subscription for a location. Requires location ownership. Canceling digital_menu also unpublishes the public menu.
+  """
+  cancelServiceSubscription(locationId: Int!, serviceKey: String!): ServiceSubscriptionType!
+
+  """
+  Clear location-scoped domain data for one service across a Clerk user's workspace and cancel that service's active subscriptions. Staff BFF only; blocked in production unless ALLOW_DEV_DATA_INGEST=1.
+  """
+  clearWorkspaceServiceData(targetClerkUserId: String!, serviceKey: String!): ClearServiceDataResultType!
   createPost(title: String = null): PostType!
   createPostPage(postId: ID!, mediaS3Key: String, prompt: String, imageFormat: String, imageQuality: String, generationModel: String): PostPageType!
   deletePost(id: ID!): Boolean!
@@ -813,7 +1060,7 @@ type Mutation {
   deletePostPageMediaVersion(pageId: ID!, mediaS3Key: String!): PostPageType!
   updatePost(id: ID!, title: String!): PostType!
   updatePostPage(id: ID!, mediaS3Key: String, prompt: String, imageFormat: String, imageQuality: String, generationModel: String): PostPageType!
-  createLocation(workspaceId: ID!, name: String!, street: String = null, city: String = null, country: String = null, currency: String): LocationType!
+  createLocation(workspaceId: ID!, name: String!, street: String = null, city: String = null, country: String = null, currency: String, publicSlug: String): LocationType!
 
   """Create a named visual style pack in the caller's workspace."""
   createStyle(name: String!, referenceImageName: String!, spec: JSON!, isDefault: Boolean! = false): StyleType!
@@ -836,17 +1083,67 @@ type Mutation {
   createPlaybook(locationId: Int!, name: String!, playbookType: String!, startDate: String!, endDate: String!): PlaybookType!
 
   """
-  Disabled for self-serve. Workspaces are staff-provisioned via provisionWorkspace (Menuyukti admin BFF).
+  Create a pickup offer for a location. Requires location ownership and an active pickup_offer subscription. Rejects when another open offer exists.
+  """
+  createPickupOffer(input: CreatePickupOfferInput!): PickupOfferType!
+
+  """
+  Create a prediction for a location. Requires location ownership and an active prediction subscription. reward_mode=points also requires point_system.
+  """
+  createPrediction(input: CreatePredictionInput!): PredictionType!
+
+  """
+  Create a voting for a location. Requires location ownership, an active voting subscription, and an active point_system subscription. Rewards are points-only. The vote stays open until the owner closes it.
+  """
+  createVoting(input: CreateVotingInput!): VotingType!
+
+  """
+  Disabled. Use ensureMyWorkspace for self-serve default workspaces, or provisionWorkspace via the Menuyukti admin BFF for custom setups.
   """
   createWorkspace(name: String!): WorkspaceType!
+
+  """
+  Get or create the primary workspace for the signed-in user. Creates a default owner workspace when none exists. Staff may still use provisionWorkspace for custom agency setups.
+  """
+  ensureMyWorkspace: WorkspaceType!
+
+  """
+  Close a pickup offer (e.g. sold out). Requires location ownership and an active pickup_offer subscription.
+  """
+  closePickupOffer(offerId: Int!): PickupOfferType!
+
+  """
+  Close voting on a prediction without resolving. Requires location ownership and an active prediction subscription.
+  """
+  closePrediction(predictionId: Int!): PredictionType!
+
+  """
+  Close voting on a voting without resolving. Requires location ownership and an active voting subscription.
+  """
+  closeVoting(votingId: Int!): VotingType!
 
   """
   Create a workspace owned by the given Clerk user with the given plan. Intended for staff BFF only; not a customer self-serve path. Defaults to pro (agency-provisioned restaurant clients).
   """
   provisionWorkspace(ownerClerkUserId: String!, name: String!, plan: String = null): WorkspaceType!
+
+  """
+  Create a new analytics run from paid Menuyukti POS tickets in an inclusive UTC date range. Always creates a new run (duplicates allowed).
+  """
+  importPosSalesReport(locationId: ID!, startDate: Date!, endDate: Date!): ImportPosSalesReportResult!
+
+  """
+  Run selective mock seed (inventar / analytics / all / clear-inventar) for a Clerk user's workspace. Same data as make dev-data. Staff BFF only; blocked in production unless ALLOW_DEV_DATA_INGEST=1.
+  """
+  ingestDevData(targetClerkUserId: String!, scope: String!): DevDataSeedResultType!
   inviteWorkspaceMember(workspaceId: ID!, clerkUserId: String!): WorkspaceMembershipType!
   removeWorkspaceMember(workspaceId: ID!, clerkUserId: String!): Boolean!
   upsertMenuItemCogsBulk(analyticsRunId: ID!, items: [MenuItemCogsUpsertInput!]!): [MenuItemCogsType!]!
+
+  """
+  Create or update point earn rules for a location. Requires location ownership and an active point_system subscription.
+  """
+  upsertPointEarnRules(locationId: Int!, rules: [PointEarnRuleInput!]!): [PointEarnRuleType!]!
   upsertLocationMenuItemCogsBulk(locationId: ID!, items: [LocationMenuItemCogsUpsertInput!]!): [LocationMenuItemCogsType!]!
 
   """Refresh an analytics run's COGS snapshot from its location catalog."""
@@ -859,6 +1156,20 @@ type Mutation {
   Replace all categories and items on the location's curated menu (creates the menu if needed). Pass an empty list to clear categories.
   """
   replaceLocationMenuItems(locationId: Int!, categories: [MenuCategoryInput!]!): MenuType!
+
+  """
+  Authenticated guest: leave feedback on a published digital-menu item. Creates a pending note for owner moderation. Optional posOrderId links the note to a digital-menu order the guest opened.
+  """
+  submitMenuItemFeedback(locationId: Int!, menuItemId: Int!, body: String!, sentiment: MenuItemFeedbackSentiment = null, guestDisplayName: String = null, posOrderId: Int = null): MenuItemFeedbackType!
+
+  """Location owner: save a reply on a feedback note."""
+  replyMenuItemFeedback(feedbackId: Int!, reply: String!): MenuItemFeedbackType!
+
+  """Location owner: publish a feedback note on the public menu item."""
+  publishMenuItemFeedback(feedbackId: Int!): MenuItemFeedbackType!
+
+  """Location owner: hide a feedback note from the public menu."""
+  hideMenuItemFeedback(feedbackId: Int!): MenuItemFeedbackType!
 
   """Open a new POS ticket for a location."""
   openPosOrder(locationId: Int!, tableLabel: String = null): PosOrderType!
@@ -888,13 +1199,23 @@ type Mutation {
   """
   closePosOrder(orderId: Int!, paymentMethod: PosPaymentMethod!): PosOrderType!
 
+  """
+  Advance digital-menu prep_status one step forward (received → preparing → ready → served|picked_up).
+  """
+  advancePosOrderPrepStatus(orderId: Int!): PosOrderType!
+
   """Void an open POS ticket (no OrderFact projection)."""
   voidPosOrder(orderId: Int!): PosOrderType!
 
   """
-  Fully refund a paid POS ticket: delete projected OrderFact rows and set status to refunded. Open/void tickets cannot be refunded.
+  Fully refund a paid POS ticket: insert compensating OrderFact rows and set status to refunded. Open/void tickets cannot be refunded.
   """
   refundPosOrder(orderId: Int!): PosOrderType!
+
+  """
+  Authenticated guest: open a POS ticket for a published digital menu and add lines. Rejects if the guest already has an open digital-menu ticket at this location (no append). No location ownership required. Close/pay remains staff-only. dine_in requires tableLabel; delivery requires address+phone; pickup clears table/delivery.
+  """
+  submitPublicMenuOrder(locationId: Int!, lines: [PublicMenuOrderLineInput!]!, fulfillmentMode: PosFulfillmentMode!, tableLabel: String = null, deliveryAddress: String = null, deliveryPhone: String = null, deliveryNotes: String = null): PosOrderType!
 
   """Add a pantry item to the workspace catalog."""
   createInventoryCatalogItem(workspaceId: Int!, name: String!, packageSize: Float!, packageUnit: String!, storageZone: InventoryStorageZone = null, category: InventoryCategory = null, price: Float = null): InventoryCatalogItemType!
@@ -952,7 +1273,9 @@ type Mutation {
   """Delete a CRM customer registration by id. Cascades enrolled devices."""
   deleteCrmCustomer(id: UUID!): Boolean!
 
-  """Delete a location and its analytics, stock, and calendar data."""
+  """
+  Delete a location and its analytics, stock, and calendar data. Refused when paid or refunded POS tickets exist (fiscal retention).
+  """
   deleteLocation(id: ID!): Boolean!
 
   """Delete a visual style pack by id."""
@@ -971,6 +1294,35 @@ type Mutation {
   """
   ensureMediaAsset(filename: String!, displayName: String = null): MediaAssetType!
 
+  """Add an explicit Food Profile preference."""
+  addExplicitFoodPreference(preferenceType: String!, preferenceValue: String!, explanation: String = null): FoodPreferenceType!
+
+  """Correct a Food Profile preference value."""
+  updateFoodPreference(id: ID!, preferenceValue: String!): FoodPreferenceType!
+
+  """Soft-delete a Food Profile preference."""
+  removeFoodPreference(id: ID!): FoodPreferenceType!
+
+  """Enable or disable cross-venue portability for one preference."""
+  setFoodPreferencePortability(id: ID!, enabled: Boolean!): FoodPreferenceType!
+
+  """
+  Enable or disable cross-venue personalization globally. Enabling requires a new cross_venue_personalization consent (notice/version/method).
+  """
+  setCrossVenuePersonalization(enabled: Boolean!, privacyNoticeVersion: String = null, consentVersion: String = null, collectionMethod: String = null, evidenceReference: String = null, allowedSignalCategories: [String!] = null): MyFoodProfileType!
+
+  """Grant Food Profile consent for a purpose."""
+  grantFoodPreferenceConsent(purpose: String!, allowedSignalCategories: [String!]!, privacyNoticeVersion: String!, consentVersion: String!, collectionMethod: String!, evidenceReference: String = null): MyFoodProfileType!
+
+  """Withdraw Food Profile consent for a purpose."""
+  withdrawFoodPreferenceConsent(purpose: String!): MyFoodProfileType!
+
+  """Export Food Profile JSON for the authenticated guest."""
+  exportMyFoodProfile: FoodProfileExportType!
+
+  """Delete Food Profile and preferences; retain consent evidence."""
+  deleteMyFoodProfile: DeleteFoodProfileResultType!
+
   """Add a photo (by filename) to a media collection."""
   addMediaToCollection(collectionId: Int!, filename: String!): MediaCollectionType!
 
@@ -987,6 +1339,26 @@ type Mutation {
   """
   recordAiUsageEvent(provider: String!, feature: String!, status: String!, model: String = null, externalId: String = null, units: Int! = 1, metadata: JSON = null): AiUsageEventType!
 
+  """
+  Authenticated guest: record a Point System earn event for a location. Currently supports open_menu_qr (idempotent once per UTC day). No-ops when Point System is off or the rule is disabled.
+  """
+  recordPointEarnEvent(locationId: Int!, actionKey: String!): RecordPointEarnEventResultType!
+
+  """
+  Mark the winning outcome and resolve the prediction. When reward_mode is points, awards correct voters via the point ledger. Requires location ownership and an active prediction subscription.
+  """
+  resolvePrediction(predictionId: Int!, winningOutcomeId: Int!): PredictionType!
+
+  """
+  Cast one vote on an open prediction. Requires authenticated Clerk guest. When reward_mode is points and points_for_vote > 0, credits the guest if Point System is active.
+  """
+  votePrediction(predictionId: Int!, outcomeId: Int!): PredictionType!
+
+  """
+  Cast one vote on an open voting. Requires authenticated Clerk guest. When reward_mode is points and points_for_vote > 0, credits the guest if Point System is active.
+  """
+  voteVoting(votingId: Int!, optionId: Int!): VotingType!
+
   """Update a manual calendar entry."""
   updateCalendarEntry(id: Int!, title: String = null, date: String = null, time: String = null, description: String, mediaRefs: [CalendarMediaRefInput!]): CalendarEntryType!
 
@@ -995,7 +1367,12 @@ type Mutation {
 
   """Update a CRM app by id."""
   updateCrmApp(id: Int!, title: String!, cashbackThresholdAmount: Int = null, cashbackPercent: Int = null): CrmAppType!
-  updateLocation(id: ID!, name: String, street: String, city: String, country: String, currency: String, openingHours: [OpeningHourInput!]): LocationType!
+  updateLocation(id: ID!, name: String, street: String, city: String, country: String, currency: String, legalName: String, taxNumber: String, vatId: String, publicSlug: String, openingHours: [OpeningHourInput!]): LocationType!
+
+  """
+  Replace advisor memory for a location. Pass empty content to clear. Does not modify owner manualBriefInput / quickProfile.
+  """
+  updateLocationAdvisorMemory(locationId: Int!, content: String!): LocationAdvisorMemoryType!
 
   """
   Replace owner manual brief hints for a location. Pass quickProfile {} to clear. Does not modify AI-generated location_social_settings.
@@ -1005,7 +1382,12 @@ type Mutation {
   """
   Publish or unpublish the location digital menu and set the public slug. Requires location ownership. Creates an empty menu when enabling if none exists.
   """
-  updateLocationPublicMenu(locationId: Int!, publicEnabled: Boolean, publicSlug: String, headerImageFilename: String): LocationPublicMenuSettingsType!
+  updateLocationPublicMenu(locationId: Int!, publicEnabled: Boolean, publicSlug: String, headerImageFilename: String, orderingEnabled: Boolean, allowDineIn: Boolean, allowPickup: Boolean, allowDelivery: Boolean): LocationPublicMenuSettingsType!
+
+  """
+  Set or clear the location public URL slug. Requires location ownership. Does not require a digital_menu subscription. Reserved and duplicate slugs are rejected.
+  """
+  updateLocationPublicSlug(locationId: Int!, publicSlug: String): LocationPublicSlugType!
 
   """Update a visual style pack in the caller's workspace."""
   updateStyle(id: Int!, name: String = null, referenceImageName: String = null, spec: JSON = null, isDefault: Boolean = null): StyleType!
@@ -1017,6 +1399,32 @@ type Mutation {
   Set workspace.plan to free or pro. Intended for staff BFF only; not a customer self-serve upgrade path.
   """
   updateWorkspacePlan(workspaceId: ID!, plan: String!): WorkspaceType!
+}
+
+"""Guest Food Profile summary."""
+type MyFoodProfileType {
+  profileId: String
+  status: String
+  crossVenuePersonalizationEnabled: Boolean!
+  activeConsents: [FoodPreferenceConsentType!]!
+}
+
+"""Guest point balance at one location."""
+type MyPointBalanceType {
+  locationId: Int!
+  locationName: String!
+  balance: Int!
+}
+
+"""One ledger credit/debit for the authenticated guest."""
+type MyPointEntryType {
+  id: String!
+  locationId: Int!
+  locationName: String!
+  amount: Int!
+  actionKey: String!
+  label: String
+  createdAt: DateTime!
 }
 
 type NormalizedLineItem {
@@ -1094,6 +1502,21 @@ type PeriodHeadlineType {
   revenueVsPreviousPct: Float
 }
 
+"""A location pickup offer guests can discover and collect."""
+type PickupOfferType {
+  id: Int!
+  locationId: Int!
+  locationName: String!
+  title: String!
+  description: String!
+  status: String!
+  availableFrom: DateTime!
+  availableUntil: DateTime!
+  price: Float
+  createdAt: DateTime!
+  isLive: Boolean!
+}
+
 """A saved playbook instance for a location and date window."""
 type PlaybookType {
   id: Int!
@@ -1102,6 +1525,31 @@ type PlaybookType {
   playbookType: String!
   startDate: String!
   endDate: String!
+}
+
+"""Upsert payload for one point earn rule."""
+input PointEarnRuleInput {
+  actionKey: String!
+  points: Int!
+  enabled: Boolean!
+}
+
+"""Earn rule for one known Point System action at a location."""
+type PointEarnRuleType {
+  actionKey: String!
+  points: Int!
+  enabled: Boolean!
+}
+
+"""Append-only POS audit event."""
+type PosAuditEventType {
+  id: Int!
+  locationId: Int!
+  posOrderId: Int
+  actorClerkUserId: String!
+  action: String!
+  payloadJson: String!
+  createdAt: DateTime!
 }
 
 """Day close / Z-lite summary for native POS."""
@@ -1125,6 +1573,31 @@ type PosDaySummaryType {
   openTicketsRemaining: Int!
 }
 
+"""Fiscalization / TSE process snapshot for a POS ticket."""
+type PosFiscalProcessType {
+  id: Int!
+  kind: String!
+  state: String!
+  provider: String!
+  tseTransactionId: String
+  tseSignature: String
+  signatureCounter: Int
+  certificateSerial: String
+  clientId: String
+  qrPayload: String
+  processType: String!
+  startedAt: DateTime
+  finishedAt: DateTime
+  lastError: String
+}
+
+"""How a digital-menu (or similar) ticket should be fulfilled."""
+enum PosFulfillmentMode {
+  DINE_IN
+  PICKUP
+  DELIVERY
+}
+
 """Selected modifier snapshot on a POS line."""
 type PosOrderLineModifierType {
   id: Int!
@@ -1135,7 +1608,7 @@ type PosOrderLineModifierType {
   sortOrder: Int!
 }
 
-"""One line on a POS ticket with price/name snapshots."""
+"""One line on a POS ticket with price/name/tax snapshots."""
 type PosOrderLineType {
   id: Int!
   posOrderId: Int!
@@ -1146,6 +1619,10 @@ type PosOrderLineType {
   qty: Int!
   unitPrice: Float!
   lineTotal: Float!
+  taxClass: String!
+  taxRateBps: Int!
+  net: Float!
+  tax: Float!
   note: String
   sortOrder: Int!
   modifiers: [PosOrderLineModifierType!]!
@@ -1163,6 +1640,7 @@ enum PosOrderStatus {
 type PosOrderType {
   id: Int!
   locationId: Int!
+  registerId: Int
   billNumber: String!
   status: PosOrderStatus!
   openedAt: DateTime!
@@ -1170,9 +1648,19 @@ type PosOrderType {
   openedByClerkUserId: String!
   paymentMethod: PosPaymentMethod
   discountAmount: Float!
+  net: Float!
+  tax: Float!
+  gross: Float!
+  taxBreakdown: [PosTaxBreakdownType!]!
   tableLabel: String
+  fulfillmentMode: PosFulfillmentMode
+  prepStatus: PosPrepStatus
+  deliveryAddress: String
+  deliveryPhone: String
+  deliveryNotes: String
   note: String
   refundedAt: DateTime
+  fiscalProcesses: [PosFiscalProcessType!]!
   lines: [PosOrderLineType!]!
 }
 
@@ -1181,6 +1669,24 @@ enum PosPaymentMethod {
   CASH
   CARD
   OTHER
+}
+
+"""Kitchen / fulfillment prep status (independent of payment)."""
+enum PosPrepStatus {
+  RECEIVED
+  PREPARING
+  READY
+  SERVED
+  PICKED_UP
+  DELIVERED
+}
+
+"""VAT breakdown bucket for a POS ticket (euros)."""
+type PosTaxBreakdownType {
+  taxRateBps: Int!
+  net: Float!
+  tax: Float!
+  gross: Float!
 }
 
 """A single generated image version for a post page."""
@@ -1217,6 +1723,40 @@ type PostType {
   pages: [PostPageType!]!
   createdAt: DateTime
   updatedAt: DateTime
+}
+
+"""One outcome option on a prediction."""
+type PredictionOutcomeType {
+  id: Int!
+  label: String!
+  sortOrder: Int!
+}
+
+"""A location prediction guests can vote on."""
+type PredictionType {
+  id: Int!
+  locationId: Int!
+  locationName: String!
+  question: String!
+  status: String!
+  closesAt: DateTime!
+  rewardMode: String!
+  pointsForVote: Int!
+  pointsForCorrect: Int!
+  winningOutcomeId: Int
+  createdAt: DateTime!
+  resolvedAt: DateTime
+  outcomes: [PredictionOutcomeType!]!
+  myVote: PredictionVoteType
+  voteCount: Int!
+}
+
+"""A guest's vote on a prediction."""
+type PredictionVoteType {
+  id: Int!
+  outcomeId: Int!
+  clerkUserId: String!
+  createdAt: DateTime!
 }
 
 """
@@ -1269,6 +1809,30 @@ type PublicHolidayType {
   isTentative: Boolean!
 }
 
+"""One discoverable venue card for the public explore directory."""
+type PublicLocationDirectoryItemType {
+  id: Int!
+  name: String!
+  publicSlug: String!
+  city: String
+  headerImageFilename: String
+  workspaceId: ID
+  mediaOwnerClerkUserId: String
+  menuDishCount: Int!
+  hasPickupOffer: Boolean!
+  pickupOfferTitle: String
+  pickupOfferAvailableUntil: DateTime
+  pickupOfferPrice: Float
+}
+
+"""
+Public explore directory: distinct cities for chips plus matching venues with a published digital menu.
+"""
+type PublicLocationDirectoryType {
+  cities: [String!]!
+  locations: [PublicLocationDirectoryItemType!]!
+}
+
 """
 Public digital menu for a location. Null when the slug is unknown or the menu is not published.
 """
@@ -1280,7 +1844,60 @@ type PublicLocationMenuType {
   workspaceId: ID
   mediaOwnerClerkUserId: String
   headerImageFilename: String
+  orderingEnabled: Boolean!
+  allowDineIn: Boolean!
+  allowPickup: Boolean!
+  allowDelivery: Boolean!
   categories: [PublicMenuCategoryType!]!
+}
+
+"""Teaser for a live pickup offer shown on the public location hub."""
+type PublicLocationPickupOfferTeaserType {
+  title: String!
+  availableUntil: DateTime!
+  price: Float
+}
+
+"""Teaser for open predictions shown on the public location hub."""
+type PublicLocationPredictionTeaserType {
+  question: String!
+  openCount: Int!
+  rewardMode: String!
+  pointsForVote: Int!
+  pointsForCorrect: Int!
+}
+
+"""One guest-facing service entry on a public location hub."""
+type PublicLocationServiceType {
+  key: String!
+  hrefSegment: String!
+  available: Boolean!
+}
+
+"""
+Public location hub by slug. Returned when the slug exists; services may all be unavailable (greeting-only home).
+"""
+type PublicLocationType {
+  id: Int!
+  name: String!
+  publicSlug: String!
+  services: [PublicLocationServiceType!]!
+  headerImageFilename: String
+  workspaceId: ID
+  mediaOwnerClerkUserId: String
+  menuDishCount: Int
+  menuOpenPoints: Int
+  predictionTeaser: PublicLocationPredictionTeaserType
+  votingTeaser: PublicLocationVotingTeaserType
+  pickupOfferTeaser: PublicLocationPickupOfferTeaserType
+}
+
+"""Teaser for open votings shown on the public location hub."""
+type PublicLocationVotingTeaserType {
+  question: String!
+  openCount: Int!
+  rewardMode: String!
+  pointsForVote: Int!
 }
 
 """One category section on the public digital menu."""
@@ -1290,13 +1907,55 @@ type PublicMenuCategoryType {
   items: [PublicMenuItemType!]!
 }
 
+"""One published guest note shown on the public menu item."""
+type PublicMenuItemFeedbackType {
+  sentiment: MenuItemFeedbackSentiment
+  body: String!
+  guestDisplayName: String
+  ownerReply: String
+  createdAt: DateTime!
+}
+
 """One available item on the public digital menu."""
 type PublicMenuItemType {
+  id: Int!
   name: String!
   price: Float!
   sortOrder: Int!
   description: String!
   imageFilename: String
+  dietaryTags: [MenuDietaryTag!]!
+  allergens: [MenuAllergen!]!
+  publishedFeedbackCount: Int!
+  publishedFeedbacks: [PublicMenuItemFeedbackType!]!
+}
+
+"""Guest-facing line on a digital-menu ticket."""
+type PublicMenuOrderLineGuestType {
+  menuItemId: Int!
+  name: String!
+}
+
+"""One line on a guest digital-menu order."""
+input PublicMenuOrderLineInput {
+  menuItemId: Int!
+  qty: Int! = 1
+}
+
+"""
+Guest-facing digital-menu order status. Lines are included when loading the caller's open ticket; status polls may return an empty line list.
+"""
+type PublicMenuOrderStatusType {
+  id: Int!
+  billNumber: String!
+  status: PosOrderStatus!
+  prepStatus: PosPrepStatus
+  fulfillmentMode: PosFulfillmentMode
+  tableLabel: String
+  deliveryAddress: String
+  deliveryPhone: String
+  deliveryNotes: String
+  lines: [PublicMenuOrderLineGuestType!]!
 }
 
 """
@@ -1393,6 +2052,14 @@ type Query {
   menuEngineeringMatrix(analyticsRunId: ID!, categories: [String!] = null, locationId: ID = null): MenuEngineeringMatrixType
 
   """
+  Location owner: list menu item feedback for the digital menu inbox. Optional status filter. Returns empty when unauthenticated or not owner.
+  """
+  locationMenuItemFeedbacks(locationId: Int!, status: MenuItemFeedbackStatus = null): [MenuItemFeedbackType!]!
+
+  """Location owner: count of pending (new) menu item feedback."""
+  locationMenuItemFeedbackPendingCount(locationId: Int!): Int!
+
+  """
   Distinct menu items from the latest analytics run for a location: aggregated from order lines (category, avg unit price). Returns null when there is no run or no order data.
   """
   menuItemsCatalog(locationId: Int!): MenuCatalogPayloadType
@@ -1407,6 +2074,31 @@ type Query {
   """
   promotionMenuItems(analyticsRunId: ID!, locationId: ID = null): PromotionMenuItemsPayloadType
   publicHolidays(country: String!, startDate: String!, endDate: String!): [PublicHolidayType!]!
+
+  """
+  Public location hub by slug. Returns null when the slug is unknown. No authentication required.
+  """
+  publicLocation(slug: String!): PublicLocationType
+
+  """
+  Discoverable venues with a published digital menu. Optional city (exact, case-insensitive) and free-text query on name/city. No authentication required.
+  """
+  publicLocations(city: String = null, query: String = null, hasPickupOffer: Boolean = null, first: Int = null): PublicLocationDirectoryType!
+
+  """
+  Guest-visible predictions for a public location slug when Prediction is active: open, closed (awaiting result), and recently resolved. Empty when the slug is unknown or Prediction is off. Includes myVote when the caller is authenticated.
+  """
+  publicLocationPredictions(slug: String!): [PredictionType!]!
+
+  """
+  Guest-visible open votings for a public location slug when Voting is active. Closed votings are hidden from guests. Empty when the slug is unknown or Voting is off. Includes myVote when the caller is authenticated.
+  """
+  publicLocationVotings(slug: String!): [VotingType!]!
+
+  """
+  Live pickup offer for a public location slug when pickup_offer is active and the offer window is open. Null when unknown, inactive, or no live offer.
+  """
+  publicLocationPickupOffer(slug: String!): PickupOfferType
 
   """
   Public digital menu by location slug. Returns null when the slug is missing or the menu is not published. No authentication required.
@@ -1425,12 +2117,25 @@ type Query {
   posOrder(id: Int!): PosOrderType
 
   """
-  List POS tickets for a location. Defaults to tickets opened since start of the current UTC day.
+  List POS tickets for a location. Defaults to tickets opened since start of the current Europe/Berlin business day. Optional note and prepStatus filter digital-menu Order board tickets.
   """
-  posOrders(locationId: Int!, status: PosOrderStatus = null, since: DateTime = null): [PosOrderType!]!
+  posOrders(locationId: Int!, status: PosOrderStatus = null, since: DateTime = null, note: String = null, prepStatus: PosPrepStatus = null): [PosOrderType!]!
 
   """Day close / Z-lite summary for native POS tickets."""
   posDaySummary(locationId: Int!, onDate: String = null): PosDaySummaryType
+
+  """Append-only audit events for a POS ticket (owner-only)."""
+  posAuditEvents(orderId: Int!): [PosAuditEventType!]!
+
+  """
+  Guest status poll for a digital-menu order the caller opened. Returns null if unauthenticated, not the opener, or not a digital-menu ticket.
+  """
+  publicMenuOrder(orderId: Int!): PublicMenuOrderStatusType
+
+  """
+  Signed-in guest: latest open digital-menu ticket at this location (for restoring My order after reload when local storage is empty).
+  """
+  myOpenPublicMenuOrder(locationId: Int!): PublicMenuOrderStatusType
 
   """
   Manual calendar entries for a location. Returns an empty payload when the caller is unauthenticated, does not own the location, or there are no manual entries.
@@ -1450,6 +2155,11 @@ type Query {
   instagramSignals(analyticsRunId: ID!, locationId: ID = null): InstagramSignalsType
 
   """
+  Semantic search over published knowledge (domain, KPI, playbook). Returns only chunks the caller may access (global + authorized scopes).
+  """
+  searchKnowledge(query: String!, categories: [String!] = null, chartIds: [String!] = null, locationId: Int = null, limit: Int = 6): [KnowledgeSearchHitType!]!
+
+  """
   Revenue and quantity share per menu category for an analytics run. Returns null when the run has no order lines.
   """
   categoryMix(analyticsRunId: ID!, locationId: ID = null): CategoryMixPayloadType
@@ -1460,6 +2170,64 @@ type Query {
   revenueTrends(analyticsRunId: ID!, locationId: ID = null, previousRunId: ID = null): RevenueTrendsPayloadType
   myWorkspace: WorkspaceType
   workspaceMembers(workspaceId: ID!, first: Int = null): [WorkspaceMembershipType!]!
+
+  """
+  Food Profile summary for the authenticated Clerk guest (global switch + active consents). Empty fields when unauthenticated.
+  """
+  myFoodProfile: MyFoodProfileType
+
+  """
+  List Food Profile preferences for the authenticated guest. Empty when unauthenticated.
+  """
+  myFoodPreferences(includeRemoved: Boolean! = false): [FoodPreferenceType!]!
+
+  """One Food Profile preference by id for the authenticated guest."""
+  myFoodPreference(id: ID!): FoodPreferenceType
+
+  """
+  Point balances for the authenticated Clerk user, one row per location with ledger activity. Empty when unauthenticated or no activity.
+  """
+  myPointBalances: [MyPointBalanceType!]!
+
+  """
+  Recent point ledger entries for the authenticated Clerk user (newest first). Empty when unauthenticated.
+  """
+  myPointEntries(limit: Int! = 20): [MyPointEntryType!]!
+
+  """
+  Point earn rules for a location (full catalog merged with saved values). Requires ownership and an active point_system subscription; otherwise [].
+  """
+  pointEarnRules(locationId: Int!): [PointEarnRuleType!]!
+
+  """
+  List pickup offers for a location. Requires location ownership. Empty when unauthenticated or not an owner.
+  """
+  pickupOffers(locationId: Int!): [PickupOfferType!]!
+
+  """
+  List predictions for a location. Requires location ownership. Empty when unauthenticated or not an owner.
+  """
+  predictions(locationId: Int!): [PredictionType!]!
+
+  """
+  Guest predictions at locations the authenticated guest has visited (point ledger or digital-menu orders), with an active prediction subscription. Includes open predictions, plus closed and recently resolved ones the guest voted on. Empty when unauthenticated.
+  """
+  myOpenPredictions: [PredictionType!]!
+
+  """
+  List votings for a location. Requires location ownership. Empty when unauthenticated or not an owner.
+  """
+  votings(locationId: Int!): [VotingType!]!
+
+  """
+  Open guest votings at locations the authenticated guest has visited (point ledger or digital-menu orders), with an active voting subscription. Closed votings are hidden. Empty when unauthenticated.
+  """
+  myOpenVotings: [VotingType!]!
+
+  """
+  Service subscriptions for workspaces the current user belongs to. Defaults to active only; set includeCanceled for history.
+  """
+  myServiceSubscriptions(includeCanceled: Boolean! = false): [ServiceSubscriptionType!]!
 
   """
   Pantry catalog for a workspace. Empty when unauthenticated or not a member.
@@ -1485,6 +2253,12 @@ type Query {
   Aggregated AI usage for the authenticated user in [startDate, endDate] (UTC dates).
   """
   myAiUsageSummary(startDate: String = null, endDate: String = null): AiUsageSummaryType
+}
+
+"""Result of recording a guest point-earn event."""
+type RecordPointEarnEventResultType {
+  awarded: Boolean!
+  balance: Int!
 }
 
 """Per-menu revenue comparison between two analytics periods."""
@@ -1535,6 +2309,20 @@ type SchedulerCalendarSlotType {
   source: String
 }
 
+"""
+Entitlement for a catalog service on one location (digital_menu, stamp_card, cashback).
+"""
+type ServiceSubscriptionType {
+  id: ID!
+  workspaceId: ID!
+  locationId: ID!
+  serviceKey: String!
+  status: String!
+  createdAt: DateTime
+  updatedAt: DateTime
+  canceledAt: DateTime
+}
+
 type SignalConfidenceType {
   tier: String!
   coverageNotes: [String!]!
@@ -1581,6 +2369,40 @@ scalar UUID
 
 """Represents a file upload."""
 scalar Upload
+
+"""One option on a voting."""
+type VotingOptionType {
+  id: Int!
+  label: String!
+  sortOrder: Int!
+}
+
+"""A location voting guests can vote on."""
+type VotingType {
+  id: Int!
+  locationId: Int!
+  locationName: String!
+  question: String!
+  status: String!
+  closesAt: DateTime
+  rewardMode: String!
+  pointsForVote: Int!
+  pointsForCorrect: Int!
+  winningOptionId: Int
+  createdAt: DateTime!
+  resolvedAt: DateTime
+  options: [VotingOptionType!]!
+  myVote: VotingVoteType
+  voteCount: Int!
+}
+
+"""A guest's vote on a voting."""
+type VotingVoteType {
+  id: Int!
+  optionId: Int!
+  clerkUserId: String!
+  createdAt: DateTime!
+}
 
 """Day-of-week demand distribution for a menu item."""
 type WeeklyHeatmapType {

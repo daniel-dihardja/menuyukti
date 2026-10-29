@@ -10,15 +10,20 @@ from agents_app.agents.core.chat.generate_instagram_post_image import (
 from agents_app.agents.core.chat.inventory_refill_forecast import (
     get_inventory_refill_forecast,
 )
+from agents_app.agents.core.chat.list_menu_item_cogs import list_menu_item_cogs
+from agents_app.agents.core.chat.request_cogs_edit import request_cogs_edit
 from agents_app.agents.core.chat.request_story_generate_confirmation import (
     request_story_generate_confirmation,
 )
 from agents_app.agents.core.chat.story_assets import clear_story_assets, save_story_asset
 from agents_app.agents.core.chat.tools import (
+    get_advisor_memory,
     get_chart_data,
     get_location_data,
     list_media,
     list_media_collections,
+    search_knowledge,
+    update_advisor_memory,
 )
 from agents_app.agents.core.tavily_search_tool import make_search_web_tool
 
@@ -57,14 +62,14 @@ def is_inventar_mode(conf: dict[str, Any]) -> bool:
     return conf.get("chat_mode") == "inventar"
 
 
-def has_agent_thread_id(conf: dict[str, Any]) -> bool:
-    raw = conf.get("agent_thread_id")
-    return isinstance(raw, str) and bool(raw.strip())
+def has_leonardo_image_generation(_conf: dict[str, Any]) -> bool:
+    """Whether general-mode chat binds ``generate_instagram_post_image``.
 
-
-def has_leonardo_image_generation(conf: dict[str, Any]) -> bool:
-    """Leonardo generate tool: IG Studio or agent-thread chat."""
-    return has_ig_studio_post_context(conf) or has_agent_thread_id(conf)
+    Always false: advisor Image Assistant is product-off, and IG Studio /
+    deprecated surfaces are out of the active LLM path. Image Assistant mode
+    still binds generate via ``chat_tools_list(image_assistant=True)``.
+    """
+    return False
 
 
 def chat_tools_list(
@@ -105,10 +110,15 @@ def chat_tools_list(
     tools = []
     tools.append(list_media_collections)
     tools.append(list_media)
+    tools.append(search_knowledge)
     if location_id:
         tools.append(get_location_data)
+        tools.append(get_advisor_memory)
+        tools.append(update_advisor_memory)
     if analytics_run:
         tools.append(get_chart_data)
+        tools.append(list_menu_item_cogs)
+        tools.append(request_cogs_edit)
     web = make_search_web_tool()
     if web is not None:
         tools.append(web)

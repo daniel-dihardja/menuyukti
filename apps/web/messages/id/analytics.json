@@ -1,8 +1,8 @@
 {
   "analytics": {
     "branches": {
-      "title": "Lokasi",
-      "description": "Kelola pengaturan yang dihadapi tamu dan menu untuk setiap tempat. Mulai dengan menu digital, lalu tambahkan analitik dan POS saat Anda membutuhkannya.",
+      "title": "Pengaturan venue",
+      "description": "Pengaturan venue lanjutan yang mendukung Analitik AI—menu, tautan tamu, dan konfigurasi lebih dalam. Konteks venue harian dan laporan penjualan ada di advisor.",
       "createDescription": "Beri nama tempat Anda, dapatkan tautan menu tamu, lalu tambahkan hidangan. Jam buka bersifat opsional.",
       "table": {
         "index": "#",

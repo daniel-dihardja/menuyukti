@@ -16,6 +16,9 @@ dependencies = [
     "menuyukti",
     "pyjwt>=2.13.0",
     "cryptography>=49.0.0",
+    "httpx>=0.28.0",
+    "pgvector>=0.3.0",
+    "squareup>=46.0.0.20260916",
 ]
 
 [dependency-groups]

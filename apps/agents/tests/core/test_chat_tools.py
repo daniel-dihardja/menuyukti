@@ -64,6 +64,127 @@ async def test_get_location_data_not_found(monkeypatch: pytest.MonkeyPatch) -> N
 
 
 @pytest.mark.asyncio
+async def test_get_advisor_memory_returns_wrapped_content(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    graphql_mock = AsyncMock(
+        return_value={
+            "location": {
+                "id": "7",
+                "advisorMemory": {
+                    "locationId": 7,
+                    "content": "Do not promote lunch specials.",
+                    "updatedAt": "2026-10-29T10:00:00Z",
+                },
+            }
+        }
+    )
+    monkeypatch.setattr(chat_tools, "get_chat_http_client", lambda: object())
+    monkeypatch.setattr(chat_tools, "graphql_post", graphql_mock)
+
+    out = await chat_tools.get_advisor_memory.ainvoke(
+        {},
+        config={"configurable": {"location_id": 7, "user_id": "u1"}},
+    )
+    assert "BEGIN_UNTRUSTED_DATA" in out
+    assert "channel=advisor_memory" in out
+    assert "Do not promote lunch specials." in out
+    graphql_mock.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_get_advisor_memory_empty(monkeypatch: pytest.MonkeyPatch) -> None:
+    graphql_mock = AsyncMock(
+        return_value={
+            "location": {
+                "id": "7",
+                "advisorMemory": {"locationId": 7, "content": "", "updatedAt": None},
+            }
+        }
+    )
+    monkeypatch.setattr(chat_tools, "get_chat_http_client", lambda: object())
+    monkeypatch.setattr(chat_tools, "graphql_post", graphql_mock)
+
+    out = await chat_tools.get_advisor_memory.ainvoke(
+        {},
+        config={"configurable": {"location_id": 7, "user_id": "u1"}},
+    )
+    assert "empty" in out.lower()
+    assert "BEGIN_UNTRUSTED_DATA" in out
+
+
+@pytest.mark.asyncio
+async def test_get_advisor_memory_missing_location_context() -> None:
+    out = await chat_tools.get_advisor_memory.ainvoke(
+        {},
+        config={"configurable": {"user_id": "u1"}},
+    )
+    assert "Location context is not available" in out
+
+
+@pytest.mark.asyncio
+async def test_update_advisor_memory_success(monkeypatch: pytest.MonkeyPatch) -> None:
+    graphql_mock = AsyncMock(
+        return_value={
+            "updateLocationAdvisorMemory": {
+                "locationId": 7,
+                "content": "Prefer weekend brunch posts.",
+                "updatedAt": "2026-10-29T10:00:00Z",
+            }
+        }
+    )
+    monkeypatch.setattr(chat_tools, "get_chat_http_client", lambda: object())
+    monkeypatch.setattr(chat_tools, "graphql_post", graphql_mock)
+
+    out = await chat_tools.update_advisor_memory.ainvoke(
+        {"content": "Prefer weekend brunch posts."},
+        config={"configurable": {"location_id": 7, "user_id": "u1"}},
+    )
+    assert "updated" in out.lower()
+    kwargs = graphql_mock.await_args.args
+    assert kwargs[2]["locationId"] == 7
+    assert kwargs[2]["content"] == "Prefer weekend brunch posts."
+
+
+@pytest.mark.asyncio
+async def test_update_advisor_memory_clear(monkeypatch: pytest.MonkeyPatch) -> None:
+    graphql_mock = AsyncMock(
+        return_value={
+            "updateLocationAdvisorMemory": {
+                "locationId": 7,
+                "content": "",
+                "updatedAt": None,
+            }
+        }
+    )
+    monkeypatch.setattr(chat_tools, "get_chat_http_client", lambda: object())
+    monkeypatch.setattr(chat_tools, "graphql_post", graphql_mock)
+
+    out = await chat_tools.update_advisor_memory.ainvoke(
+        {"content": ""},
+        config={"configurable": {"location_id": 7, "user_id": "u1"}},
+    )
+    assert "cleared" in out.lower()
+    assert graphql_mock.await_args.args[2]["content"] == ""
+
+
+@pytest.mark.asyncio
+async def test_update_advisor_memory_soft_fails(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    graphql_mock = AsyncMock(side_effect=RuntimeError("graphql boom"))
+    monkeypatch.setattr(chat_tools, "get_chat_http_client", lambda: object())
+    monkeypatch.setattr(chat_tools, "graphql_post", graphql_mock)
+
+    out = await chat_tools.update_advisor_memory.ainvoke(
+        {"content": "note"},
+        config={"configurable": {"location_id": 7, "user_id": "u1"}},
+    )
+    assert out == "Error running update_advisor_memory: tool failed"
+    assert "graphql boom" not in out
+
+
+@pytest.mark.asyncio
 async def test_get_chart_data_missing_location_context() -> None:
     out = await chat_tools.get_chart_data.ainvoke(
         {"chart_id": "venue_slot_strength_heatmap"},
@@ -109,8 +230,9 @@ async def test_get_chart_data_soft_fails_on_load_error(
         {"chart_id": "venue_slot_strength_heatmap"},
         config={"configurable": {"location_id": 7, "user_id": "u1"}},
     )
-    assert out.startswith("Error loading chart data for venue_slot_strength_heatmap:")
-    assert "graphql boom" in out
+    # Soft-fail path must not leak raw backend errors to the model (TASK-8.6).
+    assert out == "Error running get_chart_data: tool failed"
+    assert "graphql boom" not in out
 
 
 @pytest.mark.asyncio

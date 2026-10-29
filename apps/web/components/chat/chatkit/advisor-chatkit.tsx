@@ -2,7 +2,8 @@
 
 import { ChatKit, useChatKit, type SupportedLocale } from '@openai/chatkit-react'
 import { useLocale, useTranslations } from 'next-intl'
-import { useCallback, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Spinner } from '@workspace/ui/components/spinner'
 
 import { useAdvisorChatKitShell } from '@/components/chat/chatkit/advisor-chatkit-shell-context'
 import { AdvisorChatKitToolbar } from '@/components/chat/chatkit/advisor-chatkit-toolbar'
@@ -13,6 +14,7 @@ import {
   touchAgentThread,
 } from '@/lib/chat/agent-thread-registry'
 import { searchAdvisorChatKitEntities } from '@/lib/chat/chatkit-entity-search'
+import { isChatImageAssistantEnabled } from '@/lib/chat/chat-modes'
 import { apiFetch } from '@/lib/api/client-fetch'
 
 /** ChatKit startScreen prompts only render in the new-thread view (threadId === null). */
@@ -69,7 +71,83 @@ function buildChatKitHeaders(shell: {
   return headers
 }
 
+type BootThreadId = string | null
+
+/**
+ * Resolve whether to open the agent thread (history) or null (start-screen prompts)
+ * before mounting ChatKit. ``setThreadId`` after mount does not hydrate transcript the
+ * same way as ``initialThread`` — that caused empty chat on SPA navigation from overview.
+ */
 export function AdvisorChatKit() {
+  const shell = useAdvisorChatKitShell()
+  const shellRef = useRef(shell)
+  shellRef.current = shell
+  const agentThreadId = shell.agentThreadId
+  const [bootThreadId, setBootThreadId] = useState<BootThreadId | 'pending'>(() =>
+    hasChatKitStarted(agentThreadId) ? agentThreadId : 'pending',
+  )
+
+  useEffect(() => {
+    setBootThreadId(hasChatKitStarted(agentThreadId) ? agentThreadId : 'pending')
+  }, [agentThreadId])
+
+  useEffect(() => {
+    if (bootThreadId !== 'pending') return
+
+    let cancelled = false
+    void (async () => {
+      try {
+        const headers = new Headers(buildChatKitHeaders(shellRef.current))
+        headers.set('Content-Type', 'application/json')
+        const res = await fetch('/api/chatkit', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            type: 'threads.get_by_id',
+            params: { thread_id: agentThreadId },
+          }),
+        })
+        if (!res.ok || cancelled) return
+        const data = (await res.json()) as { items?: { data?: unknown[] } }
+        const count = Array.isArray(data.items?.data) ? data.items.data.length : 0
+        if (cancelled) return
+        if (count > 0) {
+          markChatKitStarted(agentThreadId)
+          setBootThreadId(agentThreadId)
+        } else {
+          setBootThreadId(null)
+        }
+      } catch {
+        if (!cancelled) setBootThreadId(null)
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [bootThreadId, agentThreadId])
+
+  if (bootThreadId === 'pending') {
+    return (
+      <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
+        <AdvisorChatKitToolbar onClearChat={() => undefined} />
+        <div className="flex min-h-0 flex-1 items-center justify-center">
+          <Spinner aria-hidden className="size-6 text-muted-foreground" />
+        </div>
+      </div>
+    )
+  }
+
+  // Remount when boot choice changes so ChatKit reads the correct initialThread.
+  return (
+    <AdvisorChatKitSession
+      initialThread={bootThreadId}
+      key={`${agentThreadId}:${bootThreadId ?? 'new'}`}
+    />
+  )
+}
+
+function AdvisorChatKitSession({ initialThread }: { initialThread: BootThreadId }) {
   const t = useTranslations('chat')
   const tMention = useTranslations('chat.mentionMenu')
   const tViz = useTranslations('chat.visualizations')
@@ -157,30 +235,33 @@ export function AdvisorChatKit() {
         shell.chatMode === 'image_assistant' ? 'placeholderImageAssistant' : 'placeholder',
       ),
       // Device uploads require ChatKit AttachmentStore + matching upload response shape.
-      // Media library @-mentions remain available via entities.
+      // @-mentions are attached visualizations only (see searchAdvisorChatKitEntities).
       attachments: {
         enabled: false,
       },
-      tools: [
-        {
-          id: 'slash_image',
-          label: `/${t('slashCommands.image.label')}`,
-          shortLabel: 'Image',
-          icon: 'images',
-          placeholderOverride: t('placeholderImageAssistant'),
-        },
-        {
-          id: 'slash_story',
-          label: `/${t('slashCommands.story.label')}`,
-          shortLabel: 'Story',
-          icon: 'square-image',
-          placeholderOverride: t('placeholderImageAssistant'),
-        },
-      ],
+      tools: isChatImageAssistantEnabled()
+        ? [
+            {
+              id: 'slash_image',
+              label: `/${t('slashCommands.image.label')}`,
+              shortLabel: 'Image',
+              icon: 'images',
+              placeholderOverride: t('placeholderImageAssistant'),
+            },
+            {
+              id: 'slash_story',
+              label: `/${t('slashCommands.story.label')}`,
+              shortLabel: 'Story',
+              icon: 'square-image',
+              placeholderOverride: t('placeholderImageAssistant'),
+            },
+          ]
+        : [],
     },
     commands: {
-      enabled: true,
+      enabled: isChatImageAssistantEnabled(),
       onSearch: async (query: string) => {
+        if (!isChatImageAssistantEnabled()) return []
         const q = query.trim().toLowerCase()
         const all = [
           {
@@ -202,6 +283,7 @@ export function AdvisorChatKit() {
         )
       },
       onSelect: async (command) => {
+        if (!isChatImageAssistantEnabled()) return
         if (command.id === 'mode_image' || command.id === 'mode_story') {
           shellRef.current.setChatMode('image_assistant')
           if (command.id === 'mode_story') {
@@ -217,21 +299,19 @@ export function AdvisorChatKit() {
           query,
           attachedVisualizationIds: addedIds,
           visualizationTitles,
-          mediaGroupLabel: tMention('mediaGroup'),
           chartsGroupLabel: tMention('visualizationsGroup'),
         }),
     },
     // null → ChatKit new-thread view (greeting + preset prompts).
-    // After the first turn we reopen the agent UUID so history hydrates.
-    initialThread: hasChatKitStarted(shell.agentThreadId) ? shell.agentThreadId : null,
+    initialThread,
     onThreadChange: ({ threadId }) => {
       if (threadId) {
         markChatKitStarted(threadId)
-        touchAgentThread(threadId)
+        markChatKitStarted(shellRef.current.agentThreadId)
+        touchAgentThread(shellRef.current.agentThreadId)
       }
     },
     onResponseEnd: () => {
-      // Server maps new ChatKit threads onto X-Chatkit-Agent-Thread-Id.
       markChatKitStarted(shellRef.current.agentThreadId)
     },
     onEffect: ({ name, data }) => {

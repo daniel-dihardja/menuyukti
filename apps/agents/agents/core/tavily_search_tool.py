@@ -49,9 +49,13 @@ def make_search_web_tool() -> BaseTool | None:
 
 
 def _format_tavily_tool_result(out: Any) -> str:
+    from agents_app.agents.core.chat.untrusted_context import wrap_untrusted
+
     if isinstance(out, str):
-        return out
-    try:
-        return json.dumps(out, ensure_ascii=False, indent=2)
-    except (TypeError, ValueError):
-        return repr(out)
+        raw = out
+    else:
+        try:
+            raw = json.dumps(out, ensure_ascii=False, indent=2)
+        except (TypeError, ValueError):
+            raw = repr(out)
+    return wrap_untrusted("web_search", raw)

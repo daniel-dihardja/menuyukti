@@ -116,8 +116,8 @@ def _normalize_user_content(content: Any) -> str | list[str | dict[Any, Any]]:
             else:
                 msg = "image_url blocks must include a url string or {url} object"
                 raise ValueError(msg)
-            if not (url.startswith("data:image/") or url.startswith("https://")):
-                msg = "image_url must be a data:image/... or https:// URL"
+            if not url.startswith("data:image/"):
+                msg = "image_url must be a data:image/... URL"
                 raise ValueError(msg)
             blocks.append({"type": "image_url", "image_url": {"url": url}})
             has_image = True

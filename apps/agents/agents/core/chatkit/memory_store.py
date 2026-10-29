@@ -6,6 +6,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from agents_app.agents.core.chatkit.context import ChatKitRequestContext
+from agents_app.agents.core.chatkit.timestamps import with_utc_created_at
 from chatkit.store import NotFoundError, Store
 from chatkit.types import Attachment, Page, ThreadItem, ThreadMetadata
 
@@ -89,9 +90,9 @@ class MemoryChatKitStore(Store[ChatKitRequestContext]):
         context: ChatKitRequestContext,
     ) -> Page[ThreadItem]:
         self._assert_owner(thread_id, context)
-        items = list(self._items.get(thread_id, []))
+        items = [with_utc_created_at(i) for i in self._items.get(thread_id, [])]
         reverse = order != "asc"
-        items.sort(key=lambda i: i.created_at, reverse=reverse)
+        items.sort(key=lambda i: (i.created_at, i.id), reverse=reverse)
         start = 0
         if after:
             for i, item in enumerate(items):
@@ -110,18 +111,19 @@ class MemoryChatKitStore(Store[ChatKitRequestContext]):
         self, thread_id: str, item: ThreadItem, context: ChatKitRequestContext
     ) -> None:
         self._assert_owner(thread_id, context)
-        self._items.setdefault(thread_id, []).append(item)
+        self._items.setdefault(thread_id, []).append(with_utc_created_at(item))
 
     async def save_item(
         self, thread_id: str, item: ThreadItem, context: ChatKitRequestContext
     ) -> None:
         self._assert_owner(thread_id, context)
+        saved = with_utc_created_at(item)
         items = self._items.setdefault(thread_id, [])
         for i, existing in enumerate(items):
-            if existing.id == item.id:
-                items[i] = item
+            if existing.id == saved.id:
+                items[i] = saved
                 return
-        items.append(item)
+        items.append(saved)
 
     async def load_item(
         self, thread_id: str, item_id: str, context: ChatKitRequestContext
@@ -129,7 +131,7 @@ class MemoryChatKitStore(Store[ChatKitRequestContext]):
         self._assert_owner(thread_id, context)
         for item in self._items.get(thread_id, []):
             if item.id == item_id:
-                return item
+                return with_utc_created_at(item)
         raise NotFoundError(f"Item {item_id} not found")
 
     async def delete_thread(self, thread_id: str, context: ChatKitRequestContext) -> None:

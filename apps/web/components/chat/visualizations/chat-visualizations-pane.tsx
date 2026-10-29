@@ -1,11 +1,16 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { Plus, X } from 'lucide-react'
+import { ChevronDown, Plus, X } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
 import { Button } from '@workspace/ui/components/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@workspace/ui/components/card'
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@workspace/ui/components/collapsible'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,6 +18,7 @@ import {
   DropdownMenuTrigger,
 } from '@workspace/ui/components/dropdown-menu'
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@workspace/ui/components/empty'
+import { cn } from '@workspace/ui/lib/utils'
 
 import { useChatVisualizationsState } from './chat-visualizations-context'
 import { getAvailableCatalogEntries, type ChatVisualizationId } from './chat-visualization-catalog'
@@ -60,8 +66,16 @@ function VisualizationCardBody({
 export function ChatVisualizationsPane() {
   const t = useTranslations('chat.visualizations')
   const tSales = useTranslations('chat.salesReport')
-  const { analyticsRunId, locationId } = useChatVisualizationsState()
-  const { addedIds, addVisualization, removeVisualization, hydrated } = useChatVisualizationsState()
+  const {
+    analyticsRunId,
+    locationId,
+    addedIds,
+    collapsedIds,
+    addVisualization,
+    removeVisualization,
+    setVisualizationExpanded,
+    hydrated,
+  } = useChatVisualizationsState()
 
   const hasSalesReport = analyticsRunId !== null
   const availableEntries = hasSalesReport ? getAvailableCatalogEntries(addedIds) : []
@@ -73,9 +87,9 @@ export function ChatVisualizationsPane() {
 
   if (!hasSalesReport) {
     return (
-      <div className="flex min-h-0 flex-1 flex-col gap-4 p-4">
-        <h2 className="text-balance font-medium text-sm">{t('panelTitle')}</h2>
-        <Empty className="flex-1 border border-dashed">
+      <div className="flex h-full min-h-0 flex-1 flex-col gap-4 overflow-hidden p-4">
+        <h2 className="shrink-0 text-balance font-medium text-sm">{t('panelTitle')}</h2>
+        <Empty className="min-h-0 flex-1 border border-dashed">
           <EmptyHeader>
             <EmptyTitle>{t('noAnalyticsRunTitle')}</EmptyTitle>
             <EmptyDescription>{tSales('attachHint')}</EmptyDescription>
@@ -86,7 +100,7 @@ export function ChatVisualizationsPane() {
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4 p-4">
+    <div className="flex h-full min-h-0 flex-1 flex-col gap-4 overflow-hidden p-4">
       <div className="flex shrink-0 items-center justify-between gap-2">
         <h2 className="text-balance font-medium text-sm">{t('panelTitle')}</h2>
         <DropdownMenu>
@@ -118,7 +132,7 @@ export function ChatVisualizationsPane() {
       </div>
 
       {addedIds.length === 0 ? (
-        <Empty className="flex-1 border border-dashed">
+        <Empty className="min-h-0 flex-1 border border-dashed">
           <EmptyHeader>
             <EmptyTitle>{t('emptyTitle')}</EmptyTitle>
             <EmptyDescription>{t('emptyDescription')}</EmptyDescription>
@@ -131,33 +145,68 @@ export function ChatVisualizationsPane() {
           ) : null}
         </Empty>
       ) : (
-        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">
-          {addedIds.map((id) => (
-            <Card className="shrink-0" key={id}>
-              <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0 pb-2">
-                <CardTitle className="min-w-0 flex-1 truncate text-sm">
-                  {t(`catalog.${id}.title`)}
-                </CardTitle>
-                <Button
-                  aria-label={t('removeAriaLabel', { title: t(`catalog.${id}.title`) })}
-                  className="size-8 shrink-0"
-                  onClick={() => removeVisualization(id)}
-                  size="icon"
-                  type="button"
-                  variant="ghost"
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+          <div className="flex flex-col gap-4 pb-2">
+            {addedIds.map((id) => {
+              const title = t(`catalog.${id}.title`)
+              const open = !collapsedIds.includes(id)
+              return (
+                <Collapsible
+                  key={id}
+                  onOpenChange={(nextOpen) => setVisualizationExpanded(id, nextOpen)}
+                  open={open}
                 >
-                  <X aria-hidden className="size-4" />
-                </Button>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <VisualizationCardBody
-                  analyticsRunId={analyticsRunId}
-                  id={id}
-                  locationId={locationId}
-                />
-              </CardContent>
-            </Card>
-          ))}
+                  <Card className="shrink-0">
+                    <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0 pb-2">
+                      <CollapsibleTrigger asChild>
+                        <Button
+                          aria-label={
+                            open
+                              ? t('collapseAriaLabel', { title })
+                              : t('expandAriaLabel', { title })
+                          }
+                          className="h-auto min-w-0 flex-1 justify-start gap-2 px-0 py-0 text-left hover:bg-transparent"
+                          type="button"
+                          variant="ghost"
+                        >
+                          <ChevronDown
+                            aria-hidden
+                            className={cn(
+                              'text-muted-foreground size-4 shrink-0 transition-transform',
+                              open && 'rotate-180',
+                            )}
+                          />
+                          <CardTitle className="min-w-0 flex-1 truncate text-sm">{title}</CardTitle>
+                        </Button>
+                      </CollapsibleTrigger>
+                      <Button
+                        aria-label={t('removeAriaLabel', { title })}
+                        className="size-8 shrink-0"
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          removeVisualization(id)
+                        }}
+                        size="icon"
+                        type="button"
+                        variant="ghost"
+                      >
+                        <X aria-hidden className="size-4" />
+                      </Button>
+                    </CardHeader>
+                    <CollapsibleContent>
+                      <CardContent className="pt-0">
+                        <VisualizationCardBody
+                          analyticsRunId={analyticsRunId}
+                          id={id}
+                          locationId={locationId}
+                        />
+                      </CardContent>
+                    </CollapsibleContent>
+                  </Card>
+                </Collapsible>
+              )
+            })}
+          </div>
         </div>
       )}
     </div>

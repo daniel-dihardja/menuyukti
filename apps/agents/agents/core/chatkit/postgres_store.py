@@ -7,6 +7,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from agents_app.agents.core.chatkit.context import ChatKitRequestContext
+from agents_app.agents.core.chatkit.timestamps import with_utc_created_at
 from chatkit.store import NotFoundError, Store
 from chatkit.types import Attachment, Page, ThreadItem, ThreadMetadata
 from psycopg import AsyncConnection
@@ -173,49 +174,37 @@ class PostgresChatKitStore(Store[ChatKitRequestContext]):
     ) -> Page[ThreadItem]:
         # Ensure ownership
         await self.load_thread(thread_id, context)
-        order_sql = "ASC" if order == "asc" else "DESC"
+        # Load the full thread then sort in Python after normalizing timestamps.
+        # ChatKit user items use naive local ``datetime.now()`` while assistant
+        # items use aware UTC; SQL ORDER BY on the raw column groups by role in
+        # non-UTC locales. Threads are small (ChatKit pages at 20).
         async with self._pool.connection() as conn:
-            if after:
-                cur = await conn.execute(
+            rows = await (
+                await conn.execute(
                     """
-                    SELECT created_at FROM chatkit_items
-                    WHERE id = %s AND thread_id = %s AND user_id = %s
+                    SELECT payload FROM chatkit_items
+                    WHERE thread_id = %s AND user_id = %s
                     """,
-                    (after, thread_id, context.user_id),
+                    (thread_id, context.user_id),
                 )
-                after_row = await cur.fetchone()
-                if after_row is None:
-                    return Page(data=[], has_more=False, after=None)
-                cmp = ">" if order == "asc" else "<"
-                rows = await (
-                    await conn.execute(
-                        f"""
-                        SELECT payload FROM chatkit_items
-                        WHERE thread_id = %s AND user_id = %s AND created_at {cmp} %s
-                        ORDER BY created_at {order_sql}
-                        LIMIT %s
-                        """,
-                        (thread_id, context.user_id, after_row["created_at"], limit + 1),
-                    )
-                ).fetchall()
-            else:
-                rows = await (
-                    await conn.execute(
-                        f"""
-                        SELECT payload FROM chatkit_items
-                        WHERE thread_id = %s AND user_id = %s
-                        ORDER BY created_at {order_sql}
-                        LIMIT %s
-                        """,
-                        (thread_id, context.user_id, limit + 1),
-                    )
-                ).fetchall()
-        items = [_THREAD_ITEM_ADAPTER.validate_python(r["payload"]) for r in rows[:limit]]
-        has_more = len(rows) > limit
+            ).fetchall()
+        items = [
+            with_utc_created_at(_THREAD_ITEM_ADAPTER.validate_python(r["payload"])) for r in rows
+        ]
+        reverse = order != "asc"
+        items.sort(key=lambda i: (i.created_at, i.id), reverse=reverse)
+        start = 0
+        if after:
+            for i, item in enumerate(items):
+                if item.id == after:
+                    start = i + 1
+                    break
+        slice_ = items[start : start + limit]
+        has_more = start + limit < len(items)
         return Page(
-            data=items,
+            data=slice_,
             has_more=has_more,
-            after=items[-1].id if items and has_more else None,
+            after=slice_[-1].id if slice_ and has_more else None,
         )
 
     async def add_thread_item(
@@ -234,16 +223,17 @@ class PostgresChatKitStore(Store[ChatKitRequestContext]):
                 ThreadMetadata(id=thread_id, created_at=datetime.now(UTC)),
                 context,
             )
-        payload = _THREAD_ITEM_ADAPTER.dump_python(item, mode="json")
+        saved = with_utc_created_at(item)
+        payload = _THREAD_ITEM_ADAPTER.dump_python(saved, mode="json")
         async with self._pool.connection() as conn:
             await conn.execute(
                 """
                 INSERT INTO chatkit_items (id, thread_id, user_id, payload, created_at)
                 VALUES (%s, %s, %s, %s::jsonb, %s)
                 ON CONFLICT (id) DO UPDATE
-                SET payload = EXCLUDED.payload
+                SET payload = EXCLUDED.payload, created_at = EXCLUDED.created_at
                 """,
-                (item.id, thread_id, context.user_id, json.dumps(payload), item.created_at),
+                (saved.id, thread_id, context.user_id, json.dumps(payload), saved.created_at),
             )
 
     async def load_item(
@@ -261,7 +251,7 @@ class PostgresChatKitStore(Store[ChatKitRequestContext]):
             ).fetchone()
         if row is None:
             raise NotFoundError(f"Item {item_id} not found")
-        return _THREAD_ITEM_ADAPTER.validate_python(row["payload"])
+        return with_utc_created_at(_THREAD_ITEM_ADAPTER.validate_python(row["payload"]))
 
     async def delete_thread(self, thread_id: str, context: ChatKitRequestContext) -> None:
         async with self._pool.connection() as conn:

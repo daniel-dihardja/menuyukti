@@ -3,6 +3,7 @@ import { buildLiftMatrixRows } from '@/lib/analytics/menu-combos-page-adapter'
 import type { SlotDemandCell } from '@/lib/graphql/queries/analytics'
 import type { MenuHeatmapsData } from '@/lib/graphql/queries/analytics'
 import type { MenuEngineeringMatrixData } from '@/lib/graphql/queries/analytics'
+import { wrapUntrusted } from '@/lib/chat/untrusted-context'
 import {
   HEATMAP_MATRIX_CHAT_CATEGORIES,
   MENU_HEATMAP_CHAT_TOP_N,
@@ -280,12 +281,13 @@ export function formatVisualizationDataMarkdownSection(args: {
   payload: unknown
   usedFallbackRun?: boolean
 }): string {
-  const lines = [`## Visualization data — ${args.title}`]
+  const heading = `## Visualization data — ${args.title}`
+  const bodyLines: string[] = []
   if (args.usedFallbackRun) {
-    lines.push(
+    bodyLines.push(
       '*(Data from a newer sales report for this location because the selected report had no data for this chart.)*',
     )
   }
-  lines.push(formatVisualizationPayload(args.visualizationId, args.payload))
-  return lines.join('\n')
+  bodyLines.push(formatVisualizationPayload(args.visualizationId, args.payload))
+  return `${heading}\n${wrapUntrusted('visualization', bodyLines.join('\n'))}`
 }

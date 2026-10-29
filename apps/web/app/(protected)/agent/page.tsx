@@ -7,10 +7,7 @@ import type { Metadata } from 'next'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { PageHeading } from '@/components/page-heading'
 import { ANALYTICS_REPORT_SHELL_MAIN_CLASS, ANALYTICS_REPORT_SECTION_CLASS } from '@/lib/app-layout'
-import {
-  getCachedAnalyticsRunsByLocation,
-  getCachedLocationsListData,
-} from '@/lib/graphql/cached-queries'
+import { getCachedLocationsListData } from '@/lib/graphql/cached-queries'
 import { routes } from '@/lib/routes'
 import { Button } from '@workspace/ui/components/button'
 import { Skeleton } from '@workspace/ui/components/skeleton'
@@ -29,26 +26,6 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
-function parseRequestedLocationId(raw: string | undefined): number | null {
-  if (!raw) return null
-  const parsed = Number(raw)
-  if (!Number.isInteger(parsed) || parsed < 1) return null
-  return parsed
-}
-
-function resolveInitialLocationId(
-  branches: Array<{ id: number }>,
-  requestedLocationId: number | null,
-): number | null {
-  if (
-    requestedLocationId !== null &&
-    branches.some((branch) => branch.id === requestedLocationId)
-  ) {
-    return requestedLocationId
-  }
-  return branches.length === 1 ? (branches[0]?.id ?? null) : null
-}
-
 function AgentListSkeleton() {
   return (
     <div className="flex flex-col gap-8">
@@ -58,20 +35,14 @@ function AgentListSkeleton() {
   )
 }
 
-async function AgentListData({ requestedLocationId }: { requestedLocationId: number | null }) {
+async function AgentListData() {
   const t = await getTranslations('agentChat')
   const { isAuthenticated, userId } = await auth()
   if (!isAuthenticated || !userId) {
     throw new Error('Invariant: expected authenticated session under (protected) layout')
   }
 
-  const locationsPromise = getCachedLocationsListData(userId)
-  const requestedRunsPromise =
-    requestedLocationId !== null
-      ? getCachedAnalyticsRunsByLocation(userId, requestedLocationId)
-      : null
-
-  const data = await locationsPromise
+  const data = await getCachedLocationsListData(userId)
   const branches = data.locations.map((loc) => ({
     id: Number(loc.id),
     name: loc.name,
@@ -91,33 +62,11 @@ async function AgentListData({ requestedLocationId }: { requestedLocationId: num
     )
   }
 
-  const initialLocationId = resolveInitialLocationId(branches, requestedLocationId)
-  let initialAnalyticsRuns: Array<{ id: number; name: string }> = []
-  if (initialLocationId !== null) {
-    if (requestedRunsPromise !== null && initialLocationId === requestedLocationId) {
-      initialAnalyticsRuns = await requestedRunsPromise
-    } else {
-      initialAnalyticsRuns = await getCachedAnalyticsRunsByLocation(userId, initialLocationId)
-    }
-  }
-
-  return (
-    <AgentThreadsClient
-      branches={branches}
-      initialAnalyticsRuns={initialAnalyticsRuns}
-      initialLocationId={initialLocationId}
-    />
-  )
+  return <AgentThreadsClient branches={branches} />
 }
 
-export default async function AgentPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ locationId?: string }>
-}) {
+export default async function AgentPage() {
   const t = await getTranslations('agentChat')
-  const { locationId: locationIdParam } = await searchParams
-  const requestedLocationId = parseRequestedLocationId(locationIdParam)
 
   return (
     <AnalyticsPageShell
@@ -128,7 +77,7 @@ export default async function AgentPage({
       <section className={cn('flex flex-col gap-6', ANALYTICS_REPORT_SECTION_CLASS)}>
         <PageHeading description={t('listDescription')} title={t('metaTitle')} />
         <Suspense fallback={<AgentListSkeleton />}>
-          <AgentListData requestedLocationId={requestedLocationId} />
+          <AgentListData />
         </Suspense>
       </section>
     </AnalyticsPageShell>

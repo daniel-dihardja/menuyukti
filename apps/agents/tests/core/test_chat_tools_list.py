@@ -24,7 +24,12 @@ def test_chat_tools_list_excludes_search_web_without_key() -> None:
     assert "get_milestone" not in names
     assert "update_milestone_input" not in names
     assert "get_location_data" in names
+    assert "get_advisor_memory" in names
+    assert "update_advisor_memory" in names
+    assert "search_knowledge" in names
     assert "get_chart_data" not in names
+    assert "list_menu_item_cogs" not in names
+    assert "request_cogs_edit" not in names
     assert "present_weekly_instagram_schedule" not in names
 
 
@@ -32,8 +37,11 @@ def test_chat_tools_list_includes_charts_when_analytics_run() -> None:
     from agents_app.agents.core.chat.graph import chat_tools_list
 
     names = [getattr(t, "name", "") for t in chat_tools_list(analytics_run=True)]
+    assert "list_menu_item_cogs" in names
+    assert "request_cogs_edit" in names
     assert "get_chart_data" in names
     assert "get_location_data" in names
+    assert "search_knowledge" in names
 
 
 def test_chat_tools_list_includes_search_web_with_key(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -58,6 +66,8 @@ def test_chat_tools_list_omits_location_without_location_id() -> None:
 
     names = [getattr(t, "name", "") for t in chat_tools_list(location_id=False)]
     assert "get_location_data" not in names
+    assert "get_advisor_memory" not in names
+    assert "update_advisor_memory" not in names
     assert "get_chart_data" not in names
     assert "list_media_collections" in names
     assert "list_media" in names
@@ -69,6 +79,9 @@ def test_chat_tools_list_inventar_mode() -> None:
 
     names = [getattr(t, "name", "") for t in chat_tools_list(inventar=True, location_id=True)]
     assert names == ["get_inventory_refill_forecast", "get_location_data"]
+    assert "get_advisor_memory" not in names
+    assert "update_advisor_memory" not in names
+    assert "search_knowledge" not in names
     assert "present_weekly_instagram_schedule" not in names
     assert "generate_instagram_post_image" not in names
 
@@ -100,6 +113,8 @@ def test_chat_tools_list_from_config_gates_by_context() -> None:
     assert "get_milestone" not in agent_names
     assert "get_location_data" not in agent_names
     assert "get_chart_data" not in agent_names
+    assert "list_menu_item_cogs" not in agent_names
+    assert "request_cogs_edit" not in agent_names
     assert "generate_instagram_post_image" not in agent_names
     assert "list_media_collections" in agent_names
     assert "list_media" in agent_names
@@ -111,7 +126,11 @@ def test_chat_tools_list_from_config_gates_by_context() -> None:
     assert "get_milestone" not in with_location_names
     assert "update_milestone_input" not in with_location_names
     assert "get_location_data" in with_location_names
+    assert "get_advisor_memory" in with_location_names
+    assert "update_advisor_memory" in with_location_names
     assert "get_chart_data" not in with_location_names
+    assert "list_menu_item_cogs" not in with_location_names
+    assert "request_cogs_edit" not in with_location_names
     assert "generate_instagram_post_image" not in with_location_names
 
     with_report = chat_tools_list_from_config(
@@ -120,6 +139,8 @@ def test_chat_tools_list_from_config_gates_by_context() -> None:
     with_report_names = [getattr(t, "name", "") for t in with_report]
     assert "get_location_data" in with_report_names
     assert "get_chart_data" in with_report_names
+    assert "list_menu_item_cogs" in with_report_names
+    assert "request_cogs_edit" in with_report_names
 
     agent_thread = chat_tools_list_from_config(
         {
@@ -130,14 +151,15 @@ def test_chat_tools_list_from_config_gates_by_context() -> None:
         }
     )
     agent_thread_names = [getattr(t, "name", "") for t in agent_thread]
-    assert "generate_instagram_post_image" in agent_thread_names
+    assert "generate_instagram_post_image" not in agent_thread_names
     assert "get_location_data" in agent_thread_names
     assert "get_chart_data" in agent_thread_names
     assert "get_milestone" not in agent_thread_names
 
+    # Deprecated IG Studio post context must not bind Leonardo on the advisor path.
     ig_studio = chat_tools_list_from_config({"user_id": "u1", "post_id": "10", "page_id": "20"})
     ig_names = [getattr(t, "name", "") for t in ig_studio]
-    assert "generate_instagram_post_image" in ig_names
+    assert "generate_instagram_post_image" not in ig_names
     assert "get_milestone" not in ig_names
     assert "get_chart_data" not in ig_names
 
@@ -166,6 +188,7 @@ def test_compile_chat_graph_registers_scratchpad_tools_and_tool_error_middleware
     assert "clear_story_assets" in tool_node.tools_by_name
     assert "request_story_generate_confirmation" in tool_node.tools_by_name
     assert "get_inventory_refill_forecast" in tool_node.tools_by_name
+    assert "search_knowledge" in tool_node.tools_by_name
     assert "story_assets" in ChatAgentState.__annotations__
     # Error handling is middleware-based (not private ToolNode._handle_tool_errors).
     assert hasattr(_handle_tool_errors, "awrap_tool_call")
