@@ -235,7 +235,7 @@ function AdvisorChatKitSession({ initialThread }: { initialThread: BootThreadId 
         shell.chatMode === 'image_assistant' ? 'placeholderImageAssistant' : 'placeholder',
       ),
       // Device uploads require ChatKit AttachmentStore + matching upload response shape.
-      // Media library @-mentions remain available via entities.
+      // @-mentions are attached visualizations only (see searchAdvisorChatKitEntities).
       attachments: {
         enabled: false,
       },
@@ -299,7 +299,6 @@ function AdvisorChatKitSession({ initialThread }: { initialThread: BootThreadId 
           query,
           attachedVisualizationIds: addedIds,
           visualizationTitles,
-          mediaGroupLabel: tMention('mediaGroup'),
           chartsGroupLabel: tMention('visualizationsGroup'),
         }),
     },
