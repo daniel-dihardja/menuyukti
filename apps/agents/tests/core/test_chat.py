@@ -694,7 +694,8 @@ def test_delete_chat_history_also_clears_chatkit_store(client: TestClient) -> No
         )
 
     anyio.run(_seed)
-    assert AGENT_THREAD_ID in store._threads  # noqa: SLF001 — MemoryChatKitStore
+    memory = getattr(store, "_inner", store)
+    assert AGENT_THREAD_ID in memory._threads  # noqa: SLF001 — MemoryChatKitStore
     cp = client.app.state.chat_checkpointer
     lg_id = f"user-1:agent:{AGENT_THREAD_ID}"
     cp.storage[lg_id] = {}
@@ -707,4 +708,4 @@ def test_delete_chat_history_also_clears_chatkit_store(client: TestClient) -> No
     assert response.status_code == 200
     assert lg_id not in cp.storage
     # load_thread autocreates empty agent threads; assert delete removed the row itself.
-    assert AGENT_THREAD_ID not in store._threads  # noqa: SLF001
+    assert AGENT_THREAD_ID not in memory._threads  # noqa: SLF001

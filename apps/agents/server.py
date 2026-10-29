@@ -115,14 +115,17 @@ async def _chat_runtime(
     chatkit_pool = None
     from agents_app.agents.core.chatkit.server import build_chatkit_server
 
+    from agents_app.agents.core.chatkit.hydrating_store import HydratingChatKitStore
+
     if chatkit_db_url:
         from agents_app.agents.core.chatkit.postgres_store import open_chatkit_postgres_store
 
-        store, chatkit_pool = await open_chatkit_postgres_store(chatkit_db_url)
+        raw_store, chatkit_pool = await open_chatkit_postgres_store(chatkit_db_url)
+        store = HydratingChatKitStore(raw_store)
         app.state.chatkit_store = store
         app.state.chatkit_server = build_chatkit_server(store)
     else:
-        store = MemoryChatKitStore()
+        store = HydratingChatKitStore(MemoryChatKitStore())
         app.state.chatkit_store = store
         app.state.chatkit_server = build_chatkit_server(store)
         _logger.warning(
