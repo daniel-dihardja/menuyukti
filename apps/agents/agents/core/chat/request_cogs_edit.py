@@ -25,10 +25,10 @@ def select_cogs_edit_items(
 ) -> list[CogsListItem] | str:
     """Pick rows for the edit form, or return an error string for the model."""
     if scope == "missing":
-        selected = [row for row in all_items if row.get("status") == "missing"]
-        if not selected:
+        missing_rows = [row for row in all_items if row.get("status") == "missing"]
+        if not missing_rows:
             return "No menu items are missing COGS on this sales report."
-        return selected[:COGS_EDIT_FORM_CAP]
+        return missing_rows[:COGS_EDIT_FORM_CAP]
 
     names = [n.strip() for n in (menu_names or []) if isinstance(n, str) and n.strip()]
     if not names:

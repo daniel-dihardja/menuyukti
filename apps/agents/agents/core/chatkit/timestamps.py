@@ -10,6 +10,7 @@ assistant is correctly ~11:00Z.
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from typing import cast
 
 from chatkit.types import ThreadItem
 
@@ -29,4 +30,5 @@ def with_utc_created_at[TItem: ThreadItem](item: TItem) -> TItem:
     normalized = ensure_utc(created)
     if normalized == created:
         return item
-    return item.model_copy(update={"created_at": normalized})
+    # model_copy is typed as returning the union ThreadItem, not the type param.
+    return cast(TItem, item.model_copy(update={"created_at": normalized}))
