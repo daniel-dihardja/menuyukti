@@ -66,7 +66,7 @@
 
 ## Output files
 
-### `docs/audits/germany-readiness/latest/` (FULL / comparable DELTA baseline)
+### `backlog/docs/audits/germany-readiness/latest/` (FULL / comparable DELTA baseline)
 
 | File                     | Source template                      |
 | ------------------------ | ------------------------------------ |
@@ -78,7 +78,7 @@
 | `engineering-roadmap.md` | templates/engineering-roadmap.md     |
 | `evidence-register.md`   | condensed finding evidence table     |
 
-### `docs/audits/germany-readiness/history/YYYY-MM-DD_HH-mm_<commit>/`
+### `backlog/docs/audits/germany-readiness/history/YYYY-MM-DD_HH-mm_<commit>/`
 
 Immutable copy including `audit.json`, key markdown reports, and `comparison.md` (from audit-comparison template).
 

@@ -39,13 +39,13 @@ Every comparable audit produces an evidence-backed score **0–100** from the **
 
 **Read-only** with respect to application source and operational systems.
 
-| Allowed                                                    | Forbidden without explicit approval                               |
-| ---------------------------------------------------------- | ----------------------------------------------------------------- |
-| Repository inspection                                      | Application source modification                                   |
-| Safe static analysis                                       | Production DB changes                                             |
-| Safe local tests (existing suite, no destructive fixtures) | Live attacks against production / shared staging without approval |
-| Report generation under `docs/audits/graphql-security/`    | Exfiltrating secrets, sending tenant data externally              |
-| Historical comparison                                      | Dependency installs, deployments, credential rotation             |
+| Allowed                                                         | Forbidden without explicit approval                               |
+| --------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Repository inspection                                           | Application source modification                                   |
+| Safe static analysis                                            | Production DB changes                                             |
+| Safe local tests (existing suite, no destructive fixtures)      | Live attacks against production / shared staging without approval |
+| Report generation under `backlog/docs/audits/graphql-security/` | Exfiltrating secrets, sending tenant data externally              |
+| Historical comparison                                           | Dependency installs, deployments, credential rotation             |
 
 Do **not** invent exploit PoCs that write payloads or attack procedures into the repo. Describe risk and remediation at a high level; cite code paths as evidence. Record any test that could not run and why.
 
@@ -55,7 +55,7 @@ Do **not** invent exploit PoCs that write payloads or attack procedures into the
 
 Inspect the GraphQL API, auth helpers, server middleware, representative queries/mutations across domains, and trusted callers (`apps/web` GraphQL client + BFF, `apps/agents` `graphql_post`).
 
-Produce all reports, overwrite `docs/audits/graphql-security/latest/`, and write an immutable snapshot under `history/`.
+Produce all reports, overwrite `backlog/docs/audits/graphql-security/latest/`, and write an immutable snapshot under `history/`.
 
 ### DELTA AUDIT
 
@@ -180,10 +180,10 @@ Prefer negative tests (`OTHER_USER` / foreign `location_id`) as strongest eviden
 
 ## Report outputs
 
-**Canonical output root:** `docs/audits/graphql-security/`
+**Canonical output root:** `backlog/docs/audits/graphql-security/`
 
 ```text
-docs/audits/graphql-security/
+backlog/docs/audits/graphql-security/
 ├── latest/          # overwritten by FULL (and comparable DELTA that publishes a new baseline)
 ├── history/YYYY-MM-DD_HH-mm_<commit>/   # immutable
 └── progress.md

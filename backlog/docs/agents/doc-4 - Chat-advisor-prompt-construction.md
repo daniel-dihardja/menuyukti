@@ -3,7 +3,7 @@ id: doc-4
 title: Chat advisor prompt construction
 type: guide
 created_date: '2026-10-29T15:50:00Z'
-updated_date: '2026-10-29T16:01:00Z'
+updated_date: '2026-10-29T16:07:00Z'
 tags:
   - chat
   - advisor
@@ -16,7 +16,7 @@ tags:
 **Audience:** engineering  
 **Scope:** System prompt assembly for Menuyukti advisor chat (`apps/agents`), including modes `general`, `image_assistant`, and `inventar`.  
 **Kind:** implementation guide — how the prompt is built and how each block behaves.  
-**Related:** [doc-1 Chat advisor security overview](../security/doc-1%20-%20Chat-advisor-security-overview.md); [doc-3 Chat advisor memory management](../security/doc-3%20-%20Chat-advisor-memory-management.md).
+**Related:** [doc-1 Chat advisor security overview](../security/doc-1%20-%20Chat-advisor-security-overview.md); [doc-3 Chat advisor memory management](../security/doc-3%20-%20Chat-advisor-memory-management.md); [doc-5 Chat advisor knowledge RAG](doc-5%20-%20Chat-advisor-knowledge-RAG.md).
 
 ---
 
@@ -154,7 +154,7 @@ Chart IDs and semantics (`venue_slot_strength_heatmap`, `menu_item_heatmap`, `pa
 
 ### Knowledge search (`KNOWLEDGE_SECTION`)
 
-When to call / skip `search_knowledge`; retrieved text is untrusted; live charts beat knowledge for numbers. Always included in general.
+When to call / skip `search_knowledge`; retrieved text is untrusted; live charts beat knowledge for numbers. Always included in general. Full RAG stack: [doc-5](doc-5%20-%20Chat-advisor-knowledge-RAG.md).
 
 ### Location (`LOCATION_SECTION`)
 
