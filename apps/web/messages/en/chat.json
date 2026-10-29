@@ -176,6 +176,8 @@
       "emptyDescription": "Add a chart from the catalog to explore sales analytics alongside your plan.",
       "addButton": "Add visualization",
       "addMenuAriaLabel": "Add visualization",
+      "expandAriaLabel": "Expand {title}",
+      "collapseAriaLabel": "Collapse {title}",
       "removeAriaLabel": "Remove {title}",
       "noAnalyticsRunTitle": "Link a sales report",
       "noAnalyticsRunDescription": "Attach a sales report in the chat composer to explore charts and sales-grounded advice.",

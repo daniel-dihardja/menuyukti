@@ -42,6 +42,30 @@ export function parseStoredVisualizationIds(value: string | null): ChatVisualiza
   }
 }
 
+/** Collapsed chart ids share the same storage shape as attached ids. */
+export const parseStoredCollapsedVisualizationIds = parseStoredVisualizationIds
+
+export function setCollapsedVisualizationId(
+  collapsedIds: ChatVisualizationId[],
+  id: ChatVisualizationId,
+  collapsed: boolean,
+): ChatVisualizationId[] {
+  const isCollapsed = collapsedIds.includes(id)
+  if (collapsed) {
+    if (isCollapsed) return collapsedIds
+    return [...collapsedIds, id]
+  }
+  if (!isCollapsed) return collapsedIds
+  return collapsedIds.filter((existing) => existing !== id)
+}
+
+export function removeCollapsedVisualizationId(
+  collapsedIds: ChatVisualizationId[],
+  id: ChatVisualizationId,
+): ChatVisualizationId[] {
+  return removeVisualizationId(collapsedIds, id)
+}
+
 export function getAvailableCatalogEntries(
   addedIds: ChatVisualizationId[],
 ): ChatVisualizationCatalogEntry[] {

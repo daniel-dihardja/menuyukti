@@ -149,6 +149,8 @@
       "emptyDescription": "Tambahkan grafik dari katalog untuk menjelajahi analitik penjualan bersama rencana Anda.",
       "addButton": "Tambah visualisasi",
       "addMenuAriaLabel": "Tambah visualisasi",
+      "expandAriaLabel": "Perluas {title}",
+      "collapseAriaLabel": "Ciutkan {title}",
       "removeAriaLabel": "Hapus {title}",
       "noAnalyticsRunTitle": "Tautkan laporan penjualan",
       "noAnalyticsRunDescription": "Lampirkan laporan penjualan di composer chat untuk menjelajahi grafik dan saran berbasis penjualan.",
