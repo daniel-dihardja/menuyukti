@@ -184,3 +184,36 @@ query SearchKnowledge(
   }
 }
 """
+
+MENU_ITEMS_CATALOG_FOR_RUN_QUERY = """
+query MenuItemsCatalogForRun($analyticsRunId: ID!) {
+  menuItemsCatalogForRun(analyticsRunId: $analyticsRunId) {
+    analyticsRunId
+    items {
+      id
+      name
+      category
+      categoryDetail
+      price
+      quantity
+      isActive
+    }
+  }
+}
+"""
+
+ANALYTICS_RUN_COGS_QUERY = """
+query AnalyticsRunCogs($id: ID!) {
+  analyticsRun(id: $id) {
+    id
+    name
+    menuItemCogs {
+      menu
+      menuCategory
+      menuCategoryDetail
+      cogs
+      currency
+    }
+  }
+}
+"""

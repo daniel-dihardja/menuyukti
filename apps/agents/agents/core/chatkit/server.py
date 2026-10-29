@@ -135,6 +135,26 @@ def _menuyukti_chatkit_server_cls() -> type:
                 async for event in self.respond(thread, fake, context):
                     yield event
                 return
+            if action_type == "cogs.edit_ack":
+                # Form submit ack only — values are not persisted yet.
+                fake = UserMessageItem(
+                    id=self.store.generate_item_id("message", thread, context),
+                    thread_id=thread.id,
+                    created_at=_utcnow(),
+                    content=[
+                        UserMessageTextContent(
+                            text=(
+                                "I filled in the COGS form fields. Acknowledge that you "
+                                "saw the form; do not claim the values were saved."
+                            )
+                        )
+                    ],
+                    inference_options=InferenceOptions(),
+                )
+                await self.store.add_thread_item(thread.id, fake, context)
+                async for event in self.respond(thread, fake, context):
+                    yield event
+                return
             _logger.info("Unhandled ChatKit action type=%s", action_type)
 
     _SERVER_CLS = MenuyuktiChatKitServer

@@ -14,6 +14,8 @@ from agents_app.agents.core.chat.request_story_generate_confirmation import (
     request_story_generate_confirmation,
 )
 from agents_app.agents.core.chat.story_assets import clear_story_assets, save_story_asset
+from agents_app.agents.core.chat.list_menu_item_cogs import list_menu_item_cogs
+from agents_app.agents.core.chat.request_cogs_edit import request_cogs_edit
 from agents_app.agents.core.chat.tools import (
     get_chart_data,
     get_location_data,
@@ -111,6 +113,8 @@ def chat_tools_list(
         tools.append(get_location_data)
     if analytics_run:
         tools.append(get_chart_data)
+        tools.append(list_menu_item_cogs)
+        tools.append(request_cogs_edit)
     web = make_search_web_tool()
     if web is not None:
         tools.append(web)

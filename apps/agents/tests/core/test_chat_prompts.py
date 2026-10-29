@@ -4,6 +4,7 @@ from agents_app.agents.core.chat.graph import chat_tools_list_from_config
 from agents_app.agents.core.chat.prompts import (
     CHART_ANALYTICS_SECTION,
     CHART_CATALOG_BLOCK,
+    COGS_SECTION,
     IG_STUDIO_BLOCK,
     KNOWLEDGE_SECTION,
     LEONARDO_IMAGE_BLOCK,
@@ -100,8 +101,12 @@ def test_build_system_prompt_with_chart_catalog() -> None:
     out = build_system_prompt(include_chart_catalog=True)
     assert CHART_CATALOG_BLOCK.strip() in out
     assert CHART_ANALYTICS_SECTION.strip() in out
+    assert COGS_SECTION.strip() in out
     assert "## Workflow chart catalog" in out
     assert "## Chart analytics" in out
+    assert "## Menu COGS" in out
+    assert "list_menu_item_cogs" in out
+    assert "request_cogs_edit" in out
     assert "venue_slot_strength_heatmap" in out
     assert "posting frequency" in out
     assert "best timing" in out

@@ -26,6 +26,8 @@ def test_chat_tools_list_excludes_search_web_without_key() -> None:
     assert "get_location_data" in names
     assert "search_knowledge" in names
     assert "get_chart_data" not in names
+    assert "list_menu_item_cogs" not in names
+    assert "request_cogs_edit" not in names
     assert "present_weekly_instagram_schedule" not in names
 
 
@@ -33,6 +35,8 @@ def test_chat_tools_list_includes_charts_when_analytics_run() -> None:
     from agents_app.agents.core.chat.graph import chat_tools_list
 
     names = [getattr(t, "name", "") for t in chat_tools_list(analytics_run=True)]
+    assert "list_menu_item_cogs" in names
+    assert "request_cogs_edit" in names
     assert "get_chart_data" in names
     assert "get_location_data" in names
     assert "search_knowledge" in names
@@ -103,6 +107,8 @@ def test_chat_tools_list_from_config_gates_by_context() -> None:
     assert "get_milestone" not in agent_names
     assert "get_location_data" not in agent_names
     assert "get_chart_data" not in agent_names
+    assert "list_menu_item_cogs" not in agent_names
+    assert "request_cogs_edit" not in agent_names
     assert "generate_instagram_post_image" not in agent_names
     assert "list_media_collections" in agent_names
     assert "list_media" in agent_names
@@ -115,6 +121,8 @@ def test_chat_tools_list_from_config_gates_by_context() -> None:
     assert "update_milestone_input" not in with_location_names
     assert "get_location_data" in with_location_names
     assert "get_chart_data" not in with_location_names
+    assert "list_menu_item_cogs" not in with_location_names
+    assert "request_cogs_edit" not in with_location_names
     assert "generate_instagram_post_image" not in with_location_names
 
     with_report = chat_tools_list_from_config(
@@ -123,6 +131,8 @@ def test_chat_tools_list_from_config_gates_by_context() -> None:
     with_report_names = [getattr(t, "name", "") for t in with_report]
     assert "get_location_data" in with_report_names
     assert "get_chart_data" in with_report_names
+    assert "list_menu_item_cogs" in with_report_names
+    assert "request_cogs_edit" in with_report_names
 
     agent_thread = chat_tools_list_from_config(
         {

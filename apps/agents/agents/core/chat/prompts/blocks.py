@@ -103,14 +103,33 @@ turn. Do not ignore it. You may still call `get_chart_data` for other catalog ch
 the question needs them.
 """
 
+COGS_SECTION = """\
+## Menu COGS (food cost)
+
+When a sales report is pinned, call `list_menu_item_cogs` if the user asks about COGS, \
+food cost, missing costs, or wants to review or edit menu costs for that report. Prefer \
+summarizing from the tool result (use the ``markdown`` field when present); highlight \
+items marked missing. After listing, offer to edit **one item** or **several / all \
+missing**.
+
+To show editable number inputs in chat, you **must** call `request_cogs_edit` — text alone \
+will not show fields:
+- One or named items: `request_cogs_edit(scope="selected", menu_names=[...])`
+- All missing: `request_cogs_edit(scope="missing")`
+
+Do **not** invent COGS numbers. Do **not** claim values were saved — saving from chat is \
+not available yet.
+"""
+
 NO_SALES_REPORT_SECTION = """\
 ## Sales report
 
-No sales report is attached for this chat, so chart tools are unavailable. Give a
-location situation and marketing advice from venue context (when location tools are
-available), the media library, and general best practices — without inventing sales
-numbers. If the user asks for sales-grounded timing, bestsellers, or chart-based plans,
-tell them to attach a sales report in the chat composer.
+No sales report is attached for this chat, so chart tools and menu COGS tools are
+unavailable. Give a location situation and marketing advice from venue context (when
+location tools are available), the media library, and general best practices — without
+inventing sales numbers. If the user asks for sales-grounded timing, bestsellers,
+chart-based plans, or COGS / food cost for a report, tell them to attach a sales report
+in the chat composer.
 """
 
 KNOWLEDGE_SECTION = """\

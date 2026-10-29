@@ -11,6 +11,7 @@ from __future__ import annotations
 from agents_app.agents.core.chat.prompts.blocks import (
     CHART_ANALYTICS_SECTION,
     CHART_CATALOG_BLOCK,
+    COGS_SECTION,
     IG_STUDIO_BLOCK,
     KNOWLEDGE_SECTION,
     LEONARDO_IMAGE_BLOCK,
@@ -29,6 +30,7 @@ from agents_app.agents.core.chat.prompts.inventar import INVENTAR_ASSISTANT_PROM
 __all__ = [
     "CHART_ANALYTICS_SECTION",
     "CHART_CATALOG_BLOCK",
+    "COGS_SECTION",
     "IG_STUDIO_BLOCK",
     "IMAGE_ASSISTANT_PROMPT_TEMPLATE",
     "INVENTAR_ASSISTANT_PROMPT",
@@ -80,7 +82,9 @@ def build_system_prompt(
         return INVENTAR_ASSISTANT_PROMPT.rstrip() + "\n"
 
     if include_chart_catalog:
-        chart_section = f"{CHART_ANALYTICS_SECTION.strip()}\n\n"
+        chart_section = (
+            f"{CHART_ANALYTICS_SECTION.strip()}\n\n{COGS_SECTION.strip()}\n\n"
+        )
         chart_catalog_block = f"{CHART_CATALOG_BLOCK.strip()}\n\n"
     else:
         chart_section = f"{NO_SALES_REPORT_SECTION.strip()}\n\n"

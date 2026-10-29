@@ -40,6 +40,9 @@ def test_chat_prompt_injects_chart_catalog_when_analytics_run_present() -> None:
 
     assert "## Workflow chart catalog" in content
     assert "## Chart analytics" in content
+    assert "## Menu COGS" in content
+    assert "list_menu_item_cogs" in content
+    assert "request_cogs_edit" in content
     assert "pair_lift_matrix_heatmap" in content
     assert "low_end_review" in content
     assert "poor dogs" in content

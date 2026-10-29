@@ -18,6 +18,8 @@ from agents_app.agents.core.chatkit.widget_stream import (
     emit_widget_root_updated,
 )
 from agents_app.agents.core.chatkit.widgets import (
+    cogs_edit_form_widget,
+    cogs_list_widget,
     generated_image_widget,
     story_confirm_widget,
     tool_status_widget,
@@ -52,6 +54,8 @@ _COMPACT_STATUS_TOOLS = frozenset(
         "search_web",
         "save_story_asset",
         "clear_story_assets",
+        "list_menu_item_cogs",
+        "request_cogs_edit",
     }
 )
 
@@ -93,6 +97,62 @@ def _image_url_from_tool_output(output: object) -> str | None:
         return None
     url = obj.get("url")
     return url.strip() if isinstance(url, str) and url.strip() else None
+
+
+def _cogs_list_widget_from_tool_output(output: object) -> Card | None:
+    """Build a COGS list Card from ``list_menu_item_cogs`` JSON output."""
+    obj = _parse_json_object(output)
+    if obj is None or obj.get("ok") is not True:
+        return None
+    raw_items = obj.get("items")
+    if not isinstance(raw_items, list):
+        return None
+    items = [row for row in raw_items if isinstance(row, dict)]
+    summary = obj.get("summary")
+    missing_count = 0
+    total_count = len(items)
+    run_name: str | None = None
+    if isinstance(summary, dict):
+        mc = summary.get("missing_count")
+        if isinstance(mc, int) and mc >= 0:
+            missing_count = mc
+        else:
+            missing_count = sum(1 for row in items if row.get("status") == "missing")
+        tc = summary.get("total")
+        if isinstance(tc, int) and tc >= 0:
+            total_count = tc
+        rn = summary.get("run_name")
+        if isinstance(rn, str) and rn.strip():
+            run_name = rn.strip()
+    else:
+        missing_count = sum(1 for row in items if row.get("status") == "missing")
+    return cogs_list_widget(
+        items,
+        missing_count=missing_count,
+        total_count=total_count,
+        run_name=run_name,
+    )
+
+
+def _cogs_edit_form_widget_from_tool_output(output: object) -> Card | None:
+    """Build a COGS edit Form Card from ``request_cogs_edit`` JSON output."""
+    obj = _parse_json_object(output)
+    if obj is None or obj.get("ok") is not True:
+        return None
+    if obj.get("action") != "request_cogs_edit":
+        return None
+    raw_items = obj.get("items")
+    if not isinstance(raw_items, list) or not raw_items:
+        return None
+    items = [row for row in raw_items if isinstance(row, dict)]
+    if not items:
+        return None
+    run_name: str | None = None
+    rn = obj.get("run_name")
+    if isinstance(rn, str) and rn.strip():
+        run_name = rn.strip()
+    truncated = obj.get("truncated") is True
+    return cogs_edit_form_widget(items, run_name=run_name, truncated=truncated)
 
 
 def _is_rejected_story_asset_save(output: object) -> bool:
@@ -182,6 +242,10 @@ def _progress_for_tool_start(
         return ("Checking media library…", "images")
     if tool_name == "get_inventory_refill_forecast":
         return ("Loading refill forecast…", "analytics")
+    if tool_name == "list_menu_item_cogs":
+        return ("Loading menu COGS…", "analytics")
+    if tool_name == "request_cogs_edit":
+        return ("Preparing COGS edit form…", "analytics")
     label = tool_name.replace("_", " ")
     return (f"Running {label}…", "bolt")
 
@@ -233,6 +297,18 @@ def _progress_for_tool_end(
         return "Media library ready"
     if tool_name == "get_inventory_refill_forecast":
         return "Refill forecast ready"
+    if tool_name == "list_menu_item_cogs":
+        return (
+            "Could not load menu COGS"
+            if _tool_output_looks_like_error(output)
+            else "Loaded menu COGS"
+        )
+    if tool_name == "request_cogs_edit":
+        return (
+            "Could not open COGS edit form"
+            if _tool_output_looks_like_error(output)
+            else "COGS edit form ready"
+        )
     return f"Finished {tool_name.replace('_', ' ')}"
 
 
@@ -259,6 +335,10 @@ def _running_status_for_tool(tool_name: str, tool_input: object) -> Card | None:
         return tool_status_widget(title="Saving story asset…", tone="info")
     if tool_name == "clear_story_assets":
         return tool_status_widget(title="Clearing story assets…", tone="info")
+    if tool_name == "list_menu_item_cogs":
+        return tool_status_widget(title="Loading menu COGS…", tone="info")
+    if tool_name == "request_cogs_edit":
+        return tool_status_widget(title="Preparing COGS edit form…", tone="info")
     return None
 
 
@@ -298,6 +378,18 @@ def _compact_status_for_tool(
     if tool_name == "clear_story_assets":
         return tool_status_widget(
             title="Could not clear assets" if is_err else "Story assets cleared",
+            tone=tone,
+        )
+    if tool_name == "list_menu_item_cogs":
+        return tool_status_widget(
+            title="Could not load menu COGS" if is_err else "Loaded menu COGS",
+            tone=tone,
+        )
+    if tool_name == "request_cogs_edit":
+        return tool_status_widget(
+            title=(
+                "Could not open COGS edit form" if is_err else "COGS edit form ready"
+            ),
             tone=tone,
         )
     return None
@@ -474,6 +566,72 @@ async def stream_langgraph_as_chatkit(
                                         title="Image generation failed",
                                         tone="error",
                                     ),
+                                    generate_id=_gen_id,
+                                ):
+                                    yield widget_event
+                        elif tool_name == "list_menu_item_cogs":
+                            status_widget = _compact_status_for_tool(
+                                tool_name,
+                                output=output,
+                                tool_input=resolved_input,
+                            )
+                            if status_widget is not None:
+                                existing_id = _take_status_widget_id(
+                                    tool_name, tool_call_id
+                                )
+                                if existing_id is not None:
+                                    async for widget_event in emit_widget_root_updated(
+                                        item_id=existing_id,
+                                        thread=thread,
+                                        widget=status_widget,
+                                    ):
+                                        yield widget_event
+                                else:
+                                    async for widget_event in emit_widget_done(
+                                        thread,
+                                        status_widget,
+                                        generate_id=_gen_id,
+                                    ):
+                                        yield widget_event
+                            list_widget = _cogs_list_widget_from_tool_output(output)
+                            if list_widget is not None:
+                                async for widget_event in emit_widget_done(
+                                    thread,
+                                    list_widget,
+                                    generate_id=_gen_id,
+                                ):
+                                    yield widget_event
+                        elif tool_name == "request_cogs_edit":
+                            status_widget = _compact_status_for_tool(
+                                tool_name,
+                                output=output,
+                                tool_input=resolved_input,
+                            )
+                            if status_widget is not None:
+                                existing_id = _take_status_widget_id(
+                                    tool_name, tool_call_id
+                                )
+                                if existing_id is not None:
+                                    async for widget_event in emit_widget_root_updated(
+                                        item_id=existing_id,
+                                        thread=thread,
+                                        widget=status_widget,
+                                    ):
+                                        yield widget_event
+                                else:
+                                    async for widget_event in emit_widget_done(
+                                        thread,
+                                        status_widget,
+                                        generate_id=_gen_id,
+                                    ):
+                                        yield widget_event
+                            edit_widget = _cogs_edit_form_widget_from_tool_output(
+                                output
+                            )
+                            if edit_widget is not None:
+                                async for widget_event in emit_widget_done(
+                                    thread,
+                                    edit_widget,
                                     generate_id=_gen_id,
                                 ):
                                     yield widget_event
