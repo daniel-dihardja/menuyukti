@@ -6,7 +6,6 @@ from agents_app.agents.core.chat.prompts import (
     CHART_ANALYTICS_SECTION,
     CHART_CATALOG_BLOCK,
     COGS_SECTION,
-    IG_STUDIO_BLOCK,
     KNOWLEDGE_SECTION,
     LEONARDO_IMAGE_BLOCK,
     LOCATION_SECTION,
@@ -39,7 +38,7 @@ def test_system_prompt_template_has_complete_structure() -> None:
     assert "{advisor_memory_section}" in SYSTEM_PROMPT_TEMPLATE
     assert "{workflow_catalog_block}" not in SYSTEM_PROMPT_TEMPLATE
     assert "{leonardo_image_block}" in SYSTEM_PROMPT_TEMPLATE
-    assert "{ig_studio_block}" in SYSTEM_PROMPT_TEMPLATE
+    assert "{ig_studio_block}" not in SYSTEM_PROMPT_TEMPLATE
     assert "{media_library_block}" in SYSTEM_PROMPT_TEMPLATE
     assert "list_media_collections" in MEDIA_LIBRARY_BLOCK
     assert "list_media" in MEDIA_LIBRARY_BLOCK
@@ -110,7 +109,6 @@ def test_build_system_prompt_without_optional_blocks() -> None:
     assert "{chart_catalog_block}" not in out
     assert "{chart_section}" not in out
     assert "{leonardo_image_block}" not in out
-    assert "{ig_studio_block}" not in out
     assert "list_media_collections" in out
     assert "## Media library" in out
     assert "## Knowledge search" in out
@@ -183,13 +181,6 @@ def test_build_system_prompt_with_leonardo_image_generation() -> None:
     assert "prefer that context default" in out
     assert "do **not** pass the tool `model` arg" in out
     assert "IG Studio Post Creator" not in out
-
-
-def test_build_system_prompt_with_ig_studio() -> None:
-    out = build_system_prompt(ig_studio_post_image=True)
-    assert IG_STUDIO_BLOCK.strip() in out
-    assert "generate_instagram_post_image" in out
-    assert "Do not paste the image URL" in out
 
 
 def test_build_system_prompt_image_assistant_mode() -> None:

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 # Placeholders: security_policy_section, situation_location_load, chart_section,
 # schedule_location_guidance, chart_catalog_block, knowledge_section, location_section,
-# advisor_memory_section, leonardo_image_block, ig_studio_block, media_library_block.
+# advisor_memory_section, leonardo_image_block, media_library_block.
 SYSTEM_PROMPT_TEMPLATE = """\
 You are the Menuyukti location marketing advisor for restaurant operators. Ground answers
 in venue hours and the sales charts when those tools are available (catalog has four
@@ -77,4 +77,4 @@ Prefer scannable headings and bullets over dense multi-column tables.
 
 {chart_catalog_block}
 {knowledge_section}
-{location_section}{advisor_memory_section}{media_library_block}{leonardo_image_block}{ig_studio_block}"""
+{location_section}{advisor_memory_section}{media_library_block}{leonardo_image_block}"""

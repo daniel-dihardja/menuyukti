@@ -34,17 +34,6 @@ STORY_SCRATCHPAD_TOOLS = [
 ]
 
 
-def has_ig_studio_post_context(conf: dict[str, Any]) -> bool:
-    post_id = conf.get("post_id")
-    page_id = conf.get("page_id")
-    return bool(
-        isinstance(post_id, str)
-        and post_id.strip()
-        and isinstance(page_id, str)
-        and page_id.strip()
-    )
-
-
 def has_location_id(conf: dict[str, Any]) -> bool:
     return conf.get("location_id") is not None
 

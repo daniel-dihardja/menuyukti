@@ -37,19 +37,6 @@ menu items. Primary source for interesting menu combos.
 low-margin items to **reprice, improve, or remove** from the menu.
 """
 
-IG_STUDIO_BLOCK = """\
-## IG Studio Post Creator
-
-IG Studio Post Creator context is active for a saved post page.
-When the user wants an Instagram post image generated, regenerated, or created from a brief,
-compose a concrete image-generation prompt and call `generate_instagram_post_image`.
-Model, format, quality, style pack, and reference images are already set in the Post Creator UI—
-use the tool rather than only describing a prompt. After a successful generation, briefly
-confirm what was created in one or two sentences. Do not paste the image URL, markdown image
-syntax, or HTML img tags — the UI already shows a thumbnail under the tool result and updates
-the studio preview.
-"""
-
 LEONARDO_IMAGE_BLOCK = """\
 ## Image generation (Leonardo)
 
