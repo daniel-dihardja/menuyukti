@@ -13,7 +13,6 @@ from agents_app.agents.core.chat.prompts.blocks import (
     CHART_ANALYTICS_SECTION,
     CHART_CATALOG_BLOCK,
     COGS_SECTION,
-    IG_STUDIO_BLOCK,
     KNOWLEDGE_SECTION,
     LEONARDO_IMAGE_BLOCK,
     LOCATION_SECTION,
@@ -36,7 +35,6 @@ __all__ = [
     "CHART_ANALYTICS_SECTION",
     "CHART_CATALOG_BLOCK",
     "COGS_SECTION",
-    "IG_STUDIO_BLOCK",
     "IMAGE_ASSISTANT_PROMPT_TEMPLATE",
     "INVENTAR_ASSISTANT_PROMPT",
     "KNOWLEDGE_SECTION",
@@ -75,7 +73,6 @@ def _image_format_prompt_fields(image_format: str | None) -> dict[str, str | int
 
 def build_system_prompt(
     *,
-    ig_studio_post_image: bool = False,
     leonardo_image_generation: bool = False,
     include_chart_catalog: bool = False,
     include_location_tools: bool = False,
@@ -106,7 +103,6 @@ def build_system_prompt(
     leonardo_image_block = (
         f"{LEONARDO_IMAGE_BLOCK.strip()}\n\n" if leonardo_image_generation else ""
     )
-    ig_studio_block = f"{IG_STUDIO_BLOCK.strip()}\n" if ig_studio_post_image else ""
     media_library_block = f"{MEDIA_LIBRARY_BLOCK.strip()}\n\n"
     knowledge_section = f"{KNOWLEDGE_SECTION.strip()}\n\n"
     security_policy_section = f"{SECURITY_POLICY_SECTION.strip()}\n\n"
@@ -132,7 +128,6 @@ def build_system_prompt(
             advisor_memory_section=advisor_memory_section,
             media_library_block=media_library_block,
             leonardo_image_block=leonardo_image_block,
-            ig_studio_block=ig_studio_block,
         ).rstrip()
         + "\n"
     )

@@ -1,6 +1,23 @@
-# GraphQL Error Contract
+---
+id: doc-6
+title: GraphQL error contract
+type: specification
+created_date: '2026-10-29T16:43:00Z'
+updated_date: '2026-10-29T16:43:00Z'
+tags:
+  - graphql
+  - errors
+  - contract
+---
 
-This document defines the shared GraphQL error contract across `apps/graphql`, `apps/web`, and `apps/agents`.
+# GraphQL error contract
+
+**Audience:** engineering  
+**Scope:** Shared GraphQL error contract across `apps/graphql`, `apps/web`, and `apps/agents`.  
+**Kind:** specification.  
+**Migrated from:** `docs/graphql-error-contract.md` (removed with root `docs/` cleanup).
+
+---
 
 ## Backend (`apps/graphql`)
 

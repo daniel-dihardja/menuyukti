@@ -3,7 +3,7 @@ id: doc-1
 title: Chat advisor security overview
 type: guide
 created_date: '2026-10-28T08:49:00Z'
-updated_date: '2026-10-28T10:30:00Z'
+updated_date: '2026-10-29T16:43:00Z'
 tags:
   - security
   - chat
@@ -17,7 +17,7 @@ tags:
 **Scope:** `/advisor` chat (and related BFF → agents → GraphQL path), including ChatKit, inventar, and IG Studio chat modes that share `POST /api/chat` / agents `/chat`.  
 **Kind:** engineering security assessment vs industry LLM-agent practice — not a penetration test or legal opinion.  
 **Date:** 2026-10-28 (guardrails inventory added same day)  
-**Related:** GraphQL trust boundary (`X-User-Id` + `X-Internal-Api-Key`); skill `menuyukti-graphql-security-audit` for a full API authz audit.
+**Related:** GraphQL trust boundary (`X-User-Id` + `X-Internal-Api-Key`); skill `menuyukti-graphql-security-audit` for a full API authz audit; [doc-5 Chat advisor knowledge RAG](../agents/doc-5%20-%20Chat-advisor-knowledge-RAG.md).
 
 ---
 
@@ -219,7 +219,7 @@ Prioritized for remediation planning. Items are findings, not committed tasks �
 
 **Direction:** FOCUSED GraphQL audit on chat-touched operations.
 
-**Status (TASK-8.5):** FOCUSED audit snapshot at `docs/audits/graphql-security/history/2026-10-28_10-29_515e7dbd/` — no P0 IDOR on general advisor ops; CONDITIONAL on shared-key trust (see TASK-8.1).
+**Status (TASK-8.5):** FOCUSED audit snapshot at `backlog/docs/audits/graphql-security/history/2026-10-28_10-29_515e7dbd/` — no P0 IDOR on general advisor ops; CONDITIONAL on shared-key trust (see TASK-8.1).
 
 #### F. Indirect injection via web / tool errors / attached context
 

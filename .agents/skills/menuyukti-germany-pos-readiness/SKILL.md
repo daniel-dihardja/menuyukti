@@ -38,13 +38,13 @@ Every comparable audit produces an evidence-backed score **0–100** from the **
 
 **Read-only** with respect to application source and operational systems.
 
-| Allowed                                                  | Forbidden without explicit approval                                           |
-| -------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| Repository inspection                                    | Application source modification                                               |
-| Safe static analysis                                     | Production DB changes                                                         |
-| Safe local tests                                         | Destructive commands                                                          |
-| Report generation under `docs/audits/germany-readiness/` | Live payment or fiscal transactions                                           |
-| Historical comparison                                    | Production deployment, dependency installs, sending sensitive data externally |
+| Allowed                                                          | Forbidden without explicit approval                                           |
+| ---------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Repository inspection                                            | Application source modification                                               |
+| Safe static analysis                                             | Production DB changes                                                         |
+| Safe local tests                                                 | Destructive commands                                                          |
+| Report generation under `backlog/docs/audits/germany-readiness/` | Live payment or fiscal transactions                                           |
+| Historical comparison                                            | Production deployment, dependency installs, sending sensitive data externally |
 
 Record any test that could not run and why.
 
@@ -56,7 +56,7 @@ Inspect the entire repository and all readiness categories.
 
 Use before initial Germany launch, after major releases/architecture changes, or before major production decisions.
 
-Produce all reports, overwrite `docs/audits/germany-readiness/latest/`, and write an immutable snapshot under `history/`.
+Produce all reports, overwrite `backlog/docs/audits/germany-readiness/latest/`, and write an immutable snapshot under `history/`.
 
 ### DELTA AUDIT
 
@@ -171,10 +171,10 @@ Details: [references/pos-transaction-integrity.md](references/pos-transaction-in
 
 ## Report outputs
 
-**Canonical output root:** `docs/audits/germany-readiness/`
+**Canonical output root:** `backlog/docs/audits/germany-readiness/`
 
 ```text
-docs/audits/germany-readiness/
+backlog/docs/audits/germany-readiness/
 ├── latest/          # overwritten by FULL (and comparable DELTA that publishes a new baseline)
 ├── history/YYYY-MM-DD_HH-mm_<commit>/   # immutable
 └── progress.md

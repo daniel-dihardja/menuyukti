@@ -4,7 +4,7 @@ title: FOCUSED GraphQL authz review for chat advisor tool operations
 status: Done
 assignee: []
 created_date: '2026-10-28T08:55:00Z'
-updated_date: '2026-10-28T10:30:00Z'
+updated_date: '2026-10-29T16:43:00Z'
 labels:
   - security
   - chat
@@ -55,6 +55,8 @@ Use the menuyukti-graphql-security-audit skill in FOCUSED mode (authorization + 
 <!-- SECTION:NOTES:BEGIN -->
 
 FOCUSED audit written under docs/audits/graphql-security/history/2026-10-28_10-29_515e7dbd/. Leonardo/inventar excluded. No new P0 follow-up tasks; P1 shared-key covered by 8.1.
+
+Audit artifacts moved to backlog/docs/audits/graphql-security/ (root docs/ removed).
 
 <!-- SECTION:NOTES:END -->
 

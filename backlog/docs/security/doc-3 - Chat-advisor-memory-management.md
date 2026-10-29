@@ -3,7 +3,7 @@ id: doc-3
 title: Chat advisor memory management
 type: guide
 created_date: '2026-10-29T14:00:00Z'
-updated_date: '2026-10-29T14:08:00Z'
+updated_date: '2026-10-29T16:07:00Z'
 tags:
   - security
   - chat
@@ -19,7 +19,7 @@ tags:
 **Scope:** Durable, location-scoped advisor memory used by general-mode `/advisor` chat (`get_advisor_memory` / `update_advisor_memory`).  
 **Kind:** product + engineering guide for how memory is stored, loaded, written, and kept separate from owner brief, RAG, and thread checkpoints.  
 **Date:** 2026-10-29  
-**Related:** TASK-11 (MVP), TASK-11.4 (venue UI), TASK-13.1 (read policies), [doc-1 — Chat advisor security overview](doc-1%20-%20Chat-advisor-security-overview.md)
+**Related:** TASK-11 (MVP), TASK-11.4 (venue UI), TASK-13.1 (read policies), [doc-1 — Chat advisor security overview](doc-1%20-%20Chat-advisor-security-overview.md); [doc-5 Chat advisor knowledge RAG](../agents/doc-5%20-%20Chat-advisor-knowledge-RAG.md)
 
 ---
 

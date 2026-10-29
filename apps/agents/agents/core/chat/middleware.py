@@ -16,7 +16,6 @@ from agents_app.agents.core.chat.prompts import build_system_prompt
 from agents_app.agents.core.chat.tools_registry import (
     chat_tools_list_from_config,
     has_analytics_run_id,
-    has_ig_studio_post_context,
     has_leonardo_image_generation,
     has_location_id,
 )
@@ -51,7 +50,6 @@ def chat_system_prompt_from_config() -> str:
     raw_format = conf_dict.get("image_format")
     image_format = raw_format if isinstance(raw_format, str) else None
     return build_system_prompt(
-        ig_studio_post_image=has_ig_studio_post_context(conf_dict),
         leonardo_image_generation=has_leonardo_image_generation(conf_dict),
         include_chart_catalog=has_analytics_run_id(conf_dict),
         include_location_tools=has_location_id(conf_dict),
