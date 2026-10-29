@@ -10,11 +10,8 @@ assistant is correctly ~11:00Z.
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import TypeVar
 
 from chatkit.types import ThreadItem
-
-TItem = TypeVar("TItem", bound=ThreadItem)
 
 
 def ensure_utc(value: datetime) -> datetime:
@@ -24,7 +21,7 @@ def ensure_utc(value: datetime) -> datetime:
     return value.astimezone(UTC)
 
 
-def with_utc_created_at(item: TItem) -> TItem:
+def with_utc_created_at[TItem: ThreadItem](item: TItem) -> TItem:
     """Return a copy of ``item`` whose ``created_at`` is timezone-aware UTC."""
     created = getattr(item, "created_at", None)
     if not isinstance(created, datetime):

@@ -113,9 +113,8 @@ async def _chat_runtime(
     app.state.chat_checkpointer = checkpointer
     app.state.chat_graph = compile_chat_graph(checkpointer)
     chatkit_pool = None
-    from agents_app.agents.core.chatkit.server import build_chatkit_server
-
     from agents_app.agents.core.chatkit.hydrating_store import HydratingChatKitStore
+    from agents_app.agents.core.chatkit.server import build_chatkit_server
 
     if chatkit_db_url:
         from agents_app.agents.core.chatkit.postgres_store import open_chatkit_postgres_store
