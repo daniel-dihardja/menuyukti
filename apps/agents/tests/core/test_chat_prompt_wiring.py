@@ -15,7 +15,7 @@ def test_chat_prompt_without_catalog_config() -> None:
     assert "## Workflow milestone catalog" not in content
     assert "## Workflow chart catalog" not in content
     assert "get_milestone" not in content
-    assert "location marketing advisor" in content
+    assert "advisor for restaurant owners" in content
     assert "## Location situation (default)" in content
     assert "No sales report is attached" in content
     assert "## Knowledge search" in content

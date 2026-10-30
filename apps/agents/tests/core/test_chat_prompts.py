@@ -26,7 +26,9 @@ from agents_app.agents.core.chat.untrusted_context import (
 
 
 def test_system_prompt_template_has_complete_structure() -> None:
-    assert "location marketing advisor" in SYSTEM_PROMPT_TEMPLATE
+    assert "advisor for restaurant owners" in SYSTEM_PROMPT_TEMPLATE
+    assert "channel-neutral" in SYSTEM_PROMPT_TEMPLATE
+    assert "Action recommendations" in SYSTEM_PROMPT_TEMPLATE
     assert "Location situation (default)" in SYSTEM_PROMPT_TEMPLATE
     assert "{security_policy_section}" in SYSTEM_PROMPT_TEMPLATE
     assert "{situation_location_load}" in SYSTEM_PROMPT_TEMPLATE
@@ -86,7 +88,8 @@ def test_wrap_untrusted_labels_channel() -> None:
 
 def test_build_system_prompt_without_optional_blocks() -> None:
     out = build_system_prompt()
-    assert "location marketing advisor" in out
+    assert "advisor for restaurant owners" in out
+    assert "channel-neutral" in out
     assert "Instagram content assistant" not in out
     assert "## Location situation (default)" in out
     assert "## Demand" in out
@@ -95,8 +98,9 @@ def test_build_system_prompt_without_optional_blocks() -> None:
     assert "## Weak items" in out
     assert "## Hours" in out
     assert "## Next" in out
-    assert "Weekly Instagram schedules" in out
-    assert "write the plan directly in markdown" in out
+    assert "## Action recommendations" in out
+    assert "Weekly Instagram schedules" not in out
+    assert "directly in markdown" in out
     assert "## Sales report" in out
     assert "No sales report is attached" in out
     assert "## Workflow chart catalog" not in out
@@ -150,7 +154,7 @@ def test_build_system_prompt_with_chart_catalog() -> None:
     assert "list_menu_item_cogs" in out
     assert "request_cogs_edit" in out
     assert "venue_slot_strength_heatmap" in out
-    assert "posting frequency" in out
+    assert "when to promote" in out
     assert "best timing" in out
     assert "interesting menu combos" in out
     assert "Daily highlights" in out
@@ -165,7 +169,8 @@ def test_build_system_prompt_with_chart_catalog() -> None:
     assert "Visualization data" in out
     assert "Do not load all four on every" in out
     assert "No sales report is attached" not in out
-    assert "Weekly Instagram schedules" in out
+    assert "## Action recommendations" in out
+    assert "promo calendar" in out
     # Analytics section is usage rules only — per-chart blurbs live in the catalog.
     assert CHART_ANALYTICS_SECTION.count("venue_slot_strength_heatmap") == 0
     assert "Daily highlights" not in CHART_ANALYTICS_SECTION
@@ -245,7 +250,7 @@ def test_build_system_prompt_inventar_mode() -> None:
     assert "summary" in out.lower()
     assert "get_chart_data" not in out
     assert "Instagram content assistant" not in out
-    assert "location marketing advisor" not in out
+    assert "advisor for restaurant owners" not in out
 
 
 def test_build_system_prompt_image_assistant_legacy_alias() -> None:

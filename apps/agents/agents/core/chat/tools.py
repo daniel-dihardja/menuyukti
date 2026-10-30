@@ -43,8 +43,8 @@ async def get_location_data(config: Annotated[RunnableConfig, InjectedToolArg()]
     """Load location-page data for the venue: basics, opening hours, owner quick profile.
 
     Call when the user asks about venue hours, address, cuisine, contact links, or other
-    location settings — and before proposing a weekly Instagram schedule so posting days
-    and times respect opening hours."""
+    location settings — and before timing-sensitive advice or an owner-requested plan so
+    days and times respect opening hours."""
     c = (config or {}).get("configurable") or {}
     location_id = c.get("location_id")
     user_id = c.get("user_id")
@@ -76,11 +76,11 @@ async def get_advisor_memory(
     """Load durable advisor memory for the current venue across chat threads.
 
     Call for location situation briefs / venue-scoped advice (first load in the
-    thread), when the user asks what you remember, or before a weekly schedule if
-    preferences may apply. Skip when only owner location-page facts are needed
-    (use ``get_location_data``), or when a successful result is already in this
-    thread unless the user asks to refresh. Memory holds preferences, constraints,
-    and outcomes — never invent sales figures from it.
+    thread), when the user asks what you remember, or before timing-sensitive advice
+    or an owner-requested plan if preferences may apply. Skip when only owner
+    location-page facts are needed (use ``get_location_data``), or when a successful
+    result is already in this thread unless the user asks to refresh. Memory holds
+    preferences, constraints, and outcomes — never invent sales figures from it.
     """
     c = (config or {}).get("configurable") or {}
     location_id = c.get("location_id")
