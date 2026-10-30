@@ -26,7 +26,8 @@ schema/
   node_handlers/    # NodeHandler strategy registry keyed by node_type
   auth.py           # user_id_from_info, is_location_owner, require_location_owner
 data_sources/       # SQLAlchemy models + SessionLocal
-services/           # App-layer orchestration (sales reports, menu engineering, pos_*, fiscalization, …)
+services/           # App-layer orchestration (sales reports, menu engineering, pos_*, fiscalization, knowledge, …)
+knowledge/          # Knowledge docs (markdown) for advisor RAG — see knowledge-docs.mdc
 reports/            # Analytics transform / ingest logic
 resolvers/          # Package stub (setuptools); Strawberry fields live under schema/queries|mutations
 scripts/            # One-off dev scripts (never import from schema)

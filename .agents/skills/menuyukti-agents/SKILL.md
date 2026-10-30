@@ -2,9 +2,9 @@
 name: menuyukti-agents
 description: >-
   LangGraph agents app (apps/agents): FastAPI, streaming chat ReAct (general +
-  image_assistant + inventar modes), graphql_post, format-markdown, holiday and
-  nearby-locations helpers. Use when adding chat tools, routers, or agents-side
-  GraphQL clients.
+  image_assistant + inventar modes), search_knowledge over knowledge docs,
+  graphql_post, format-markdown, holiday and nearby-locations helpers. Use when
+  adding chat tools, routers, or agents-side GraphQL clients.
 ---
 
 # Menuyukti: `apps/agents`
@@ -48,7 +48,8 @@ Commands and ports: [`apps/agents/README.md`](../../../apps/agents/README.md).
 ## Chat (primary product surface)
 
 - **Identity:** `agent_thread_id` (required). Optional `location_id` for location/chart/inventar tools; optional `analytics_run_id` for chart tools.
-- **Modes:** `general` (media, weekly schedule, optional location/charts/web search/IG generate); `image_assistant` (media + story scratchpad + confirmation + IG image generate; format from UI); `inventar` (inventory refill forecast + optional location data — used by `/inventar`, not the advisor mode picker).
+- **Modes:** `general` (media, weekly schedule, knowledge search, optional location/charts/web search/IG generate); `image_assistant` (media + story scratchpad + confirmation + IG image generate; format from UI); `inventar` (inventory refill forecast + optional location data — used by `/inventar`, not the advisor mode picker).
+- **Knowledge docs:** curated markdown under [`apps/graphql/knowledge/`](../../../apps/graphql/knowledge/) (domain / KPI / playbook). General mode retrieves them via `search_knowledge` → GraphQL `searchKnowledge`. They are **not** location advisor memory. Authoring: [`.cursor/rules/knowledge-docs.mdc`](../../../.cursor/rules/knowledge-docs.mdc); GraphQL ingest: [`menuyukti-graphql`](../menuyukti-graphql/SKILL.md).
 - **Tool gates:** [`chat/tools_registry.py`](../../../apps/agents/agents/core/chat/tools_registry.py) — `chat_tools_list` / `chat_tools_list_from_config` bind tools by mode.
 - **Graph:** [`chat/graph.py`](../../../apps/agents/agents/core/chat/graph.py) — `compile_chat_graph` / `create_agent`; tools in [`chat/tools.py`](../../../apps/agents/agents/core/chat/tools.py) plus related modules. Middleware: dynamic prompt, model/tool selection + history trim, model retry, AI usage recording, `wrap_tool_call` error handling. `CHAT_RECURSION_LIMIT` (20) is applied on the router runnable config.
 - **History:** `GET` / `DELETE /chat/history` by `agent_thread_id` (Postgres checkpointer when configured; required in production).

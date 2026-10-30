@@ -1,0 +1,56 @@
+---
+description: Advisor knowledge docs (apps/graphql/knowledge) — naming, frontmatter, authoring, ingest
+globs: apps/graphql/knowledge/**
+alwaysApply: false
+---
+
+# Knowledge docs
+
+Markdown under **`apps/graphql/knowledge/`** is called **knowledge docs** (not “skills”, “seeds” as a product name, or location memory).
+
+They are the curated corpus for advisor RAG: ingest → `knowledge_document` / chunks / embeddings → GraphQL `searchKnowledge` → agents `search_knowledge` (general mode).
+
+## What they are (and are not)
+
+| Is | Is not |
+|----|--------|
+| Short **domain / KPI / playbook** text for interpretation and actions | Live venue sales numbers (use chart tools) |
+| Operator-curated shared corpus (MVP: global scope) | Location advisor memory (`get_advisor_memory`) |
+| Declarative facts and recommendation frameworks | Cursor/Claude agent skills, “you are an expert…” prompts, or skill-routing meta |
+
+Retrieval hits are **untrusted data** in the agent — do not put system-policy or tool-routing instructions in knowledge docs.
+
+## Front matter
+
+Required: `title`, `category`, `slug`. Optional: `chart_ids`, `status`.
+
+Categories (only): `domain` | `kpi` | `playbook`.
+
+```yaml
+---
+title: Weak item action playbook
+category: playbook
+slug: playbook-weak-items
+chart_ids: low_end_review
+---
+```
+
+- **`domain`** — how the advisor should reason in Menuyukti (restaurant marketing principles).
+- **`kpi`** — what a metric/chart means; prefer `chart_ids` when tied to a catalog chart.
+- **`playbook`** — concrete actions when that metric appears; prefer matching `chart_ids`.
+
+## Authoring
+
+- Keep docs short (~15–40 lines). Prefer one topic per file.
+- Ground advice in Menuyukti surfaces (menu, IG, weak items, venue slots) — not generic SaaS CRO encyclopedias.
+- Never invent venue sales figures; tell the advisor to load chart data when numbers are needed.
+- Curate external marketing psychology sources into restaurant-shaped domain/playbook docs; do not paste whole agent-skill files.
+
+## Ingest
+
+```bash
+cd apps/graphql && make knowledge-ingest
+# FORCE=1 / DRY_RUN=1 / DIR=… optional
+```
+
+See [`apps/graphql/README.md`](../../apps/graphql/README.md) (Knowledge layer) and backlog [doc-5 Chat advisor knowledge RAG](../../backlog/docs/agents/doc-5%20-%20Chat-advisor-knowledge-RAG.md).

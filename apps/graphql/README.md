@@ -59,9 +59,9 @@ Import `SessionLocal` from `graphql.data_sources` inside resolvers to read or wr
 
 ### Knowledge layer (pgvector RAG)
 
-Advisor RAG stores global domain / KPI / playbook docs in `knowledge_document`, `knowledge_chunk`, and `knowledge_embedding`. The Alembic revision enables the Postgres **`vector`** extension and an optional `embedding_vec` HNSW index (Neon must allow `CREATE EXTENSION vector`).
+Advisor RAG stores global **knowledge docs** (domain / KPI / playbook) in `knowledge_document`, `knowledge_chunk`, and `knowledge_embedding`. The Alembic revision enables the Postgres **`vector`** extension and an optional `embedding_vec` HNSW index (Neon must allow `CREATE EXTENSION vector`).
 
-Seed / update content (markdown under [`knowledge/`](./knowledge/)):
+Ingest / update **knowledge docs** (markdown under [`knowledge/`](./knowledge/); authoring: [`.cursor/rules/knowledge-docs.mdc`](../../.cursor/rules/knowledge-docs.mdc)):
 
 ```bash
 cd apps/graphql
@@ -109,7 +109,7 @@ To import a specific Excel report directly into `order_fact`, run `make load-rep
 | `make dev-data SCOPE=analytics USER_ID=user_xxx EXCEL=/path/to/report.xlsx` | Same as above, but use a custom Excel instead of the default mock                                                                                                                                                                                               |
 | `make dev-data SCOPE=all USER_ID=user_xxx`                                  | Inventar (Warung) + analytics (Berlin cafe default mock) + MIDO Matcha Corner menu                                                                                                                                                                              |
 | `make generate-dev-mock-excel`                                              | Regenerate Berlin cafe `fixtures/dev_mock_….xlsx` + `dev_mock_menu_cogs.json` (ESB structure from SNABB; Kaffeestube Mitte menu)                                                                                                                                |
-| `make knowledge-ingest`                                                     | Upsert advisor RAG seeds from `knowledge/*.md` (needs embedding API key; `FORCE=1` / `DRY_RUN=1` / `DIR=…` optional)                                                                                                                                            |
+| `make knowledge-ingest`                                                     | Upsert advisor RAG **knowledge docs** from `knowledge/*.md` (needs embedding API key; `FORCE=1` / `DRY_RUN=1` / `DIR=…` optional)                                                                                                                               |
 | `make db-reset-dev`                                                         | Destructive: `drop-db` + `db-upgrade` (Alembic)                                                                                                                                                                                                                 |
 | `make db-reset-dev SEED=1 USER_ID=user_xxx`                                 | Hard schema reset, then inventar seed                                                                                                                                                                                                                           |
 
