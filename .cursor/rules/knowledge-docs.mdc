@@ -31,7 +31,7 @@ Categories (only): `domain` | `kpi` | `playbook`.
 title: Weak item action playbook
 category: playbook
 slug: playbook-weak-items
-chart_ids: low_end_review
+chart_ids: weak_review
 ---
 ```
 

@@ -19,7 +19,7 @@ _EXPECTED_CHART_IDS = (
     "venue_slot_strength_heatmap",
     "menu_item_heatmap",
     "pair_lift_matrix_heatmap",
-    "low_end_review",
+    "weak_review",
 )
 
 # Mirror of apps/web/lib/chat/visualization-contract.ts
@@ -29,7 +29,7 @@ _EXPECTED_CHART_TITLES = {
     "venue_slot_strength_heatmap": "Venue slot strength",
     "menu_item_heatmap": "Menu item heatmap",
     "pair_lift_matrix_heatmap": "Pair lift matrix",
-    "low_end_review": "Weak items review",
+    "weak_review": "Weak items review",
 }
 
 

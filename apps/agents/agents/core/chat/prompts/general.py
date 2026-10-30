@@ -47,7 +47,7 @@ sections):
 - Pairings worth featuring
 
 ## Weak items
-- Low End / dogs to reprice, improve, or remove (only when Low End data was loaded or
+- Weak items to reprice, improve, or remove (only when weak-items data was loaded or
   @-attached)
 
 ## Hours

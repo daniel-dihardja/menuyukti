@@ -41,7 +41,7 @@ When implementing in **`packages/menuyukti` analytics**, follow these skills in 
 | `calculate_menu_heatmaps`                    | `menu`, `qty`, `order_time`, …                  | Per-menu hourly/weekly grids                         |
 | `compute_menu_heatmaps_from_orders`          | Typed order rows                                | Delegates to `calculate_menu_heatmaps`               |
 | `compute_operating_profile_from_orders`      | Bill-level rows + optional holidays             | Meal periods, DOW, labels                            |
-| `calculate_menu_engineering_matrix`          | Menu-level revenue + COGS                       | Star / plow_horse / puzzle / low_end                 |
+| `calculate_menu_engineering_matrix`          | Menu-level revenue + COGS                       | Star / plow_horse / puzzle / weak                    |
 | `compute_menu_engineering_from_orders`       | Typed order rows                                | Delegates to `calculate_menu_engineering_matrix`     |
 | `calculate_category_mix`                     | Line items with optional categories             | Revenue/qty share per category                       |
 | `compute_category_mix_from_orders`           | Typed order rows                                | Delegates to `calculate_category_mix`                |

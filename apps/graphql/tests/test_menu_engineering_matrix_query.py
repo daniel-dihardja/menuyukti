@@ -287,7 +287,7 @@ def test_menu_engineering_matrix_query_returns_matrix_with_cogs_from_json():
     assert isinstance(distribution, list)
     assert len(distribution) >= 1
     categories = {d["category"] for d in distribution}
-    expected_categories = {"star", "plow_horse", "puzzle", "low_end"}
+    expected_categories = {"star", "plow_horse", "puzzle", "weak"}
     assert categories.issubset(expected_categories), f"Unexpected categories: {categories}"
 
     items = matrix["items"]

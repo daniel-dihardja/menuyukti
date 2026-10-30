@@ -62,10 +62,10 @@ def test_system_prompt_template_has_complete_structure() -> None:
     assert "get_location_data" in SCHEDULE_LOCATION_GUIDANCE
     assert "## Weak items" in SYSTEM_PROMPT_TEMPLATE
     assert "venue_slot_strength_heatmap" in CHART_CATALOG_BLOCK
-    assert "low_end_review" in CHART_CATALOG_BLOCK
-    assert "poor dogs" in CHART_CATALOG_BLOCK
+    assert "weak_review" in CHART_CATALOG_BLOCK
+    assert "Weak items review" in CHART_CATALOG_BLOCK
     assert "core three" in CHART_ANALYTICS_SECTION
-    assert "low_end_review" in CHART_ANALYTICS_SECTION
+    assert "weak_review" in CHART_ANALYTICS_SECTION
     assert "reprice / improve / remove" in CHART_ANALYTICS_SECTION
     assert "Visualization data" in CHART_ANALYTICS_SECTION
     assert "No sales report is attached" in NO_SALES_REPORT_SECTION
@@ -159,9 +159,9 @@ def test_build_system_prompt_with_chart_catalog() -> None:
     assert "interesting menu combos" in out
     assert "Daily highlights" in out
     assert "Day specialties" in out
-    assert "low_end_review" in out
-    assert "poor dogs" in out
-    assert "BCG dogs" in out
+    assert "weak_review" in out
+    assert "Weak items review" in out
+    assert "weak items" in out.lower()
     assert "reprice, improve, or remove" in out
     assert "get_chart_data" in out
     assert "core three" in out

@@ -2,14 +2,14 @@
 title: Weak item action playbook
 category: playbook
 slug: playbook-weak-items
-chart_ids: low_end_review
+chart_ids: weak_review
 ---
 
 # Weak item action playbook
 
-When Low End items appear in the sales report:
+When weak items appear in the sales report:
 
-1. **Confirm the list** from `low_end_review` (names, popularity, margin signals).
+1. **Confirm the list** from `weak_review` (names, popularity, margin signals).
 2. **Reprice** if guests still order but contribution is weak — small price tests.
 3. **Improve** if the dish has brand value (recipe, plating, portion, name).
 4. **Remove or rotate** if neither price nor quality fixes lift contribution.

@@ -141,7 +141,7 @@ export function MatrixView({ items, distribution, thresholds, locale, currency }
   )
 
   const totalVisible =
-    grouped.star.length + grouped.plow_horse.length + grouped.puzzle.length + grouped.low_end.length
+    grouped.star.length + grouped.plow_horse.length + grouped.puzzle.length + grouped.weak.length
 
   const toggleMatrixCategory = useCallback((category: MatrixCategory) => {
     setSelectedMatrixCategories((prev) => {

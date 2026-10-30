@@ -43,7 +43,7 @@ class MenuEngineeringDistributionItem(TypedDict):
     """Portfolio-level aggregation for one BCG quadrant.
 
     Attributes:
-        category: Quadrant name — "star", "plow_horse", "puzzle", or "low_end".
+        category: Quadrant name — "star", "plow_horse", "puzzle", or "weak".
         item_count: Number of distinct menu SKUs in this quadrant (after the
             cogs > 0 / revenue > 0 filter that gates matrix membership).
         item_share: ``item_count / total_items_in_portfolio`` — the quadrant's
@@ -102,11 +102,11 @@ def _classify_action(
     over promote for overlapping conditions.
     """
     remove = (
-        category == "low_end"
+        category == "weak"
         and contribution_margin_percentage < 0.005
         and quantity < avg_popularity
     )
-    reprice = category == "low_end" and margin_per_unit >= avg_margin and not remove
+    reprice = category == "weak" and margin_per_unit >= avg_margin and not remove
     promote = category == "puzzle" and not remove and not reprice
     if promote:
         return "promote"
@@ -250,7 +250,7 @@ def calculate_menu_engineering_matrix(df: pd.DataFrame) -> MenuEngineeringMatrix
     # --------------------------------------------------
     popular = df["quantity"] >= avg_popularity
     profitable = df["contribution_margin"] >= avg_margin
-    df["category"] = "low_end"
+    df["category"] = "weak"
     df.loc[popular & profitable, "category"] = "star"
     df.loc[popular & ~profitable, "category"] = "plow_horse"
     df.loc[~popular & profitable, "category"] = "puzzle"
@@ -259,11 +259,11 @@ def calculate_menu_engineering_matrix(df: pd.DataFrame) -> MenuEngineeringMatrix
     # Action recommendation (vectorized; mirrors _classify_action)
     # --------------------------------------------------
     remove = (
-        (df["category"] == "low_end")
+        (df["category"] == "weak")
         & (df["contribution_margin_percentage"] < 0.005)
         & (df["quantity"] < avg_popularity)
     )
-    reprice = (df["category"] == "low_end") & (df["margin_per_unit"] >= avg_margin) & ~remove
+    reprice = (df["category"] == "weak") & (df["margin_per_unit"] >= avg_margin) & ~remove
     promote = (df["category"] == "puzzle") & ~remove & ~reprice
     df["action"] = np.select(
         [promote, reprice, remove],

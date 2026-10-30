@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { adaptLowEndPage } from '@/lib/analytics/low-end-page-adapter'
+import { adaptWeakPage } from '@/lib/analytics/weak-page-adapter'
 
 const matrixItems = [
   {
@@ -28,7 +28,7 @@ const matrixItems = [
     contributionMarginPercentage: 0.02,
     marginPerUnit: 2,
     weValue: 0.6,
-    category: 'low_end',
+    category: 'weak',
     action: 'remove',
     menuCategory: 'Sides',
     menuCategoryDetail: null,
@@ -43,7 +43,7 @@ const matrixItems = [
     contributionMarginPercentage: 0.04,
     marginPerUnit: 2,
     weValue: 0.5,
-    category: 'low_end',
+    category: 'weak',
     action: 'reprice',
     menuCategory: 'Starters',
     menuCategoryDetail: null,
@@ -52,12 +52,12 @@ const matrixItems = [
 
 const distribution = [
   { category: 'star', itemCount: 1, itemShare: 1 / 3, marginShare: 0.8 },
-  { category: 'low_end', itemCount: 2, itemShare: 2 / 3, marginShare: 0.06 },
+  { category: 'weak', itemCount: 2, itemShare: 2 / 3, marginShare: 0.06 },
 ]
 
-describe('adaptLowEndPage', () => {
-  it('filters to low_end rows and derives avg qty/day from period length', () => {
-    const model = adaptLowEndPage(matrixItems, distribution, '2024-01-01', '2024-01-10')
+describe('adaptWeakPage', () => {
+  it('filters to weak rows and derives avg qty/day from period length', () => {
+    const model = adaptWeakPage(matrixItems, distribution, '2024-01-01', '2024-01-10')
 
     expect(model.rows).toHaveLength(2)
     expect(model.stats.periodDays).toBe(10)
@@ -77,15 +77,15 @@ describe('adaptLowEndPage', () => {
   })
 
   it('omits avg qty/day when period dates are missing', () => {
-    const model = adaptLowEndPage(matrixItems, distribution, null, null)
+    const model = adaptWeakPage(matrixItems, distribution, null, null)
 
     expect(model.stats.periodDays).toBeNull()
     expect(model.rows.every((r) => r.avgQtyPerDay === null)).toBe(true)
     expect(model.rows).toHaveLength(2)
   })
 
-  it('returns empty rows when there are no low_end items', () => {
-    const model = adaptLowEndPage(
+  it('returns empty rows when there are no weak items', () => {
+    const model = adaptWeakPage(
       [matrixItems[0]!],
       [{ category: 'star', itemCount: 1, itemShare: 1, marginShare: 1 }],
       '2024-01-01',

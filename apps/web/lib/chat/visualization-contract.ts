@@ -15,7 +15,7 @@ export { CHAT_VISUALIZATION_ID_VALUES, isChatVisualizationId, type ChatVisualiza
 /** Max menu items included in chat summaries (raw hourly arrays are omitted). */
 export const MENU_HEATMAP_CHAT_TOP_N = 25
 
-/** When matrix data exists, chat heatmaps keep only these BCG roles (excludes low_end). */
+/** When matrix data exists, chat heatmaps keep only these BCG roles (excludes weak). */
 export const HEATMAP_MATRIX_CHAT_CATEGORIES: ReadonlySet<string> = new Set([
   'star',
   'plow_horse',
@@ -27,5 +27,5 @@ export const CHAT_VISUALIZATION_TITLES: Record<ChatVisualizationId, string> = {
   venue_slot_strength_heatmap: 'Venue slot strength',
   menu_item_heatmap: 'Menu item heatmap',
   pair_lift_matrix_heatmap: 'Pair lift matrix',
-  low_end_review: 'Weak items review',
+  weak_review: 'Weak items review',
 }

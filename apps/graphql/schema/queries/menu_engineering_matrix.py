@@ -23,7 +23,7 @@ class MenuEngineeringMatrixQuery:
             "Compute the menu engineering BCG matrix for an analytics run. "
             "Requires COGS to be set; returns None if no COGS are available. "
             "Optionally filter returned items to specific categories "
-            "(star, puzzle, plow_horse, low_end) — thresholds and distribution "
+            "(star, puzzle, plow_horse, weak) — thresholds and distribution "
             "always reflect the full dataset. "
             "When locationId is set, the run must belong to that location (otherwise returns null)."
         )

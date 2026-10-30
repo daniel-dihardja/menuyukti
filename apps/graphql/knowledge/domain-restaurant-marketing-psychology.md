@@ -39,8 +39,8 @@ or combos to apply them to — never invent venue sales figures.
   only when the specialty is real.
 - **Status-quo bias**: removals feel risky; pair cuts with a clear substitute
   from stars / plow horses so guests are not left with a blank slot.
-- **Sunk cost**: past kitchen investment does not justify keeping a low-end
-  item that charts show as weak — decide from current sales data.
+- **Sunk cost**: past kitchen investment does not justify keeping a weak
+  item that charts show as underperforming — decide from current sales data.
 
 ## Second-order effects
 

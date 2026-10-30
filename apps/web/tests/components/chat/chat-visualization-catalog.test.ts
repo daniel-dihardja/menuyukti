@@ -20,13 +20,13 @@ import {
 } from '@/lib/chat/visualization-contract'
 
 describe('chat-visualization-catalog', () => {
-  it('includes venue slot strength, menu item heatmap, pair lift matrix, and low end review in the catalog', () => {
+  it('includes venue slot strength, menu item heatmap, pair lift matrix, and weak review in the catalog', () => {
     expect(CHAT_VISUALIZATION_CATALOG).toEqual(
       expect.arrayContaining([
         { id: 'venue_slot_strength_heatmap' },
         { id: 'menu_item_heatmap' },
         { id: 'pair_lift_matrix_heatmap' },
-        { id: 'low_end_review' },
+        { id: 'weak_review' },
       ]),
     )
   })
@@ -53,7 +53,7 @@ describe('chat-visualization-catalog', () => {
           'venue_slot_strength_heatmap',
           'menu_item_heatmap',
           'pair_lift_matrix_heatmap',
-          'low_end_review',
+          'weak_review',
           'unknown_chart',
           42,
         ]),
@@ -62,7 +62,7 @@ describe('chat-visualization-catalog', () => {
       'venue_slot_strength_heatmap',
       'menu_item_heatmap',
       'pair_lift_matrix_heatmap',
-      'low_end_review',
+      'weak_review',
     ])
   })
 
@@ -91,8 +91,8 @@ describe('chat-visualization-catalog', () => {
 
   it('removeCollapsedVisualizationId drops the matching id', () => {
     expect(
-      removeCollapsedVisualizationId(['menu_item_heatmap', 'low_end_review'], 'menu_item_heatmap'),
-    ).toEqual(['low_end_review'])
+      removeCollapsedVisualizationId(['menu_item_heatmap', 'weak_review'], 'menu_item_heatmap'),
+    ).toEqual(['weak_review'])
   })
 
   it('getAvailableCatalogEntries hides already-added charts', () => {
@@ -100,14 +100,14 @@ describe('chat-visualization-catalog', () => {
     expect(getAvailableCatalogEntries(['venue_slot_strength_heatmap'])).toEqual([
       { id: 'menu_item_heatmap' },
       { id: 'pair_lift_matrix_heatmap' },
-      { id: 'low_end_review' },
+      { id: 'weak_review' },
     ])
     expect(
       getAvailableCatalogEntries([
         'venue_slot_strength_heatmap',
         'menu_item_heatmap',
         'pair_lift_matrix_heatmap',
-        'low_end_review',
+        'weak_review',
       ]),
     ).toEqual([])
   })
@@ -116,7 +116,7 @@ describe('chat-visualization-catalog', () => {
     expect(isChatVisualizationId('venue_slot_strength_heatmap')).toBe(true)
     expect(isChatVisualizationId('menu_item_heatmap')).toBe(true)
     expect(isChatVisualizationId('pair_lift_matrix_heatmap')).toBe(true)
-    expect(isChatVisualizationId('low_end_review')).toBe(true)
+    expect(isChatVisualizationId('weak_review')).toBe(true)
     expect(isChatVisualizationId('other')).toBe(false)
   })
 

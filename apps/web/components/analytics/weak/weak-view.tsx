@@ -4,13 +4,13 @@ import { useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
 
 import { buildCumulativeMarginBand } from '@/lib/analytics/cumulative-margin-band'
-import { adaptLowEndPage, type LowEndDisplayRow } from '@/lib/analytics/low-end-page-adapter'
+import { adaptWeakPage, type WeakDisplayRow } from '@/lib/analytics/weak-page-adapter'
 import type { MenuEngineeringMatrixData } from '@/lib/graphql/queries'
 import { Alert, AlertDescription } from '@workspace/ui/components/alert'
 
-import { LowEndImpactPanel } from '@/components/analytics/low-end/low-end-impact-panel'
-import { LowEndKpis } from '@/components/analytics/low-end/low-end-kpis'
-import { LowEndTable } from '@/components/analytics/low-end/low-end-table'
+import { WeakImpactPanel } from '@/components/analytics/weak/weak-impact-panel'
+import { WeakKpis } from '@/components/analytics/weak/weak-kpis'
+import { WeakTable } from '@/components/analytics/weak/weak-table'
 
 type MatrixItem = NonNullable<MenuEngineeringMatrixData['menuEngineeringMatrix']>['items'][number]
 type DistributionItem = NonNullable<
@@ -26,19 +26,12 @@ type Props = {
   currency: string
 }
 
-export function LowEndView({
-  items,
-  distribution,
-  periodStart,
-  periodEnd,
-  locale,
-  currency,
-}: Props) {
-  const t = useTranslations('analytics.lowEnd')
+export function WeakView({ items, distribution, periodStart, periodEnd, locale, currency }: Props) {
+  const t = useTranslations('analytics.weak')
   const [sliderValue, setSliderValue] = useState(0)
 
   const { rows, stats } = useMemo(
-    () => adaptLowEndPage(items, distribution, periodStart, periodEnd),
+    () => adaptWeakPage(items, distribution, periodStart, periodEnd),
     [items, distribution, periodStart, periodEnd],
   )
 
@@ -50,7 +43,7 @@ export function LowEndView({
   )
 
   const highlightedMenuItems = useMemo(
-    () => new Set(band.selected.map((row: LowEndDisplayRow) => row.menuItem)),
+    () => new Set(band.selected.map((row: WeakDisplayRow) => row.menuItem)),
     [band.selected],
   )
 
@@ -64,7 +57,7 @@ export function LowEndView({
 
   return (
     <div className="flex flex-col gap-6">
-      <LowEndKpis stats={stats} locale={locale} currency={currency} />
+      <WeakKpis stats={stats} locale={locale} currency={currency} />
 
       {!showAvgQtyPerDay ? (
         <Alert>
@@ -72,7 +65,7 @@ export function LowEndView({
         </Alert>
       ) : null}
 
-      <LowEndImpactPanel
+      <WeakImpactPanel
         sliderValue={sliderValue}
         onSliderChange={setSliderValue}
         impactItemCount={band.itemCount}
@@ -82,7 +75,7 @@ export function LowEndView({
         currency={currency}
       />
 
-      <LowEndTable
+      <WeakTable
         rows={rows}
         highlightedMenuItems={highlightedMenuItems}
         showAvgQtyPerDay={showAvgQtyPerDay}

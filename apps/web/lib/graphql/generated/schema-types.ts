@@ -694,7 +694,7 @@ export type MenuCombosPayloadType = {
   totalOrders: Scalars['Int']['output']
 }
 
-/** Share of items and margin contribution per BCG category (star, puzzle, plow_horse, low_end). */
+/** Share of items and margin contribution per BCG category (star, puzzle, plow_horse, weak). */
 export type MenuEngineeringDistributionItemType = {
   __typename?: 'MenuEngineeringDistributionItemType'
   category: Scalars['String']['output']
@@ -703,7 +703,7 @@ export type MenuEngineeringDistributionItemType = {
   marginShare: Scalars['Float']['output']
 }
 
-/** A single menu item's position in the menu engineering BCG matrix, including its classification (star, puzzle, plow_horse, low_end) and recommended action. */
+/** A single menu item's position in the menu engineering BCG matrix, including its classification (star, puzzle, plow_horse, weak) and recommended action. */
 export type MenuEngineeringMatrixItemType = {
   __typename?: 'MenuEngineeringMatrixItemType'
   action: Scalars['String']['output']
@@ -1810,7 +1810,7 @@ export type Query = {
   mediaCollections: Array<MediaCollectionType>
   /** Return basket affinity analytics for an analytics run: menu pairs ordered together, with lift and confidence metrics. Defaults to star items when menu engineering matrix is available; otherwise top items by order presence. When locationId is set, the run must belong to that location. */
   menuCombos?: Maybe<MenuCombosPayloadType>
-  /** Compute the menu engineering BCG matrix for an analytics run. Requires COGS to be set; returns None if no COGS are available. Optionally filter returned items to specific categories (star, puzzle, plow_horse, low_end) — thresholds and distribution always reflect the full dataset. When locationId is set, the run must belong to that location (otherwise returns null). */
+  /** Compute the menu engineering BCG matrix for an analytics run. Requires COGS to be set; returns None if no COGS are available. Optionally filter returned items to specific categories (star, puzzle, plow_horse, weak) — thresholds and distribution always reflect the full dataset. When locationId is set, the run must belong to that location (otherwise returns null). */
   menuEngineeringMatrix?: Maybe<MenuEngineeringMatrixType>
   /** Return hourly and day-of-week demand heatmaps for every menu item in an analytics run. Use this to identify peak selling times per dish. When locationId is set, the run must belong to that location (otherwise returns an empty list). */
   menuHeatmaps: Array<MenuHeatmapType>

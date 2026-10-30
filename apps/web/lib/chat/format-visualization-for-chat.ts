@@ -1,4 +1,5 @@
-import { adaptLowEndPage } from '@/lib/analytics/low-end-page-adapter'
+import { adaptWeakPage } from '@/lib/analytics/weak-page-adapter'
+import { normalizeCategory } from '@/lib/analytics/matrix-page-adapter'
 import { buildLiftMatrixRows } from '@/lib/analytics/menu-combos-page-adapter'
 import type { SlotDemandCell } from '@/lib/graphql/queries/analytics'
 import type { MenuHeatmapsData } from '@/lib/graphql/queries/analytics'
@@ -12,7 +13,7 @@ import {
 
 export { HEATMAP_MATRIX_CHAT_CATEGORIES, MENU_HEATMAP_CHAT_TOP_N }
 
-type HeatmapMatrixChatCategory = 'star' | 'plow_horse' | 'puzzle' | 'low_end'
+type HeatmapMatrixChatCategory = 'star' | 'plow_horse' | 'puzzle' | 'weak'
 
 type MenuHeatmapItem = MenuHeatmapsData['menuHeatmaps'][number]
 
@@ -43,7 +44,7 @@ type PairLiftChatPayload = {
   analyticsRunId?: string | null
 }
 
-type LowEndChatPayload = {
+type WeakChatPayload = {
   items: NonNullable<MenuEngineeringMatrixData['menuEngineeringMatrix']>['items']
   distribution: NonNullable<MenuEngineeringMatrixData['menuEngineeringMatrix']>['distribution']
   periodStart?: string | null
@@ -51,8 +52,8 @@ type LowEndChatPayload = {
   analyticsRunId?: string | null
 }
 
-function formatLowEndReview(payload: LowEndChatPayload): string {
-  const model = adaptLowEndPage(
+function formatWeakReview(payload: WeakChatPayload): string {
+  const model = adaptWeakPage(
     payload.items,
     payload.distribution,
     payload.periodStart ?? null,
@@ -60,13 +61,13 @@ function formatLowEndReview(payload: LowEndChatPayload): string {
   )
 
   if (model.rows.length === 0) {
-    return '(no Low End items)'
+    return '(no Weak items)'
   }
 
   const lines: string[] = [
-    `- **Low End items:** ${model.stats.itemCount} of ${model.stats.totalMenuItems} (${(model.stats.itemShare * 100).toFixed(1)}% of menu)`,
+    `- **Weak items:** ${model.stats.itemCount} of ${model.stats.totalMenuItems} (${(model.stats.itemShare * 100).toFixed(1)}% of menu)`,
     `- **Margin share:** ${(model.stats.marginShare * 100).toFixed(1)}% of portfolio margin`,
-    `- **Low End margin:** ${model.stats.marginAmount.toFixed(2)}`,
+    `- **Weak items margin:** ${model.stats.marginAmount.toFixed(2)}`,
   ]
   if (model.stats.periodDays != null) {
     lines.push(`- **Period days:** ${model.stats.periodDays}`)
@@ -85,7 +86,7 @@ function formatLowEndReview(payload: LowEndChatPayload): string {
     )
   }
   if (sorted.length > 25) {
-    lines.push(`- *(Showing 25 of ${sorted.length} Low End items.)*`)
+    lines.push(`- *(Showing 25 of ${sorted.length} Weak items.)*`)
   }
   return lines.join('\n')
 }
@@ -161,12 +162,10 @@ function peakDailyHour(item: MenuHeatmapItem): { hour: number; quantity: number 
 
 function normalizeMatrixCategory(raw: string | null | undefined): HeatmapMatrixChatCategory | null {
   if (raw == null) return null
-  const value = raw
-    .trim()
-    .toLowerCase()
-    .replace(/[\s-]+/g, '_')
-  if (value === 'star' || value === 'plow_horse' || value === 'puzzle' || value === 'low_end') {
-    return value
+  const category = normalizeCategory(raw)
+  if (category === 'weak') return 'weak'
+  if (category === 'star' || category === 'plow_horse' || category === 'puzzle') {
+    return category
   }
   return null
 }
@@ -265,8 +264,8 @@ function formatVisualizationPayload(
       return formatPairLiftMatrix(payload as PairLiftChatPayload)
     case 'menu_item_heatmap':
       return formatMenuHeatmapSummary(payload as MenuHeatmapChatPayload)
-    case 'low_end_review':
-      return formatLowEndReview(payload as LowEndChatPayload)
+    case 'weak_review':
+      return formatWeakReview(payload as WeakChatPayload)
     default: {
       const _exhaustive: never = visualizationId
       return _exhaustive

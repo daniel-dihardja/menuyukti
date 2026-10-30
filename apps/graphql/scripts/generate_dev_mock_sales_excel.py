@@ -418,7 +418,7 @@ def _smoke_check(output_path: Path, cogs_path: Path) -> None:
     print(
         f"Smoke: stars={len(stars)} sample={stars[:5]}; "
         f"plow_horses={len(plows)} sample={plows[:5]}; "
-        f"puzzles={len(by_cat.get('puzzle', []))} low_end={len(by_cat.get('low_end', []))}"
+        f"puzzles={len(by_cat.get('puzzle', []))} weak={len(by_cat.get('weak', []))}"
     )
 
     basket_rows = [

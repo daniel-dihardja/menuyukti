@@ -16,14 +16,14 @@ const QUADRANT_FILL: Record<MatrixCategory, string> = {
   star: 'rgba(47, 212, 199, 0.08)',
   plow_horse: 'rgba(242, 183, 90, 0.08)',
   puzzle: 'rgba(135, 201, 255, 0.08)',
-  low_end: 'rgba(182, 157, 255, 0.08)',
+  weak: 'rgba(182, 157, 255, 0.08)',
 }
 
 const POINT_FILL: Record<MatrixCategory, string> = {
   star: '#2fd4c7',
   plow_horse: '#f2b75a',
   puzzle: '#87c9ff',
-  low_end: '#b69dff',
+  weak: '#b69dff',
 }
 
 export type MatrixScatterItem = {
@@ -85,7 +85,7 @@ export function MatrixScatterChart({ items, thresholds, locale, currency }: Prop
         height: thresholdY,
       },
       {
-        category: 'low_end' as MatrixCategory,
+        category: 'weak' as MatrixCategory,
         x: 0,
         y: thresholdY,
         width: thresholdX,

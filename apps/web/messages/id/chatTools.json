@@ -29,7 +29,7 @@
           "running": "Memeriksa combo menu dan peluang pair-lift…",
           "done": "Meninjau matriks pair lift"
         },
-        "low_end_review": {
+        "weak_review": {
           "running": "Memeriksa item lemah untuk dinilai ulang harga, diperbaiki, atau dihapus…",
           "done": "Meninjau item lemah"
         }

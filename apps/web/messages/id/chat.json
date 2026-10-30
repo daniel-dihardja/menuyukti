@@ -188,7 +188,6 @@
       "emptyDataDescription": "Tidak ada data permintaan slot tersedia untuk laporan penjualan ini.",
       "emptyMenuHeatmapDescription": "Tidak ada data heatmap menu tersedia untuk laporan penjualan ini.",
       "emptyPairLiftMatrixDescription": "Setidaknya dua item menu fokus diperlukan untuk menampilkan matriks lift.",
-      "emptyLowEndDescription": "Tidak ada item Low End tersedia untuk laporan penjualan ini. Perbarui COGS jika matriks hilang.",
       "fallbackRunHint": "Menampilkan data dari laporan penjualan yang lebih baru untuk lokasi ini karena laporan yang ditautkan alur kerja tidak memiliki data permintaan slot.",
       "catalog": {
         "venue_slot_strength_heatmap": {
@@ -203,11 +202,12 @@
           "title": "Matriks pair lift",
           "description": "Seberapa kuat item menu dipesan bersama dibanding kebetulan saja."
         },
-        "low_end_review": {
+        "weak_review": {
           "title": "Tinjauan item lemah",
           "description": "Item popularitas rendah dan margin rendah untuk dinilai ulang harga, diperbaiki, atau dihapus."
         }
-      }
+      },
+      "emptyWeakDescription": "Tidak ada item Weak tersedia untuk laporan penjualan ini. Perbarui COGS jika matriks hilang."
     }
   }
 }

@@ -3,7 +3,7 @@
 import { CircleDollarSign, LayoutGrid, Percent, PieChart } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
-import type { LowEndPortfolioStats } from '@/lib/analytics/low-end-page-adapter'
+import type { WeakPortfolioStats } from '@/lib/analytics/weak-page-adapter'
 import { formatCurrencyWithCode } from '@/lib/currency'
 import {
   Card,
@@ -14,13 +14,13 @@ import {
 } from '@workspace/ui/components/card'
 
 type Props = {
-  stats: LowEndPortfolioStats
+  stats: WeakPortfolioStats
   locale: string
   currency: string
 }
 
-export function LowEndKpis({ stats, locale, currency }: Props) {
-  const t = useTranslations('analytics.lowEnd.kpi')
+export function WeakKpis({ stats, locale, currency }: Props) {
+  const t = useTranslations('analytics.weak.kpi')
 
   const itemSharePct = `${(stats.itemShare * 100).toFixed(1)}%`
   const marginSharePct = `${(stats.marginShare * 100).toFixed(1)}%`

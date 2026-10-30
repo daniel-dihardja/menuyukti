@@ -54,14 +54,14 @@ export function MatrixCategoryTable({ category, items, portfolioStats, locale, c
   const tTable = useTranslations('analytics.matrix.table')
   const tCategories = useTranslations('analytics.matrix.categories')
   const tPortfolio = useTranslations('analytics.matrix.portfolio')
-  const tHighlight = useTranslations('analytics.matrix.lowEndHighlight')
+  const tHighlight = useTranslations('analytics.matrix.weakHighlight')
   const tQuadrantHelp = useTranslations('analytics.matrix.quadrantHelp')
   const { sortKey, sortDirection, toggleSort } = useSortableColumns<SortKey>('unitsSold', 'desc')
 
   const [sliderValue, setSliderValue] = useState(0)
 
   const highlightedRows = useMemo<Set<MatrixDisplayRow>>(() => {
-    if (category !== 'low_end' || sliderValue <= 0) return new Set()
+    if (category !== 'weak' || sliderValue <= 0) return new Set()
     const band = buildCumulativeMarginBand(items, sliderValue, locale)
     return new Set(band.selected)
   }, [category, items, sliderValue, locale])
@@ -208,12 +208,12 @@ export function MatrixCategoryTable({ category, items, portfolioStats, locale, c
         </SortableTable>
       </div>
 
-      {category === 'low_end' && items.length > 0 && (
+      {category === 'weak' && items.length > 0 && (
         <div className="rounded-lg border bg-muted/30 px-4 py-3">
           <Field className="gap-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5">
-                <FieldLabel htmlFor="low-end-margin-slider" className="text-xs font-medium">
+                <FieldLabel htmlFor="weak-margin-slider" className="text-xs font-medium">
                   {tHighlight('sliderLabel')}
                 </FieldLabel>
                 <HoverCard openDelay={200} closeDelay={100}>
@@ -233,7 +233,7 @@ export function MatrixCategoryTable({ category, items, portfolioStats, locale, c
               </span>
             </div>
             <Slider
-              id="low-end-margin-slider"
+              id="weak-margin-slider"
               min={0}
               max={10}
               step={0.1}

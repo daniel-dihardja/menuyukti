@@ -3,7 +3,7 @@ id: doc-4
 title: Chat advisor prompt construction
 type: guide
 created_date: '2026-10-29T15:50:00Z'
-updated_date: '2026-10-30T02:21:00Z'
+updated_date: '2026-10-30T02:35:00Z'
 tags:
   - chat
   - advisor
@@ -130,7 +130,7 @@ When `location_id` is set: instruct calling `get_location_data` and `get_advisor
 
 ### Chart analytics (`CHART_ANALYTICS_SECTION`) — with pinned report
 
-How to use `get_chart_data`, core charts, Low End, and `@`-attached viz. Bundled into `{chart_section}` with COGS when `analytics_run_id` is set. Low End answers stay on reprice / improve / remove — do not pivot to a promo calendar.
+How to use `get_chart_data`, core charts, weak items, and `@`-attached viz. Bundled into `{chart_section}` with COGS when `analytics_run_id` is set. Weak-item answers stay on reprice / improve / remove — do not pivot to a promo calendar.
 
 ### Menu COGS (`COGS_SECTION`) — with pinned report
 
@@ -150,7 +150,7 @@ When location is set: load hours via `get_location_data` before timing-sensitive
 
 ### Workflow chart catalog (`CHART_CATALOG_BLOCK`)
 
-Chart IDs and semantics (`venue_slot_strength_heatmap`, `menu_item_heatmap`, `pair_lift_matrix_heatmap`, `low_end_review`). Only when a sales report is pinned. Venue slots inform demand timing / when to promote (channel-neutral).
+Chart IDs and semantics (`venue_slot_strength_heatmap`, `menu_item_heatmap`, `pair_lift_matrix_heatmap`, `weak_review`). Only when a sales report is pinned. Venue slots inform demand timing / when to promote (channel-neutral).
 
 ### Knowledge search (`KNOWLEDGE_SECTION`)
 

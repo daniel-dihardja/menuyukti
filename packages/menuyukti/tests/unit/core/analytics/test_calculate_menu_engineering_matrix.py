@@ -35,7 +35,7 @@ def test_matrix_single_item_returns_one_category():
     result = compute_menu_engineering_from_orders(order_rows, cogs_by_menu)
     assert len(result["items"]) == 1
     assert result["items"][0]["menu"] == "Solo"
-    assert result["items"][0]["category"] in ("star", "plow_horse", "puzzle", "low_end")
+    assert result["items"][0]["category"] in ("star", "plow_horse", "puzzle", "weak")
     assert result["items"][0]["quantity"] == 5
     assert result["items"][0]["total_revenue"] == 100.0
     assert result["items"][0]["cogs"] == 10.0
@@ -44,18 +44,18 @@ def test_matrix_single_item_returns_one_category():
 
 
 def test_matrix_four_quadrants_and_actions():
-    """Four items with tuned qty/revenue/cogs produce star, plow_horse, puzzle, low_end and multiple actions."""
+    """Four items with tuned qty/revenue/cogs produce star, plow_horse, puzzle, weak and multiple actions."""
     order_rows = [
         {"menu": "StarItem", "qty": 5, "total_after_bill_discount": 100.0},
         {"menu": "PlowHorseItem", "qty": 5, "total_after_bill_discount": 30.0},
         {"menu": "PuzzleItem", "qty": 1, "total_after_bill_discount": 50.0},
-        {"menu": "LowEndItem", "qty": 1, "total_after_bill_discount": 5.5},
+        {"menu": "WeakItem", "qty": 1, "total_after_bill_discount": 5.5},
     ]
     cogs_by_menu = {
         "StarItem": 5.0,
         "PlowHorseItem": 5.0,
         "PuzzleItem": 5.0,
-        "LowEndItem": 5.0,
+        "WeakItem": 5.0,
     }
     result = compute_menu_engineering_from_orders(order_rows, cogs_by_menu)
 
@@ -65,16 +65,16 @@ def test_matrix_four_quadrants_and_actions():
     assert categories["StarItem"] == "star"
     assert categories["PlowHorseItem"] == "plow_horse"
     assert categories["PuzzleItem"] == "puzzle"
-    assert categories["LowEndItem"] == "low_end"
+    assert categories["WeakItem"] == "weak"
 
     assert actions["StarItem"] == "keep"
-    assert actions["LowEndItem"] == "remove"
+    assert actions["WeakItem"] == "remove"
     assert actions["PuzzleItem"] == "promote"
     assert actions["PlowHorseItem"] in ("keep", "reprice")
 
     assert len(result["distribution"]) == 4
     dist_cats = {d["category"] for d in result["distribution"]}
-    assert dist_cats == {"star", "plow_horse", "puzzle", "low_end"}
+    assert dist_cats == {"star", "plow_horse", "puzzle", "weak"}
 
 
 def test_calculate_menu_engineering_matrix_missing_columns_raises():

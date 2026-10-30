@@ -3,7 +3,7 @@ id: doc-5
 title: Chat advisor knowledge RAG
 type: guide
 created_date: '2026-10-29T16:06:00Z'
-updated_date: '2026-10-29T16:07:00Z'
+updated_date: '2026-10-30T02:35:00Z'
 tags:
   - chat
   - advisor
@@ -72,7 +72,7 @@ Markdown with YAML front matter (`title`, `category`, `slug`, optional `chart_id
 | File                                           | Category       | Typical `chart_ids`           |
 | ---------------------------------------------- | -------------- | ----------------------------- |
 | `domain-restaurant-marketing.md`               | domain         | —                             |
-| `kpi-weak-items.md` / `playbook-weak-items.md` | kpi / playbook | `low_end_review`              |
+| `kpi-weak-items.md` / `playbook-weak-items.md` | kpi / playbook | `weak_review`                 |
 | `kpi-menu-heatmap.md`                          | kpi            | `menu_item_heatmap`           |
 | `kpi-pair-lift.md`                             | kpi            | `pair_lift_matrix_heatmap`    |
 | `kpi-venue-slot-strength.md`                   | kpi            | `venue_slot_strength_heatmap` |

@@ -1,11 +1,12 @@
 /**
- * Adapter for the Low End review page: filters menu-engineering matrix items
- * to the low_end quadrant and derives avg qty/day + portfolio KPIs.
+ * Adapter for the Weak items review page: filters menu-engineering matrix items
+ * to the weak quadrant and derives avg qty/day + portfolio KPIs.
  */
 
 import { inclusiveCalendarDays } from '@/lib/analytics/period-days'
 import {
   distributionToCategoryMap,
+  normalizeCategory,
   type DistributionStats,
 } from '@/lib/analytics/matrix-page-adapter'
 import type { MenuEngineeringMatrixData } from '@/lib/graphql/queries'
@@ -17,14 +18,14 @@ type DistributionItem = NonNullable<
 
 const VALID_ACTIONS = new Set(['keep', 'promote', 'reprice', 'remove'])
 
-function normalizeAction(raw: string): LowEndDisplayRow['action'] {
+function normalizeAction(raw: string): WeakDisplayRow['action'] {
   const lower = String(raw ?? '')
     .trim()
     .toLowerCase()
-  return VALID_ACTIONS.has(lower) ? (lower as LowEndDisplayRow['action']) : null
+  return VALID_ACTIONS.has(lower) ? (lower as WeakDisplayRow['action']) : null
 }
 
-export type LowEndDisplayRow = {
+export type WeakDisplayRow = {
   menuItem: string
   unitsSold: number
   /** Null when period length is unknown. */
@@ -34,7 +35,7 @@ export type LowEndDisplayRow = {
   action: 'keep' | 'promote' | 'reprice' | 'remove' | null
 }
 
-export type LowEndPortfolioStats = {
+export type WeakPortfolioStats = {
   itemCount: number
   itemShare: number
   marginShare: number
@@ -43,13 +44,13 @@ export type LowEndPortfolioStats = {
   periodDays: number | null
 }
 
-export type LowEndPageModel = {
-  rows: LowEndDisplayRow[]
-  stats: LowEndPortfolioStats
+export type WeakPageModel = {
+  rows: WeakDisplayRow[]
+  stats: WeakPortfolioStats
   distributionStats: DistributionStats
 }
 
-function toDisplayRow(item: MatrixItem, periodDays: number | null): LowEndDisplayRow {
+function toDisplayRow(item: MatrixItem, periodDays: number | null): WeakDisplayRow {
   const unitsSold = Number.isFinite(Number(item.quantity)) ? Number(item.quantity) : 0
   const rawShare = Number(item.contributionMarginPercentage)
   const contributionMarginShare =
@@ -71,28 +72,23 @@ function toDisplayRow(item: MatrixItem, periodDays: number | null): LowEndDispla
 }
 
 /**
- * Build Low End review rows and portfolio stats from a full matrix payload.
+ * Build Weak items review rows and portfolio stats from a full matrix payload.
  */
-export function adaptLowEndPage(
+export function adaptWeakPage(
   items: MatrixItem[] | null | undefined,
   distribution: DistributionItem[] | null | undefined,
   periodStart: string | null | undefined,
   periodEnd: string | null | undefined,
-): LowEndPageModel {
+): WeakPageModel {
   const periodDays = inclusiveCalendarDays(periodStart, periodEnd)
   const distMap = distributionToCategoryMap(distribution)
-  const lowEndDist = distMap.low_end
+  const weakDist = distMap.weak
 
   const allItems = Array.isArray(items) ? items : []
   const totalMenuItems = allItems.length
 
   const rows = allItems
-    .filter(
-      (item) =>
-        String(item.category ?? '')
-          .trim()
-          .toLowerCase() === 'low_end',
-    )
+    .filter((item) => normalizeCategory(String(item.category ?? '')) === 'weak')
     .map((item) => toDisplayRow(item, periodDays))
 
   const marginAmount = rows.reduce((sum, row) => sum + row.contributionMargin, 0)
@@ -103,14 +99,14 @@ export function adaptLowEndPage(
 
   const itemCount = rows.length
   const itemShare =
-    lowEndDist.itemCount > 0
-      ? lowEndDist.itemShare
+    weakDist.itemCount > 0
+      ? weakDist.itemShare
       : totalMenuItems > 0
         ? itemCount / totalMenuItems
         : 0
   const marginShare =
-    lowEndDist.itemCount > 0 || lowEndDist.marginShare > 0
-      ? lowEndDist.marginShare
+    weakDist.itemCount > 0 || weakDist.marginShare > 0
+      ? weakDist.marginShare
       : totalMargin > 0
         ? marginAmount / totalMargin
         : 0
@@ -126,7 +122,7 @@ export function adaptLowEndPage(
       periodDays,
     },
     distributionStats: {
-      itemCount: lowEndDist.itemCount > 0 ? lowEndDist.itemCount : itemCount,
+      itemCount: weakDist.itemCount > 0 ? weakDist.itemCount : itemCount,
       itemShare,
       marginShare,
     },

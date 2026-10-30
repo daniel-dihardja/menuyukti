@@ -1,18 +1,18 @@
 import { NextResponse } from 'next/server'
 
 import { prepareChatAnalyticsGet } from '@/lib/analytics/chat-analytics-route'
-import { loadLowEndForChat } from '@/lib/analytics/load-low-end-for-chat'
+import { loadWeakForChat } from '@/lib/analytics/load-weak-for-chat'
 
 /**
- * GET /api/analytics/low-end?analyticsRunId=...&locationId=...
- * Menu-engineering Low End review payload for chat visualizations.
+ * GET /api/analytics/weak?analyticsRunId=...&locationId=...
+ * Menu-engineering Weak items review payload for chat visualizations.
  */
 export async function GET(req: Request) {
   try {
     const prepared = await prepareChatAnalyticsGet(req)
     if (!prepared.ok) return prepared.response
 
-    const result = await loadLowEndForChat({
+    const result = await loadWeakForChat({
       userId: prepared.userId,
       analyticsRunId: prepared.analyticsRunId,
       locationId: prepared.locationId,
@@ -30,7 +30,7 @@ export async function GET(req: Request) {
       { headers: { 'Cache-Control': 'no-store' } },
     )
   } catch (error) {
-    console.error('[api/analytics/low-end]', error)
-    return NextResponse.json({ error: 'Failed to load Low End review' }, { status: 500 })
+    console.error('[api/analytics/weak]', error)
+    return NextResponse.json({ error: 'Failed to load Weak items review' }, { status: 500 })
   }
 }

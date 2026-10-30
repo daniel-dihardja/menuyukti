@@ -3,7 +3,7 @@
 import { useMemo } from 'react'
 import { useTranslations } from 'next-intl'
 
-import type { LowEndDisplayRow } from '@/lib/analytics/low-end-page-adapter'
+import type { WeakDisplayRow } from '@/lib/analytics/weak-page-adapter'
 import { formatCurrencyWithCode } from '@/lib/currency'
 import { SortableTable, useSortableColumns } from '@/components/sortable-table'
 import { Badge } from '@workspace/ui/components/badge'
@@ -19,7 +19,7 @@ type SortKey =
   | 'action'
 
 type Props = {
-  rows: LowEndDisplayRow[]
+  rows: WeakDisplayRow[]
   highlightedMenuItems: Set<string>
   showAvgQtyPerDay: boolean
   locale: string
@@ -27,7 +27,7 @@ type Props = {
 }
 
 function actionBadgeVariant(
-  action: LowEndDisplayRow['action'],
+  action: WeakDisplayRow['action'],
 ): 'default' | 'secondary' | 'destructive' | 'outline' {
   switch (action) {
     case 'promote':
@@ -41,15 +41,15 @@ function actionBadgeVariant(
   }
 }
 
-export function LowEndTable({
+export function WeakTable({
   rows,
   highlightedMenuItems,
   showAvgQtyPerDay,
   locale,
   currency,
 }: Props) {
-  const t = useTranslations('analytics.lowEnd.table')
-  const tImpact = useTranslations('analytics.lowEnd.impact')
+  const t = useTranslations('analytics.weak.table')
+  const tImpact = useTranslations('analytics.weak.impact')
   const { sortKey, sortDirection, toggleSort } = useSortableColumns<SortKey>(
     'contributionMarginShare',
     'asc',

@@ -53,8 +53,8 @@ def test_chat_prompt_injects_chart_catalog_when_analytics_run_present() -> None:
     assert "list_menu_item_cogs" in content
     assert "request_cogs_edit" in content
     assert "pair_lift_matrix_heatmap" in content
-    assert "low_end_review" in content
-    assert "poor dogs" in content
+    assert "weak_review" in content
+    assert "weak items" in content.lower()
     assert "core three" in content
     assert "No sales report is attached" not in content
     assert "## Advisor memory" in content

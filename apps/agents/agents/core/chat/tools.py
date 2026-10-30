@@ -175,7 +175,7 @@ async def get_chart_data(
         "venue_slot_strength_heatmap",
         "menu_item_heatmap",
         "pair_lift_matrix_heatmap",
-        "low_end_review",
+        "weak_review",
     ],
     config: Annotated[RunnableConfig, InjectedToolArg()] = None,  # type: ignore[assignment]
 ) -> str:
@@ -184,8 +184,8 @@ async def get_chart_data(
     - ``venue_slot_strength_heatmap``: posting frequency and best timing (``schedule``).
     - ``menu_item_heatmap``: which menus to feature, with timing context.
     - ``pair_lift_matrix_heatmap``: interesting menu combos / co-purchase pairings.
-    - ``low_end_review``: Weak items review (Low End / BCG dogs) — low-popularity,
-      low-margin items to reprice, improve, or remove.
+    - ``weak_review``: Weak items review — low-popularity, low-margin items to reprice,
+      improve, or remove.
 
     Pass a chart_id from the chart catalog exactly — do not invent ids.
     """

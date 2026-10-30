@@ -146,13 +146,13 @@ def test_instagram_signals_with_matrix_filters_heroes_and_avoid():
         {"menu": "StarItem", "qty": 5, "total_after_bill_discount": 100.0},
         {"menu": "PlowHorseItem", "qty": 5, "total_after_bill_discount": 30.0},
         {"menu": "PuzzleItem", "qty": 1, "total_after_bill_discount": 50.0},
-        {"menu": "LowEndItem", "qty": 1, "total_after_bill_discount": 5.5},
+        {"menu": "WeakItem", "qty": 1, "total_after_bill_discount": 5.5},
     ]
     cogs_by_menu = {
         "StarItem": 5.0,
         "PlowHorseItem": 5.0,
         "PuzzleItem": 5.0,
-        "LowEndItem": 5.0,
+        "WeakItem": 5.0,
     }
     matrix = compute_menu_engineering_from_orders(order_rows, cogs_by_menu)
 
@@ -168,7 +168,7 @@ def test_instagram_signals_with_matrix_filters_heroes_and_avoid():
     hero_menus = {h["menu"] for h in matrix["content_heroes"]}
     avoid_menus = {a["menu"] for a in matrix["avoid_items"]}
     assert "StarItem" in hero_menus
-    assert "LowEndItem" in avoid_menus
+    assert "WeakItem" in avoid_menus
 
 
 def _matrix_stub_item(menu: str, category: str, total_revenue: float) -> dict:
@@ -183,7 +183,7 @@ def _matrix_stub_item(menu: str, category: str, total_revenue: float) -> dict:
 
 def test_instagram_signals_caps_heroes_avoid_and_trending():
     many_stars = [_matrix_stub_item(f"star_{i}", "star", 200.0 - i) for i in range(30)]
-    many_low = [_matrix_stub_item(f"low_{i}", "low_end", 50.0 - i) for i in range(35)]
+    many_low = [_matrix_stub_item(f"weak_{i}", "weak", 50.0 - i) for i in range(35)]
     matrix = {"items": many_stars + many_low, "thresholds": {}, "distribution": []}
 
     rising_rows = [

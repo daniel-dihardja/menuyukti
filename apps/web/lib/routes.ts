@@ -144,7 +144,7 @@ export const routes = {
     salesLegacy: '/analytics/sales',
 
     matrix: (analyticsId: string | number) => `/analytics/${analyticsId}/matrix`,
-    lowEnd: (analyticsId: string | number) => `/analytics/${analyticsId}/low-end`,
+    weak: (analyticsId: string | number) => `/analytics/${analyticsId}/weak`,
     attribution: (analyticsId: string | number) => `/analytics/${analyticsId}/attribution`,
 
     finance: (analyticsId: string | number) => `/analytics/${analyticsId}/finance`,
