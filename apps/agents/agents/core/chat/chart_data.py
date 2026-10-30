@@ -24,21 +24,21 @@ ChartId = Literal[
     "venue_slot_strength_heatmap",
     "menu_item_heatmap",
     "pair_lift_matrix_heatmap",
-    "low_end_review",
+    "weak_review",
 ]
 
 CHART_IDS: tuple[ChartId, ...] = (
     "venue_slot_strength_heatmap",
     "menu_item_heatmap",
     "pair_lift_matrix_heatmap",
-    "low_end_review",
+    "weak_review",
 )
 
 CHART_TITLES: dict[ChartId, str] = {
     "venue_slot_strength_heatmap": "Venue slot strength",
     "menu_item_heatmap": "Menu item heatmap",
     "pair_lift_matrix_heatmap": "Pair lift matrix",
-    "low_end_review": "Weak items review",
+    "weak_review": "Weak items review",
 }
 
 MENU_HEATMAP_CHAT_TOP_N = 25
@@ -200,7 +200,7 @@ def find_day_specialties(
     min_units: int = DAY_SPECIALTY_MIN_UNITS,
     max_n: int = DAY_SPECIALTY_MAX_N,
 ) -> list[dict[str, Any]]:
-    """Menus whose weekly volume is concentrated on one weekday (includes ``low_end``)."""
+    """Menus whose weekly volume is concentrated on one weekday (includes ``weak``)."""
     found: list[dict[str, Any]] = []
     for item in heatmaps:
         menu_raw = item.get("menu")
@@ -253,7 +253,7 @@ def format_daily_highlights(
     top_n: int = DAILY_HIGHLIGHTS_TOP_N,
     specialties: list[dict[str, Any]] | None = None,
 ) -> str:
-    """Top dishes per weekday from unfiltered heatmaps (includes ``low_end``).
+    """Top dishes per weekday from unfiltered heatmaps (includes ``weak``).
 
     Appends day specialties for each weekday when missing from the absolute top-N.
     Returns an empty string when no weekday has positive quantity.
@@ -350,7 +350,7 @@ def _normalize_matrix_category(raw: Any) -> str | None:
     if not isinstance(raw, str):
         return None
     value = raw.strip().lower().replace(" ", "_").replace("-", "_")
-    if value in {"star", "plow_horse", "puzzle", "low_end"}:
+    if value in {"star", "plow_horse", "puzzle", "weak"}:
         return value
     return None
 
@@ -522,14 +522,14 @@ def format_chart_markdown_section(
         )
     elif chart_id == "pair_lift_matrix_heatmap":
         body_lines.append(format_pair_lift_matrix(payload))
-    else:
-        body_lines.append(format_low_end_review(payload))
+    elif chart_id == "weak_review":
+        body_lines.append(format_weak_review(payload))
 
     return f"{heading}\n{wrap_untrusted('visualization', '\n'.join(body_lines))}"
 
 
-def format_low_end_review(payload: dict[str, Any]) -> str:
-    """Summarize Low End (BCG) items for chat / tool markdown."""
+def format_weak_review(payload: dict[str, Any]) -> str:
+    """Summarize weak (BCG) items for chat / tool markdown."""
     items_raw = payload.get("items")
     items = [i for i in items_raw if isinstance(i, dict)] if isinstance(items_raw, list) else []
     distribution_raw = payload.get("distribution")
@@ -539,44 +539,44 @@ def format_low_end_review(payload: dict[str, Any]) -> str:
         else []
     )
 
-    low_end = [
+    weak_items = [
         i
         for i in items
-        if str(i.get("category") or "").strip().lower() == "low_end"
+        if str(i.get("category") or "").strip().lower() == "weak"
     ]
-    if not low_end:
-        return "(no Low End items)"
+    if not weak_items:
+        return "(no weak items)"
 
     total_items = len(items)
-    low_end_dist = next(
+    weak_dist = next(
         (
             d
             for d in distribution
-            if str(d.get("category") or "").strip().lower() == "low_end"
+            if str(d.get("category") or "").strip().lower() == "weak"
         ),
         None,
     )
     item_share = (
-        _as_float(low_end_dist.get("itemShare"))
-        if low_end_dist is not None
-        else (len(low_end) / total_items if total_items > 0 else 0.0)
+        _as_float(weak_dist.get("itemShare"))
+        if weak_dist is not None
+        else (len(weak_items) / total_items if total_items > 0 else 0.0)
     )
     margin_share = (
-        _as_float(low_end_dist.get("marginShare")) if low_end_dist is not None else 0.0
+        _as_float(weak_dist.get("marginShare")) if weak_dist is not None else 0.0
     )
-    margin_amount = sum(_as_float(i.get("contributionMargin")) for i in low_end)
+    margin_amount = sum(_as_float(i.get("contributionMargin")) for i in weak_items)
 
     lines = [
-        f"- **Low End items:** {len(low_end)} of {total_items} "
+        f"- **Weak items:** {len(weak_items)} of {total_items} "
         f"({item_share * 100:.1f}% of menu)",
         f"- **Margin share:** {margin_share * 100:.1f}% of portfolio margin",
-        f"- **Low End margin:** {margin_amount:.2f}",
+        f"- **Weak margin:** {margin_amount:.2f}",
         "",
         "### Items (weakest margin share first)",
     ]
 
     sorted_items = sorted(
-        low_end,
+        weak_items,
         key=lambda i: (
             _as_float(i.get("contributionMarginPercentage")),
             str(i.get("menu") or ""),
@@ -592,7 +592,7 @@ def format_low_end_review(payload: dict[str, Any]) -> str:
             f"- **{menu}** — qty {qty}, margin {margin:.2f} ({share:.2f}%), action {action}"
         )
     if len(sorted_items) > 25:
-        lines.append(f"- *(Showing 25 of {len(sorted_items)} Low End items.)*")
+        lines.append(f"- *(Showing 25 of {len(sorted_items)} weak items.)*")
     return "\n".join(lines)
 
 

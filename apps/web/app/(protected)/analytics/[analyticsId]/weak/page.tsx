@@ -24,14 +24,14 @@ import {
 import { Skeleton } from '@workspace/ui/components/skeleton'
 import { cn } from '@workspace/ui/lib/utils'
 import { Suspense } from 'react'
-import { LowEndView } from '@/components/analytics/low-end/low-end-view'
+import { WeakView } from '@/components/analytics/weak/weak-view'
 
 type PageProps = {
   params: Promise<{ analyticsId?: string }>
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations('analytics.lowEnd')
+  const t = await getTranslations('analytics.weak')
   const title = t('reportTitle')
   const description = t('description')
   return { title, description, openGraph: { title, description } }
@@ -50,7 +50,7 @@ function formatReportPeriod(
   return null
 }
 
-function LowEndReportSkeleton() {
+function WeakReportSkeleton() {
   return (
     <>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -64,7 +64,7 @@ function LowEndReportSkeleton() {
   )
 }
 
-async function LowEndReportContent({
+async function WeakReportContent({
   analyticsId,
   userId,
   periodStart,
@@ -75,7 +75,7 @@ async function LowEndReportContent({
   periodStart: string | null
   periodEnd: string | null
 }) {
-  const tLowEnd = await getTranslations('analytics.lowEnd')
+  const tWeak = await getTranslations('analytics.weak')
   const id = String(analyticsId)
   const matrixData = await getCachedMenuEngineeringMatrix(userId, id)
   const matrix = matrixData.menuEngineeringMatrix
@@ -91,12 +91,12 @@ async function LowEndReportContent({
           <EmptyMedia variant="icon">
             <CircleOff aria-hidden />
           </EmptyMedia>
-          <EmptyTitle>{tLowEnd('empty.title')}</EmptyTitle>
-          <EmptyDescription>{tLowEnd('empty.description')}</EmptyDescription>
+          <EmptyTitle>{tWeak('empty.title')}</EmptyTitle>
+          <EmptyDescription>{tWeak('empty.description')}</EmptyDescription>
         </EmptyHeader>
         <EmptyContent>
           <Button asChild size="sm">
-            <Link href={routes.analytics.cogs(analyticsId)}>{tLowEnd('empty.cta')}</Link>
+            <Link href={routes.analytics.cogs(analyticsId)}>{tWeak('empty.cta')}</Link>
           </Button>
         </EmptyContent>
       </Empty>
@@ -104,7 +104,7 @@ async function LowEndReportContent({
   }
 
   return (
-    <LowEndView
+    <WeakView
       items={items}
       distribution={distribution}
       periodStart={periodStart}
@@ -122,7 +122,7 @@ export default async function Page({ params }: PageProps) {
   }
 
   const tSales = await getTranslations('analytics.sales')
-  const tLowEnd = await getTranslations('analytics.lowEnd')
+  const tWeak = await getTranslations('analytics.weak')
   const tShared = await getTranslations('analytics.shared')
 
   const { analyticsId: analyticsIdParam } = await params
@@ -145,26 +145,26 @@ export default async function Page({ params }: PageProps) {
 
   return (
     <AnalyticsPageShell
-      title={tLowEnd('reportTitle')}
+      title={tWeak('reportTitle')}
       mainClassName={ANALYTICS_REPORT_SHELL_MAIN_CLASS}
       breadcrumbs={[
         { label: tSales('title'), href: salesHref },
         { label: analyticsName },
-        { label: tLowEnd('breadcrumb') },
+        { label: tWeak('breadcrumb') },
       ]}
     >
       <section className={cn('flex flex-col gap-6', ANALYTICS_REPORT_SECTION_CLASS)}>
         <div className="flex flex-col gap-3">
-          <PageHeading title={tLowEnd('heading')} description={tLowEnd('description')} />
+          <PageHeading title={tWeak('heading')} description={tWeak('description')} />
           <div className="flex flex-wrap items-center gap-2">
             {run.posSystem ? (
               <Badge variant="outline">
-                {tLowEnd('reportPos')}: {run.posSystem}
+                {tWeak('reportPos')}: {run.posSystem}
               </Badge>
             ) : null}
             {reportPeriod ? (
               <Badge variant="secondary">
-                {tLowEnd('reportPeriod')}: {reportPeriod}
+                {tWeak('reportPeriod')}: {reportPeriod}
               </Badge>
             ) : null}
           </div>
@@ -176,15 +176,15 @@ export default async function Page({ params }: PageProps) {
             <Link href={salesHref}>{tShared('backToSales')}</Link>
           </Button>
           <Button asChild variant="outline" size="sm">
-            <Link href={routes.analytics.matrix(analyticsId)}>{tLowEnd('links.matrix')}</Link>
+            <Link href={routes.analytics.matrix(analyticsId)}>{tWeak('links.matrix')}</Link>
           </Button>
           <Button asChild variant="outline" size="sm">
-            <Link href={routes.analytics.cogs(analyticsId)}>{tLowEnd('links.cogs')}</Link>
+            <Link href={routes.analytics.cogs(analyticsId)}>{tWeak('links.cogs')}</Link>
           </Button>
         </div>
 
-        <Suspense fallback={<LowEndReportSkeleton />}>
-          <LowEndReportContent
+        <Suspense fallback={<WeakReportSkeleton />}>
+          <WeakReportContent
             analyticsId={analyticsId}
             userId={userId}
             periodStart={run.periodStart}

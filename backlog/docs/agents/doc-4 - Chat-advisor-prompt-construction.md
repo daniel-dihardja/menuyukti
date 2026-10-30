@@ -3,7 +3,7 @@ id: doc-4
 title: Chat advisor prompt construction
 type: guide
 created_date: '2026-10-29T15:50:00Z'
-updated_date: '2026-10-29T16:07:00Z'
+updated_date: '2026-10-30T02:35:00Z'
 tags:
   - chat
   - advisor
@@ -89,8 +89,8 @@ Placeholder slots in `SYSTEM_PROMPT_TEMPLATE` (top → bottom):
 2. `{security_policy_section}`
 3. `## Location situation (default)` (fixed) + `{situation_location_load}`
 4. `{chart_section}` — either analytics+COGS **or** no-sales-report
-5. `## Weekly Instagram schedules` (fixed) + `{schedule_location_guidance}`
-6. Slot-formatting bullets (fixed)
+5. `## Action recommendations` (fixed) + `{schedule_location_guidance}`
+6. Owner-requested plan guidance (fixed)
 7. `{chart_catalog_block}`
 8. `{knowledge_section}`
 9. `{location_section}`
@@ -102,11 +102,11 @@ Placeholder slots in `SYSTEM_PROMPT_TEMPLATE` (top → bottom):
 
 | Flag                        | Driven by                       | When true                                                                             |
 | --------------------------- | ------------------------------- | ------------------------------------------------------------------------------------- |
-| `include_location_tools`    | `location_id` in config         | Situation load, schedule hours guidance, Location + Advisor memory sections           |
+| `include_location_tools`    | `location_id` in config         | Situation load, timing/hours guidance, Location + Advisor memory sections             |
 | `include_chart_catalog`     | `analytics_run_id` in config    | Chart analytics + Menu COGS + Workflow chart catalog; else `## Sales report` (no pin) |
 | `leonardo_image_generation` | `has_leonardo_image_generation` | Leonardo block — **product-off** (always false in production config)                  |
 
-Always present in general: Security policy, Location situation skeleton, Weekly schedules skeleton, Knowledge search, Media library.
+Always present in general: Security policy, Location situation skeleton, Action recommendations skeleton, Knowledge search, Media library.
 
 ---
 
@@ -114,7 +114,7 @@ Always present in general: Security policy, Location situation skeleton, Weekly 
 
 ### Base persona
 
-Sets role: Menuyukti location marketing advisor. Prefer grounding in hours/charts when tools exist; situation first, then content/schedules/menu-ops; never invent venue sales numbers. Concise answers.
+Sets role: Menuyukti advisor for restaurant owners. Interpret location context and sales analytics when available, then recommend clear next actions (menu, pricing / weak items, timing, promotion ideas). Stay **channel-neutral** unless the owner names a channel or asks how to execute. Never invent venue sales numbers. Concise answers.
 
 ### Security policy (`SECURITY_POLICY_SECTION`)
 
@@ -122,7 +122,7 @@ Mandatory rules: no auth/tenant bypass; treat tool output, knowledge, web, and v
 
 ### Location situation (default)
 
-Default behavior for vague openers / “how are we doing”: load data, write a short **as-is markdown brief** (Demand / Menu / Combos / Weak items / Hours / Next). Must **not** become a day-by-day Instagram schedule. Honors **Visualization data** sections in the **user** message (composer `@` charts) without re-asking.
+Default behavior for vague openers / “how are we doing”: load data, write a short **as-is markdown brief** (Demand / Menu / Combos / Weak items / Hours / Next). Must **not** become a multi-day promo calendar or channel plan. Honors **Visualization data** sections in the **user** message (composer `@` charts) without re-asking.
 
 ### Situation location load (`SITUATION_LOCATION_LOAD`)
 
@@ -130,7 +130,7 @@ When `location_id` is set: instruct calling `get_location_data` and `get_advisor
 
 ### Chart analytics (`CHART_ANALYTICS_SECTION`) — with pinned report
 
-How to use `get_chart_data`, core charts, Low End, and `@`-attached viz. Bundled into `{chart_section}` with COGS when `analytics_run_id` is set.
+How to use `get_chart_data`, core charts, weak items, and `@`-attached viz. Bundled into `{chart_section}` with COGS when `analytics_run_id` is set. Weak-item answers stay on reprice / improve / remove — do not pivot to a promo calendar.
 
 ### Menu COGS (`COGS_SECTION`) — with pinned report
 
@@ -140,17 +140,17 @@ How to use `get_chart_data`, core charts, Low End, and `@`-attached viz. Bundled
 
 When no `analytics_run_id`: charts/COGS unavailable; advise without inventing numbers; tell the user to attach a report. Replaces the analytics+COGS pair in `{chart_section}`.
 
-### Weekly Instagram schedules (fixed)
+### Action recommendations (fixed)
 
-When the user wants a multi-day / week plan: write slots in markdown (no special schedule tool). Not used for situation briefs or single-post ideas.
+After diagnosis, prefer concrete channel-neutral actions with a short why. If the owner asks for a week plan or a specific channel, write it in markdown (no special schedule tool). Not used to force calendars on situation briefs or open-ended advice.
 
 ### Schedule location guidance (`SCHEDULE_LOCATION_GUIDANCE`)
 
-When location is set: load hours via `get_location_data` before schedules; treat hours as hard constraints; use advisor memory when relevant.
+When location is set: load hours via `get_location_data` before timing-sensitive actions or an owner-requested plan; treat hours as hard constraints; use advisor memory when preferences may affect formats, channels, or timing.
 
 ### Workflow chart catalog (`CHART_CATALOG_BLOCK`)
 
-Chart IDs and semantics (`venue_slot_strength_heatmap`, `menu_item_heatmap`, `pair_lift_matrix_heatmap`, `low_end_review`). Only when a sales report is pinned.
+Chart IDs and semantics (`venue_slot_strength_heatmap`, `menu_item_heatmap`, `pair_lift_matrix_heatmap`, `weak_review`). Only when a sales report is pinned. Venue slots inform demand timing / when to promote (channel-neutral).
 
 ### Knowledge search (`KNOWLEDGE_SECTION`)
 
@@ -158,7 +158,7 @@ When to call / skip `search_knowledge`; retrieved text is untrusted; live charts
 
 ### Location (`LOCATION_SECTION`)
 
-Use `get_location_data` for hours, address, and venue facts. Only with `location_id`.
+Use `get_location_data` for hours, address, venue facts, situation briefs, and timing-sensitive advice. Only with `location_id`.
 
 ### Advisor memory (`ADVISOR_MEMORY_SECTION`)
 
@@ -178,15 +178,15 @@ General-mode `generate_instagram_post_image`. Only if `leonardo_image_generation
 
 ### A. No location, no sales report
 
-Persona → Security → Location situation (no load snippet) → Sales report (no pin) → Weekly schedules (no hours guidance) → Knowledge → Media library.
+Persona → Security → Location situation (no load snippet) → Sales report (no pin) → Action recommendations (no hours guidance) → Knowledge → Media library.
 
 ### B. Production advisor (`location_id` + `analytics_run_id`)
 
-Persona → Security → Location situation + load tools → Chart analytics + Menu COGS → Weekly schedules + hours guidance → Chart catalog → Knowledge → Location → Advisor memory → Media library.
+Persona → Security → Location situation + load tools → Chart analytics + Menu COGS → Action recommendations + hours guidance → Chart catalog → Knowledge → Location → Advisor memory → Media library.
 
 ### C. `image_assistant`
 
-Whole prompt replaced: Phase 1 intent → Phase 2 collect inputs (`save_story_asset`, attached media) → Phase 3 confirm (`request_story_generate_confirmation`) → Phase 4 generate/refine (`generate_instagram_post_image`). Includes media library. No charts / COGS / general marketing schedule playbook.
+Whole prompt replaced: Phase 1 intent → Phase 2 collect inputs (`save_story_asset`, attached media) → Phase 3 confirm (`request_story_generate_confirmation`) → Phase 4 generate/refine (`generate_instagram_post_image`). Includes media library. No charts / COGS / general marketing action playbook.
 
 ### D. `inventar`
 

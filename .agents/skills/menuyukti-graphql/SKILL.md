@@ -2,9 +2,10 @@
 name: menuyukti-graphql
 description: >-
   GraphQL API app (apps/graphql): Strawberry schema, query modules, services, SQLAlchemy and Alembic,
-  native POS (orders, tax, fiscalization), inventory, CRM, reports/transform integration with
-  packages/menuyukti, auth, and tests. Use when adding queries or mutations for web/agents, resolver
-  logic, migrations, calendar entries, POS, or analytics-shaped API fields.
+  native POS (orders, tax, fiscalization), inventory, CRM, knowledge docs (apps/graphql/knowledge
+  advisor RAG), reports/transform integration with packages/menuyukti, auth, and tests. Use when
+  adding queries or mutations for web/agents, resolver logic, migrations, calendar entries, POS,
+  knowledge docs / knowledge-ingest, or analytics-shaped API fields.
 ---
 
 # Menuyukti: `apps/graphql`
@@ -22,17 +23,27 @@ When implementing in **`apps/graphql`**, follow these skills in addition to this
 
 ## Layout
 
-| Area            | Path                                                                              | Role                                                                 |
-| --------------- | --------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| Schema root     | [`apps/graphql/schema/query.py`](../../../apps/graphql/schema/query.py)           | Composes query type from mixins.                                     |
-| Query modules   | [`apps/graphql/schema/queries/`](../../../apps/graphql/schema/queries/)           | Feature queries (locations, analytics, POS, inventory, calendar, …). |
-| Mutations       | [`apps/graphql/schema/mutations/`](../../../apps/graphql/schema/mutations/)       | Create/update/delete and domain writes (incl. `pos_orders`).         |
-| Services        | [`apps/graphql/services/`](../../../apps/graphql/services/)                       | Domain orchestration (menu engineering, POS, fiscalization, …).      |
-| Ingest / frames | [`apps/graphql/reports/transform.py`](../../../apps/graphql/reports/transform.py) | Rows → DataFrame → `packages/menuyukti` `calculate_*` / `compute_*`. |
-| Migrations      | [`apps/graphql/alembic/`](../../../apps/graphql/alembic/)                         | Alembic revisions; **only** here for product schema.                 |
-| Tests           | [`apps/graphql/tests/`](../../../apps/graphql/tests/)                             | Pytest.                                                              |
+| Area            | Path                                                                              | Role                                                                  |
+| --------------- | --------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| Schema root     | [`apps/graphql/schema/query.py`](../../../apps/graphql/schema/query.py)           | Composes query type from mixins.                                      |
+| Query modules   | [`apps/graphql/schema/queries/`](../../../apps/graphql/schema/queries/)           | Feature queries (locations, analytics, POS, inventory, calendar, …).  |
+| Mutations       | [`apps/graphql/schema/mutations/`](../../../apps/graphql/schema/mutations/)       | Create/update/delete and domain writes (incl. `pos_orders`).          |
+| Services        | [`apps/graphql/services/`](../../../apps/graphql/services/)                       | Domain orchestration (menu engineering, POS, fiscalization, …).       |
+| Ingest / frames | [`apps/graphql/reports/transform.py`](../../../apps/graphql/reports/transform.py) | Rows → DataFrame → `packages/menuyukti` `calculate_*` / `compute_*`.  |
+| Migrations      | [`apps/graphql/alembic/`](../../../apps/graphql/alembic/)                         | Alembic revisions; **only** here for product schema.                  |
+| Knowledge docs  | [`apps/graphql/knowledge/`](../../../apps/graphql/knowledge/)                     | Curated **knowledge docs** (domain / KPI / playbook) for advisor RAG. |
+| Tests           | [`apps/graphql/tests/`](../../../apps/graphql/tests/)                             | Pytest.                                                               |
 
-Commands: [`apps/graphql/README.md`](../../../apps/graphql/README.md). Deep SQLAlchemy patterns: [`.agents/skills/sqlalchemy-postgres/SKILL.md`](../sqlalchemy-postgres/SKILL.md).
+Commands: [`apps/graphql/README.md`](../../../apps/graphql/README.md). Deep SQLAlchemy patterns: [`.agents/skills/sqlalchemy-postgres/SKILL.md`](../sqlalchemy-postgres/SKILL.md). Knowledge doc authoring: [`.cursor/rules/knowledge-docs.mdc`](../../../.cursor/rules/knowledge-docs.mdc).
+
+## Knowledge docs (advisor RAG)
+
+Call markdown under **`apps/graphql/knowledge/`** **knowledge docs**. They are not agent skills and not location memory.
+
+- Categories: `domain` | `kpi` | `playbook` (YAML front matter: `title`, `category`, `slug`; optional `chart_ids`).
+- Ingest: `cd apps/graphql && make knowledge-ingest` → `knowledge_document` / chunks / embeddings.
+- Search: GraphQL `searchKnowledge` (agents tool `search_knowledge`).
+- Authoring rules: [`.cursor/rules/knowledge-docs.mdc`](../../../.cursor/rules/knowledge-docs.mdc); architecture: [doc-5 Chat advisor knowledge RAG](../../../backlog/docs/agents/doc-5%20-%20Chat-advisor-knowledge-RAG.md).
 
 ## Design rules
 

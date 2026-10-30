@@ -14,7 +14,7 @@ so you can feature the right items at the right times.
 
 - Evergreen portfolio: star / plow horse / puzzle items from the ranked list.
 - Daily highlights: strong same-day volume for timely posts.
-- Day specialties: limited-availability favorites (even if BCG low_end).
+- Day specialties: limited-availability favorites (even if BCG weak).
 - Combine with venue slot strength and pair lift when planning content.
 - Load `menu_item_heatmap` for numbers; do not invent unit counts.
 

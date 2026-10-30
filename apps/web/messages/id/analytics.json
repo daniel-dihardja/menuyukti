@@ -588,7 +588,7 @@
         "heroesDescription": "Item bintang yang direkomendasikan untuk konten sorotan",
         "heroesEmpty": "Tidak ada item hero yang teridentifikasi",
         "avoidTitle": "Gunakan dengan hati-hati",
-        "avoidDescription": "Item matriks Low End yang sebaiknya tidak dipromosikan berlebihan",
+        "avoidDescription": "Item matriks Weak yang sebaiknya tidak dipromosikan berlebihan",
         "avoidEmpty": "Tidak ada item yang ditandai untuk dihindari",
         "empty": "Sinyal menu engineering memerlukan data COGS. Tambahkan biaya untuk membuka daftar hero dan avoid.",
         "menuColumn": "Item menu",
@@ -992,14 +992,14 @@
         "star": "Popularitas tinggi dan margin tinggi — lindungi dan tampilkan pemenang ini.",
         "plow_horse": "Popularitas tinggi tetapi margin lebih rendah — optimalkan biaya atau harga dengan hati-hati.",
         "puzzle": "Margin kuat tetapi volume lebih rendah — promosikan dan tingkatkan visibilitas.",
-        "low_end": "Popularitas dan margin lebih rendah — tinjau, ubah harga, atau hentikan."
+        "weak": "Popularitas dan margin lebih rendah — tinjau, ubah harga, atau hentikan."
       },
       "uncategorized": "Tanpa kategori",
       "links": {
         "heatmap": "Lihat heatmap",
         "menuCombos": "Lihat kombo menu",
-        "lowEnd": "Tinjau Low End",
-        "cogs": "Penyiapan COGS"
+        "cogs": "Penyiapan COGS",
+        "weak": "Tinjau Weak"
       },
       "chart": {
         "ariaLabel": "Scatter plot matriks menu engineering yang menampilkan popularitas versus contribution margin",
@@ -1058,28 +1058,20 @@
         "allCategories": "Semua Kategori",
         "matrixLabel": "Kuadran",
         "matrixAriaLabel": "Filter berdasarkan kuadran menu engineering",
-        "matrixHelp": "Tampilkan atau sembunyikan item Stars, Plow Horses, Puzzles, dan Low End.",
+        "matrixHelp": "Tampilkan atau sembunyikan item Stars, Plow Horses, Puzzles, dan Weak.",
         "showingCount": "Menampilkan {count, plural, one {# item} other {# item}}"
       },
       "categories": {
         "star": "Stars",
         "plow_horse": "Plow Horses",
         "puzzle": "Puzzles",
-        "low_end": "Low End"
+        "weak": "Weak"
       },
       "categoriesShort": {
         "star": "Star",
         "plow_horse": "Plow",
         "puzzle": "Puzzle",
-        "low_end": "Low"
-      },
-      "lowEndHighlight": {
-        "sliderLabel": "Ambang pangsa margin",
-        "sliderAriaLabel": "Sorot pangsa margin terbawah hingga {value}% dari total margin",
-        "sliderHelp": "Menyoroti item Low End (pangsa margin terendah terlebih dahulu) yang pangsa margin kumulatifnya berada dalam ambang ini.",
-        "sliderValue": "{value}% dari total margin",
-        "rowIncludedInBand": "Dalam ambang pangsa margin kumulatif.",
-        "shareCellDescription": "{percent}% dari total margin, dalam pita ambang pangsa margin kumulatif."
+        "weak": "Weak"
       },
       "table": {
         "menu": "Menu",
@@ -1098,6 +1090,14 @@
           "promote": "PROMOSIKAN",
           "keep": "PERTAHANKAN"
         }
+      },
+      "weakHighlight": {
+        "sliderLabel": "Ambang pangsa margin",
+        "sliderAriaLabel": "Sorot pangsa margin terbawah hingga {value}% dari total margin",
+        "sliderHelp": "Menyoroti item Weak (pangsa margin terendah terlebih dahulu) yang pangsa margin kumulatifnya berada dalam ambang ini.",
+        "sliderValue": "{value}% dari total margin",
+        "rowIncludedInBand": "Dalam ambang pangsa margin kumulatif.",
+        "shareCellDescription": "{percent}% dari total margin, dalam pita ambang pangsa margin kumulatif."
       }
     },
     "menuItems": {
@@ -1139,38 +1139,38 @@
         "empty": "Tidak ada item menu tersedia untuk kategori yang dipilih."
       }
     },
-    "lowEnd": {
-      "reportTitle": "Tinjauan Low End",
-      "pageLoadingTitle": "Memuat Low End…",
-      "breadcrumb": "Low End",
-      "heading": "Item Low End",
+    "weak": {
+      "reportTitle": "Tinjauan Weak",
+      "pageLoadingTitle": "Memuat Weak…",
+      "breadcrumb": "Weak",
+      "heading": "Item Weak",
       "description": "Tinjau item dengan popularitas rendah dan margin rendah, lalu putuskan mana yang perlu diubah harganya, ditingkatkan, atau dihapus dari menu.",
       "reportPeriod": "Periode laporan",
       "reportPos": "POS",
       "empty": {
-        "title": "Tinjauan Low End belum siap",
-        "description": "Data menu engineering belum tersedia untuk file analitik ini. Perbarui COGS terlebih dahulu untuk mengklasifikasikan item Low End.",
+        "title": "Tinjauan Weak belum siap",
+        "description": "Data menu engineering belum tersedia untuk file analitik ini. Perbarui COGS terlebih dahulu untuk mengklasifikasikan item Weak.",
         "cta": "Buka penyiapan COGS",
-        "noItems": "Tidak ada item Low End dalam proses ini. Setiap item yang diklasifikasikan berada di luar kuadran Low End."
+        "noItems": "Tidak ada item Weak dalam proses ini. Setiap item yang diklasifikasikan berada di luar kuadran Weak."
       },
       "links": {
         "matrix": "Matriks menu engineering lengkap",
         "cogs": "Penyiapan COGS"
       },
       "kpi": {
-        "itemCount": "Item Low End",
+        "itemCount": "Item Weak",
         "itemCountHint": "{count} dari {total} item menu ({share})",
         "itemShare": "Pangsa menu",
-        "itemShareHint": "SKU Low End sebagai pangsa semua item yang diklasifikasikan",
-        "marginShare": "Margin dari Low End",
-        "marginShareHint": "Pangsa contribution margin portofolio dari item Low End",
-        "marginAmount": "Margin Low End",
-        "marginAmountHint": "Total contribution margin dari item Low End dalam periode ini"
+        "itemShareHint": "SKU Weak sebagai pangsa semua item yang diklasifikasikan",
+        "marginShare": "Margin dari Weak",
+        "marginShareHint": "Pangsa contribution margin portofolio dari item Weak",
+        "marginAmount": "Margin Weak",
+        "marginAmountHint": "Total contribution margin dari item Weak dalam periode ini"
       },
       "avgQtyUnavailable": "Tanggal periode hilang — rata-rata jml/hari tidak tersedia",
       "impact": {
         "title": "Pratinjau dampak penghapusan",
-        "description": "Sorot item Low End terlemah (pangsa margin terendah terlebih dahulu) hingga pangsa total margin portofolio. Gunakan ini untuk memperkirakan biaya menghentikan pita item.",
+        "description": "Sorot item Weak terlemah (pangsa margin terendah terlebih dahulu) hingga pangsa total margin portofolio. Gunakan ini untuk memperkirakan biaya menghentikan pita item.",
         "sliderLabel": "Ambang pangsa margin kumulatif",
         "sliderAriaLabel": "Sorot pangsa margin terbawah hingga {value}% dari total margin",
         "sliderValue": "{value}% dari total margin",
@@ -1187,8 +1187,8 @@
         "margin": "Margin",
         "shareOfTotalMargin": "% dari total margin",
         "action": "Tindakan",
-        "caption": "Item menu Low End: Menu, Rata-rata jml/hari, Jml periode, Margin, Pangsa dari total margin, Tindakan.",
-        "empty": "Tidak ada item Low End untuk ditinjau.",
+        "caption": "Item menu Weak: Menu, Rata-rata jml/hari, Jml periode, Margin, Pangsa dari total margin, Tindakan.",
+        "empty": "Tidak ada item Weak untuk ditinjau.",
         "actions": {
           "remove": "HAPUS",
           "reprice": "UBAH HARGA",

@@ -18,7 +18,7 @@ class MenuEngineeringThresholdsType:
 
 
 @strawberry.type(
-    description="Share of items and margin contribution per BCG category (star, puzzle, plow_horse, low_end)."
+    description="Share of items and margin contribution per BCG category (star, puzzle, plow_horse, weak)."
 )
 class MenuEngineeringDistributionItemType:
     category: str
@@ -30,7 +30,7 @@ class MenuEngineeringDistributionItemType:
 @strawberry.type(
     description=(
         "A single menu item's position in the menu engineering BCG matrix, including its "
-        "classification (star, puzzle, plow_horse, low_end) and recommended action."
+        "classification (star, puzzle, plow_horse, weak) and recommended action."
     )
 )
 class MenuEngineeringMatrixItemType:

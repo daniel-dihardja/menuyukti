@@ -51,7 +51,7 @@ Schema changes are **versioned** under [`alembic/`](./alembic/) (revision script
    make db-stamp REV=r7s8t9u0v1w2   # last revision before your pending migration(s)
    make db-upgrade          # applies only newer revisions
    ```
-   Use `make db-stamp-head` only when you have verified the schema already matches **head** and must not re-run any DDL. For a clean PostgreSQL database: `make drop-db` then `make db-upgrade` (destructive).
+   Use `make db-stamp-head` only when you have verified the schema already matches **head** and must not re-run any DDL. For a clean PostgreSQL database: `make drop-db ALLOW_DROP_DB=1` then `make db-upgrade` (destructive; refuses without the flag).
 
 The app still falls back to the on-disk SQLite file (`sqlite+pysqlite:///./graphql.db`) when `DATABASE_URL` is unset (handy for quick local runs). The pytest suite forces a SQLite test DB in `tests/conftest.py` and uses `create_all` — it does not run Alembic.
 
@@ -59,9 +59,9 @@ Import `SessionLocal` from `graphql.data_sources` inside resolvers to read or wr
 
 ### Knowledge layer (pgvector RAG)
 
-Advisor RAG stores global domain / KPI / playbook docs in `knowledge_document`, `knowledge_chunk`, and `knowledge_embedding`. The Alembic revision enables the Postgres **`vector`** extension and an optional `embedding_vec` HNSW index (Neon must allow `CREATE EXTENSION vector`).
+Advisor RAG stores global **knowledge docs** (domain / KPI / playbook) in `knowledge_document`, `knowledge_chunk`, and `knowledge_embedding`. The Alembic revision enables the Postgres **`vector`** extension and an optional `embedding_vec` HNSW index (Neon must allow `CREATE EXTENSION vector`).
 
-Seed / update content (markdown under [`knowledge/`](./knowledge/)):
+Ingest / update **knowledge docs** (markdown under [`knowledge/`](./knowledge/); authoring: [`.cursor/rules/knowledge-docs.mdc`](../../.cursor/rules/knowledge-docs.mdc)):
 
 ```bash
 cd apps/graphql
@@ -69,6 +69,8 @@ make knowledge-ingest
 # make knowledge-ingest FORCE=1      # re-embed even if unchanged
 # make knowledge-ingest DRY_RUN=1   # parse only
 # make knowledge-ingest DIR=/path/to/seeds
+# make knowledge-clear              # wipe all docs/chunks/embeddings (then re-ingest)
+# make knowledge-clear DRY_RUN=1    # count rows only
 ```
 
 Embeddings use the Vercel AI Gateway when `AI_GATEWAY_API_KEY` (or `VERCEL_OIDC_TOKEN`) is set, otherwise `OPENAI_API_KEY`. Put the gateway key in the **repo-root** `.env` (same file as Docker Compose / agents). Ingest uses `load_app_env` — root then optional `apps/graphql/.env` — and does **not** read `apps/agents/.env`. Optional: `KNOWLEDGE_EMBEDDING_MODEL` (default `text-embedding-3-small`), `KNOWLEDGE_EMBEDDING_BASE_URL`.
@@ -92,8 +94,8 @@ CREATE INDEX IF NOT EXISTS ix_node_location_type ON node(location_id, type);
 
 The polymorphic **`node`** table (`type` + JSON `data`) remains for entities that still use it. Prefer dedicated tables (e.g. calendar entries, media) for new features. **Workflow-container / milestone export-import are not live product APIs** — see [`packages/docs/menuyukti/remove-milestones.md`](../../packages/docs/menuyukti/remove-milestones.md) for cleanup history.
 
-Need a clean slate on PostgreSQL? Run `make drop-db` (destructive: drops `public` schema), then `make db-upgrade`. For local SQLite only, you can also use `uv run python -m graphql.data_sources.database` for `create_all` (not used for production Postgres).  
-To import a specific Excel report directly into `order_fact`, run `make load-report REPORT_PATH=../../reports/Sales_Recapitulation_Detail_Report_Test.xlsx`; this drops/recreates the database, normalizes the specified workbook with Menyukti, and loads the rows so the analytics schema mirrors that report.
+Need a clean slate on PostgreSQL? Run `make drop-db ALLOW_DROP_DB=1` (destructive: drops `public` schema; refuses without the flag), then `make db-upgrade`. For local SQLite only, you can also use `uv run python -m graphql.data_sources.database` for `create_all` (not used for production Postgres).  
+To import a specific Excel report into `order_fact` **without wiping the DB**, run `make load-report REPORT_PATH=../../reports/Sales_Recapitulation_Detail_Report_Test.xlsx`.
 
 ### Dev data (selective seed)
 
@@ -109,9 +111,10 @@ To import a specific Excel report directly into `order_fact`, run `make load-rep
 | `make dev-data SCOPE=analytics USER_ID=user_xxx EXCEL=/path/to/report.xlsx` | Same as above, but use a custom Excel instead of the default mock                                                                                                                                                                                               |
 | `make dev-data SCOPE=all USER_ID=user_xxx`                                  | Inventar (Warung) + analytics (Berlin cafe default mock) + MIDO Matcha Corner menu                                                                                                                                                                              |
 | `make generate-dev-mock-excel`                                              | Regenerate Berlin cafe `fixtures/dev_mock_….xlsx` + `dev_mock_menu_cogs.json` (ESB structure from SNABB; Kaffeestube Mitte menu)                                                                                                                                |
-| `make knowledge-ingest`                                                     | Upsert advisor RAG seeds from `knowledge/*.md` (needs embedding API key; `FORCE=1` / `DRY_RUN=1` / `DIR=…` optional)                                                                                                                                            |
-| `make db-reset-dev`                                                         | Destructive: `drop-db` + `db-upgrade` (Alembic)                                                                                                                                                                                                                 |
-| `make db-reset-dev SEED=1 USER_ID=user_xxx`                                 | Hard schema reset, then inventar seed                                                                                                                                                                                                                           |
+| `make knowledge-ingest`                                                     | Upsert advisor RAG **knowledge docs** from `knowledge/*.md` (needs embedding API key; `FORCE=1` / `DRY_RUN=1` / `DIR=…` optional)                                                                                                                               |
+| `make knowledge-clear`                                                      | Delete all knowledge docs/chunks/embeddings (ingest does not prune removed files; `DRY_RUN=1` optional)                                                                                                                                                         |
+| `make db-reset-dev ALLOW_DROP_DB=1`                                         | Destructive: `drop-db` + `db-upgrade` (refuses without `ALLOW_DROP_DB=1`)                                                                                                                                                                                       |
+| `make db-reset-dev ALLOW_DROP_DB=1 SEED=1 USER_ID=user_xxx`                 | Hard schema reset, then inventar seed                                                                                                                                                                                                                           |
 
 Optional: `COGS=/path/to/menu_cogs.json` (defaults to [`fixtures/dev_mock_menu_cogs.json`](fixtures/dev_mock_menu_cogs.json)). Analytics scopes default to the committed Berlin cafe mock at [`fixtures/dev_mock_SalesRecapitulationDetailReport_1mo.xlsx`](fixtures/dev_mock_SalesRecapitulationDetailReport_1mo.xlsx) — ESB column layout from SNABB, with EUR cafe items (coffee, bakery, brunch). Analytics attach to **Kaffeestube Mitte** (`Berlin` / `EUR`). Inventar remains on **Warung Sunda Lembur**. Raw dumps under `/sales-reports/` are gitignored and used only as an optional header template when regenerating.
 

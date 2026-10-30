@@ -92,7 +92,7 @@ def test_filter_heatmaps_for_chat_keeps_star_plow_puzzle() -> None:
         {"menu": "Steak", "category": "star"},
         {"menu": "Burger", "category": "plow_horse"},
         {"menu": "Soup", "category": "puzzle"},
-        {"menu": "Dog", "category": "low_end"},
+        {"menu": "Dog", "category": "weak"},
     ]
     filtered, by_menu, applied = filter_heatmaps_for_chat(heatmaps, matrix)
     assert applied is True
@@ -155,8 +155,8 @@ def test_format_daily_highlights_top_n_and_skips_empty_days() -> None:
     assert "**wed:**" not in out
 
 
-def test_format_menu_heatmap_summary_daily_highlights_includes_filtered_low_end() -> None:
-    """Thursday-only low_end specialty appears in Daily highlights, not the BCG main list."""
+def test_format_menu_heatmap_summary_daily_highlights_includes_filtered_weak() -> None:
+    """Thursday-only weak specialty appears in Daily highlights, not the BCG main list."""
     steak = {
         "menu": "Steak",
         "menuCategory": "Mains",
@@ -175,7 +175,7 @@ def test_format_menu_heatmap_summary_daily_highlights_includes_filtered_low_end(
     all_items = [steak, choipan]
     matrix = [
         {"menu": "Steak", "category": "star"},
-        {"menu": "Choipan", "category": "low_end"},
+        {"menu": "Choipan", "category": "weak"},
     ]
     filtered, by_menu, applied = filter_heatmaps_for_chat(all_items, matrix)
     assert applied is True
@@ -190,9 +190,9 @@ def test_format_menu_heatmap_summary_daily_highlights_includes_filtered_low_end(
     assert "**1. Steak**" in out
     assert "Choipan" not in out.split("### Daily highlights")[0]
     assert "### Daily highlights" in out
-    assert "**thu:** Choipan (low_end, 42 units)" in out
+    assert "**thu:** Choipan (weak, 42 units)" in out
     assert "### Day specialties" in out
-    assert "**Choipan** (low_end): thu, 42 units (100% of weekly)" in out
+    assert "**Choipan** (weak): thu, 42 units (100% of weekly)" in out
 
 
 def test_find_day_specialties_thresholds() -> None:
@@ -228,7 +228,7 @@ def test_format_daily_highlights_appends_specialty_outside_top_n() -> None:
     specialties = find_day_specialties(heatmaps)
     out = format_daily_highlights(
         heatmaps,
-        {"Choipan": "low_end"},
+        {"Choipan": "weak"},
         top_n=3,
         specialties=specialties,
     )
@@ -236,7 +236,7 @@ def test_format_daily_highlights_appends_specialty_outside_top_n() -> None:
     assert "A (100 units)" in thu_line
     assert "B (90 units)" in thu_line
     assert "C (80 units)" in thu_line
-    assert "Choipan (low_end, 42 units, day specialty)" in thu_line
+    assert "Choipan (weak, 42 units, day specialty)" in thu_line
 
 
 def test_format_daily_highlights_does_not_duplicate_specialty_in_top_n() -> None:
@@ -247,7 +247,7 @@ def test_format_daily_highlights_does_not_duplicate_specialty_in_top_n() -> None
     specialties = find_day_specialties(heatmaps)
     out = format_daily_highlights(
         heatmaps,
-        {"Choipan": "low_end"},
+        {"Choipan": "weak"},
         specialties=specialties,
     )
     thu_line = out.split("**thu:**")[1].split("\n")[0]
@@ -285,7 +285,7 @@ def test_format_chart_markdown_section_menu_heatmap_daily_highlights() -> None:
                     "dailyHeatmap": [{"hour": 12, "quantity": 42}],
                 },
             ],
-            "matrixCategoryByMenu": {"Steak": "star", "Choipan": "low_end"},
+            "matrixCategoryByMenu": {"Steak": "star", "Choipan": "weak"},
             "matrixFilterApplied": True,
             "dailyStartHour": 8,
             "dailyEndHour": 22,
@@ -293,9 +293,9 @@ def test_format_chart_markdown_section_menu_heatmap_daily_highlights() -> None:
     )
     assert "## Visualization data — Menu item heatmap" in out
     assert "### Daily highlights" in out
-    assert "**thu:** Choipan (low_end, 42 units)" in out
+    assert "**thu:** Choipan (weak, 42 units)" in out
     assert "### Day specialties" in out
-    assert "**Choipan** (low_end): thu, 42 units (100% of weekly)" in out
+    assert "**Choipan** (weak): thu, 42 units (100% of weekly)" in out
 
 
 def test_format_chart_markdown_section_fallback_note() -> None:

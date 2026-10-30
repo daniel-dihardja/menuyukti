@@ -67,20 +67,30 @@ def init_db(target_engine=None) -> None:
 def drop_db(target_engine=None) -> None:
     """Drop all tables for the configured models.
 
-    On PostgreSQL the schema is reset via DROP SCHEMA ... CASCADE so that
-    stale tables (not in the current models) with FK dependencies don't block
-    the drop. SQLite falls back to the standard drop_all path.
+    **SQLite (tests):** uses ``drop_all``.
+
+    **PostgreSQL:** requires ``ALLOW_DROP_DB=1``. Resets via
+    ``DROP SCHEMA public CASCADE`` so stale tables don't block the drop.
+    Refuses without the flag so Neon / production cannot be wiped by accident
+    (pytest mis-config, ``load-report``, or ``python -m ... drop``).
     """
 
     resolved_engine = target_engine or engine
     if resolved_engine.dialect.name == "postgresql":
+        if os.environ.get("ALLOW_DROP_DB", "").strip() != "1":
+            raise RuntimeError(
+                "Refusing to drop PostgreSQL schema. "
+                "Set ALLOW_DROP_DB=1 only for intentional local resets "
+                "(e.g. make drop-db ALLOW_DROP_DB=1). "
+                "Alembic migrations never call drop_db."
+            )
         with resolved_engine.connect() as conn:
             conn.execute(text("DROP SCHEMA public CASCADE"))
             conn.execute(text("CREATE SCHEMA public"))
             conn.execute(text("GRANT ALL ON SCHEMA public TO public"))
             conn.commit()
-    else:
-        Base.metadata.drop_all(bind=resolved_engine)
+        return
+    Base.metadata.drop_all(bind=resolved_engine)
 
 
 def main() -> None:
@@ -96,7 +106,7 @@ def main() -> None:
 
 
 def _main_drop() -> None:
-    """Drop tables via the same module entry point."""
+    """Drop tables via the same module entry point (guarded for Postgres)."""
 
     drop_db()
     print("Dropped all GraphQL tables.")

@@ -2,7 +2,7 @@
 
 No external Excel/JSON files. Data is tuned so that:
 - Heatmap: 4 menus, orders in 2–3 hours and 2 weekdays (Mon, Fri).
-- Menu engineering matrix: 4 items fall in star, plow_horse, puzzle, low_end
+- Menu engineering matrix: 4 items fall in star, plow_horse, puzzle, weak
   with actions keep, keep/reprice, promote, remove.
 """
 
@@ -23,7 +23,7 @@ _CAT_DETAIL = "QA"
 # StarItem: high qty (5), high margin (75)
 # PlowHorseItem: high qty (5), low margin (5)
 # PuzzleItem: low qty (1), high margin (45)
-# LowEndItem: low qty (1), very low margin (0.5) -> remove (contribution_margin_pct < 0.005)
+# WeakItem: low qty (1), very low margin (0.5) -> remove (contribution_margin_pct < 0.005)
 QA_SALES_ROWS: list[NormalizedLineItemData] = [
     # Bill 1, Mon 10:00
     NormalizedLineItemData(
@@ -80,7 +80,7 @@ QA_SALES_ROWS: list[NormalizedLineItemData] = [
     ),
     NormalizedLineItemData(
         billNumber="QA-B3",
-        menu="LowEndItem",
+        menu="WeakItem",
         qty=1,
         price=5.5,
         totalAfterBillDiscount=5.5,
@@ -91,12 +91,12 @@ QA_SALES_ROWS: list[NormalizedLineItemData] = [
 ]
 
 # Per-unit COGS so that matrix categories and actions are deterministic.
-# StarItem/PlowHorseItem/PuzzleItem/LowEndItem all have cogs 5.0 (total_cogs = qty * 5).
+# StarItem/PlowHorseItem/PuzzleItem/WeakItem all have cogs 5.0 (total_cogs = qty * 5).
 QA_COGS_BY_MENU: dict[str, float] = {
     "StarItem": 5.0,
     "PlowHorseItem": 5.0,
     "PuzzleItem": 5.0,
-    "LowEndItem": 5.0,
+    "WeakItem": 5.0,
 }
 
 

@@ -43,8 +43,8 @@ async def get_location_data(config: Annotated[RunnableConfig, InjectedToolArg()]
     """Load location-page data for the venue: basics, opening hours, owner quick profile.
 
     Call when the user asks about venue hours, address, cuisine, contact links, or other
-    location settings — and before proposing a weekly Instagram schedule so posting days
-    and times respect opening hours."""
+    location settings — and before timing-sensitive advice or an owner-requested plan so
+    days and times respect opening hours."""
     c = (config or {}).get("configurable") or {}
     location_id = c.get("location_id")
     user_id = c.get("user_id")
@@ -76,11 +76,11 @@ async def get_advisor_memory(
     """Load durable advisor memory for the current venue across chat threads.
 
     Call for location situation briefs / venue-scoped advice (first load in the
-    thread), when the user asks what you remember, or before a weekly schedule if
-    preferences may apply. Skip when only owner location-page facts are needed
-    (use ``get_location_data``), or when a successful result is already in this
-    thread unless the user asks to refresh. Memory holds preferences, constraints,
-    and outcomes — never invent sales figures from it.
+    thread), when the user asks what you remember, or before timing-sensitive advice
+    or an owner-requested plan if preferences may apply. Skip when only owner
+    location-page facts are needed (use ``get_location_data``), or when a successful
+    result is already in this thread unless the user asks to refresh. Memory holds
+    preferences, constraints, and outcomes — never invent sales figures from it.
     """
     c = (config or {}).get("configurable") or {}
     location_id = c.get("location_id")
@@ -175,7 +175,7 @@ async def get_chart_data(
         "venue_slot_strength_heatmap",
         "menu_item_heatmap",
         "pair_lift_matrix_heatmap",
-        "low_end_review",
+        "weak_review",
     ],
     config: Annotated[RunnableConfig, InjectedToolArg()] = None,  # type: ignore[assignment]
 ) -> str:
@@ -184,8 +184,8 @@ async def get_chart_data(
     - ``venue_slot_strength_heatmap``: posting frequency and best timing (``schedule``).
     - ``menu_item_heatmap``: which menus to feature, with timing context.
     - ``pair_lift_matrix_heatmap``: interesting menu combos / co-purchase pairings.
-    - ``low_end_review``: Weak items review (Low End / BCG dogs) — low-popularity,
-      low-margin items to reprice, improve, or remove.
+    - ``weak_review``: Weak items review — low-popularity, low-margin items to reprice,
+      improve, or remove.
 
     Pass a chart_id from the chart catalog exactly — do not invent ids.
     """

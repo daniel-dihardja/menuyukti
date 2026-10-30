@@ -1,4 +1,4 @@
-import { loadLowEndForChat } from '@/lib/analytics/load-low-end-for-chat'
+import { loadWeakForChat } from '@/lib/analytics/load-weak-for-chat'
 import { loadMenuHeatmapsForChat } from '@/lib/analytics/load-menu-heatmaps-for-chat'
 import { loadPairLiftMatrixForChat } from '@/lib/analytics/load-pair-lift-matrix-for-chat'
 import { loadSlotDemandProfileForChat } from '@/lib/analytics/load-slot-demand-profile-for-chat'
@@ -90,8 +90,8 @@ export async function loadReferencedVisualizationForChat(
         usedFallbackRun: result.usedFallbackRun,
       }
     }
-    case 'low_end_review': {
-      const result = await loadLowEndForChat(loaderOptions)
+    case 'weak_review': {
+      const result = await loadWeakForChat(loaderOptions)
       return {
         ok: true,
         title,

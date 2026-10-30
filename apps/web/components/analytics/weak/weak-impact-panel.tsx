@@ -19,7 +19,7 @@ type Props = {
   locale: string
 }
 
-export function LowEndImpactPanel({
+export function WeakImpactPanel({
   sliderValue,
   onSliderChange,
   impactItemCount,
@@ -28,7 +28,7 @@ export function LowEndImpactPanel({
   currency,
   locale,
 }: Props) {
-  const t = useTranslations('analytics.lowEnd.impact')
+  const t = useTranslations('analytics.weak.impact')
 
   const sharePct = `${(impactMarginShare * 100).toFixed(1)}%`
   const amount = formatCurrencyWithCode(impactMarginAmount, currency, locale)
@@ -44,7 +44,7 @@ export function LowEndImpactPanel({
       <Field className="gap-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
-            <FieldLabel htmlFor="low-end-impact-slider" className="text-xs font-medium">
+            <FieldLabel htmlFor="weak-impact-slider" className="text-xs font-medium">
               {t('sliderLabel')}
             </FieldLabel>
             <HoverCard openDelay={200} closeDelay={100}>
@@ -62,7 +62,7 @@ export function LowEndImpactPanel({
           </span>
         </div>
         <Slider
-          id="low-end-impact-slider"
+          id="weak-impact-slider"
           min={0}
           max={10}
           step={0.1}

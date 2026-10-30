@@ -834,7 +834,7 @@ enum MenuDietaryTag {
 }
 
 """
-Share of items and margin contribution per BCG category (star, puzzle, plow_horse, low_end).
+Share of items and margin contribution per BCG category (star, puzzle, plow_horse, weak).
 """
 type MenuEngineeringDistributionItemType {
   category: String!
@@ -844,7 +844,7 @@ type MenuEngineeringDistributionItemType {
 }
 
 """
-A single menu item's position in the menu engineering BCG matrix, including its classification (star, puzzle, plow_horse, low_end) and recommended action.
+A single menu item's position in the menu engineering BCG matrix, including its classification (star, puzzle, plow_horse, weak) and recommended action.
 """
 type MenuEngineeringMatrixItemType {
   menu: String!
@@ -2047,7 +2047,7 @@ type Query {
   menuHeatmaps(analyticsRunId: ID!, locationId: ID = null): [MenuHeatmapType!]!
 
   """
-  Compute the menu engineering BCG matrix for an analytics run. Requires COGS to be set; returns None if no COGS are available. Optionally filter returned items to specific categories (star, puzzle, plow_horse, low_end) — thresholds and distribution always reflect the full dataset. When locationId is set, the run must belong to that location (otherwise returns null).
+  Compute the menu engineering BCG matrix for an analytics run. Requires COGS to be set; returns None if no COGS are available. Optionally filter returned items to specific categories (star, puzzle, plow_horse, weak) — thresholds and distribution always reflect the full dataset. When locationId is set, the run must belong to that location (otherwise returns null).
   """
   menuEngineeringMatrix(analyticsRunId: ID!, categories: [String!] = null, locationId: ID = null): MenuEngineeringMatrixType
 

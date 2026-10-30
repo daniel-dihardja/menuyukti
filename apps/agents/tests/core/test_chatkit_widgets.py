@@ -130,11 +130,11 @@ def test_compact_status_skips_rejected_save() -> None:
 
 def test_chart_status_uses_input_and_output_fallback() -> None:
     title, detail = _chart_status_detail(
-        {"chart_id": "low_end_review"},
+        {"chart_id": "weak_review"},
         "ok",
     )
     assert title == "Loaded Weak items review"
-    assert detail == "low_end_review"
+    assert detail == "weak_review"
 
     # tool_end historically had no input — recover from markdown heading
     title2, detail2 = _chart_status_detail(
@@ -142,7 +142,7 @@ def test_chart_status_uses_input_and_output_fallback() -> None:
         "## Visualization data — Weak items review\n- dogs",
     )
     assert title2 == "Loaded Weak items review"
-    assert detail2 == "low_end_review"
+    assert detail2 == "weak_review"
 
     title3, _ = _chart_status_detail(None, "ok")
     assert title3 == "Chart data ready"
@@ -151,14 +151,14 @@ def test_chart_status_uses_input_and_output_fallback() -> None:
 def test_running_status_and_progress_name_the_chart() -> None:
     text, icon = _progress_for_tool_start(
         "get_chart_data",
-        {"chart_id": "low_end_review"},
+        {"chart_id": "weak_review"},
     )
     assert text == "Loading Weak items review…"
     assert icon == "chart"
 
     running = _running_status_for_tool(
         "get_chart_data",
-        {"chart_id": "low_end_review"},
+        {"chart_id": "weak_review"},
     )
     assert running is not None
     dumped = str(running.model_dump(mode="json"))

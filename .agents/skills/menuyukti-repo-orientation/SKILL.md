@@ -16,7 +16,7 @@ This skill is for **Cursor/agents** navigating the repo. The **product home** is
 | ----------------------- | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Web**                 | `apps/web`        | Next.js: operator shell (chat `/advisor`, analytics + **native POS**, inventar, …) and **customer PWA** (Serwist). **GraphQL only** — no direct DB.                                             |
 | **Mobile (deprecated)** | `apps/mobile-app` | Expo CRM client — **inactive**; kept in repo. Prefer **web PWA** for customer work. Still GraphQL/BFF only if touched.                                                                          |
-| **GraphQL API**         | `apps/graphql`    | Strawberry schema, **SQLAlchemy persistence**, analytics, POS, inventory, CRM. **Single HTTP API** for web and agents (and legacy mobile BFF).                                                  |
+| **GraphQL API**         | `apps/graphql`    | Strawberry schema, **SQLAlchemy persistence**, analytics, POS, inventory, CRM, **knowledge docs** (`knowledge/` → advisor RAG). **Single HTTP API** for web and agents (and legacy mobile BFF). |
 | **LangGraph agents**    | `apps/agents`     | FastAPI, LangChain / LangGraph **streaming chat** (`general` \| `image_assistant` \| `inventar`) + holiday/nearby helpers. **Calls GraphQL over HTTP**; **does not** open database connections. |
 | **Shared packages**     | `packages/*`      | Shared TypeScript libraries; Python: [`packages/menuyukti`](../../../packages/menuyukti) (analytics), optional legacy workspace packages per root config.                                       |
 
@@ -47,8 +47,10 @@ flowchart LR
 
 1. User opens **`/advisor`** (thread = `agentThreadId`).
 2. Web BFF **`/api/chat`** forwards the turn to agents **`POST /chat`** with `agent_thread_id` (+ optional `location_id`, `chat_mode`).
-3. Agents ReAct graph may call **GraphQL** (location, charts, media) via `graphql_post`.
+3. Agents ReAct graph may call **GraphQL** (location, charts, media, **knowledge docs** via `searchKnowledge`) via `graphql_post`.
 4. History loads via **`/api/chat/history`** ↔ agents **`GET /chat/history`**.
+
+**Knowledge docs** live in `apps/graphql/knowledge/` — see [`.cursor/rules/knowledge-docs.mdc`](../../../.cursor/rules/knowledge-docs.mdc) and [`menuyukti-graphql`](../menuyukti-graphql/SKILL.md).
 
 See [`menuyukti-agents`](../menuyukti-agents/SKILL.md) and [`menuyukti-web`](../menuyukti-web/SKILL.md). Cleanup history for the old campaign-pipeline model: [`packages/docs/menuyukti/remove-milestones.md`](../../../packages/docs/menuyukti/remove-milestones.md).
 

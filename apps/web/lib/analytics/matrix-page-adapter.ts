@@ -5,18 +5,20 @@
 
 import type { MenuEngineeringMatrixData } from '@/lib/graphql/queries'
 
-export type MatrixCategory = 'star' | 'plow_horse' | 'puzzle' | 'low_end'
+export type MatrixCategory = 'star' | 'plow_horse' | 'puzzle' | 'weak'
 
-const CATEGORY_ORDER: MatrixCategory[] = ['star', 'plow_horse', 'puzzle', 'low_end']
+const CATEGORY_ORDER: MatrixCategory[] = ['star', 'plow_horse', 'puzzle', 'weak']
 
 const VALID_CATEGORIES = new Set<string>(CATEGORY_ORDER)
 
-function normalizeCategory(raw: string): MatrixCategory {
+/** Maps GraphQL BCG category strings to web matrix categories. Accepts legacy `low_end`. */
+export function normalizeCategory(raw: string): MatrixCategory {
   const lower = String(raw ?? '')
     .trim()
     .toLowerCase()
+  if (lower === 'low_end') return 'weak'
   if (VALID_CATEGORIES.has(lower)) return lower as MatrixCategory
-  return 'low_end'
+  return 'weak'
 }
 
 const VALID_ACTIONS = new Set(['keep', 'promote', 'reprice', 'remove'])
@@ -62,7 +64,7 @@ export type GroupedByCategory = Record<MatrixCategory, MatrixDisplayRow[]>
 
 /**
  * Maps menuEngineeringMatrix.items to display rows and groups by category.
- * Returns the four categories in order (Star, Plow Horse, Puzzle, Low End), each
+ * Returns the four categories in order (Star, Plow Horse, Puzzle, Weak), each
  * with an array of rows (possibly empty).
  */
 export function matrixItemsToGroupedRows(
@@ -72,7 +74,7 @@ export function matrixItemsToGroupedRows(
     star: [],
     plow_horse: [],
     puzzle: [],
-    low_end: [],
+    weak: [],
   }
   if (!items || !Array.isArray(items)) return grouped
   for (const item of items) {
@@ -109,7 +111,7 @@ export function distributionToCategoryMap(
     star: { ...ZERO_STATS },
     plow_horse: { ...ZERO_STATS },
     puzzle: { ...ZERO_STATS },
-    low_end: { ...ZERO_STATS },
+    weak: { ...ZERO_STATS },
   }
   if (!distribution || !Array.isArray(distribution)) return map
   for (const item of distribution) {
@@ -155,7 +157,7 @@ export function distributionFromGroupedRows(
     star: { ...ZERO_STATS },
     plow_horse: { ...ZERO_STATS },
     puzzle: { ...ZERO_STATS },
-    low_end: { ...ZERO_STATS },
+    weak: { ...ZERO_STATS },
   }
 
   for (const category of CATEGORY_ORDER) {

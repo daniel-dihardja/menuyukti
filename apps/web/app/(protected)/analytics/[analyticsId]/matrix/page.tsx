@@ -171,7 +171,7 @@ export default async function Page({ params }: PageProps) {
             <Link href={salesHref}>{tShared('backToSales')}</Link>
           </Button>
           <Button asChild variant="outline" size="sm">
-            <Link href={routes.analytics.lowEnd(analyticsId)}>{tMatrix('links.lowEnd')}</Link>
+            <Link href={routes.analytics.weak(analyticsId)}>{tMatrix('links.weak')}</Link>
           </Button>
           <Button asChild variant="outline" size="sm">
             <Link href={routes.analytics.cogs(analyticsId)}>{tMatrix('links.cogs')}</Link>

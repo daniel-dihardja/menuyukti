@@ -8,14 +8,14 @@ chart_ids: venue_slot_strength_heatmap
 # Venue slot strength
 
 Venue slot strength summarizes demand by weekday × meal period (orders and a
-relative demand index). Strong slots are good times to post, promote, or staff
-for peaks; weak slots suggest quieter periods.
+relative demand index). Strong slots are good times to promote, staff for peaks,
+or time guest-facing actions; weak slots suggest quieter periods.
 
 ## How to use it
 
-- Ground Instagram schedules in open hours **and** strong demand slots.
-- Prefer posting shortly before or during strong service windows — not overnight
-  on closed days.
+- Ground timing and promo advice in open hours **and** strong demand slots.
+- Prefer guest-facing timing shortly before or during strong service windows —
+  not overnight on closed days.
 - Load `venue_slot_strength_heatmap` for numbers; never invent demand indexes.
 
 ## Caveats

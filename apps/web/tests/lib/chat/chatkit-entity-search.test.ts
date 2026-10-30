@@ -6,10 +6,10 @@ describe('searchAdvisorChatKitEntities', () => {
   it('returns matching attached visualizations only', async () => {
     const entities = await searchAdvisorChatKitEntities({
       query: 'menu',
-      attachedVisualizationIds: ['menu_item_heatmap', 'low_end_review'],
+      attachedVisualizationIds: ['menu_item_heatmap', 'weak_review'],
       visualizationTitles: {
         menu_item_heatmap: 'Menu item heatmap',
-        low_end_review: 'Weak items review',
+        weak_review: 'Weak items review',
       },
       chartsGroupLabel: 'Charts',
     })

@@ -111,7 +111,7 @@ describe('formatVisualizationDataMarkdownSection', () => {
         ],
         matrixItems: [
           { menu: 'Steak', category: 'star' },
-          { menu: 'Dog', category: 'low_end' },
+          { menu: 'Dog', category: 'weak' },
           { menu: 'Soup', category: 'puzzle' },
         ],
       },

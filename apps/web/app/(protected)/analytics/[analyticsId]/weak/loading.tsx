@@ -6,19 +6,19 @@ import { routes } from '@/lib/routes'
 import { Skeleton } from '@workspace/ui/components/skeleton'
 import { cn } from '@workspace/ui/lib/utils'
 
-export default async function LowEndLoading() {
+export default async function WeakLoading() {
   const tSales = await getTranslations('analytics.sales')
-  const tLowEnd = await getTranslations('analytics.lowEnd')
+  const tWeak = await getTranslations('analytics.weak')
   const tShared = await getTranslations('analytics.shared')
 
   return (
     <AnalyticsPageShell
-      title={tLowEnd('pageLoadingTitle')}
+      title={tWeak('pageLoadingTitle')}
       mainClassName={ANALYTICS_REPORT_SHELL_MAIN_CLASS}
       breadcrumbs={[
         { label: tSales('title'), href: routes.analytics.sales },
         { label: tShared('breadcrumbRunLoading') },
-        { label: tLowEnd('breadcrumb') },
+        { label: tWeak('breadcrumb') },
       ]}
     >
       <section className={cn('flex flex-col gap-6', ANALYTICS_REPORT_SECTION_CLASS)}>

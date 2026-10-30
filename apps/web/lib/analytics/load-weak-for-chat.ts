@@ -10,13 +10,13 @@ import {
 
 type MatrixPayload = NonNullable<MenuEngineeringMatrixData['menuEngineeringMatrix']>
 
-export type LoadLowEndForChatOptions = {
+export type LoadWeakForChatOptions = {
   userId: string
   locationId?: number | null
   analyticsRunId?: number | string | null
 }
 
-export type LoadLowEndForChatResult = {
+export type LoadWeakForChatResult = {
   items: MatrixPayload['items']
   distribution: MatrixPayload['distribution']
   periodStart: string | null
@@ -77,7 +77,7 @@ async function toResult(
   matrix: MatrixPayload,
   analyticsRunId: string,
   usedFallbackRun: boolean,
-): Promise<LoadLowEndForChatResult> {
+): Promise<LoadWeakForChatResult> {
   const period = await fetchRunPeriod(userId, analyticsRunId)
   return {
     items: matrix.items,
@@ -89,7 +89,7 @@ async function toResult(
   }
 }
 
-function emptyResult(preferredRunId: string | null): LoadLowEndForChatResult {
+function emptyResult(preferredRunId: string | null): LoadWeakForChatResult {
   return {
     items: [],
     distribution: [],
@@ -101,12 +101,12 @@ function emptyResult(preferredRunId: string | null): LoadLowEndForChatResult {
 }
 
 /**
- * Load menu-engineering matrix (+ run period) for the Low End chat visualization.
+ * Load menu-engineering matrix (+ run period) for the Weak items chat visualization.
  * Tries the preferred analytics run first, then other runs for the location when empty.
  */
-export async function loadLowEndForChat(
-  options: LoadLowEndForChatOptions,
-): Promise<LoadLowEndForChatResult> {
+export async function loadWeakForChat(
+  options: LoadWeakForChatOptions,
+): Promise<LoadWeakForChatResult> {
   const preferredRunId =
     options.analyticsRunId != null && String(options.analyticsRunId).length > 0
       ? String(options.analyticsRunId)

@@ -12,7 +12,7 @@ const QUADRANT_POINT_CLASS: Record<MatrixCategory, string> = {
   star: 'bg-emerald-500',
   plow_horse: 'bg-amber-500',
   puzzle: 'bg-sky-500',
-  low_end: 'bg-rose-500',
+  weak: 'bg-rose-500',
 }
 
 export function MatrixQuadrantLegend() {

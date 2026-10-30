@@ -186,8 +186,7 @@ def calculate_instagram_signals(
     Output list fields are capped (see module constants) so consumers never receive unbounded arrays.
 
     **Matrix categories** follow :func:`calculate_menu_engineering_matrix` (``star``,
-    ``plow_horse``, ``puzzle``, ``low_end``). ``avoid_items`` uses ``low_end`` (classic
-    "dog" quadrant).
+    ``plow_horse``, ``puzzle``, ``weak``). ``avoid_items`` uses the ``weak`` quadrant.
     """
     content_heroes: list[MatrixBackedItem] = []
     avoid_items: list[MatrixBackedItem] = []
@@ -197,7 +196,7 @@ def calculate_instagram_signals(
             cat = raw["category"]
             if cat == "star":
                 content_heroes.append(_matrix_item_to_signal(raw))
-            elif cat == "low_end":
+            elif cat == "weak":
                 avoid_items.append(_matrix_item_to_signal(raw))
 
         content_heroes.sort(key=lambda x: (-x["total_revenue"], x["menu"]))
