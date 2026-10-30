@@ -18,6 +18,7 @@ from graphql.data_sources import (
 from graphql.services.knowledge_embeddings import StaticEmbedder
 from graphql.services.knowledge_ingest import (
     KnowledgeSeedSpec,
+    clear_knowledge_corpus,
     ingest_seed_directory,
     upsert_knowledge_document,
 )
@@ -180,3 +181,30 @@ def test_ingest_skips_unchanged_hash(knowledge_session) -> None:
     assert first.skipped is False
     assert second.skipped is True
     assert second.version == first.version
+
+
+def test_clear_knowledge_corpus(knowledge_session) -> None:
+    embedder = StaticEmbedder(dims=16)
+    upsert_knowledge_document(
+        knowledge_session,
+        KnowledgeSeedSpec(
+            slug="clear-me",
+            title="Clear me",
+            category="domain",
+            body="# Wipe\n\nThis should disappear on clear.\n",
+        ),
+        embedder=embedder,
+    )
+    knowledge_session.commit()
+    assert knowledge_session.query(KnowledgeDocument).count() == 1
+    assert knowledge_session.query(KnowledgeChunk).count() >= 1
+    assert knowledge_session.query(KnowledgeEmbedding).count() >= 1
+
+    result = clear_knowledge_corpus(knowledge_session)
+    knowledge_session.commit()
+    assert result.documents == 1
+    assert result.chunks >= 1
+    assert result.embeddings >= 1
+    assert knowledge_session.query(KnowledgeDocument).count() == 0
+    assert knowledge_session.query(KnowledgeChunk).count() == 0
+    assert knowledge_session.query(KnowledgeEmbedding).count() == 0

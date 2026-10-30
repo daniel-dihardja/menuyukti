@@ -44,13 +44,14 @@ chart_ids: weak_review
 - Keep docs short (~15–40 lines). Prefer one topic per file.
 - Ground advice in Menuyukti surfaces (menu, IG, weak items, venue slots) — not generic SaaS CRO encyclopedias.
 - Never invent venue sales figures; tell the advisor to load chart data when numbers are needed.
-- Curate external marketing psychology sources into restaurant-shaped domain/playbook docs; do not paste whole agent-skill files.
+- Do **not** RAG generic marketing psychology (jobs-to-be-done, anchoring, social proof, etc.) — models already know that; steer tone/frameworks in the advisor **system prompt** when needed. Knowledge docs are for Menuyukti-specific interpretation and actions.
 
 ## Ingest
 
 ```bash
 cd apps/graphql && make knowledge-ingest
 # FORCE=1 / DRY_RUN=1 / DIR=… optional
+# make knowledge-clear   # wipe DB corpus (ingest does not prune deleted files)
 ```
 
 See [`apps/graphql/README.md`](../../apps/graphql/README.md) (Knowledge layer) and backlog [doc-5 Chat advisor knowledge RAG](../../backlog/docs/agents/doc-5%20-%20Chat-advisor-knowledge-RAG.md).

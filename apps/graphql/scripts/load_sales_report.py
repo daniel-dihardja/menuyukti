@@ -3,7 +3,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-from graphql.data_sources import AnalyticsRun, Location, SessionLocal, drop_db, init_db
+from graphql.data_sources import AnalyticsRun, Location, SessionLocal
 from graphql.reports import normalize_sales_report, persist_sales_report
 
 
@@ -12,9 +12,6 @@ def main(excel_path: str) -> int:
     if not path.exists():
         print(f"ERROR: file not found: {path}")
         return 1
-
-    drop_db()
-    init_db()
 
     payload = path.read_bytes()
     normalized_rows, detected_pos = normalize_sales_report(payload)

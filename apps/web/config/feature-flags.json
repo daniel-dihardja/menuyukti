@@ -199,8 +199,8 @@
     },
     {
       "id": "team",
-      "description": "Workspace team management (MVP off; code retained).",
-      "enabled": false,
+      "description": "Workspace team management.",
+      "enabled": true,
       "audience": "all",
       "routePrefixes": ["/team"],
       "navKeys": ["team"],

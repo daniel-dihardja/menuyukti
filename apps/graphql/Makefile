@@ -3,7 +3,7 @@ UV=uv run
 UVICORN=uv run uvicorn
 ALEMBIC=PYTHONPATH=../.. uv run alembic
 
-.PHONY: install run dev db-upgrade db-downgrade db-generate db-history db-current db-stamp db-stamp-head db-check drop-db db-reset-dev test test-qa test-upload test-order-metrics test-menu-item-cogs test-menu-heatmaps test-menu-engineering-matrix load-report generate-dev-mock-excel knowledge-ingest square-smoke dev-data lint format typecheck clean
+.PHONY: install run dev db-upgrade db-downgrade db-generate db-history db-current db-stamp db-stamp-head db-check drop-db db-reset-dev test test-qa test-upload test-order-metrics test-menu-item-cogs test-menu-heatmaps test-menu-engineering-matrix load-report generate-dev-mock-excel knowledge-ingest knowledge-clear square-smoke dev-data lint format typecheck clean
 
 install:
 	uv sync --all-groups
@@ -43,9 +43,15 @@ db-stamp-head:
 db-check:
 	$(ALEMBIC) check
 
-# Destructive: drops public schema on PostgreSQL (see graphql.data_sources.database).
+# Destructive: drops public schema on PostgreSQL. Requires ALLOW_DROP_DB=1.
+#   make drop-db ALLOW_DROP_DB=1
 drop-db:
-	PYTHONPATH=../.. $(PYTHON) -m graphql.data_sources.database drop
+	@if [ "$(ALLOW_DROP_DB)" != "1" ]; then \
+		echo "Refusing drop-db without ALLOW_DROP_DB=1 (protects Neon/production)."; \
+		echo "Example: make drop-db ALLOW_DROP_DB=1"; \
+		exit 1; \
+	fi
+	ALLOW_DROP_DB=1 PYTHONPATH=../.. $(PYTHON) -m graphql.data_sources.database drop
 
 test-upload:
 	PYTHONPATH=../.. $(UV) pytest tests/test_upload_excel.py
@@ -86,6 +92,15 @@ knowledge-ingest:
 		$(if $(FORCE),--force,) \
 		$(if $(DRY_RUN),--dry-run,)
 
+# Destructive: delete all knowledge_document / chunk / embedding rows.
+# Ingest does not prune removed markdown files — clear then re-ingest.
+# Examples:
+#   make knowledge-clear
+#   make knowledge-clear DRY_RUN=1
+knowledge-clear:
+	PYTHONPATH=../.. $(PYTHON) scripts/clear_knowledge.py \
+		$(if $(DRY_RUN),--dry-run,)
+
 # Square sandbox smoke: ListLocations via SQUARE_ACCESS_TOKEN (repo-root .env).
 #   make square-smoke
 square-smoke:
@@ -115,7 +130,15 @@ dev-data:
 		$(if $(COGS),--cogs "$(COGS)",)
 
 # Destructive schema reset via Alembic, then optional seed when SEED=1.
-db-reset-dev: drop-db db-upgrade
+# Requires ALLOW_DROP_DB=1 (same guard as drop-db).
+db-reset-dev:
+	@if [ "$(ALLOW_DROP_DB)" != "1" ]; then \
+		echo "Refusing db-reset-dev without ALLOW_DROP_DB=1 (protects Neon/production)."; \
+		echo "Example: make db-reset-dev ALLOW_DROP_DB=1 SEED=1 USER_ID=user_xxx"; \
+		exit 1; \
+	fi
+	$(MAKE) drop-db ALLOW_DROP_DB=1
+	$(MAKE) db-upgrade
 	$(if $(SEED),$(MAKE) dev-data SCOPE="$(or $(SCOPE),inventar)" USER_ID="$(USER_ID)" EXCEL="$(EXCEL)" COGS="$(COGS)",)
 
 lint:

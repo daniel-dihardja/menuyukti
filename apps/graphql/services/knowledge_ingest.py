@@ -54,6 +54,13 @@ class IngestResult:
     skipped: bool
 
 
+@dataclass(frozen=True)
+class ClearKnowledgeResult:
+    documents: int
+    chunks: int
+    embeddings: int
+
+
 def content_hash(body: str, *, title: str, category: str, metadata: dict[str, Any] | None) -> str:
     payload = {
         "title": title,
@@ -273,3 +280,21 @@ def ingest_seed_directory(
             upsert_knowledge_document(session, spec, embedder=embedder, force=force)
         )
     return results
+
+
+def clear_knowledge_corpus(session: Session) -> ClearKnowledgeResult:
+    """Delete all knowledge embeddings, chunks, and documents.
+
+    Child tables first so SQLite (no FK enforce) and Postgres stay consistent.
+    Ingest does not prune removed seed files — use this for a full wipe, then
+    ``ingest_seed_directory`` to rebuild from ``knowledge/*.md``.
+    """
+    embeddings = session.execute(delete(KnowledgeEmbedding)).rowcount or 0
+    chunks = session.execute(delete(KnowledgeChunk)).rowcount or 0
+    documents = session.execute(delete(KnowledgeDocument)).rowcount or 0
+    session.flush()
+    return ClearKnowledgeResult(
+        documents=int(documents),
+        chunks=int(chunks),
+        embeddings=int(embeddings),
+    )
