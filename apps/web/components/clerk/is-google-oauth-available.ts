@@ -9,12 +9,21 @@ type ClerkWithOauthEnvironment = {
 }
 
 /**
- * Returns true when Clerk has loaded and Google is an authenticatable social strategy
- * for the current instance (Dashboard SSO connection enabled for sign-in/sign-up).
+ * Temporary frontend gate: hide Google sign-in UI without removing OAuth handlers.
+ * Flip to `true` to show the button again when Clerk has `oauth_google` enabled.
+ */
+export const SHOW_GOOGLE_SIGN_IN = false
+
+/**
+ * Returns true when Google sign-in should appear in the UI: the frontend gate is on,
+ * Clerk has loaded, and Google is an authenticatable social strategy for this instance.
  */
 export function isGoogleOauthAvailable(
   clerk: ClerkWithOauthEnvironment | null | undefined,
 ): boolean {
+  if (!SHOW_GOOGLE_SIGN_IN) {
+    return false
+  }
   if (!clerk?.loaded) {
     return false
   }

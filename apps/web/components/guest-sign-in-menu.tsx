@@ -2,7 +2,7 @@
 
 import { useClerk, useSignIn } from '@clerk/nextjs'
 import { isClerkAPIResponseError } from '@clerk/nextjs/errors'
-import { ChevronDown, Mail } from 'lucide-react'
+import { ChevronDown, UserRound } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
@@ -12,7 +12,6 @@ import { ClerkCaptcha } from '@/components/clerk/clerk-captcha'
 import { GoogleMark } from '@/components/clerk/google-mark'
 import { isGoogleOauthAvailable } from '@/components/clerk/is-google-oauth-available'
 import { buildAuthContinueUrl, buildLoginUrl, rememberAuthReturnPath } from '@/lib/auth-return-path'
-import { isEmailSignInEnabled } from '@/lib/email-sign-in'
 import { isCaptchaOauthError, startGoogleOauthSignIn } from '@/lib/start-google-oauth'
 import { Button } from '@workspace/ui/components/button'
 import {
@@ -49,7 +48,6 @@ export function GuestSignInMenu({ className }: GuestSignInMenuProps) {
   const clerk = useClerk()
   const { signIn } = useSignIn()
   const googleAvailable = isGoogleOauthAvailable(clerk)
-  const emailSignInEnabled = isEmailSignInEnabled()
   const [oauthBusy, setOauthBusy] = React.useState(false)
   const [oauthError, setOauthError] = React.useState<string | null>(null)
 
@@ -130,14 +128,12 @@ export function GuestSignInMenu({ className }: GuestSignInMenuProps) {
               {oauthBusy ? tLogin('signingInWithGoogle') : tLogin('continueWithGoogle')}
             </DropdownMenuItem>
           ) : null}
-          {emailSignInEnabled ? (
-            <DropdownMenuItem asChild disabled={oauthBusy}>
-              <Link href={loginUrl}>
-                <Mail className="size-4" aria-hidden />
-                {tLogin('continueWithEmail')}
-              </Link>
-            </DropdownMenuItem>
-          ) : null}
+          <DropdownMenuItem asChild disabled={oauthBusy}>
+            <Link href={loginUrl}>
+              <UserRound className="size-4" aria-hidden />
+              {tLogin('continueWithUsername')}
+            </Link>
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
       {/* Bot protection mount — required for Google SSO from marketing chrome. */}

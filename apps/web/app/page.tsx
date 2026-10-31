@@ -4,9 +4,11 @@ import { LandingCapabilityHighlights } from '@/app/_components/landing/landing-c
 import { LandingHero } from '@/app/_components/landing/landing-hero'
 import { LandingMidIntro } from '@/app/_components/landing/landing-mid-intro'
 import { SiteFooter } from '@/components/site-footer'
+import { isMarketingSignInEnabled } from '@/lib/marketing-sign-in'
 
 export default async function LandingPage() {
   const t = await getTranslations('landing')
+  const showMarketingSignIn = isMarketingSignInEnabled()
 
   return (
     <div className="relative flex min-h-full min-w-0 flex-col bg-background pb-20 text-foreground">
@@ -23,6 +25,7 @@ export default async function LandingPage() {
           headline={t('hero.headline')}
           subtitle={t('hero.subtitle')}
           primaryCta={t('hero.primaryCta')}
+          showPrimaryCta={showMarketingSignIn}
           productImageAlt={t('hero.productImageAlt')}
           trustItems={[
             t('hero.trust.salesImport'),
