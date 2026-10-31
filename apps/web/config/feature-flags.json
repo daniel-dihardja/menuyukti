@@ -66,8 +66,8 @@
     },
     {
       "id": "playbooks",
-      "description": "Playbook library (MVP off; code retained).",
-      "enabled": false,
+      "description": "Playbook library (MVP on).",
+      "enabled": true,
       "audience": "all",
       "routePrefixes": ["/playbooks"],
       "navKeys": ["playbooks"],

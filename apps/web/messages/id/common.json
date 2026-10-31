@@ -1,5 +1,9 @@
 {
   "common": {
-    "close": "Tutup"
+    "close": "Tutup",
+    "beta": {
+      "badge": "Beta",
+      "message": "Menuyukti sedang dalam uji beta. Fitur dapat berubah seiring kami meningkatkan produk."
+    }
   }
 }
