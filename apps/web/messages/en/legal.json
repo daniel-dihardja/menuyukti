@@ -28,7 +28,7 @@
         },
         "contact": {
           "title": "Contact",
-          "body": "The data controller is Daniel Dihardja, identified in the Impressum. For privacy-related questions or requests, use the contact details on the Impressum page."
+          "body": "The data controller is Daniel Dihardja, identified in the Imprint. For privacy-related questions or requests, use the contact details on the Imprint page."
         }
       }
     },
@@ -65,9 +65,9 @@
       }
     },
     "impressum": {
-      "metaTitle": "Impressum | Menuyukti",
+      "metaTitle": "Imprint | Menuyukti",
       "metaDescription": "Legal notice and provider identification for Menuyukti.",
-      "title": "Impressum",
+      "title": "Imprint",
       "lastUpdated": "Last updated: October 31, 2026.",
       "sections": {
         "provider": {
