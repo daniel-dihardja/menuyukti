@@ -34,6 +34,10 @@
     },
     "privacy": {
       "sections": {
+        "salesUploads": {
+          "title": "Uploads von Verkaufsberichten",
+          "body": "Wenn Sie eine Excel-Verkaufsdatei hochladen, extrahieren wir die Transaktionsdaten und speichern sie in unserer Datenbank in Frankfurt (EU). Die Original-Tabellendatei behalten wir nicht."
+        },
         "contact": {
           "title": "Kontakt",
           "body": "Verantwortlicher ist Daniel Dihardja, benannt im Impressum. Für datenschutzbezogene Fragen oder Anfragen nutzen Sie die Kontaktdaten auf der Impressum-Seite."

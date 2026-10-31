@@ -44,6 +44,13 @@ export default async function PrivacyPage() {
           </section>
 
           <section className="space-y-3">
+            <h2 className="text-xl font-semibold">{t('sections.salesUploads.title')}</h2>
+            <p className="text-pretty leading-relaxed text-foreground/90">
+              {t('sections.salesUploads.body')}
+            </p>
+          </section>
+
+          <section className="space-y-3">
             <h2 className="text-xl font-semibold">{t('sections.use.title')}</h2>
             <p className="text-pretty leading-relaxed text-foreground/90">
               {t('sections.use.body')}

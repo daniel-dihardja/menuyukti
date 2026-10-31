@@ -10,6 +10,10 @@
           "title": "Data we process",
           "body": "Menuyukti processes information you provide when you use the product—including account details, location and sales data you upload, workflow and milestone content, and usage needed to run the service. We process this data to deliver analytics, workflows, and AI-assisted features you request."
         },
+        "salesUploads": {
+          "title": "Sales report uploads",
+          "body": "When you upload a sales Excel file, we extract the transaction data and store it in our database in Frankfurt (EU). We do not keep the original spreadsheet file."
+        },
         "use": {
           "title": "How we use your data",
           "body": "We use your data to operate and improve the platform, provide support, secure accounts, and comply with law. We do not sell your personal information or your restaurant sales data to third parties for their marketing."

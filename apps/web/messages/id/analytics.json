@@ -205,6 +205,7 @@
       "uploadInfo": {
         "title": "Unggahan Excel POS yang didukung",
         "description": "Sistem POS berikut didukung saat ini. Unggah jenis laporan yang sesuai agar kami dapat mendeteksi dan mengurai file Anda.",
+        "dataHandling": "Setelah Anda mengunggah file Excel penjualan, kami mengekstrak data transaksi dan menyimpannya di database kami di Frankfurt (UE). Kami tidak menyimpan file spreadsheet aslinya.",
         "supportedLabel": "Didukung sekarang",
         "reportLabel": "Laporan yang diperlukan",
         "reports": {
