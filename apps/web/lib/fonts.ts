@@ -11,6 +11,14 @@ export const fontSans = localFont({
   weight: '400 800',
 })
 
+/** Static ExtraBold cut for marketing display headlines (fuller than variable 800). */
+export const fontDisplay = localFont({
+  src: '../fonts/PlusJakartaSans-ExtraBold.ttf',
+  display: 'swap',
+  variable: '--font-display',
+  weight: '800',
+})
+
 export const fontMono = localFont({
   src: '../fonts/JetBrainsMono-latin-wght-normal.woff2',
   display: 'swap',

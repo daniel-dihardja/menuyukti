@@ -5,7 +5,7 @@ import { Suspense } from 'react'
 
 import '@workspace/ui/globals.css'
 import { RootIntlFallback, RootIntlShell } from '@/app/_components/root-shell'
-import { fontMono, fontSans } from '@/lib/fonts'
+import { fontDisplay, fontMono, fontSans } from '@/lib/fonts'
 import { routes } from '@/lib/routes'
 import { getTranslations } from 'next-intl/server'
 
@@ -79,7 +79,9 @@ export default function RootLayout({
           strategy="beforeInteractive"
         />
       </head>
-      <body className={`${fontSans.variable} ${fontMono.variable} font-sans antialiased `}>
+      <body
+        className={`${fontSans.variable} ${fontDisplay.variable} ${fontMono.variable} font-sans antialiased `}
+      >
         {/*
           Outer Suspense: Clerk cookie/auth reads (Cache Components).
           Inner Suspense: next-intl getMessages/getLocale.
