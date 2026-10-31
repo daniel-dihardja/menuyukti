@@ -28,6 +28,7 @@ RESERVED_PUBLIC_SLUGS = frozenset(
         "explore",
         "home",
         "ig-studio",
+        "impressum",
         "inventar",
         "l",
         "login",

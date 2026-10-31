@@ -1,12 +1,17 @@
 import { MenuyuktiSignIn } from '@/components/clerk/menuyukti-sign-in'
 import { RedirectIfSignedIn } from '@/components/clerk/redirect-if-signed-in'
 import { auth } from '@clerk/nextjs/server'
+import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { redirect } from 'next/navigation'
 import { Suspense } from 'react'
 import { getSafeAuthReturnPath } from '@/lib/auth-return-path'
 import { isEmailSignInEnabled } from '@/lib/email-sign-in'
+import { routes } from '@/lib/routes'
 import { getAuthenticatedHomePath } from '@/lib/workspace-plan-server'
+
+const legalLinkClassName =
+  'text-muted-foreground underline-offset-4 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
 
 type LoginPageProps = {
   searchParams: Promise<{ next?: string | string[] }>
@@ -54,6 +59,20 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               {t('accessNote')}
             </p>
           ) : null}
+          <nav
+            aria-label={t('legalNavAria')}
+            className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-sm"
+          >
+            <Link href={routes.privacy} className={legalLinkClassName}>
+              {t('privacy')}
+            </Link>
+            <Link href={routes.terms} className={legalLinkClassName}>
+              {t('terms')}
+            </Link>
+            <Link href={routes.impressum} className={legalLinkClassName}>
+              {t('impressum')}
+            </Link>
+          </nav>
         </div>
       </div>
     </div>

@@ -124,6 +124,7 @@ export const routes = {
   /** Public legal pages (not behind app shell). */
   privacy: '/privacy',
   terms: '/terms',
+  impressum: '/impressum',
 
   analytics: {
     branches: '/analytics/locations',

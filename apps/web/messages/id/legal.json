@@ -4,7 +4,7 @@
       "metaTitle": "Kebijakan Privasi | Menuyukti",
       "metaDescription": "Bagaimana Menuyukti mengumpulkan, menggunakan, dan melindungi data di workspace Anda.",
       "title": "Kebijakan Privasi",
-      "lastUpdated": "Terakhir diperbarui: 12 April 2026.",
+      "lastUpdated": "Terakhir diperbarui: 31 Oktober 2026.",
       "sections": {
         "data": {
           "title": "Data yang kami proses",
@@ -28,7 +28,7 @@
         },
         "contact": {
           "title": "Kontak",
-          "body": "Untuk pertanyaan atau permintaan terkait privasi, hubungi kami melalui saluran yang sama yang Anda gunakan untuk dukungan produk Menuyukti."
+          "body": "Pengendali data adalah Daniel Dihardja, disebutkan di halaman Impressum. Untuk pertanyaan atau permintaan terkait privasi, gunakan detail kontak di halaman Impressum."
         }
       }
     },
@@ -36,11 +36,15 @@
       "metaTitle": "Ketentuan Layanan | Menuyukti",
       "metaDescription": "Ketentuan yang mengatur penggunaan platform Menuyukti.",
       "title": "Ketentuan Layanan",
-      "lastUpdated": "Terakhir diperbarui: 12 April 2026.",
+      "lastUpdated": "Terakhir diperbarui: 31 Oktober 2026.",
       "sections": {
         "service": {
           "title": "Layanan",
           "body": "Menuyukti menyediakan perangkat lunak untuk pemasaran dan operasional restoran—termasuk analitik, fitur berbantuan AI, POS, inventaris, dan pengalaman digital tamu. Fitur dapat berubah seiring perkembangan produk."
+        },
+        "beta": {
+          "title": "Beta / pratinjau publik",
+          "body": "Menuyukti saat ini ditawarkan sebagai beta / pratinjau publik. Fitur dapat berubah, rusak, atau dihentikan tanpa pemberitahuan. Tidak ada jaminan uptime atau fitur. Data uji coba dapat direset. Masukan yang Anda bagikan dapat digunakan untuk meningkatkan produk. Keluaran AI dan analitik bersifat informatif; Anda tetap bertanggung jawab atas keputusan bisnis dan kepatuhan."
         },
         "account": {
           "title": "Akun Anda",
@@ -57,6 +61,38 @@
         "changes": {
           "title": "Perubahan",
           "body": "Kami dapat memperbarui ketentuan ini atau layanan. Penggunaan berkelanjutan setelah perubahan merupakan penerimaan atas ketentuan yang diperbarui sejauh diizinkan oleh hukum."
+        }
+      }
+    },
+    "impressum": {
+      "metaTitle": "Impressum | Menuyukti",
+      "metaDescription": "Pemberitahuan hukum dan identitas penyedia untuk Menuyukti.",
+      "title": "Impressum",
+      "lastUpdated": "Terakhir diperbarui: 31 Oktober 2026.",
+      "sections": {
+        "provider": {
+          "title": "Penyedia",
+          "body": "Daniel Dihardja (usaha perorangan)"
+        },
+        "representedBy": {
+          "title": "Diwakili oleh",
+          "body": "Daniel Dihardja"
+        },
+        "address": {
+          "title": "Alamat",
+          "body": "Kurt-Eisner-Straße 68\n04275 Leipzig\nJerman"
+        },
+        "contact": {
+          "title": "Kontak",
+          "body": "Email: daniel@dihardja.de"
+        },
+        "registry": {
+          "title": "Register dan identitas pajak",
+          "body": "Register komersial: tidak terdaftar di Handelsregister\nID PPN (USt-IdNr.): DE297803875"
+        },
+        "beta": {
+          "title": "Beta publik",
+          "body": "Menuyukti dapat diakses publik sebagai produk beta / pratinjau. Ini tidak disajikan sebagai peluncuran komersial yang selesai. Fitur dan ketersediaan dapat berubah."
         }
       }
     }

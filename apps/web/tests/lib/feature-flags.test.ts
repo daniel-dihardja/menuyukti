@@ -107,6 +107,7 @@ describe('feature-flags', () => {
 
   it('leaves unlisted paths enabled', () => {
     expect(isPathnameFeatureEnabled('/privacy')).toBe(true)
+    expect(isPathnameFeatureEnabled('/impressum')).toBe(true)
     expect(isPathnameFeatureEnabled('/login')).toBe(true)
   })
 

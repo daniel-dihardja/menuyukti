@@ -18,5 +18,25 @@ describe('loadMessages id smoke', () => {
     // Disabled inventar catalog stays English via base merge
     const inventar = messages.inventar as { title?: string }
     expect(inventar?.title).toBe('Inventar')
+
+    const legal = messages.legal as { impressum?: { title?: string } }
+    expect(legal.impressum?.title).toBe('Impressum')
+  })
+})
+
+describe('loadMessages de smoke', () => {
+  it('deep-merges German legal overlays onto English', async () => {
+    const messages = await loadMessages('de')
+    const legal = messages.legal as {
+      impressum?: { title?: string; sections?: { address?: { title?: string } } }
+      privacy?: { title?: string }
+    }
+    expect(legal.impressum?.title).toBe('Impressum')
+    expect(legal.impressum?.sections?.address?.title).toBe('Anschrift')
+    expect(legal.privacy?.title).toBe('Privacy Policy')
+
+    const siteFooter = messages.siteFooter as { impressum?: string; privacy?: string }
+    expect(siteFooter.impressum).toBe('Impressum')
+    expect(siteFooter.privacy).toBe('Datenschutz')
   })
 })

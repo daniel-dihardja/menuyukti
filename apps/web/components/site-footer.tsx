@@ -31,6 +31,20 @@ export async function SiteFooter() {
             </Link>
           </nav>
         ) : null}
+        <nav
+          aria-label={t('legalNavAria')}
+          className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-sm"
+        >
+          <Link href={routes.privacy} className={linkClassName}>
+            {t('privacy')}
+          </Link>
+          <Link href={routes.terms} className={linkClassName}>
+            {t('terms')}
+          </Link>
+          <Link href={routes.impressum} className={linkClassName}>
+            {t('impressum')}
+          </Link>
+        </nav>
         <p className="text-center text-sm tracking-wide text-muted-foreground">
           {t('copyright', { year: COPYRIGHT_YEAR })}
         </p>

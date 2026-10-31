@@ -7,7 +7,7 @@ import { BetaStatusBanner } from '@/components/beta-status-banner'
 import { MainHeader } from '@/components/main-header'
 import { isOperatorAppShellPath } from '@/lib/routes'
 
-const HIDE_HEADER_PREFIXES = ['/sso-callback', '/privacy', '/terms']
+const HIDE_HEADER_PREFIXES = ['/sso-callback', '/privacy', '/terms', '/impressum']
 
 /**
  * Pathname-gated chrome. `usePathname` suspends for dynamic routes during

@@ -1,0 +1,52 @@
+{
+  "legal": {
+    "impressum": {
+      "metaTitle": "Impressum | Menuyukti",
+      "metaDescription": "Anbieterkennzeichnung und rechtliche Hinweise für Menuyukti.",
+      "title": "Impressum",
+      "lastUpdated": "Zuletzt aktualisiert: 31. Oktober 2026.",
+      "sections": {
+        "provider": {
+          "title": "Anbieter",
+          "body": "Daniel Dihardja (Einzelunternehmen)"
+        },
+        "representedBy": {
+          "title": "Vertreten durch",
+          "body": "Daniel Dihardja"
+        },
+        "address": {
+          "title": "Anschrift",
+          "body": "Kurt-Eisner-Straße 68\n04275 Leipzig\nDeutschland"
+        },
+        "contact": {
+          "title": "Kontakt",
+          "body": "E-Mail: daniel@dihardja.de"
+        },
+        "registry": {
+          "title": "Register und Steuerangaben",
+          "body": "Handelsregister: nicht eingetragen\nUSt-IdNr.: DE297803875"
+        },
+        "beta": {
+          "title": "Öffentliche Beta",
+          "body": "Menuyukti ist öffentlich als Beta-/Vorschau-Produkt erreichbar. Es wird nicht als fertiger kommerzieller Launch dargestellt. Funktionen und Verfügbarkeit können sich ändern."
+        }
+      }
+    },
+    "privacy": {
+      "sections": {
+        "contact": {
+          "title": "Kontakt",
+          "body": "Verantwortlicher ist Daniel Dihardja, benannt im Impressum. Für datenschutzbezogene Fragen oder Anfragen nutzen Sie die Kontaktdaten auf der Impressum-Seite."
+        }
+      }
+    },
+    "terms": {
+      "sections": {
+        "beta": {
+          "title": "Beta / öffentliche Vorschau",
+          "body": "Menuyukti wird derzeit als öffentliche Beta / Vorschau angeboten. Funktionen können sich ohne Vorankündigung ändern, ausfallen oder entfallen. Es gibt keine Zusicherung für Verfügbarkeit oder Funktionsumfang. Testdaten können zurückgesetzt werden. Feedback darf zur Produktverbesserung genutzt werden. KI- und Analyseergebnisse sind nur informativ; geschäftliche und Compliance-Entscheidungen bleiben Ihre Verantwortung."
+        }
+      }
+    }
+  }
+}
