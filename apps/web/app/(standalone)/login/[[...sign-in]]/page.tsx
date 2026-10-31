@@ -6,7 +6,6 @@ import { getTranslations } from 'next-intl/server'
 import { redirect } from 'next/navigation'
 import { Suspense } from 'react'
 import { getSafeAuthReturnPath } from '@/lib/auth-return-path'
-import { isEmailSignInEnabled } from '@/lib/email-sign-in'
 import { routes } from '@/lib/routes'
 import { getAuthenticatedHomePath } from '@/lib/workspace-plan-server'
 
@@ -33,7 +32,6 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   }
 
   const t = await getTranslations('login')
-  const emailSignInEnabled = isEmailSignInEnabled()
 
   return (
     <div className="relative flex min-h-[calc(100svh-3.5rem)] w-full flex-col items-center justify-center bg-background p-6">
@@ -54,11 +52,6 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           <Suspense fallback={null}>
             <MenuyuktiSignIn />
           </Suspense>
-          {emailSignInEnabled ? (
-            <p className="mt-4 text-center text-sm leading-relaxed text-muted-foreground">
-              {t('accessNote')}
-            </p>
-          ) : null}
           <nav
             aria-label={t('legalNavAria')}
             className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-sm"

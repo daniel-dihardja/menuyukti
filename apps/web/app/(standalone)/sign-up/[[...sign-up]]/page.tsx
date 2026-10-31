@@ -14,7 +14,7 @@ function firstParam(value: string | string[] | undefined): string | null {
 }
 
 /**
- * Sign-up is folded into `/login` (passwordless email code via `signUpIfMissing`).
+ * Self-serve sign-up is not offered — `/login` is Google + username/password sign-in only.
  * Keep this route as a redirect so old links and Clerk `signUpUrl` keep working.
  */
 export default async function SignUpPage({ searchParams }: SignUpPageProps) {

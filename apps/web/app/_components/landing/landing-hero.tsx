@@ -12,6 +12,8 @@ type LandingHeroProps = {
   headline: string
   subtitle: string
   primaryCta: string
+  /** Same gate as header Sign in (`NEXT_PUBLIC_SHOW_MARKETING_SIGN_IN`). */
+  showPrimaryCta?: boolean
   productImageAlt: string
   trustItems: readonly string[]
 }
@@ -21,6 +23,7 @@ export function LandingHero({
   headline,
   subtitle,
   primaryCta,
+  showPrimaryCta = true,
   productImageAlt,
   trustItems,
 }: LandingHeroProps) {
@@ -54,11 +57,13 @@ export function LandingHero({
             {subtitle}
           </p>
 
-          <div className="mt-8 flex w-full max-w-md justify-center lg:justify-start">
-            <Button asChild size="lg" className="hero-btn-primary w-full sm:w-auto">
-              <Link href={routes.login}>{primaryCta}</Link>
-            </Button>
-          </div>
+          {showPrimaryCta ? (
+            <div className="mt-8 flex w-full max-w-md justify-center lg:justify-start">
+              <Button asChild size="lg" className="hero-btn-primary w-full sm:w-auto">
+                <Link href={routes.login}>{primaryCta}</Link>
+              </Button>
+            </div>
+          ) : null}
 
           {trustItems.length > 0 ? (
             <ul className="mt-8 flex w-full flex-col items-center gap-3 sm:flex-row sm:flex-wrap sm:justify-center lg:justify-start">

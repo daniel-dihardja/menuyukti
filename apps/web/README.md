@@ -64,13 +64,20 @@ Any value other than `false` shows it (default for local/dev when unset). Produc
 
 `/explore` is **auth-only** (Clerk). Guests are redirected to `/login` with `next=/explore`; signed-in users can open the page. Nav/footer Explore links appear only when authenticated. The page stays `noindex` until a public launch.
 
-## Email sign-in (OTP)
+## Username + password sign-in
 
-Email OTP on `/login` and in the guest Sign in menu is off by default (Clerk email delivery). Re-enable with:
+`/login` offers **Google OAuth** and **username + password** (sign-in only — no self-serve registration). Provision accounts in the Clerk Dashboard with a username and password.
 
-```env
-NEXT_PUBLIC_SHOW_EMAIL_SIGN_IN=true
-```
+### Clerk Dashboard checklist
+
+In **User & authentication** for the instance this app uses:
+
+- Enable **Username** and **Password** for sign-in.
+- Keep **Google** OAuth enabled.
+- Do not use email verification codes/links as the primary sign-in method.
+- Prefer turning **Device Trust** email challenges **off** so username-only users are not blocked by a missing email. Optional TOTP MFA can stay.
+
+Password reset for username-only accounts is admin-side in Clerk (no forgot-password email flow in the app).
 
 ## Google Analytics
 
