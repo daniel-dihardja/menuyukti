@@ -16,6 +16,7 @@ export const RESERVED_PUBLIC_SLUGS = new Set([
   'explore',
   'home',
   'ig-studio',
+  'impressum',
   'inventar',
   'l',
   'login',

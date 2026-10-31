@@ -1,5 +1,9 @@
 {
   "common": {
-    "close": "Tutup"
+    "close": "Tutup",
+    "beta": {
+      "badge": "Beta",
+      "message": "Menuyukti adalah beta / pratinjau publik. Fitur dapat berubah atau tidak tersedia; ini bukan peluncuran komersial yang selesai."
+    }
   }
 }

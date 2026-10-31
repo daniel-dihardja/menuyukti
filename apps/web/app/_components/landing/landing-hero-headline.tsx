@@ -5,7 +5,8 @@ export type LandingHeroHeadlineVariant = 'default'
 
 export const LANDING_HERO_HEADLINE_VARIANTS: readonly LandingHeroHeadlineVariant[] = ['default']
 
-const baseClass = 'landing-hero-headline w-full min-w-0 text-balance text-foreground'
+const baseClass =
+  'landing-hero-headline font-display w-full min-w-0 text-balance font-extrabold text-foreground'
 
 type LandingHeroHeadlineProps = {
   children: ReactNode

@@ -2,8 +2,17 @@
   "landing": {
     "skipToContent": "Skip to content",
     "hero": {
-      "headline": "We read between the bites.",
-      "subtitle": "Restaurant analytics with practical suggestions from your sales data.",
+      "eyebrow": "Public beta · AI-first restaurant analytics",
+      "headline": "Turn your sales data into actionable insights.",
+      "subtitle": "See what’s selling, ask follow-up questions, and decide with an AI that works beside your charts — not instead of you.",
+      "primaryCta": "Get started",
+      "secondaryCta": "Open sample menu",
+      "productImageAlt": "Placeholder preview of the Menuyukti analytics dashboard and AI Advisor",
+      "trust": {
+        "salesImport": "Sales report analytics",
+        "advisorInsights": "AI assistance on your numbers",
+        "forOperators": "Human judgment stays in control"
+      },
       "mobileCta": "Open a sample menu",
       "qr": {
         "ariaLabel": "QR code that opens a sample Menuyukti digital menu",
@@ -28,6 +37,29 @@
         "dish3Price": "€9",
         "dish3Desc": "Bitter citrus, soda, olive"
       }
+    },
+    "capabilities": {
+      "ariaLabel": "Product capabilities",
+      "reports": {
+        "title": "Restaurant analytics",
+        "description": "Turn sales reports into clear views of what’s selling, when demand peaks, and where opportunity sits."
+      },
+      "advisor": {
+        "title": "AI on your analytics",
+        "description": "Ask Advisor about the same reports and charts you’re looking at — recommendations grounded in your data."
+      },
+      "locations": {
+        "title": "Venue-scoped insight",
+        "description": "Keep analytics and chat tied to the right location so every venue stays in the right context."
+      },
+      "workspace": {
+        "title": "Human + AI workspace",
+        "description": "Charts, reports, and Advisor chat side by side — you steer; AI speeds the analysis."
+      }
+    },
+    "midIntro": {
+      "title": "Analytics you can talk to",
+      "subtitle": "Menuyukti pairs restaurant BI with an Advisor that works next to your numbers — so people and AI decide together."
     },
     "why": {
       "title": "Why Menuyukti exists",

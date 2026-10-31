@@ -2,8 +2,17 @@
   "landing": {
     "skipToContent": "Lewati ke konten",
     "hero": {
-      "headline": "Kami membaca di antara gigitan.",
-      "subtitle": "Analitik restoran dengan saran praktis dari data penjualan Anda.",
+      "eyebrow": "Beta publik · Analitik restoran berbasis AI",
+      "headline": "Ubah data penjualan menjadi wawasan yang bisa ditindaklanjuti.",
+      "subtitle": "Lihat apa yang laris, ajukan pertanyaan lanjutan, dan putuskan bersama AI yang bekerja di samping grafik Anda — bukan menggantikan Anda.",
+      "primaryCta": "Mulai",
+      "secondaryCta": "Buka menu contoh",
+      "productImageAlt": "Pratinjau placeholder dashboard analitik Menuyukti dan AI Advisor",
+      "trust": {
+        "salesImport": "Analitik laporan penjualan",
+        "advisorInsights": "Bantuan AI pada angka Anda",
+        "forOperators": "Keputusan tetap di tangan Anda"
+      },
       "mobileCta": "Buka menu contoh",
       "qr": {
         "ariaLabel": "Kode QR yang membuka menu digital contoh Menuyukti",
@@ -28,6 +37,29 @@
         "dish3Price": "€9",
         "dish3Desc": "Sitrus pahit, soda, zaitun"
       }
+    },
+    "capabilities": {
+      "ariaLabel": "Kemampuan produk",
+      "reports": {
+        "title": "Analitik restoran",
+        "description": "Ubah laporan penjualan menjadi gambaran jelas tentang apa yang laris, kapan permintaan memuncak, dan di mana peluang berada."
+      },
+      "advisor": {
+        "title": "AI pada analitik Anda",
+        "description": "Tanyakan Advisor tentang laporan dan grafik yang sama yang Anda lihat — rekomendasi berpijak pada data Anda."
+      },
+      "locations": {
+        "title": "Wawasan per venue",
+        "description": "Jaga analitik dan chat terikat ke lokasi yang tepat agar setiap venue tetap dalam konteks yang benar."
+      },
+      "workspace": {
+        "title": "Workspace manusia + AI",
+        "description": "Grafik, laporan, dan chat Advisor berdampingan — Anda mengarahkan; AI mempercepat analisis."
+      }
+    },
+    "midIntro": {
+      "title": "Analitik yang bisa diajak bicara",
+      "subtitle": "Menuyukti menggabungkan BI restoran dengan Advisor yang bekerja di samping angka Anda — agar manusia dan AI memutuskan bersama."
     },
     "why": {
       "title": "Mengapa Menuyukti ada",

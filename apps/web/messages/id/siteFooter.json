@@ -2,6 +2,10 @@
   "siteFooter": {
     "copyright": "© {year} Menuyukti",
     "navAria": "Situs",
-    "explore": "Jelajahi"
+    "legalNavAria": "Hukum",
+    "explore": "Jelajahi",
+    "privacy": "Kebijakan Privasi",
+    "terms": "Ketentuan Layanan",
+    "impressum": "Impressum"
   }
 }

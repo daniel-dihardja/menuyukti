@@ -27,7 +27,7 @@ describe('feature-flags', () => {
     expect(isNavKeyEnabled('crm')).toBe(true)
     expect(isNavKeyEnabled('usage')).toBe(true)
     expect(isNavKeyEnabled('inventar')).toBe(false)
-    expect(isNavKeyEnabled('team')).toBe(true)
+    expect(isNavKeyEnabled('team')).toBe(false)
   })
 
   it('fails open for unknown nav keys', () => {
@@ -53,14 +53,12 @@ describe('feature-flags', () => {
     expect(isPathnameFeatureEnabled('/usage')).toBe(true)
   })
 
-  it('enables team management routes', () => {
-    expect(isPathnameFeatureEnabled('/team')).toBe(true)
-    expect(isFeatureEnabled('team')).toBe(true)
-  })
-
-  it('disables MVP-off inventar, guests, customer home, pos, explore, and image assistant', () => {
+  it('disables MVP-off inventar, team, guests, customer home, pos, explore, and image assistant', () => {
     expect(isPathnameFeatureEnabled('/inventar')).toBe(false)
     expect(isPathnameFeatureEnabled('/inventar/catalog')).toBe(false)
+    expect(isFeatureEnabled('team')).toBe(false)
+    expect(isPathnameFeatureEnabled('/team')).toBe(false)
+    expect(isNavKeyEnabled('team')).toBe(false)
     expect(isFeatureEnabled('services')).toBe(false)
     expect(isPathnameFeatureEnabled('/services')).toBe(false)
     expect(isFeatureEnabled('home')).toBe(false)
@@ -109,6 +107,7 @@ describe('feature-flags', () => {
 
   it('leaves unlisted paths enabled', () => {
     expect(isPathnameFeatureEnabled('/privacy')).toBe(true)
+    expect(isPathnameFeatureEnabled('/impressum')).toBe(true)
     expect(isPathnameFeatureEnabled('/login')).toBe(true)
   })
 

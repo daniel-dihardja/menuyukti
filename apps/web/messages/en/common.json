@@ -1,5 +1,9 @@
 {
   "common": {
-    "close": "Close"
+    "close": "Close",
+    "beta": {
+      "badge": "Beta",
+      "message": "Menuyukti is a public beta / preview. Features may change or be unavailable; this is not a finished commercial launch."
+    }
   }
 }

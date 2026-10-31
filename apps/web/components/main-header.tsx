@@ -16,6 +16,7 @@ import { SERVICE_KEY_POINT_SYSTEM } from '@/lib/graphql/queries/service-subscrip
 import { isMarketingSignInEnabled } from '@/lib/marketing-sign-in'
 import { isPublicLocationSurfacePath, routes } from '@/lib/routes'
 import { getDefaultPathForPlan } from '@/lib/workspace-plan'
+import { Button } from '@workspace/ui/components/button'
 import { cn } from '@workspace/ui/lib/utils'
 
 export function MainHeader() {
@@ -29,6 +30,7 @@ export function MainHeader() {
     pathname === routes.signUp || (pathname?.startsWith(`${routes.signUp}/`) ?? false)
   const isExplore =
     pathname === routes.explore || (pathname?.startsWith(`${routes.explore}/`) ?? false)
+  const isLanding = pathname === routes.root
   const isGuestLocation = isPublicLocationSurfacePath(pathname)
   const pointSystemFeatureEnabled = isServiceKeyFeatureEnabled(SERVICE_KEY_POINT_SYSTEM)
   const guestPointsToShow =
@@ -41,6 +43,7 @@ export function MainHeader() {
       : null
   /** Hide sign-in chrome on auth pages (user is already signing in / up). */
   const showSignIn = !isLogin && !isSignUp && isMarketingSignInEnabled()
+  const showLandingGetStarted = isLanding && showSignIn
   /** Explore is Clerk-protected and feature-flagged — only tease when enabled. */
   const showExplore = Boolean(isSignedIn) && isFeatureEnabled('explore')
   const [isScrolled, setIsScrolled] = React.useState(false)
@@ -108,7 +111,18 @@ export function MainHeader() {
             <div className="size-8 shrink-0 animate-pulse rounded-full bg-muted" aria-hidden />
           ) : (
             <>
-              <Show when="signed-out">{showSignIn ? <GuestSignInMenu /> : null}</Show>
+              <Show when="signed-out">
+                {showSignIn ? (
+                  <div className="flex items-center gap-2">
+                    <GuestSignInMenu />
+                    {showLandingGetStarted ? (
+                      <Button asChild size="sm" className="hero-btn-primary hidden sm:inline-flex">
+                        <Link href={routes.login}>{t('getStarted')}</Link>
+                      </Button>
+                    ) : null}
+                  </div>
+                ) : null}
+              </Show>
               <Show when="signed-in">
                 <AccountMenu />
               </Show>

@@ -130,11 +130,25 @@ async function loadIndonesianOverlays(): Promise<AbstractIntlMessages[]> {
 export async function loadMessages(locale: string): Promise<AbstractIntlMessages> {
   const base = await loadEnglishMessages()
   if (locale === 'de') {
-    const [dePublic, deExplore] = await Promise.all([
-      import('../messages/de/public.json'),
-      import('../messages/de/explore.json'),
-    ])
-    return deepMergeMessages(deepMergeMessages(base, dePublic.default), deExplore.default)
+    const [dePublic, deExplore, deLegal, deSiteFooter, deLogin, deCommon, deLanding] =
+      await Promise.all([
+        import('../messages/de/public.json'),
+        import('../messages/de/explore.json'),
+        import('../messages/de/legal.json'),
+        import('../messages/de/siteFooter.json'),
+        import('../messages/de/login.json'),
+        import('../messages/de/common.json'),
+        import('../messages/de/landing.json'),
+      ])
+    return [
+      dePublic.default,
+      deExplore.default,
+      deLegal.default,
+      deSiteFooter.default,
+      deLogin.default,
+      deCommon.default,
+      deLanding.default,
+    ].reduce((acc, overlay) => deepMergeMessages(acc, overlay), base)
   }
   if (locale === 'id') {
     const overlays = await loadIndonesianOverlays()

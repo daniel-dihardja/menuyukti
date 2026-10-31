@@ -1,15 +1,14 @@
-import { cookies, headers } from 'next/headers'
 import { getRequestConfig } from 'next-intl/server'
 
-import { LOCALE_COOKIE_NAME } from './locale-cookie'
-import { loadMessages, resolveAppLocale } from './load-messages'
+import { DEFAULT_LOCALE, loadMessages } from './load-messages'
 
+/**
+ * Language selector is hidden for now — always serve English.
+ * Cookie / Accept-Language resolution remains in load-messages for when the
+ * account-menu locale switcher is re-enabled.
+ */
 export default getRequestConfig(async () => {
-  const [headerStore, cookieStore] = await Promise.all([headers(), cookies()])
-  const locale = resolveAppLocale({
-    cookieLocale: cookieStore.get(LOCALE_COOKIE_NAME)?.value,
-    acceptLanguage: headerStore.get('accept-language'),
-  })
+  const locale = DEFAULT_LOCALE
 
   return {
     locale,

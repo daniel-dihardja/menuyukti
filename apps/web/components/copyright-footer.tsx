@@ -20,6 +20,12 @@ export async function CopyrightFooter() {
         <Link href={routes.privacy} className={linkClassName}>
           {t('privacy')}
         </Link>
+        <Link href={routes.terms} className={linkClassName}>
+          {t('terms')}
+        </Link>
+        <Link href={routes.impressum} className={linkClassName}>
+          {t('impressum')}
+        </Link>
         <CookiePreferencesButton className={linkClassName} />
       </div>
     </footer>

@@ -4,7 +4,7 @@
       "metaTitle": "Privacy Policy | Menuyukti",
       "metaDescription": "How Menuyukti collects, uses, and protects data in your workspace.",
       "title": "Privacy Policy",
-      "lastUpdated": "Last updated: April 12, 2026.",
+      "lastUpdated": "Last updated: October 31, 2026.",
       "sections": {
         "data": {
           "title": "Data we process",
@@ -28,7 +28,7 @@
         },
         "contact": {
           "title": "Contact",
-          "body": "For privacy-related questions or requests, contact us through the same channel you use for Menuyukti product support."
+          "body": "The data controller is Daniel Dihardja, identified in the Impressum. For privacy-related questions or requests, use the contact details on the Impressum page."
         }
       }
     },
@@ -36,11 +36,15 @@
       "metaTitle": "Terms of Service | Menuyukti",
       "metaDescription": "Terms governing use of the Menuyukti platform.",
       "title": "Terms of Service",
-      "lastUpdated": "Last updated: April 12, 2026.",
+      "lastUpdated": "Last updated: October 31, 2026.",
       "sections": {
         "service": {
           "title": "The service",
           "body": "Menuyukti provides software for restaurant marketing and operations—including analytics, AI-assisted features, POS, inventory, and guest digital experiences. Features may change as the product evolves."
+        },
+        "beta": {
+          "title": "Beta / public preview",
+          "body": "Menuyukti is currently offered as a public beta / preview. Features may change, break, or be withdrawn without notice. There is no uptime or feature warranty. Test data may be reset. Feedback you share may be used to improve the product. AI and analytics outputs are informational only; you remain responsible for business and compliance decisions."
         },
         "account": {
           "title": "Your account",
@@ -57,6 +61,38 @@
         "changes": {
           "title": "Changes",
           "body": "We may update these terms or the service. Continued use after changes constitutes acceptance of the updated terms where permitted by law."
+        }
+      }
+    },
+    "impressum": {
+      "metaTitle": "Impressum | Menuyukti",
+      "metaDescription": "Legal notice and provider identification for Menuyukti.",
+      "title": "Impressum",
+      "lastUpdated": "Last updated: October 31, 2026.",
+      "sections": {
+        "provider": {
+          "title": "Provider",
+          "body": "Daniel Dihardja (sole trader)"
+        },
+        "representedBy": {
+          "title": "Represented by",
+          "body": "Daniel Dihardja"
+        },
+        "address": {
+          "title": "Address",
+          "body": "Kurt-Eisner-Straße 68\n04275 Leipzig\nGermany"
+        },
+        "contact": {
+          "title": "Contact",
+          "body": "Email: daniel@dihardja.de"
+        },
+        "registry": {
+          "title": "Register and tax identifiers",
+          "body": "Commercial register: not entered in the commercial register\nVAT ID (USt-IdNr.): DE297803875"
+        },
+        "beta": {
+          "title": "Public beta",
+          "body": "Menuyukti is publicly reachable as a beta / preview product. It is not presented as a finished commercial launch. Features and availability may change."
         }
       }
     }

@@ -134,6 +134,7 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --font-sans: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-display), var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-mono), ui-monospace, monospace;
   --shadow-warm-sm: var(--shadow-warm-sm);
   --shadow-warm-md: var(--shadow-warm-md);
@@ -277,11 +278,17 @@
   }
 
   .landing-hero-headline {
-    font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+    font-family: var(--font-display), var(--font-sans), ui-sans-serif, system-ui, sans-serif;
     font-size: clamp(2.25rem, 6.5vw, 4.75rem);
     font-weight: 800;
     line-height: 0.98;
-    letter-spacing: -0.03em;
+    letter-spacing: -0.04em;
+    /* Body uses antialiased smoothing, which thins display type — keep strokes full. */
+    -webkit-font-smoothing: auto;
+    -moz-osx-font-smoothing: auto;
+    /* ExtraBold still reads soft at display size; slight stroke pushes a marketing/BI weight. */
+    -webkit-text-stroke: 0.35px currentColor;
+    paint-order: stroke fill;
   }
 
   .landing-hero-subtitle {

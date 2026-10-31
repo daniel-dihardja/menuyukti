@@ -2,6 +2,10 @@
   "siteFooter": {
     "copyright": "© {year} Menuyukti",
     "navAria": "Site",
-    "explore": "Explore"
+    "legalNavAria": "Legal",
+    "explore": "Explore",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "impressum": "Impressum"
   }
 }
