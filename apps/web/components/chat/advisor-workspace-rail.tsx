@@ -104,54 +104,53 @@ export function AdvisorWorkspaceRail() {
 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
-      <div className="flex shrink-0 flex-col gap-3 border-b border-border p-3">
-        <Field className="flex w-full max-w-none flex-col gap-1.5">
-          <FieldLabel htmlFor="advisor-workspace-venue">{t('venueLabel')}</FieldLabel>
-          <LocationSelect
-            branches={branches}
-            className="w-full max-w-none"
-            id="advisor-workspace-venue"
-            placeholder={t('venuePlaceholder')}
-            value={locationId}
-            onValueChange={handleVenueChange}
-          />
-        </Field>
-        <Field className="flex w-full max-w-none flex-col gap-1.5">
-          <FieldLabel>{t('salesReportLabel')}</FieldLabel>
-          <div className="flex w-full min-w-0 flex-col gap-2">
-            <div className="flex w-full min-w-0 items-start gap-2">
-              <div className="min-w-0 flex-1">
-                <ChatSalesReportSelect
-                  className="w-full max-w-none"
-                  locationId={locationId}
-                  value={analyticsRunId}
-                  onValueChange={setAnalyticsRunId}
-                />
-              </div>
-              {salesReportsEnabled ? (
-                <UploadExcelClient
-                  variant="compact"
-                  disabled={!locationId}
-                  uploading={uploading}
-                  status={status}
-                  message={null}
-                  pos={null}
-                  onFileSelected={uploadFile}
-                />
-              ) : null}
-            </div>
-            {salesReportsEnabled && message ? (
-              <p
-                role="status"
-                aria-live={status === 'error' ? 'assertive' : 'polite'}
-                className={`text-xs ${status === 'success' ? 'text-green-600' : 'text-red-600'}`}
-              >
-                {message}
-                {status === 'success' && pos ? ` · ${pos.toUpperCase()}` : null}
-              </p>
-            ) : null}
-          </div>
-        </Field>
+      <div className="flex shrink-0 flex-col gap-2 border-b border-border p-3">
+        <div className="flex w-full min-w-0 flex-col gap-3 sm:flex-row sm:items-end sm:gap-2">
+          <Field className="flex min-w-0 w-full max-w-none flex-1 basis-0 flex-col gap-1.5">
+            <FieldLabel htmlFor="advisor-workspace-venue">{t('venueLabel')}</FieldLabel>
+            <LocationSelect
+              branches={branches}
+              className="w-full max-w-none"
+              id="advisor-workspace-venue"
+              placeholder={t('venuePlaceholder')}
+              triggerClassName="w-full max-w-none"
+              value={locationId}
+              variant="borderless"
+              onValueChange={handleVenueChange}
+            />
+          </Field>
+          <Field className="flex min-w-0 w-full max-w-none flex-1 basis-0 flex-col gap-1.5">
+            <FieldLabel>{t('salesReportLabel')}</FieldLabel>
+            <ChatSalesReportSelect
+              className="w-full max-w-none"
+              locationId={locationId}
+              value={analyticsRunId}
+              onValueChange={setAnalyticsRunId}
+            />
+          </Field>
+          {salesReportsEnabled ? (
+            <UploadExcelClient
+              variant="compact"
+              className="shrink-0"
+              disabled={!locationId}
+              uploading={uploading}
+              status={status}
+              message={null}
+              pos={null}
+              onFileSelected={uploadFile}
+            />
+          ) : null}
+        </div>
+        {salesReportsEnabled && message ? (
+          <p
+            role="status"
+            aria-live={status === 'error' ? 'assertive' : 'polite'}
+            className={`text-xs ${status === 'success' ? 'text-green-600' : 'text-red-600'}`}
+          >
+            {message}
+            {status === 'success' && pos ? ` · ${pos.toUpperCase()}` : null}
+          </p>
+        ) : null}
       </div>
 
       <Tabs
