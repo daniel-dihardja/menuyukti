@@ -205,6 +205,7 @@
       "uploadInfo": {
         "title": "Supported POS Excel uploads",
         "description": "These POS systems are supported today. Upload the matching report type so we can detect and parse your file.",
+        "dataHandling": "After you upload a sales Excel file, we extract the transaction data and store it in our database in Frankfurt (EU). We do not keep the original spreadsheet file.",
         "supportedLabel": "Supported now",
         "reportLabel": "Required report",
         "reports": {

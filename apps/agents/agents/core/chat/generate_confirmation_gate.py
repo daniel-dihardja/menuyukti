@@ -45,17 +45,33 @@ def _tool_name(message: ToolMessage) -> str:
     return ""
 
 
+def _confirmation_payload(message: ToolMessage) -> dict[str, Any] | None:
+    text = _message_text(message.content)
+    try:
+        payload = json.loads(text)
+    except (json.JSONDecodeError, TypeError):
+        return None
+    return payload if isinstance(payload, dict) else None
+
+
 def _is_confirmation_tool_message(message: ToolMessage) -> bool:
     if _tool_name(message) == REQUEST_STORY_GENERATE_CONFIRMATION:
         return True
     text = _message_text(message.content)
     if "request_confirmation" not in text:
         return False
-    try:
-        payload = json.loads(text)
-    except (json.JSONDecodeError, TypeError):
-        return '"action": "request_confirmation"' in text or '"action":"request_confirmation"' in text
-    return isinstance(payload, dict) and payload.get("action") == "request_confirmation"
+    payload = _confirmation_payload(message)
+    if payload is not None:
+        return payload.get("action") == "request_confirmation"
+    return '"action": "request_confirmation"' in text or '"action":"request_confirmation"' in text
+
+
+def _confirmation_tool_already_confirmed(message: ToolMessage) -> bool:
+    """True when AG-UI interrupt resume stamped ``confirmed: true`` on the tool result."""
+    if not _is_confirmation_tool_message(message):
+        return False
+    payload = _confirmation_payload(message)
+    return bool(payload and payload.get("confirmed") is True)
 
 
 def _is_successful_generate_tool_message(message: ToolMessage) -> bool:
@@ -116,9 +132,11 @@ def image_assistant_generate_block_reason(
             return None
 
     last_confirm_idx = -1
+    last_confirm_message: ToolMessage | None = None
     for idx, message in enumerate(msgs):
         if isinstance(message, ToolMessage) and _is_confirmation_tool_message(message):
             last_confirm_idx = idx
+            last_confirm_message = message
         if isinstance(message, AIMessage):
             for call in message.tool_calls or []:
                 if (
@@ -133,6 +151,12 @@ def image_assistant_generate_block_reason(
             "Error: call request_story_generate_confirmation and wait for the user to "
             f"confirm (e.g. {STORY_GENERATE_CONFIRM_REPLY!r}) before generating."
         )
+
+    # CopilotKit/AG-UI interrupt resume embeds confirmation on the tool result.
+    if last_confirm_message is not None and _confirmation_tool_already_confirmed(
+        last_confirm_message
+    ):
+        return None
 
     for message in msgs[last_confirm_idx + 1 :]:
         if isinstance(message, HumanMessage) and _is_confirm_human_message(message):

@@ -13,7 +13,8 @@ import {
 } from '@workspace/ui/components/drawer'
 import { cn } from '@workspace/ui/lib/utils'
 
-import { InventarAssistantPanel, INVENTAR_ASSISTANT_OPEN_ID } from './inventar-assistant-panel'
+import { InventarAssistantActivePanel } from './inventar-assistant-active-panel'
+import { INVENTAR_ASSISTANT_OPEN_ID } from './inventar-assistant-panel'
 
 type Props = {
   open: boolean
@@ -66,7 +67,7 @@ export function InventarAssistantShell({ open, onOpenChange, locationId, childre
             )}
             aria-label={t('assistantTitle')}
           >
-            <InventarAssistantPanel
+            <InventarAssistantActivePanel
               active={open}
               onClose={closeAssistant}
               locationId={locationId}
@@ -101,7 +102,7 @@ export function InventarAssistantShell({ open, onOpenChange, locationId, childre
           </DrawerHeader>
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             {open ? (
-              <InventarAssistantPanel
+              <InventarAssistantActivePanel
                 active={open}
                 onClose={closeAssistant}
                 locationId={locationId}

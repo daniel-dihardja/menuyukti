@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from 'next'
 import { ClerkProvider } from '@clerk/nextjs'
-import Script from 'next/script'
 import { Suspense } from 'react'
 
 import '@workspace/ui/globals.css'
@@ -73,12 +72,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <Script
-          src="https://cdn.platform.openai.com/deployments/chatkit/chatkit.js"
-          strategy="beforeInteractive"
-        />
-      </head>
       <body
         className={`${fontSans.variable} ${fontDisplay.variable} ${fontMono.variable} font-sans antialiased `}
       >

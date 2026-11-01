@@ -4,7 +4,7 @@ title: 'Deferred: real HITL for advisor Leonardo / Image Assistant generate'
 status: To Do
 assignee: []
 created_date: '2026-10-28T08:55:00Z'
-updated_date: '2026-10-28T09:03:00Z'
+updated_date: '2026-11-01T09:11:00Z'
 labels:
   - security
   - chat
@@ -13,6 +13,9 @@ dependencies: []
 references:
   - apps/agents/agents/core/chat/generate_confirmation_gate.py
   - apps/agents/agents/core/chat/generate_instagram_post_image.py
+  - >-
+    backlog/tasks/task-14.7 -
+    Implement-CopilotKit-human-in-the-loop-for-advisor-confirmations.md
 documentation:
   - backlog/docs/security/doc-1 - Chat-advisor-security-overview.md
 parent_task_id: TASK-8
@@ -54,6 +57,14 @@ created: 2026-10-28T09:03:00Z
 ---
 
 Deferred: no Leonardo support required in advisor while chatImageAssistant is off.
+
+---
+
+created: 2026-11-01T09:11:00Z
+
+---
+
+Depends productively on CopilotKit HITL primitives from TASK-14.7 (epic TASK-14: replace ChatKit with CopilotKit). Prefer implementing image-generate approval on that path once Image Assistant is re-enabled.
 
 ---
 

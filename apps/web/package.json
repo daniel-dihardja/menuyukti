@@ -21,6 +21,7 @@
     "graphql:check": "node scripts/check-graphql-operations.mjs"
   },
   "dependencies": {
+    "@ag-ui/client": "^1.0.2",
     "@ai-sdk/react": "^3.0.99",
     "@aws-sdk/client-s3": "^3.1023.0",
     "@aws-sdk/s3-request-presigner": "^3.1023.0",
@@ -29,8 +30,10 @@
     "@codemirror/lang-json": "^6.0.2",
     "@codemirror/state": "^6.7.1",
     "@codemirror/view": "^6.43.6",
+    "@copilotkit/react-core": "^1.83.0",
+    "@copilotkit/react-ui": "^1.83.0",
+    "@copilotkit/runtime": "^1.83.0",
     "@next/third-parties": "^16.3.8",
-    "@openai/chatkit-react": "^1.6.1",
     "@serwist/next": "^9.5.10",
     "@types/d3-format": "^3.0.4",
     "@types/d3-hierarchy": "^3.1.7",

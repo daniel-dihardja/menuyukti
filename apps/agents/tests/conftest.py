@@ -4,7 +4,7 @@ import os
 import sys
 from pathlib import Path
 
-# Keep openai-agents importable when cwd is apps/agents (ChatKit dependency).
+# Keep local package import paths predictable when cwd is apps/agents.
 _app_root = Path(__file__).resolve().parents[1]
 sys.path[:] = [
     p
@@ -12,7 +12,7 @@ sys.path[:] = [
     if Path(p or ".").resolve() != _app_root
 ]
 
-import pytest  # noqa: E402  # after sys.path fix for openai-agents vs local agents/
+import pytest  # noqa: E402
 
 # Chat graph compiles at app lifespan and instantiates ChatOpenAI; avoid requiring a real key in CI.
 os.environ.setdefault("AI_GATEWAY_API_KEY", "test-key-agents-ci-not-for-production")

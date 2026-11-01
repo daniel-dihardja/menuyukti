@@ -6,7 +6,8 @@ import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useState } from 'react'
 
 import { AdvisorWorkspaceRail } from '@/components/chat/advisor-workspace-rail'
-import { AdvisorChatKit } from '@/components/chat/chatkit/advisor-chatkit'
+import { AdvisorChatPane } from '@/components/chat/advisor-chat-pane'
+import { AdvisorCopilotKitShellBridge } from '@/components/chat/copilotkit/advisor-copilotkit-shell-bridge'
 import {
   AdvisorChatKitShellProvider,
   type AdvisorBranchOption,
@@ -66,14 +67,16 @@ export function AgentChatPanel({
         locationId={locationId}
         storageKeyId={agentThreadId}
       >
-        <AgentChatPanelLayout
-          mobileArtifactDescription={t('mobileSheetDescription')}
-          mobileArtifactHint={t('mobileSheetHint')}
-          mobileArtifactOpen={mobileArtifactOpen}
-          mobileArtifactTitle={t('mobileSheetTitle')}
-          onMobileArtifactOpenChange={setMobileArtifactOpen}
-          previewPanelRef={previewPanelRef}
-        />
+        <AdvisorCopilotKitShellBridge>
+          <AgentChatPanelLayout
+            mobileArtifactDescription={t('mobileSheetDescription')}
+            mobileArtifactHint={t('mobileSheetHint')}
+            mobileArtifactOpen={mobileArtifactOpen}
+            mobileArtifactTitle={t('mobileSheetTitle')}
+            onMobileArtifactOpenChange={setMobileArtifactOpen}
+            previewPanelRef={previewPanelRef}
+          />
+        </AdvisorCopilotKitShellBridge>
       </ChatVisualizationsProvider>
     </AdvisorChatKitShellProvider>
   )
@@ -108,7 +111,7 @@ function AgentChatPanelLayout({
   if (!isDesktop) {
     return (
       <ChatWithMobileArtifactLayout
-        chatPane={<AdvisorChatKit />}
+        chatPane={<AdvisorChatPane />}
         mobileArtifactDescription={mobileArtifactDescription}
         mobileArtifactHint={mobileArtifactHint}
         mobileArtifactOpen={mobileArtifactOpen}
@@ -121,7 +124,7 @@ function AgentChatPanelLayout({
 
   return (
     <ChatWithPreviewLayout
-      chatPane={<AdvisorChatKit />}
+      chatPane={<AdvisorChatPane />}
       previewPane={previewPane}
       previewPanelRef={previewPanelRef}
     />

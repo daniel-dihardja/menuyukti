@@ -1,4 +1,4 @@
-"""Show ChatKit COGS edit form inputs (no persist yet)."""
+"""Request COGS edit UI in the advisor workspace rail (no persist yet)."""
 
 from __future__ import annotations
 

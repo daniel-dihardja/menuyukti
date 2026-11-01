@@ -3,7 +3,7 @@ id: doc-1
 title: Chat advisor security overview
 type: guide
 created_date: '2026-10-28T08:49:00Z'
-updated_date: '2026-10-29T16:43:00Z'
+updated_date: '2026-11-01T09:32:00Z'
 tags:
   - security
   - chat
@@ -14,7 +14,7 @@ tags:
 # Chat advisor security overview
 
 **Audience:** engineering  
-**Scope:** `/advisor` chat (and related BFF → agents → GraphQL path), including ChatKit, inventar, and IG Studio chat modes that share `POST /api/chat` / agents `/chat`.  
+**Scope:** `/advisor` chat (and related BFF → agents → GraphQL path), including CopilotKit/AG-UI, inventar, and IG Studio chat modes that share `POST /api/chat` / agents `/chat`.  
 **Kind:** engineering security assessment vs industry LLM-agent practice — not a penetration test or legal opinion.  
 **Date:** 2026-10-28 (guardrails inventory added same day)  
 **Related:** GraphQL trust boundary (`X-User-Id` + `X-Internal-Api-Key`); skill `menuyukti-graphql-security-audit` for a full API authz audit; [doc-5 Chat advisor knowledge RAG](../agents/doc-5%20-%20Chat-advisor-knowledge-RAG.md).
@@ -48,8 +48,8 @@ Several **concrete guardrails are already implemented in code** (auth middleware
 
 ```text
 Browser (Clerk session)
-  → Next.js BFF  /api/chat | /api/chatkit | /api/chat/history
-  → apps/agents  /chat | /chatkit   (X-Menuyukti-User-Id + X-Internal-Api-Key)
+  → Next.js BFF  /api/chat | /api/copilotkit | /api/chat/history
+  → apps/agents  /chat | /copilotkit/advisor   (X-Menuyukti-User-Id + X-Internal-Api-Key)
   → tools (location, charts, media, knowledge, Tavily, image generate, …)
   → GraphQL (X-User-Id + same internal key)
 ```
@@ -77,7 +77,7 @@ Inventory of **code-level** controls that already constrain the advisor. These a
 | Shared secret to agents          | `apps/web/lib/agents/headers.ts`                                | Sends `X-Internal-Api-Key` from `GRAPHQL_INTERNAL_API_KEY`; required in production.                    |
 | Agents inbound key middleware    | `apps/agents/server.py` → `InternalApiKeyMiddleware`            | When a key is set, all routes except `GET /health` need matching `X-Internal-Api-Key` (403 otherwise). |
 | Production startup fail-fast     | `apps/agents/server.py` → `validate_startup_security()`         | Requires internal API key (+ checkpoint DB) in production / when `AGENTS_REQUIRE_*` flags are set.     |
-| Agents require user header       | `chat_run_config.resolve_thread_id`, chatkit router             | Missing `X-Menuyukti-User-Id` → 401.                                                                   |
+| Agents require user header       | `chat_run_config.resolve_thread_id`, copilotkit router          | Missing `X-Menuyukti-User-Id` → 401.                                                                   |
 | Outbound GraphQL / generate auth | `graphql_base.graphql_headers`, `generate_instagram_post_image` | Forwards `X-User-Id` + internal key to GraphQL and web `/api/posts/generate`.                          |
 
 ### B. Tenant / thread isolation

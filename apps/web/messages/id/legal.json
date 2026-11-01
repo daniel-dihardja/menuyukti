@@ -10,6 +10,10 @@
           "title": "Data yang kami proses",
           "body": "Menuyukti memproses informasi yang Anda berikan saat menggunakan produk—termasuk detail akun, data lokasi dan penjualan yang Anda unggah, konten alur kerja, serta penggunaan yang diperlukan untuk menjalankan layanan. Kami memproses data ini untuk menyediakan analitik, alur kerja, dan fitur berbantuan AI yang Anda minta."
         },
+        "salesUploads": {
+          "title": "Unggahan laporan penjualan",
+          "body": "Saat Anda mengunggah file Excel penjualan, kami mengekstrak data transaksi dan menyimpannya di database kami di Frankfurt (UE). Kami tidak menyimpan file spreadsheet aslinya."
+        },
         "use": {
           "title": "Bagaimana kami menggunakan data Anda",
           "body": "Kami menggunakan data Anda untuk mengoperasikan dan meningkatkan platform, memberikan dukungan, mengamankan akun, dan mematuhi hukum. Kami tidak menjual informasi pribadi Anda atau data penjualan restoran Anda kepada pihak ketiga untuk pemasaran mereka."

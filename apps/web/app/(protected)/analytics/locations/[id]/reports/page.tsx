@@ -90,6 +90,7 @@ function PosUploadInfoSection({ t }: { t: Awaited<ReturnType<typeof getTranslati
           ))}
         </ul>
       </div>
+      <p className="text-sm text-muted-foreground">{t('uploadInfo.dataHandling')}</p>
     </section>
   )
 }
