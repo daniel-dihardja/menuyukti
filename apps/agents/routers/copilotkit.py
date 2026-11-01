@@ -133,7 +133,7 @@ async def advisor_agui_run(
         },
     )
 
-    encoder = EventEncoder(accept=request.headers.get("accept"))
+    encoder = EventEncoder(accept=request.headers.get("accept") or "")
 
     async def event_generator():
         # Bind HTTP client inside the stream task (StreamingResponse may run in
