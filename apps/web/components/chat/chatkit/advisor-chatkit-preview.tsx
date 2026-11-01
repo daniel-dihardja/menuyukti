@@ -5,7 +5,7 @@ import { Card, CardContent } from '@workspace/ui/components/card'
 import { useAdvisorChatKitShell } from '@/components/chat/chatkit/advisor-chatkit-shell-context'
 import { StoryImageArtifact } from '@/components/chat/story-image-artifact-placeholder'
 
-/** Image-assistant side preview for ChatKit advisor (URL set via client effect). */
+/** Image-assistant side preview for advisor (URL set from generative UI / tools). */
 export function AdvisorChatKitPreview() {
   const { latestStoryImageUrl, selectedImageFormat, setSelectedImageFormat } =
     useAdvisorChatKitShell()

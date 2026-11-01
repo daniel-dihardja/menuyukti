@@ -1,9 +1,11 @@
 ---
 id: TASK-14.7
 title: Implement CopilotKit human-in-the-loop for advisor confirmations
-status: To Do
-assignee: []
+status: Done
+assignee:
+  - '@agent'
 created_date: '2026-11-01T09:11:00Z'
+updated_date: '2026-11-01T09:33:00Z'
 labels:
   - frontend
   - agents
@@ -35,8 +37,31 @@ Story generate confirmation and similar approvals are custom request_confirmatio
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 At least one production advisor confirmation flow (story generate or equivalent) pauses the agent until the user responds in UI
-- [ ] #2 Cancel/reject path leaves agent/thread in a safe, resumable state
-- [ ] #3 No ChatKit client-effect protocol is required for the CopilotKit confirmation path
-- [ ] #4 Notes link how TASK-8.4 can reuse the same HITL primitive when chatImageAssistant returns
+- [x] #1 At least one production advisor confirmation flow (story generate or equivalent) pauses the agent until the user responds in UI
+- [x] #2 Cancel/reject path leaves agent/thread in a safe, resumable state
+- [x] #3 No ChatKit client-effect protocol is required for the CopilotKit confirmation path
+- [x] #4 Notes link how TASK-8.4 can reuse the same HITL primitive when chatImageAssistant returns
 <!-- AC:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+
+1. AG-UI transport flag. 2. interrupt() in request_story_generate_confirmation. 3. useInterrupt + useHumanInTheLoop UI. 4. Gate accepts confirmed tool result. 5. Notes for TASK-8.4.
+<!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+
+AG-UI sets configurable.transport=agui; tool interrupts; AdvisorCopilotHitl uses useInterrupt (Generate/Change/Cancel) and useHumanInTheLoop for frontend-tool reuse (TASK-8.4). generate_confirmation_gate accepts confirmed:true. Agents pytest + web tsc clean.
+
+<!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+
+Story generate confirmation pauses the AG-UI run via LangGraph interrupt until the operator resolves Generate/Change/Cancel in CopilotKit UI. Cancel/change resumes safely with change_requested. No ChatKit client-effect protocol. TASK-8.4 can reuse useHumanInTheLoop/useInterrupt.
+
+<!-- SECTION:FINAL_SUMMARY:END -->

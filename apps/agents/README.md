@@ -23,15 +23,15 @@ make dev
 
 - API: `http://127.0.0.1:8001`
 - Health: `GET /health`
-- Streaming chat: `POST /chat` — `text/event-stream` (SSE). Body: **`messages`** must contain **exactly one** `user` message (the new turn); history is loaded from the LangGraph checkpointer. **`agent_thread_id`** is required and selects the thread (`{user_id}:agent:{agent_thread_id}`); **`location_id`** is optional and passed into tools via run config. Modes: `general` | `image_assistant` (legacy alias `story_image_assistant`). Graph factory: **`compile_chat_graph`**. ReAct uses **`CHAT_RECURSION_LIMIT`** (20). Set **`LANGGRAPH_CHECKPOINT_DATABASE_URL`** for durable Postgres checkpoints via **`AsyncPostgresSaver`** over an **`AsyncConnectionPool`** (see `.env.example`). Optional **`TAVILY_API_KEY`** enables **`search_web`** in chat. Used by Inventar / IG Studio (AI SDK) and as the LangGraph runtime behind ChatKit.
-- Advisor ChatKit: `POST /chatkit` — OpenAI ChatKit protocol (JSON or SSE). Self-hosted **`ChatKitServer`** maps turns onto **`compile_chat_graph`**. Context headers: **`X-Chatkit-Agent-Thread-Id`**, location / analytics / mode / model fields. Durable ChatKit **`Store`** uses the same Postgres URL as checkpoints when set (else in-memory). Proxied from the web BFF at **`/api/chatkit`**.
-- Chat history: `GET /chat/history` — returns checkpoint messages as UIMessage-shaped JSON (`messages`, `story_assets`, `thread_id`). Requires **`agent_thread_id`**. Durable across restarts only when Postgres checkpoints are configured. `DELETE /chat/history` removes that agent thread’s LangGraph checkpoints **and** the matching ChatKit store thread (dual cleanup for advisor clear/rotate).
+- Streaming chat: `POST /chat` — `text/event-stream` (SSE). Body: **`messages`** must contain **exactly one** `user` message (the new turn); history is loaded from the LangGraph checkpointer. **`agent_thread_id`** is required and selects the thread (`{user_id}:agent:{agent_thread_id}`); **`location_id`** is optional and passed into tools via run config. Modes: `general` | `image_assistant` (legacy alias `story_image_assistant`) | `inventar`. Graph factory: **`compile_chat_graph`**. ReAct uses **`CHAT_RECURSION_LIMIT`** (20). Set **`LANGGRAPH_CHECKPOINT_DATABASE_URL`** for durable Postgres checkpoints via **`AsyncPostgresSaver`** over an **`AsyncConnectionPool`** (see `.env.example`). Optional **`TAVILY_API_KEY`** enables **`search_web`** in chat. Used by IG Studio (AI SDK) and as the LangGraph runtime behind CopilotKit AG-UI.
+- Advisor CopilotKit / AG-UI: `POST /copilotkit/advisor` — AG-UI event stream for CopilotKit (`HttpAgent`). Context headers: **`X-Menuyukti-Agent-Thread-Id`**, location / analytics / mode / model fields (identity via **`X-Menuyukti-User-Id`**). Proxied from the web BFF at **`/api/copilotkit`**.
+- Chat history: `GET /chat/history` — returns checkpoint messages as UIMessage-shaped JSON (`messages`, `story_assets`, `thread_id`). Requires **`agent_thread_id`**. Durable across restarts only when Postgres checkpoints are configured. `DELETE /chat/history` removes that agent thread’s LangGraph checkpoints (advisor clear/rotate).
 - **Helper:** `POST /format-markdown` — JSON body `{"content":"...","preset":"notes"}` returns `{"formatted":"..."}`. Legacy preset id `milestone-data` is an alias of `notes` (`agents/core/format_markdown/`); not a campaign pipeline.
 - **Style draft:** `POST /style-specs/draft-from-image` — IG Studio vision helper.
 
 ## Auth and trust boundary (advisor chat)
 
-**Active LLM path:** web advisor BFF (`POST /api/chat`, `POST /api/chatkit`) → this service (`POST /chat`, `POST /chatkit`) → GraphQL with the same user id.
+**Active LLM path:** web advisor BFF (`POST /api/chat`, `POST /api/copilotkit`) → this service (`POST /chat`, `POST /copilotkit/advisor`) → GraphQL with the same user id.
 
 ### Operator checklist
 

@@ -1,9 +1,10 @@
 ---
 id: TASK-14
 title: Replace ChatKit with CopilotKit for advisor agents
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-11-01T09:10:00Z'
+updated_date: '2026-11-01T09:33:00Z'
 labels:
   - chat
   - advisor
@@ -43,9 +44,25 @@ Related: TASK-8.4 (real HITL for image generate) can land more naturally after C
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 Children cover spike/architecture, agents AG-UI endpoint, web CopilotKit runtime+auth, chat UI cutover, shared workspace state, generative UI parity, HITL, mode/feature parity, and ChatKit removal+docs
-- [ ] #2 Existing LangGraph chat graph and agent_thread_id persistence remain the source of truth for conversation state
-- [ ] #3 Clerk-owned user identity and X-Menuyukti-User-Id / internal API key trust boundary are preserved (doc-1 still accurate after cutover)
-- [ ] #4 ChatKit CDN, @openai/chatkit-react, agents chatkit bridge/store/router, and /api/chatkit are removed or fully unused in production paths when the epic is Done
-- [ ] #5 No child expands into unrelated Square/POS or full GraphQL security audit work
+- [x] #1 Children cover spike/architecture, agents AG-UI endpoint, web CopilotKit runtime+auth, chat UI cutover, shared workspace state, generative UI parity, HITL, mode/feature parity, and ChatKit removal+docs
+- [x] #2 Existing LangGraph chat graph and agent_thread_id persistence remain the source of truth for conversation state
+- [x] #3 Clerk-owned user identity and X-Menuyukti-User-Id / internal API key trust boundary are preserved (doc-1 still accurate after cutover)
+- [x] #4 ChatKit CDN, @openai/chatkit-react, agents chatkit bridge/store/router, and /api/chatkit are removed or fully unused in production paths when the epic is Done
+- [x] #5 No child expands into unrelated Square/POS or full GraphQL security audit work
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+
+All subtasks 14.1–14.9 Done. CopilotKit/AG-UI is the sole advisor chat path.
+
+<!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+
+Replaced OpenAI ChatKit with self-hosted CopilotKit/AG-UI on agents FastAPI. Auth stays Clerk→BFF→agents; agentThreadId maps to checkpointer keys; shared CoAgent state, generative UI, and interrupt HITL shipped; inventar/image parity covered; ChatKit stack removed.
+
+<!-- SECTION:FINAL_SUMMARY:END -->

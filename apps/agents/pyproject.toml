@@ -20,7 +20,8 @@ dependencies = [
     # Binary wheels so local/dev hosts without system libpq can still import psycopg.
     "psycopg[binary]>=3.2.13",
     "langchain-tavily>=0.2.18",
-    "openai-chatkit>=1.6.5",
+    "ag-ui-langgraph>=0.0.47",
+    "copilotkit>=0.1.96",
 ]
 
 [dependency-groups]
@@ -42,7 +43,7 @@ packages = [
     "agents_app.agents",
     "agents_app.agents.core",
     "agents_app.agents.core.chat",
-    "agents_app.agents.core.chatkit",
+    "agents_app.agents.core.copilotkit",
     "agents_app.agents.core.format_markdown",
     "agents_app.agents.core.holiday_relevance",
     "agents_app.agents.core.style_spec",
