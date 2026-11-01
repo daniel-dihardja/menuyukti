@@ -6,9 +6,9 @@ from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
+from ag_ui.core.types import RunAgentInput
 from agents_app.agents.core.chat.chat_run_config import resolve_thread_id
 from agents_app.agents.core.copilotkit.agent import MenuyuktiLangGraphAGUIAgent
-from ag_ui.core.types import RunAgentInput
 from copilotkit import LangGraphAGUIAgent
 from fastapi.testclient import TestClient
 from langchain_core.runnables import RunnableConfig

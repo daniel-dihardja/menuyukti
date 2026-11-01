@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from agents_app.agents.core.chat.chat_run_config import resolve_thread_id
 from ag_ui.core.types import RunAgentInput
 from ag_ui_langgraph.agent import PreparedStream
 from ag_ui_langgraph.types import State
+from agents_app.agents.core.chat.chat_run_config import resolve_thread_id
 from copilotkit import LangGraphAGUIAgent
 from langchain_core.runnables import RunnableConfig
 
