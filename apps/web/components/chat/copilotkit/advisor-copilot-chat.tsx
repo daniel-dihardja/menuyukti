@@ -9,6 +9,7 @@ import { AdvisorChatKitToolbar } from '@/components/chat/chatkit/advisor-chatkit
 import { useAdvisorChatKitShell } from '@/components/chat/chatkit/advisor-chatkit-shell-context'
 import { AdvisorCopilotGenerativeUi } from '@/components/chat/copilotkit/advisor-copilot-generative-ui'
 import { AdvisorCopilotHitl } from '@/components/chat/copilotkit/advisor-copilot-hitl'
+import { AdvisorCopilotSuggestions } from '@/components/chat/copilotkit/advisor-copilot-suggestions'
 import { apiFetch } from '@/lib/api/client-fetch'
 import { createAgentThread, removeAgentThread } from '@/lib/chat/agent-thread-registry'
 
@@ -39,7 +40,7 @@ export function AdvisorCopilotChat() {
       <AdvisorChatKitToolbar onClearChat={handleClearChat} />
       <AdvisorCopilotGenerativeUi />
       <AdvisorCopilotHitl />
-      <div className="min-h-0 flex-1">
+      <div className="relative min-h-0 flex-1">
         <CopilotChat
           agentId="advisor"
           className="h-full"
@@ -48,9 +49,11 @@ export function AdvisorCopilotChat() {
               shell.chatMode === 'image_assistant'
                 ? t('placeholderImageAssistant')
                 : t('placeholder'),
+            welcomeMessageText: t('emptyTitle'),
           }}
           threadId={shell.agentThreadId}
         />
+        <AdvisorCopilotSuggestions />
       </div>
     </div>
   )
