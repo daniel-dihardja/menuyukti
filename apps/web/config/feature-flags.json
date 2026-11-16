@@ -180,8 +180,8 @@
     },
     {
       "id": "inventar",
-      "description": "Inventory assistant (MVP off; code retained).",
-      "enabled": false,
+      "description": "Inventory stock, catalog, and refill assistant for operators.",
+      "enabled": true,
       "audience": "all",
       "routePrefixes": ["/inventar"],
       "navKeys": ["inventar"],

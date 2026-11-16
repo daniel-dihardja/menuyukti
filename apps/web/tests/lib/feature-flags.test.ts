@@ -25,7 +25,7 @@ describe('feature-flags', () => {
     expect(isNavKeyEnabled('services')).toBe(false)
     expect(isNavKeyEnabled('playbooks')).toBe(true)
     expect(isNavKeyEnabled('usage')).toBe(true)
-    expect(isNavKeyEnabled('inventar')).toBe(false)
+    expect(isNavKeyEnabled('inventar')).toBe(true)
     expect(isNavKeyEnabled('team')).toBe(false)
   })
 
@@ -48,11 +48,19 @@ describe('feature-flags', () => {
     expect(isPathnameFeatureEnabled('/services/digital-menu')).toBe(true)
     expect(isPathnameFeatureEnabled('/playbooks')).toBe(true)
     expect(isPathnameFeatureEnabled('/usage')).toBe(true)
+    expect(isPathnameFeatureEnabled('/inventar')).toBe(true)
+    expect(isPathnameFeatureEnabled('/inventar/catalog')).toBe(true)
   })
 
-  it('disables MVP-off inventar, team, guests, customer home, pos, explore, and image assistant', () => {
-    expect(isPathnameFeatureEnabled('/inventar')).toBe(false)
-    expect(isPathnameFeatureEnabled('/inventar/catalog')).toBe(false)
+  it('enables inventar for all operators', () => {
+    expect(isFeatureEnabled('inventar')).toBe(true)
+    expect(isNavKeyEnabled('inventar')).toBe(true)
+    expect(isPathnameFeatureEnabled('/inventar')).toBe(true)
+    expect(isPathnameFeatureEnabled('/inventar/catalog')).toBe(true)
+    expect(pathnameRequiresAdmin('/inventar')).toBe(false)
+  })
+
+  it('disables MVP-off team, guests, customer home, pos, explore, and image assistant', () => {
     expect(isFeatureEnabled('team')).toBe(false)
     expect(isPathnameFeatureEnabled('/team')).toBe(false)
     expect(isNavKeyEnabled('team')).toBe(false)

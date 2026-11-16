@@ -95,6 +95,7 @@ async function loadIndonesianOverlays(): Promise<AbstractIntlMessages[]> {
     import('../messages/id/docs.json'),
     import('../messages/id/errorBoundary.json'),
     import('../messages/id/igStudio.json'),
+    import('../messages/id/inventar.json'),
     import('../messages/id/landing.json'),
     import('../messages/id/legal.json'),
     import('../messages/id/login.json'),
