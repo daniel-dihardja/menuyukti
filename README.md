@@ -31,5 +31,5 @@ Customer focus is the web PWA.
 
 ## Architecture docs
 
-- [Platform architecture](backlog/docs/architecture/doc-8%20-%20Menuyukti-platform-architecture.md) — services, data ownership, auth trust boundary
-- [Advisor agent runtime and AG-UI sync](backlog/docs/agents/doc-9%20-%20Advisor-agent-runtime-and-AG-UI-sync.md) — tool selection, CopilotKit ↔ agents sync
+- [Platform architecture](backlog/docs/architecture/doc-8%20-%20Menuyukti-platform-architecture.md) — agent infrastructure at a glance, services, data ownership, auth trust boundary
+- [Advisor agent runtime and AG-UI sync](backlog/docs/agents/doc-9%20-%20Advisor-agent-runtime-and-AG-UI-sync.md) — operator tasks (promotion / menu compact), tool selection, CopilotKit ↔ agents sync

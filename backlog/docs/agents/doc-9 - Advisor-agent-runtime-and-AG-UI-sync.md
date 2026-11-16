@@ -3,14 +3,29 @@ id: doc-9
 title: Advisor agent runtime and AG-UI sync
 type: guide
 created_date: '2026-11-16T07:54:00Z'
-updated_date: '2026-11-16T07:55:00Z'
+updated_date: '2026-11-16T11:05:00Z'
 ---
 
 # Advisor agent runtime and AG-UI sync
 
 How the advisor agent decides tools, fetches data, and stays in sync with the chat UI via CopilotKit + AG-UI.
 
-## What the agent does
+## Operator tasks the agent completes (`general` mode)
+
+With a pinned sales report (`analytics_run_id`) and location context, the **general** advisor’s main jobs are **promotion** and **menu compact**, grounded in analytics tools — not free-form guessing.
+
+| Task                | What the agent does on its own                                                                                                                                                                                                                                                | Typical tools / charts                                                                                                           |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| **Situation brief** | On “how are we doing?” / vague openers: load charts, write a short as-is markdown brief (`Demand` → `Menu` → `Combos` → `Weak items` → `Hours` → `Next`). Does **not** turn that into a multi-day promo calendar by default.                                                  | `get_chart_data` — typically venue slot, menu heatmap, pair lift                                                                 |
+| **Promotion**       | After diagnosis: recommend what/when to feature (channel-neutral unless the owner names a channel). If the owner asks for a **week plan on a channel** (e.g. Instagram), write a scannable plan (days/slots, what to feature, why) grounded in demand + menu + combo signals. | `venue_slot_strength_heatmap`, `menu_item_heatmap`, `pair_lift_matrix_heatmap`; optional `get_location_data`, `search_knowledge` |
+| **Menu compact**    | For “what can I cut / reprice?”: load weak items and recommend **reprice / improve / remove** (low popularity + low margin).                                                                                                                                                  | `weak_review`; COGS tools when food-cost context is needed                                                                       |
+| **Visualizations**  | Chooses which catalog `chart_id`s to fetch; generative UI renders results in chat and can attach charts to the Insights rail. Operator need not assemble charts manually (optional `@` attach).                                                                               | `get_chart_data(chart_id)` only — no invented ids                                                                                |
+
+Chart catalog ids (bound when analytics run is set): `venue_slot_strength_heatmap`, `menu_item_heatmap`, `pair_lift_matrix_heatmap`, `weak_review`. Prompt source: `apps/agents/agents/core/chat/prompts/general.py` + `prompts/blocks.py` (see [doc-4](./doc-4%20-%20Chat-advisor-prompt-construction.md)).
+
+**Not claimed here:** a dedicated schedule/Instagram product module — week plans are markdown deliverables from the ReAct advisor when asked. Image generate is **not** bound in `general` (see mode gate below).
+
+## What the agent does (per turn)
 
 On each operator turn the agent:
 
