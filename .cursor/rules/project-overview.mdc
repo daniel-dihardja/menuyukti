@@ -33,6 +33,8 @@ Menuyukti is an **agentic AI platform for data-driven restaurant marketing and o
 ## Further reading
 
 - Root [`README.md`](../../README.md) — features and high-level architecture.
+- Platform architecture: [`backlog/docs/architecture/doc-8`](../../backlog/docs/architecture/doc-8%20-%20Menuyukti-platform-architecture.md).
+- Advisor agent + AG-UI: [`backlog/docs/agents/doc-9`](../../backlog/docs/agents/doc-9%20-%20Advisor-agent-runtime-and-AG-UI-sync.md).
 - Feature glossary: [`.agents/menuyukti-features.md`](../../.agents/menuyukti-features.md).
 - Cleanup history (milestones removed): [`packages/docs/menuyukti/remove-milestones.md`](../../packages/docs/menuyukti/remove-milestones.md).
 - Germany POS readiness audits: [`.agents/skills/menuyukti-germany-pos-readiness/SKILL.md`](../../.agents/skills/menuyukti-germany-pos-readiness/SKILL.md).

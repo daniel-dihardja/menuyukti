@@ -3,8 +3,10 @@ id: doc-7
 title: ChatKit to CopilotKit migration architecture
 type: specification
 created_date: '2026-11-01T09:16:00Z'
-updated_date: '2026-11-01T09:32:00Z'
+updated_date: '2026-11-16T07:56:00Z'
 ---
+
+> **Status:** Historical cutover note for TASK-14. Live architecture: [doc-8 platform](../architecture/doc-8%20-%20Menuyukti-platform-architecture.md), [doc-9 advisor AG-UI](./doc-9%20-%20Advisor-agent-runtime-and-AG-UI-sync.md).
 
 # ChatKit → CopilotKit migration architecture
 

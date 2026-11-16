@@ -70,6 +70,8 @@ See [`menuyukti-agents`](../menuyukti-agents/SKILL.md) and [`menuyukti-web`](../
 - [`.cursor/rules/project-overview.mdc`](../../../.cursor/rules/project-overview.mdc) — product context and layering.
 - [`.cursor/rules/monorepo-conventions.mdc`](../../../.cursor/rules/monorepo-conventions.mdc) — pnpm, Turbo, uv, formatting.
 - [`.agents/skills/turborepo/SKILL.md`](../turborepo/SKILL.md) — Turbo pipelines, caching, `--filter`.
+- Platform architecture: [`doc-8`](../../../backlog/docs/architecture/doc-8%20-%20Menuyukti-platform-architecture.md).
+- Advisor agent + AG-UI: [`doc-9`](../../../backlog/docs/agents/doc-9%20-%20Advisor-agent-runtime-and-AG-UI-sync.md).
 - App READMEs: `apps/web`, `apps/graphql`, `apps/agents`.
 
 ## Non-goals

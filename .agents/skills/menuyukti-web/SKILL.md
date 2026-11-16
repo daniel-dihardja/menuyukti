@@ -89,6 +89,8 @@ Default authenticated path is **`/advisor`** (`defaultAuthenticatedPath`). Legac
 ## Canonical docs
 
 - [`apps/web/README.md`](../../../apps/web/README.md)
+- Platform architecture: [`doc-8`](../../../backlog/docs/architecture/doc-8%20-%20Menuyukti-platform-architecture.md)
+- Advisor agent + AG-UI: [`doc-9`](../../../backlog/docs/agents/doc-9%20-%20Advisor-agent-runtime-and-AG-UI-sync.md)
 
 ## Progressive disclosure
 

@@ -28,3 +28,8 @@ Agent-first workflow for this monorepo:
 - Public location hub + explore (customer PWA)
 
 Customer focus is the web PWA.
+
+## Architecture docs
+
+- [Platform architecture](backlog/docs/architecture/doc-8%20-%20Menuyukti-platform-architecture.md) — services, data ownership, auth trust boundary
+- [Advisor agent runtime and AG-UI sync](backlog/docs/agents/doc-9%20-%20Advisor-agent-runtime-and-AG-UI-sync.md) — tool selection, CopilotKit ↔ agents sync
