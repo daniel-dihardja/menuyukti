@@ -3,12 +3,35 @@ id: doc-8
 title: Menuyukti platform architecture
 type: specification
 created_date: '2026-11-16T07:54:00Z'
-updated_date: '2026-11-16T07:55:00Z'
+updated_date: '2026-11-16T11:00:00Z'
 ---
 
 # Menuyukti platform architecture
 
 Current system map after removal of the Expo CRM client and CRM/device-auth stack (TASK-15). Use this as the canonical product architecture overview.
+
+## Agent infrastructure at a glance
+
+Designed so the agent runtime and the product data plane stay separate — agents use tools over HTTP, not the database.
+
+```text
+Operator chat → Web BFF (stamps session identity)
+  → LangGraph ReAct (apps/agents)
+  → Tools → GraphQL (single persistence; agents have no app DB)
+  → Generative UI (chosen charts) → brief / plan / next actions
+```
+
+| Concern             | Design                                                                                                                                                              |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Agent runtime**   | `apps/agents` — FastAPI + LangGraph ReAct, tool catalog, checkpointer, AG-UI adapter. Chat orchestration is **not** in GraphQL.                                     |
+| **Data plane**      | `apps/graphql` — Strawberry + SQLAlchemy + Alembic; **only** place with product DB access and migrations.                                                           |
+| **Analytics**       | `packages/menuyukti` — pure compute (pandas); invoked from GraphQL services, not persisted by agents.                                                               |
+| **Tool boundary**   | Agents call GraphQL over HTTP (`graphql_post`). No direct Postgres from `apps/agents`.                                                                              |
+| **Identity**        | Browser never supplies user id to agents/GraphQL. Web BFF stamps Clerk user + internal API key; agents forward that user id into tool/GraphQL calls via run config. |
+| **Fail closed**     | Production GraphQL and agents require the internal API key; missing key → refuse privileged traffic.                                                                |
+| **Durable threads** | LangGraph checkpoints on agents Postgres (`LANGGRAPH_CHECKPOINT_DATABASE_URL`); thread key `{clerkUserId}:agent:{agentThreadId}`.                                   |
+
+Runtime detail (tool gating, chart catalog, CoAgent sync): [doc-9 Advisor agent runtime and AG-UI sync](../agents/doc-9%20-%20Advisor-agent-runtime-and-AG-UI-sync.md).
 
 ## Product focus
 
