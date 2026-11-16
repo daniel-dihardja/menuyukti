@@ -1,11 +1,8 @@
-from .award_crm_cashback import AwardCrmCashbackMutation
 from .clear_workspace_service_data import ClearWorkspaceServiceDataMutation
 from .close_pickup_offer import ClosePickupOfferMutation
 from .close_prediction import ClosePredictionMutation
 from .close_voting import CloseVotingMutation
 from .create_calendar_entry import CreateCalendarEntryMutation
-from .create_crm_app import CreateCrmAppMutation
-from .create_crm_enrollment_token import CreateCrmEnrollmentTokenMutation
 from .create_location import CreateLocationMutation
 from .create_media_collection import CreateMediaCollectionMutation
 from .create_pickup_offer import CreatePickupOfferMutation
@@ -18,8 +15,6 @@ from .create_voting import CreateVotingMutation
 from .create_workspace import CreateWorkspaceMutation
 from .delete_analytics_run import DeleteAnalyticsRunMutation
 from .delete_calendar_entry import DeleteCalendarEntryMutation
-from .delete_crm_app import DeleteCrmAppMutation
-from .delete_crm_customer import DeleteCrmCustomerMutation
 from .delete_location import DeleteLocationMutation
 from .delete_media_collection import DeleteMediaCollectionMutation
 from .delete_playbook import DeletePlaybookMutation
@@ -52,14 +47,12 @@ from .record_point_earn_event import RecordPointEarnEventMutation
 from .remove_workspace_member import RemoveWorkspaceMemberMutation
 from .replace_location_menu_items import ReplaceLocationMenuItemsMutation
 from .resolve_prediction import ResolvePredictionMutation
-from .revoke_crm_device import RevokeCrmDeviceMutation
 from .service_subscriptions import (
     ActivateServiceSubscriptionMutation,
     CancelServiceSubscriptionMutation,
 )
 from .submit_public_menu_order import SubmitPublicMenuOrderMutation
 from .update_calendar_entry import UpdateCalendarEntryMutation
-from .update_crm_app import UpdateCrmAppMutation
 from .update_location import UpdateLocationMutation
 from .update_location_advisor_memory import UpdateLocationAdvisorMemoryMutation
 from .update_location_manual_brief_input import UpdateLocationManualBriefInputMutation
@@ -91,15 +84,12 @@ __all__ = [
     "VotePredictionMutation",
     "VoteVotingMutation",
     "UpsertPointEarnRulesMutation",
-    "AwardCrmCashbackMutation",
     "AddMediaToCollectionMutation",
     "CancelServiceSubscriptionMutation",
     "InventoryCatalogMutations",
     "InventoryStockMutations",
     "LocationAreaMutations",
     "CreateCalendarEntryMutation",
-    "CreateCrmAppMutation",
-    "CreateCrmEnrollmentTokenMutation",
     "CreateLocationMutation",
     "CreateMediaCollectionMutation",
     "CreatePlaybookMutation",
@@ -111,11 +101,8 @@ __all__ = [
     "ProvisionWorkspaceMutation",
     "DeleteAnalyticsRunMutation",
     "DeleteCalendarEntryMutation",
-    "DeleteCrmAppMutation",
-    "DeleteCrmCustomerMutation",
     "DeleteLocationMutation",
     "DeletePlaybookMutation",
-    "RevokeCrmDeviceMutation",
     "DeleteMediaAssetMutation",
     "DeleteMediaCollectionMutation",
     "DeleteStyleMutation",
@@ -135,7 +122,6 @@ __all__ = [
     "PosOrderMutations",
     "SubmitPublicMenuOrderMutation",
     "UpdateCalendarEntryMutation",
-    "UpdateCrmAppMutation",
     "UpdateLocationMutation",
     "UpdateLocationAdvisorMemoryMutation",
     "UpdateLocationManualBriefInputMutation",

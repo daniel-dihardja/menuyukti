@@ -10,7 +10,7 @@ description: >-
 
 # Menuyukti: `apps/web`
 
-**Next.js** user-facing app: **operator** shell (chat-first `/advisor`, analytics, digital menu / Order board, inventar, media, IG Studio, calendar, CRM, staff) and **customer PWA** shell (Serwist). **All product data** goes through **GraphQL** (no direct DB). Auth: **Clerk**. Copy: **next-intl** (no hardcoded user-facing strings). The Expo app (`apps/mobile-app`) is **deprecated / inactive** — customer work belongs here in the PWA.
+**Next.js** user-facing app: **operator** shell (chat-first `/advisor`, analytics, digital menu / Order board, inventar, media, IG Studio, calendar, staff) and **customer PWA** shell (Serwist). **All product data** goes through **GraphQL** (no direct DB). Auth: **Clerk**. Copy: **next-intl** (no hardcoded user-facing strings).
 
 For monorepo boundaries, see [`menuyukti-repo-orientation`](../menuyukti-repo-orientation/SKILL.md). For UI and i18n rules, see [`.cursor/rules/web-conventions.mdc`](../../../.cursor/rules/web-conventions.mdc).
 
@@ -39,7 +39,7 @@ When improving an existing implementation (not only greenfield features), also r
 | Concern          | Typical locations                                                                                                                                                                                          |
 | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | App Router       | [`apps/web/app/`](../../../apps/web/app/)                                                                                                                                                                  |
-| Operator shell   | [`apps/web/app/(protected)/`](<../../../apps/web/app/(protected)/>) — `/advisor`, `/analytics`, `/calendar`, `/ig-studio`, `/media`, `/inventar`, `/crm`, `/staff`, …                                      |
+| Operator shell   | [`apps/web/app/(protected)/`](<../../../apps/web/app/(protected)/>) — `/advisor`, `/analytics`, `/calendar`, `/ig-studio`, `/media`, `/inventar`, `/staff`, …                                              |
 | Customer shell   | [`apps/web/app/(customer)/`](<../../../apps/web/app/(customer)/>) — `/home`, `/continue`, `/profile` (auth, no sidebar; free-plan default)                                                                 |
 | Chat home        | Public URL **`/advisor`** (rewrites to `app/(protected)/agent/`); thread id = **`agentThreadId`**. Shared UI: [`components/chat/`](../../../apps/web/components/chat/)                                     |
 | Chat modes       | [`lib/chat/chat-modes.ts`](../../../apps/web/lib/chat/chat-modes.ts) — advisor picker: `general` \| `image_assistant`; also `inventar` (inventar surface only)                                             |

@@ -27,4 +27,4 @@ Agent-first workflow for this monorepo:
 - Inventory chat mode with refill-forecast tools
 - Public location hub + explore (customer PWA)
 
-Expo (`apps/mobile-app`) remains in the repo but is inactive; customer focus is the web PWA.
+Customer focus is the web PWA.

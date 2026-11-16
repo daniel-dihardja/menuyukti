@@ -7,7 +7,7 @@ import strawberry
 
 @strawberry.type(
     description=(
-        "Entitlement for a catalog service on one location (digital_menu, stamp_card, cashback)."
+        "Entitlement for a catalog service on one location (digital_menu, stamp_card, voting, …)."
     )
 )
 class ServiceSubscriptionType:

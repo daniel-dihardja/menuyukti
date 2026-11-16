@@ -2,7 +2,7 @@
 name: menuyukti-graphql
 description: >-
   GraphQL API app (apps/graphql): Strawberry schema, query modules, services, SQLAlchemy and Alembic,
-  native POS (orders, tax, fiscalization), inventory, CRM, knowledge docs (apps/graphql/knowledge
+  native POS (orders, tax, fiscalization), inventory, knowledge docs (apps/graphql/knowledge
   advisor RAG), reports/transform integration with packages/menuyukti, auth, and tests. Use when
   adding queries or mutations for web/agents, resolver logic, migrations, calendar entries, POS,
   knowledge docs / knowledge-ingest, or analytics-shaped API fields.
@@ -10,7 +10,7 @@ description: >-
 
 # Menuyukti: `apps/graphql`
 
-Python **Strawberry** API: **single persistence layer** (SQLAlchemy + Alembic) and structured reads/writes for **`apps/web`** (operator + customer PWA) and **`apps/agents`**. Legacy mobile BFF routes may still call GraphQL; the Expo app is **deprecated / inactive**.
+Python **Strawberry** API: **single persistence layer** (SQLAlchemy + Alembic) and structured reads/writes for **`apps/web`** (operator + customer PWA) and **`apps/agents`**.
 
 For monorepo boundaries, see [`menuyukti-repo-orientation`](../menuyukti-repo-orientation/SKILL.md). For resolver/auth conventions, see [`.cursor/rules/python-graphql-conventions.mdc`](../../../.cursor/rules/python-graphql-conventions.mdc). For pandas analytics logic, see [`menuyukti-analytics`](../menuyukti-analytics/SKILL.md). Germany POS readiness audits: [`menuyukti-germany-pos-readiness`](../menuyukti-germany-pos-readiness/SKILL.md).
 

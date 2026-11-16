@@ -16,7 +16,6 @@ export const OPERATOR_APP_SHELL_PREFIXES = [
   '/media',
   '/content',
   '/advisor',
-  '/crm',
   '/print-orders',
   '/dashboard',
   '/staff',
@@ -180,15 +179,6 @@ export const routes = {
   playbookNew: (slug: string) => `/playbooks/${encodeURIComponent(slug)}/new`,
   playbookInstance: (slug: string, id: string | number) =>
     `/playbooks/${encodeURIComponent(slug)}/${encodeURIComponent(String(id))}`,
-
-  /** Restaurant CRM (customer registrations, programs). */
-  crm: '/crm',
-  crmApps: '/crm/apps',
-  crmAppsDetail: (id: string | number) => `/crm/apps/${encodeURIComponent(String(id))}`,
-  crmRegistrations: '/crm/registrations',
-  crmRegistrationsWithApp: (appId: string | number) =>
-    `/crm/registrations?appId=${encodeURIComponent(String(appId))}`,
-  crmRegistrationsDetail: (id: string) => `/crm/registrations/${encodeURIComponent(id)}`,
 
   /** Standalone Instagram post drafts + Post Creator (admin). */
   igStudio: '/ig-studio',

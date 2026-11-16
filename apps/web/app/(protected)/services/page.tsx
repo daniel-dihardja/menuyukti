@@ -23,7 +23,6 @@ import { getCachedLocationsListData } from '@/lib/graphql/cached-queries'
 import { graphqlQuery } from '@/lib/graphql/client'
 import {
   MY_SERVICE_SUBSCRIPTIONS_QUERY,
-  SERVICE_KEY_CASHBACK,
   SERVICE_KEY_DIGITAL_MENU,
   SERVICE_KEY_POINT_SYSTEM,
   SERVICE_KEY_PICK_AND_WIN,
@@ -110,20 +109,6 @@ function StampCardPreview() {
           />
         ))}
       </div>
-    </div>
-  )
-}
-
-function CashbackPreview() {
-  return (
-    <div className="border-border bg-background flex w-44 flex-col gap-3 rounded-xl border p-4 shadow-sm">
-      <div className="bg-muted h-2 w-1/2 rounded" />
-      <div className="flex items-end gap-1">
-        <span className="text-2xl font-semibold tracking-tight">20%</span>
-        <span className="text-muted-foreground pb-0.5 text-xs">back</span>
-      </div>
-      <div className="bg-muted h-2 w-full rounded" />
-      <div className="bg-muted h-2 w-3/4 rounded" />
     </div>
   )
 }
@@ -387,16 +372,6 @@ export default async function ServicesPage() {
         status={<Badge variant="outline">{tCatalog('comingSoon')}</Badge>}
         pricingComingSoon={pricingComingSoon}
         preview={<StampCardPreview />}
-      />
-    ) : null,
-    isServiceKeyFeatureEnabled(SERVICE_KEY_CASHBACK) ? (
-      <CatalogCard
-        key="cashback"
-        title={tCatalog('cashback.title')}
-        benefit={tCatalog('cashback.benefit')}
-        status={<Badge variant="outline">{tCatalog('comingSoon')}</Badge>}
-        pricingComingSoon={pricingComingSoon}
-        preview={<CashbackPreview />}
       />
     ) : null,
   ].filter(Boolean)

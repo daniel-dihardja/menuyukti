@@ -22,7 +22,6 @@ export type Scalars = {
   DateTime: { input: string; output: string }
   /** The `JSON` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf). */
   JSON: { input: unknown; output: unknown }
-  UUID: { input: any; output: any }
   /** Represents a file upload. */
   Upload: { input: unknown; output: unknown }
 }
@@ -196,6 +195,23 @@ export type CategoryMixRowGqlType = {
   topItem: Scalars['String']['output']
 }
 
+export type ClearServiceDataResultType = {
+  __typename?: 'ClearServiceDataResultType'
+  clerkUserId: Scalars['String']['output']
+  earnRulesDeleted: Scalars['Int']['output']
+  ledgerEntriesDeleted: Scalars['Int']['output']
+  locationIds: Array<Scalars['ID']['output']>
+  menuCategoriesCleared: Scalars['Int']['output']
+  notes: Array<Scalars['String']['output']>
+  pickupOffersDeleted: Scalars['Int']['output']
+  posOrdersDeleted: Scalars['Int']['output']
+  predictionsDeleted: Scalars['Int']['output']
+  serviceKey: Scalars['String']['output']
+  subscriptionsCanceled: Scalars['Int']['output']
+  votingsDeleted: Scalars['Int']['output']
+  workspaceId: Scalars['ID']['output']
+}
+
 /** Recommended promo window for a combo pair. */
 export type ComboPairRecommendedWindowType = {
   __typename?: 'ComboPairRecommendedWindowType'
@@ -240,77 +256,34 @@ export type ComboPromoPostureType = {
   venueRelativeDemand?: Maybe<Scalars['String']['output']>
 }
 
-/** Workspace-scoped CRM app: loyalty / customer-registration tenant. Public appId (UUID) is used in enrollment QR and mobile auth claims. */
-export type CrmAppType = {
-  __typename?: 'CrmAppType'
-  appId: Scalars['UUID']['output']
-  cashbackPercent: Scalars['Int']['output']
-  cashbackThresholdAmount: Scalars['Int']['output']
-  createdAt: Scalars['DateTime']['output']
-  createdByClerkUserId: Scalars['String']['output']
-  id: Scalars['Int']['output']
-  title: Scalars['String']['output']
-  updatedAt: Scalars['DateTime']['output']
-  workspaceId: Scalars['Int']['output']
+/** Create a pickup offer for a location. */
+export type CreatePickupOfferInput = {
+  availableFrom: Scalars['DateTime']['input']
+  availableUntil: Scalars['DateTime']['input']
+  description: Scalars['String']['input']
+  locationId: Scalars['Int']['input']
+  price?: InputMaybe<Scalars['Float']['input']>
+  title: Scalars['String']['input']
 }
 
-/** Cashback ledger entry for a CRM customer. */
-export type CrmCashbackEntryType = {
-  __typename?: 'CrmCashbackEntryType'
-  amount: Scalars['Int']['output']
-  cashbackPercent?: Maybe<Scalars['Int']['output']>
-  createdAt: Scalars['DateTime']['output']
-  customerId: Scalars['UUID']['output']
-  id: Scalars['UUID']['output']
-  label?: Maybe<Scalars['String']['output']>
-  paymentAmount?: Maybe<Scalars['Int']['output']>
+/** Create a prediction for a location. */
+export type CreatePredictionInput = {
+  closesAt: Scalars['DateTime']['input']
+  locationId: Scalars['Int']['input']
+  outcomes: Array<Scalars['String']['input']>
+  pointsForCorrect?: Scalars['Int']['input']
+  pointsForVote?: Scalars['Int']['input']
+  question: Scalars['String']['input']
+  rewardMode?: Scalars['String']['input']
 }
 
-/** Registration status derived from enrolled devices. */
-export enum CrmCustomerStatus {
-  Active = 'ACTIVE',
-  None = 'NONE',
-  Revoked = 'REVOKED',
-}
-
-/** Customer enrolled in a CRM app. */
-export type CrmCustomerType = {
-  __typename?: 'CrmCustomerType'
-  /** Internal CRM app id (crm_app.id). */
-  appId: Scalars['Int']['output']
-  /** Sum of cashback ledger amounts in IDR (populated on crmCustomer detail). */
-  cashbackBalance: Scalars['Int']['output']
-  /** Recent cashback ledger entries (populated on crmCustomer detail). */
-  cashbackEntries: Array<CrmCashbackEntryType>
-  createdAt: Scalars['DateTime']['output']
-  deviceCount: Scalars['Int']['output']
-  /** Enrolled devices (populated on crmCustomer detail). */
-  devices: Array<CrmDeviceType>
-  familyName?: Maybe<Scalars['String']['output']>
-  givenName?: Maybe<Scalars['String']['output']>
-  id: Scalars['UUID']['output']
-  lastSeenAt?: Maybe<Scalars['DateTime']['output']>
-  phoneMasked: Scalars['String']['output']
-  status: CrmCustomerStatus
-}
-
-/** Device enrolled for a CRM customer. */
-export type CrmDeviceType = {
-  __typename?: 'CrmDeviceType'
-  createdAt: Scalars['DateTime']['output']
-  id: Scalars['UUID']['output']
-  label?: Maybe<Scalars['String']['output']>
-  lastSeenAt?: Maybe<Scalars['DateTime']['output']>
-  platform: Scalars['String']['output']
-  revokedAt?: Maybe<Scalars['DateTime']['output']>
-}
-
-/** Staff-minted enrollment token. The raw token is returned only once; the server stores a hash. */
-export type CrmEnrollmentTokenCreatedType = {
-  __typename?: 'CrmEnrollmentTokenCreatedType'
-  enrollUrl: Scalars['String']['output']
-  expiresAt: Scalars['DateTime']['output']
-  token: Scalars['String']['output']
+/** Create a voting for a location. */
+export type CreateVotingInput = {
+  locationId: Scalars['Int']['input']
+  options: Array<Scalars['String']['input']>
+  pointsForVote?: Scalars['Int']['input']
+  question: Scalars['String']['input']
+  rewardMode?: Scalars['String']['input']
 }
 
 /** Hourly demand distribution for a menu item. */
@@ -345,6 +318,45 @@ export type DayTypeBreakdownType = {
   type: Scalars['String']['output']
 }
 
+/** Result of deleting the guest Food Profile. */
+export type DeleteFoodProfileResultType = {
+  __typename?: 'DeleteFoodProfileResultType'
+  deleted: Scalars['Boolean']['output']
+}
+
+export type DevDataSeedResultType = {
+  __typename?: 'DevDataSeedResultType'
+  analyticsClearedPosOrders?: Maybe<Scalars['Int']['output']>
+  analyticsDeletedSeedRuns?: Maybe<Scalars['Int']['output']>
+  analyticsLocationCogs?: Maybe<Scalars['Int']['output']>
+  analyticsLocationId?: Maybe<Scalars['ID']['output']>
+  analyticsLocationName?: Maybe<Scalars['String']['output']>
+  analyticsMenuCategories?: Maybe<Scalars['Int']['output']>
+  analyticsMenuItems?: Maybe<Scalars['Int']['output']>
+  analyticsOrderRows?: Maybe<Scalars['Int']['output']>
+  analyticsPosSystem?: Maybe<Scalars['String']['output']>
+  analyticsRunId?: Maybe<Scalars['ID']['output']>
+  clerkUserId: Scalars['String']['output']
+  createdPrimary: Scalars['Boolean']['output']
+  inventarCatalogItems?: Maybe<Scalars['Int']['output']>
+  inventarCleared: Scalars['Boolean']['output']
+  inventarClearedPosOrders?: Maybe<Scalars['Int']['output']>
+  inventarLocationId?: Maybe<Scalars['ID']['output']>
+  inventarLocationName?: Maybe<Scalars['String']['output']>
+  inventarMenuCategories?: Maybe<Scalars['Int']['output']>
+  inventarMenuItems?: Maybe<Scalars['Int']['output']>
+  inventarMovements?: Maybe<Scalars['Int']['output']>
+  inventarStockRows?: Maybe<Scalars['Int']['output']>
+  midoClearedPosOrders?: Maybe<Scalars['Int']['output']>
+  midoLocationId?: Maybe<Scalars['ID']['output']>
+  midoLocationName?: Maybe<Scalars['String']['output']>
+  midoMenuCategories?: Maybe<Scalars['Int']['output']>
+  midoMenuItems?: Maybe<Scalars['Int']['output']>
+  notes: Array<Scalars['String']['output']>
+  scope: Scalars['String']['output']
+  workspaceId: Scalars['ID']['output']
+}
+
 /** Result of ingesting a sales report Excel file. Line-level `normalizedRows` and `orders` are omitted unless includeLineItems is true. */
 export type ExcelUploadResult = {
   __typename?: 'ExcelUploadResult'
@@ -355,6 +367,45 @@ export type ExcelUploadResult = {
   salesAnalytics: Scalars['JSON']['output']
   sheetNames: Array<Scalars['String']['output']>
   sizeBytes: Scalars['Int']['output']
+}
+
+/** Active consent summary for the guest Food Profile. */
+export type FoodPreferenceConsentType = {
+  __typename?: 'FoodPreferenceConsentType'
+  allowedSignalCategories: Array<Scalars['String']['output']>
+  consentVersion: Scalars['String']['output']
+  grantedAt: Scalars['DateTime']['output']
+  id: Scalars['String']['output']
+  privacyNoticeVersion: Scalars['String']['output']
+  purpose: Scalars['String']['output']
+  withdrawnAt?: Maybe<Scalars['DateTime']['output']>
+}
+
+/** One Food Profile preference (guest-self). */
+export type FoodPreferenceType = {
+  __typename?: 'FoodPreferenceType'
+  confidence: Scalars['Float']['output']
+  consentId: Scalars['String']['output']
+  expiresAt?: Maybe<Scalars['DateTime']['output']>
+  explanation?: Maybe<Scalars['String']['output']>
+  id: Scalars['String']['output']
+  originKind: Scalars['String']['output']
+  originLocationId?: Maybe<Scalars['Int']['output']>
+  originLocationName?: Maybe<Scalars['String']['output']>
+  portabilityEnabled: Scalars['Boolean']['output']
+  preferenceType: Scalars['String']['output']
+  preferenceValue: Scalars['String']['output']
+  recordedAt: Scalars['DateTime']['output']
+  removedAt?: Maybe<Scalars['DateTime']['output']>
+  sourceRef: Scalars['String']['output']
+  sourceType: Scalars['String']['output']
+  updatedAt: Scalars['DateTime']['output']
+}
+
+/** DSAR-style Food Profile export payload. */
+export type FoodProfileExportType = {
+  __typename?: 'FoodProfileExportType'
+  payloadJson: Scalars['String']['output']
 }
 
 export type FundamentalSalesSignalsType = {
@@ -371,6 +422,14 @@ export type FundamentalSignalsType = {
   categoryFocus?: Maybe<CategoryFocusType>
   sales: FundamentalSalesSignalsType
   trendingItems: Array<TrendingItemType>
+}
+
+export type ImportPosSalesReportResult = {
+  __typename?: 'ImportPosSalesReportResult'
+  analyticsRunId: Scalars['ID']['output']
+  lineCount: Scalars['Int']['output']
+  name: Scalars['String']['output']
+  orderCount: Scalars['Int']['output']
 }
 
 /** Tiered analytics payload for campaign_brief and growth agents. */
@@ -493,6 +552,29 @@ export enum InventoryStorageZone {
   Freezer = 'freezer',
 }
 
+/** A retrieved knowledge chunk for advisor RAG. */
+export type KnowledgeSearchHitType = {
+  __typename?: 'KnowledgeSearchHitType'
+  category: Scalars['String']['output']
+  chunkId: Scalars['Int']['output']
+  content: Scalars['String']['output']
+  documentId: Scalars['Int']['output']
+  /** Optional JSON metadata (e.g. chart_ids) as a string. */
+  metadata?: Maybe<Scalars['String']['output']>
+  scopeType: Scalars['String']['output']
+  score: Scalars['Float']['output']
+  slug: Scalars['String']['output']
+  title: Scalars['String']['output']
+}
+
+/** Durable advisor-written notes for a location (preferences, constraints, outcomes). Separate from owner manualBriefInput.quickProfile. */
+export type LocationAdvisorMemoryType = {
+  __typename?: 'LocationAdvisorMemoryType'
+  content: Scalars['String']['output']
+  locationId: Scalars['Int']['output']
+  updatedAt?: Maybe<Scalars['DateTime']['output']>
+}
+
 /** Summary of analytics runs for one location. */
 export type LocationAnalyticsRunSummaryType = {
   __typename?: 'LocationAnalyticsRunSummaryType'
@@ -554,14 +636,24 @@ export type LocationPublicMenuSettingsType = {
   publicSlug?: Maybe<Scalars['String']['output']>
 }
 
+/** Result of updating a location public slug. */
+export type LocationPublicSlugType = {
+  __typename?: 'LocationPublicSlugType'
+  locationId: Scalars['Int']['output']
+  publicSlug?: Maybe<Scalars['String']['output']>
+}
+
 /** A restaurant location; ties POS data and product entities to a workspace or legacy owner. */
 export type LocationType = {
   __typename?: 'LocationType'
+  /** Durable advisor-written notes for this venue. Separate from owner manualBriefInput. */
+  advisorMemory?: Maybe<LocationAdvisorMemoryType>
   areas: Array<LocationAreaType>
   city?: Maybe<Scalars['String']['output']>
   country?: Maybe<Scalars['String']['output']>
   currency?: Maybe<Scalars['String']['output']>
   id: Scalars['ID']['output']
+  legalName?: Maybe<Scalars['String']['output']>
   /** Owner-provided click-first brief hints. Not AI-generated. */
   manualBriefInput?: Maybe<LocationManualBriefInputType>
   name: Scalars['String']['output']
@@ -569,6 +661,8 @@ export type LocationType = {
   openingHours: Array<OpeningHourType>
   publicSlug?: Maybe<Scalars['String']['output']>
   street?: Maybe<Scalars['String']['output']>
+  taxNumber?: Maybe<Scalars['String']['output']>
+  vatId?: Maybe<Scalars['String']['output']>
   workspaceId?: Maybe<Scalars['ID']['output']>
 }
 
@@ -618,6 +712,19 @@ export type MediaCollectionType = {
   workspaceId: Scalars['Int']['output']
 }
 
+/** Allergen present in a menu item. */
+export enum MenuAllergen {
+  Dairy = 'dairy',
+  Eggs = 'eggs',
+  Fish = 'fish',
+  Gluten = 'gluten',
+  Peanuts = 'peanuts',
+  Sesame = 'sesame',
+  Shellfish = 'shellfish',
+  Soy = 'soy',
+  TreeNuts = 'tree_nuts',
+}
+
 /** One distinct menu line from POS data with aggregated quantity and avg unit price. */
 export type MenuCatalogItemType = {
   __typename?: 'MenuCatalogItemType'
@@ -639,6 +746,7 @@ export type MenuCatalogPayloadType = {
 
 /** Category payload for replaceLocationMenuItems. */
 export type MenuCategoryInput = {
+  id?: InputMaybe<Scalars['Int']['input']>
   items: Array<MenuItemInput>
   name: Scalars['String']['input']
 }
@@ -692,6 +800,17 @@ export type MenuCombosPayloadType = {
   slotDemandProfile: Array<SlotDemandCellType>
   topPairTiming: Array<MenuComboPairTimingType>
   totalOrders: Scalars['Int']['output']
+}
+
+/** Dietary or lifestyle tag on a menu item. */
+export enum MenuDietaryTag {
+  DairyFree = 'dairy_free',
+  GlutenFree = 'gluten_free',
+  Halal = 'halal',
+  Pescatarian = 'pescatarian',
+  Spicy = 'spicy',
+  Vegan = 'vegan',
+  Vegetarian = 'vegetarian',
 }
 
 /** Share of items and margin contribution per BCG category (star, puzzle, plow_horse, weak). */
@@ -771,21 +890,60 @@ export type MenuItemCogsUpsertInput = {
   menuName: Scalars['String']['input']
 }
 
+/** Guest thumbs sentiment on a menu item. */
+export enum MenuItemFeedbackSentiment {
+  Negative = 'NEGATIVE',
+  Positive = 'POSITIVE',
+}
+
+/** Moderation status for menu item feedback. */
+export enum MenuItemFeedbackStatus {
+  Hidden = 'HIDDEN',
+  Pending = 'PENDING',
+  Published = 'PUBLISHED',
+}
+
+/** Owner inbox row for menu item feedback. */
+export type MenuItemFeedbackType = {
+  __typename?: 'MenuItemFeedbackType'
+  body: Scalars['String']['output']
+  clerkUserId: Scalars['String']['output']
+  createdAt: Scalars['DateTime']['output']
+  guestDisplayName?: Maybe<Scalars['String']['output']>
+  id: Scalars['Int']['output']
+  locationId: Scalars['Int']['output']
+  menuItemId: Scalars['Int']['output']
+  menuItemName: Scalars['String']['output']
+  ownerRepliedAt?: Maybe<Scalars['DateTime']['output']>
+  ownerReply?: Maybe<Scalars['String']['output']>
+  posOrderId?: Maybe<Scalars['Int']['output']>
+  publishedAt?: Maybe<Scalars['DateTime']['output']>
+  sentiment?: Maybe<MenuItemFeedbackSentiment>
+  status: MenuItemFeedbackStatus
+  updatedAt: Scalars['DateTime']['output']
+}
+
 /** Item payload for replaceLocationMenuItems. */
 export type MenuItemInput = {
+  allergens?: InputMaybe<Array<MenuAllergen>>
   description?: InputMaybe<Scalars['String']['input']>
+  dietaryTags?: InputMaybe<Array<MenuDietaryTag>>
+  id?: InputMaybe<Scalars['Int']['input']>
   imageFilename?: InputMaybe<Scalars['String']['input']>
   isAvailable?: InputMaybe<Scalars['Boolean']['input']>
   modifierGroups?: InputMaybe<Array<MenuModifierGroupInput>>
   name: Scalars['String']['input']
   price: Scalars['Float']['input']
+  taxClass?: InputMaybe<Scalars['String']['input']>
 }
 
 /** One dish line on a location menu. */
 export type MenuItemType = {
   __typename?: 'MenuItemType'
+  allergens: Array<MenuAllergen>
   categoryId: Scalars['Int']['output']
   description: Scalars['String']['output']
+  dietaryTags: Array<MenuDietaryTag>
   id: Scalars['Int']['output']
   imageFilename?: Maybe<Scalars['String']['output']>
   isAvailable: Scalars['Boolean']['output']
@@ -794,6 +952,7 @@ export type MenuItemType = {
   name: Scalars['String']['output']
   price: Scalars['Float']['output']
   sortOrder: Scalars['Int']['output']
+  taxClass: Scalars['String']['output']
 }
 
 /** Modifier group payload for replaceLocationMenuItems. */
@@ -837,12 +996,14 @@ export type MenuModifierOptionType = {
 /** Curated menu catalog for a location (one per location). */
 export type MenuType = {
   __typename?: 'MenuType'
+  allowDelivery: Scalars['Boolean']['output']
   allowDineIn: Scalars['Boolean']['output']
   allowPickup: Scalars['Boolean']['output']
   categories: Array<MenuCategoryType>
   headerImageFilename?: Maybe<Scalars['String']['output']>
   id: Scalars['Int']['output']
   locationId: Scalars['Int']['output']
+  orderingEnabled: Scalars['Boolean']['output']
   publicEnabled: Scalars['Boolean']['output']
   title: Scalars['String']['output']
 }
@@ -850,24 +1011,34 @@ export type MenuType = {
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type Mutation = {
   __typename?: 'Mutation'
+  /** Activate (or re-activate) a service subscription for a location. Requires location ownership. Idempotent upsert to status=active. */
+  activateServiceSubscription: ServiceSubscriptionType
+  /** Add an explicit Food Profile preference. */
+  addExplicitFoodPreference: FoodPreferenceType
   /** Add a photo (by filename) to a media collection. */
   addMediaToCollection: MediaCollectionType
   /** Add a menu item line to an open POS ticket. */
   addPosOrderLine: PosOrderType
+  /** Advance digital-menu prep_status one step forward (received → preparing → ready → served|picked_up). */
+  advancePosOrderPrepStatus: PosOrderType
   /** Refresh an analytics run's COGS snapshot from its location catalog. */
   applyLocationCogsToAnalyticsRun: Array<MenuItemCogsType>
-  /** Award cashback from a payment total (applies app threshold/percent) or redeem a positive amount from the customer's balance. Pass exactly one of paymentAmount or redeemAmount. */
-  awardCrmCashback: CrmCashbackEntryType
+  /** Cancel a service subscription for a location. Requires location ownership. Canceling digital_menu also unpublishes the public menu. */
+  cancelServiceSubscription: ServiceSubscriptionType
+  /** Clear location-scoped domain data for one service across a Clerk user's workspace and cancel that service's active subscriptions. Staff BFF only; blocked in production unless ALLOW_DEV_DATA_INGEST=1. */
+  clearWorkspaceServiceData: ClearServiceDataResultType
+  /** Close a pickup offer (e.g. sold out). Requires location ownership and an active pickup_offer subscription. */
+  closePickupOffer: PickupOfferType
   /** Close (pay) an open POS ticket and project OrderFact rows onto the monthly Menuyukti POS analytics run. */
   closePosOrder: PosOrderType
+  /** Close voting on a prediction without resolving. Requires location ownership and an active prediction subscription. */
+  closePrediction: PredictionType
+  /** Close voting on a voting without resolving. Requires location ownership and an active voting subscription. */
+  closeVoting: VotingType
   /** Use packages from stock (decreases stock and records an out movement). */
   consumeInventoryStock: InventoryStockType
   /** Create a manual calendar entry for a location. */
   createCalendarEntry: CalendarEntryType
-  /** Create a CRM app in the caller's primary workspace. */
-  createCrmApp: CrmAppType
-  /** Create a single-use enrollment token for a CRM app. Returns the raw token once; expires in 5 minutes. */
-  createCrmEnrollmentToken: CrmEnrollmentTokenCreatedType
   /** Add a pantry item to the workspace catalog. */
   createInventoryCatalogItem: InventoryCatalogItemType
   /** Create a catalog item and initial stock at a location in one step. */
@@ -877,26 +1048,28 @@ export type Mutation = {
   createLocationArea: LocationAreaType
   /** Create a named media collection in the caller's workspace. */
   createMediaCollection: MediaCollectionType
+  /** Create a pickup offer for a location. Requires location ownership and an active pickup_offer subscription. Rejects when another open offer exists. */
+  createPickupOffer: PickupOfferType
   /** Create a playbook instance for a location. */
   createPlaybook: PlaybookType
   createPost: PostType
   createPostPage: PostPageType
+  /** Create a prediction for a location. Requires location ownership and an active prediction subscription. reward_mode=points also requires point_system. */
+  createPrediction: PredictionType
   /** Create a named visual style pack in the caller's workspace. */
   createStyle: StyleType
-  /** Disabled for self-serve. Workspaces are staff-provisioned via provisionWorkspace (Menuyukti admin BFF). */
+  /** Create a voting for a location. Requires location ownership, an active voting subscription, and an active point_system subscription. Rewards are points-only. The vote stays open until the owner closes it. */
+  createVoting: VotingType
+  /** Disabled. Use ensureMyWorkspace for self-serve default workspaces, or provisionWorkspace via the Menuyukti admin BFF for custom setups. */
   createWorkspace: WorkspaceType
   deleteAnalyticsRun: Scalars['Boolean']['output']
   /** Delete a manual calendar entry. */
   deleteCalendarEntry: CalendarEntryType
-  /** Delete a CRM app by id. */
-  deleteCrmApp: Scalars['Boolean']['output']
-  /** Delete a CRM customer registration by id. Cascades enrolled devices. */
-  deleteCrmCustomer: Scalars['Boolean']['output']
   /** Delete a pantry catalog item and all location stock rows. */
   deleteInventoryCatalogItem: Scalars['Boolean']['output']
   /** Stop tracking a catalog item at a location. */
   deleteInventoryStock: Scalars['Boolean']['output']
-  /** Delete a location and its analytics, stock, and calendar data. */
+  /** Delete a location and its analytics, stock, and calendar data. Refused when paid or refunded POS tickets exist (fiscal retention). */
   deleteLocation: Scalars['Boolean']['output']
   /** Delete a location area. Prior stock movements keep history with a null area. */
   deleteLocationArea: Scalars['Boolean']['output']
@@ -904,6 +1077,8 @@ export type Mutation = {
   deleteMediaAsset: Scalars['Boolean']['output']
   /** Delete a media collection by id (memberships cascade). */
   deleteMediaCollection: Scalars['Boolean']['output']
+  /** Delete Food Profile and preferences; retain consent evidence. */
+  deleteMyFoodProfile: DeleteFoodProfileResultType
   /** Delete a playbook instance. */
   deletePlaybook: Scalars['Boolean']['output']
   deletePost: Scalars['Boolean']['output']
@@ -913,17 +1088,35 @@ export type Mutation = {
   deleteStyle: Scalars['Boolean']['output']
   /** Idempotently create or update a media asset catalog row for a workspace photo filename. */
   ensureMediaAsset: MediaAssetType
+  /** Get or create the primary workspace for the signed-in user. Creates a default owner workspace when none exists. Staff may still use provisionWorkspace for custom agency setups. */
+  ensureMyWorkspace: WorkspaceType
+  /** Export Food Profile JSON for the authenticated guest. */
+  exportMyFoodProfile: FoodProfileExportType
+  /** Grant Food Profile consent for a purpose. */
+  grantFoodPreferenceConsent: MyFoodProfileType
+  /** Location owner: hide a feedback note from the public menu. */
+  hideMenuItemFeedback: MenuItemFeedbackType
+  /** Create a new analytics run from paid Menuyukti POS tickets in an inclusive UTC date range. Always creates a new run (duplicates allowed). */
+  importPosSalesReport: ImportPosSalesReportResult
+  /** Run selective mock seed (inventar / analytics / all / clear-inventar) for a Clerk user's workspace. Same data as make dev-data. Staff BFF only; blocked in production unless ALLOW_DEV_DATA_INGEST=1. */
+  ingestDevData: DevDataSeedResultType
   inviteWorkspaceMember: WorkspaceMembershipType
   /** Open a new POS ticket for a location. */
   openPosOrder: PosOrderType
   /** Create a workspace owned by the given Clerk user with the given plan. Intended for staff BFF only; not a customer self-serve path. Defaults to pro (agency-provisioned restaurant clients). */
   provisionWorkspace: WorkspaceType
+  /** Location owner: publish a feedback note on the public menu item. */
+  publishMenuItemFeedback: MenuItemFeedbackType
   /** Receive packages at a location (increases stock and records an in movement). */
   receiveInventoryStock: InventoryStockType
   /** Append an AI usage ledger row for the authenticated user (Leonardo generations and similar). */
   recordAiUsageEvent: AiUsageEventType
-  /** Fully refund a paid POS ticket: delete projected OrderFact rows and set status to refunded. Open/void tickets cannot be refunded. */
+  /** Authenticated guest: record a Point System earn event for a location. Currently supports open_menu_qr (idempotent once per UTC day). No-ops when Point System is off or the rule is disabled. */
+  recordPointEarnEvent: RecordPointEarnEventResultType
+  /** Fully refund a paid POS ticket: insert compensating OrderFact rows and set status to refunded. Open/void tickets cannot be refunded. */
   refundPosOrder: PosOrderType
+  /** Soft-delete a Food Profile preference. */
+  removeFoodPreference: FoodPreferenceType
   /** Remove a photo (by filename) from a media collection. */
   removeMediaFromCollection: MediaCollectionType
   /** Remove a line from an open POS ticket. */
@@ -931,33 +1124,47 @@ export type Mutation = {
   removeWorkspaceMember: Scalars['Boolean']['output']
   /** Replace all categories and items on the location's curated menu (creates the menu if needed). Pass an empty list to clear categories. */
   replaceLocationMenuItems: MenuType
-  /** Revoke a CRM device so it can no longer authenticate. Clears refresh token hash. Idempotent if already revoked. */
-  revokeCrmDevice: CrmDeviceType
+  /** Location owner: save a reply on a feedback note. */
+  replyMenuItemFeedback: MenuItemFeedbackType
+  /** Mark the winning outcome and resolve the prediction. When reward_mode is points, awards correct voters via the point ledger. Requires location ownership and an active prediction subscription. */
+  resolvePrediction: PredictionType
   /** Promote an analytics run's COGS snapshot into the location catalog. */
   saveAnalyticsRunCogsToLocation: Array<LocationMenuItemCogsType>
+  /** Enable or disable cross-venue personalization globally. Enabling requires a new cross_venue_personalization consent (notice/version/method). */
+  setCrossVenuePersonalization: MyFoodProfileType
+  /** Enable or disable cross-venue portability for one preference. */
+  setFoodPreferencePortability: FoodPreferenceType
   /** Set bill-level discount on an open POS ticket. */
   setPosOrderDiscount: PosOrderType
   /** Set or clear the note on an open POS ticket line. */
   setPosOrderLineNote: PosOrderType
   /** Set or clear the optional table label on an open POS ticket. Pass null or blank to clear. */
   setPosOrderTableLabel: PosOrderType
+  /** Authenticated guest: leave feedback on a published digital-menu item. Creates a pending note for owner moderation. Optional posOrderId links the note to a digital-menu order the guest opened. */
+  submitMenuItemFeedback: MenuItemFeedbackType
+  /** Authenticated guest: open a POS ticket for a published digital menu and add lines. Rejects if the guest already has an open digital-menu ticket at this location (no append). No location ownership required. Close/pay remains staff-only. dine_in requires tableLabel; delivery requires address+phone; pickup clears table/delivery. */
+  submitPublicMenuOrder: PosOrderType
   /** Move packages of a tracked item from one location to another. */
   transferInventoryStock: InventoryStockTransferResult
   /** Update a manual calendar entry. */
   updateCalendarEntry: CalendarEntryType
-  /** Update a CRM app by id. */
-  updateCrmApp: CrmAppType
+  /** Correct a Food Profile preference value. */
+  updateFoodPreference: FoodPreferenceType
   /** Update a pantry catalog item. */
   updateInventoryCatalogItem: InventoryCatalogItemType
   /** Update lower/upper on-hand limits for location stock. */
   updateInventoryStockLimits: InventoryStockType
   updateLocation: LocationType
+  /** Replace advisor memory for a location. Pass empty content to clear. Does not modify owner manualBriefInput / quickProfile. */
+  updateLocationAdvisorMemory: LocationAdvisorMemoryType
   /** Rename or reorder a location area. */
   updateLocationArea: LocationAreaType
   /** Replace owner manual brief hints for a location. Pass quickProfile {} to clear. Does not modify AI-generated location_social_settings. */
   updateLocationManualBriefInput: LocationManualBriefInputType
   /** Publish or unpublish the location digital menu and set the public slug. Requires location ownership. Creates an empty menu when enabling if none exists. */
   updateLocationPublicMenu: LocationPublicMenuSettingsType
+  /** Set or clear the location public URL slug. Requires location ownership. Does not require a digital_menu subscription. Reserved and duplicate slugs are rejected. */
+  updateLocationPublicSlug: LocationPublicSlugType
   /** Rename a media collection by id. */
   updateMediaCollection: MediaCollectionType
   /** Update a playbook instance. */
@@ -976,8 +1183,29 @@ export type Mutation = {
   upsertInventoryStock: InventoryStockType
   upsertLocationMenuItemCogsBulk: Array<LocationMenuItemCogsType>
   upsertMenuItemCogsBulk: Array<MenuItemCogsType>
+  /** Create or update point earn rules for a location. Requires location ownership and an active point_system subscription. */
+  upsertPointEarnRules: Array<PointEarnRuleType>
   /** Void an open POS ticket (no OrderFact projection). */
   voidPosOrder: PosOrderType
+  /** Cast one vote on an open prediction. Requires authenticated Clerk guest. When reward_mode is points and points_for_vote > 0, credits the guest if Point System is active. */
+  votePrediction: PredictionType
+  /** Cast one vote on an open voting. Requires authenticated Clerk guest. When reward_mode is points and points_for_vote > 0, credits the guest if Point System is active. */
+  voteVoting: VotingType
+  /** Withdraw Food Profile consent for a purpose. */
+  withdrawFoodPreferenceConsent: MyFoodProfileType
+}
+
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationActivateServiceSubscriptionArgs = {
+  locationId: Scalars['Int']['input']
+  serviceKey: Scalars['String']['input']
+}
+
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationAddExplicitFoodPreferenceArgs = {
+  explanation?: InputMaybe<Scalars['String']['input']>
+  preferenceType: Scalars['String']['input']
+  preferenceValue: Scalars['String']['input']
 }
 
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */
@@ -996,22 +1224,46 @@ export type MutationAddPosOrderLineArgs = {
 }
 
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationAdvancePosOrderPrepStatusArgs = {
+  orderId: Scalars['Int']['input']
+}
+
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationApplyLocationCogsToAnalyticsRunArgs = {
   analyticsRunId: Scalars['ID']['input']
 }
 
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */
-export type MutationAwardCrmCashbackArgs = {
-  customerId: Scalars['UUID']['input']
-  label?: InputMaybe<Scalars['String']['input']>
-  paymentAmount?: InputMaybe<Scalars['Int']['input']>
-  redeemAmount?: InputMaybe<Scalars['Int']['input']>
+export type MutationCancelServiceSubscriptionArgs = {
+  locationId: Scalars['Int']['input']
+  serviceKey: Scalars['String']['input']
+}
+
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationClearWorkspaceServiceDataArgs = {
+  serviceKey: Scalars['String']['input']
+  targetClerkUserId: Scalars['String']['input']
+}
+
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationClosePickupOfferArgs = {
+  offerId: Scalars['Int']['input']
 }
 
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationClosePosOrderArgs = {
   orderId: Scalars['Int']['input']
   paymentMethod: PosPaymentMethod
+}
+
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationClosePredictionArgs = {
+  predictionId: Scalars['Int']['input']
+}
+
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationCloseVotingArgs = {
+  votingId: Scalars['Int']['input']
 }
 
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */
@@ -1030,16 +1282,6 @@ export type MutationCreateCalendarEntryArgs = {
   mediaRefs?: InputMaybe<Array<CalendarMediaRefInput>>
   time: Scalars['String']['input']
   title: Scalars['String']['input']
-}
-
-/** Root mutation: sales uploads, workspace invites, and catalog writes. */
-export type MutationCreateCrmAppArgs = {
-  title: Scalars['String']['input']
-}
-
-/** Root mutation: sales uploads, workspace invites, and catalog writes. */
-export type MutationCreateCrmEnrollmentTokenArgs = {
-  appId: Scalars['Int']['input']
 }
 
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */
@@ -1073,6 +1315,7 @@ export type MutationCreateLocationArgs = {
   country?: InputMaybe<Scalars['String']['input']>
   currency?: InputMaybe<Scalars['String']['input']>
   name: Scalars['String']['input']
+  publicSlug?: InputMaybe<Scalars['String']['input']>
   street?: InputMaybe<Scalars['String']['input']>
   workspaceId: Scalars['ID']['input']
 }
@@ -1087,6 +1330,11 @@ export type MutationCreateLocationAreaArgs = {
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationCreateMediaCollectionArgs = {
   name: Scalars['String']['input']
+}
+
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationCreatePickupOfferArgs = {
+  input: CreatePickupOfferInput
 }
 
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */
@@ -1114,11 +1362,21 @@ export type MutationCreatePostPageArgs = {
 }
 
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationCreatePredictionArgs = {
+  input: CreatePredictionInput
+}
+
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationCreateStyleArgs = {
   isDefault?: Scalars['Boolean']['input']
   name: Scalars['String']['input']
   referenceImageName: Scalars['String']['input']
   spec: Scalars['JSON']['input']
+}
+
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationCreateVotingArgs = {
+  input: CreateVotingInput
 }
 
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */
@@ -1134,16 +1392,6 @@ export type MutationDeleteAnalyticsRunArgs = {
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationDeleteCalendarEntryArgs = {
   id: Scalars['Int']['input']
-}
-
-/** Root mutation: sales uploads, workspace invites, and catalog writes. */
-export type MutationDeleteCrmAppArgs = {
-  id: Scalars['Int']['input']
-}
-
-/** Root mutation: sales uploads, workspace invites, and catalog writes. */
-export type MutationDeleteCrmCustomerArgs = {
-  id: Scalars['UUID']['input']
 }
 
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */
@@ -1209,6 +1457,34 @@ export type MutationEnsureMediaAssetArgs = {
 }
 
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationGrantFoodPreferenceConsentArgs = {
+  allowedSignalCategories: Array<Scalars['String']['input']>
+  collectionMethod: Scalars['String']['input']
+  consentVersion: Scalars['String']['input']
+  evidenceReference?: InputMaybe<Scalars['String']['input']>
+  privacyNoticeVersion: Scalars['String']['input']
+  purpose: Scalars['String']['input']
+}
+
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationHideMenuItemFeedbackArgs = {
+  feedbackId: Scalars['Int']['input']
+}
+
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationImportPosSalesReportArgs = {
+  endDate: Scalars['Date']['input']
+  locationId: Scalars['ID']['input']
+  startDate: Scalars['Date']['input']
+}
+
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationIngestDevDataArgs = {
+  scope: Scalars['String']['input']
+  targetClerkUserId: Scalars['String']['input']
+}
+
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationInviteWorkspaceMemberArgs = {
   clerkUserId: Scalars['String']['input']
   workspaceId: Scalars['ID']['input']
@@ -1225,6 +1501,11 @@ export type MutationProvisionWorkspaceArgs = {
   name: Scalars['String']['input']
   ownerClerkUserId: Scalars['String']['input']
   plan?: InputMaybe<Scalars['String']['input']>
+}
+
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationPublishMenuItemFeedbackArgs = {
+  feedbackId: Scalars['Int']['input']
 }
 
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */
@@ -1248,8 +1529,19 @@ export type MutationRecordAiUsageEventArgs = {
 }
 
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationRecordPointEarnEventArgs = {
+  actionKey: Scalars['String']['input']
+  locationId: Scalars['Int']['input']
+}
+
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationRefundPosOrderArgs = {
   orderId: Scalars['Int']['input']
+}
+
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationRemoveFoodPreferenceArgs = {
+  id: Scalars['ID']['input']
 }
 
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */
@@ -1276,13 +1568,36 @@ export type MutationReplaceLocationMenuItemsArgs = {
 }
 
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */
-export type MutationRevokeCrmDeviceArgs = {
-  deviceId: Scalars['UUID']['input']
+export type MutationReplyMenuItemFeedbackArgs = {
+  feedbackId: Scalars['Int']['input']
+  reply: Scalars['String']['input']
+}
+
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationResolvePredictionArgs = {
+  predictionId: Scalars['Int']['input']
+  winningOutcomeId: Scalars['Int']['input']
 }
 
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationSaveAnalyticsRunCogsToLocationArgs = {
   analyticsRunId: Scalars['ID']['input']
+}
+
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationSetCrossVenuePersonalizationArgs = {
+  allowedSignalCategories?: InputMaybe<Array<Scalars['String']['input']>>
+  collectionMethod?: InputMaybe<Scalars['String']['input']>
+  consentVersion?: InputMaybe<Scalars['String']['input']>
+  enabled: Scalars['Boolean']['input']
+  evidenceReference?: InputMaybe<Scalars['String']['input']>
+  privacyNoticeVersion?: InputMaybe<Scalars['String']['input']>
+}
+
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationSetFoodPreferencePortabilityArgs = {
+  enabled: Scalars['Boolean']['input']
+  id: Scalars['ID']['input']
 }
 
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */
@@ -1300,6 +1615,27 @@ export type MutationSetPosOrderLineNoteArgs = {
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationSetPosOrderTableLabelArgs = {
   orderId: Scalars['Int']['input']
+  tableLabel?: InputMaybe<Scalars['String']['input']>
+}
+
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationSubmitMenuItemFeedbackArgs = {
+  body: Scalars['String']['input']
+  guestDisplayName?: InputMaybe<Scalars['String']['input']>
+  locationId: Scalars['Int']['input']
+  menuItemId: Scalars['Int']['input']
+  posOrderId?: InputMaybe<Scalars['Int']['input']>
+  sentiment?: InputMaybe<MenuItemFeedbackSentiment>
+}
+
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationSubmitPublicMenuOrderArgs = {
+  deliveryAddress?: InputMaybe<Scalars['String']['input']>
+  deliveryNotes?: InputMaybe<Scalars['String']['input']>
+  deliveryPhone?: InputMaybe<Scalars['String']['input']>
+  fulfillmentMode: PosFulfillmentMode
+  lines: Array<PublicMenuOrderLineInput>
+  locationId: Scalars['Int']['input']
   tableLabel?: InputMaybe<Scalars['String']['input']>
 }
 
@@ -1322,11 +1658,9 @@ export type MutationUpdateCalendarEntryArgs = {
 }
 
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */
-export type MutationUpdateCrmAppArgs = {
-  cashbackPercent?: InputMaybe<Scalars['Int']['input']>
-  cashbackThresholdAmount?: InputMaybe<Scalars['Int']['input']>
-  id: Scalars['Int']['input']
-  title: Scalars['String']['input']
+export type MutationUpdateFoodPreferenceArgs = {
+  id: Scalars['ID']['input']
+  preferenceValue: Scalars['String']['input']
 }
 
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */
@@ -1353,9 +1687,19 @@ export type MutationUpdateLocationArgs = {
   country?: InputMaybe<Scalars['String']['input']>
   currency?: InputMaybe<Scalars['String']['input']>
   id: Scalars['ID']['input']
+  legalName?: InputMaybe<Scalars['String']['input']>
   name?: InputMaybe<Scalars['String']['input']>
   openingHours?: InputMaybe<Array<OpeningHourInput>>
+  publicSlug?: InputMaybe<Scalars['String']['input']>
   street?: InputMaybe<Scalars['String']['input']>
+  taxNumber?: InputMaybe<Scalars['String']['input']>
+  vatId?: InputMaybe<Scalars['String']['input']>
+}
+
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationUpdateLocationAdvisorMemoryArgs = {
+  content: Scalars['String']['input']
+  locationId: Scalars['Int']['input']
 }
 
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */
@@ -1373,11 +1717,19 @@ export type MutationUpdateLocationManualBriefInputArgs = {
 
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationUpdateLocationPublicMenuArgs = {
+  allowDelivery?: InputMaybe<Scalars['Boolean']['input']>
   allowDineIn?: InputMaybe<Scalars['Boolean']['input']>
   allowPickup?: InputMaybe<Scalars['Boolean']['input']>
   headerImageFilename?: InputMaybe<Scalars['String']['input']>
   locationId: Scalars['Int']['input']
+  orderingEnabled?: InputMaybe<Scalars['Boolean']['input']>
   publicEnabled?: InputMaybe<Scalars['Boolean']['input']>
+  publicSlug?: InputMaybe<Scalars['String']['input']>
+}
+
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationUpdateLocationPublicSlugArgs = {
+  locationId: Scalars['Int']['input']
   publicSlug?: InputMaybe<Scalars['String']['input']>
 }
 
@@ -1460,8 +1812,60 @@ export type MutationUpsertMenuItemCogsBulkArgs = {
 }
 
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationUpsertPointEarnRulesArgs = {
+  locationId: Scalars['Int']['input']
+  rules: Array<PointEarnRuleInput>
+}
+
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationVoidPosOrderArgs = {
   orderId: Scalars['Int']['input']
+}
+
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationVotePredictionArgs = {
+  outcomeId: Scalars['Int']['input']
+  predictionId: Scalars['Int']['input']
+}
+
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationVoteVotingArgs = {
+  optionId: Scalars['Int']['input']
+  votingId: Scalars['Int']['input']
+}
+
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationWithdrawFoodPreferenceConsentArgs = {
+  purpose: Scalars['String']['input']
+}
+
+/** Guest Food Profile summary. */
+export type MyFoodProfileType = {
+  __typename?: 'MyFoodProfileType'
+  activeConsents: Array<FoodPreferenceConsentType>
+  crossVenuePersonalizationEnabled: Scalars['Boolean']['output']
+  profileId?: Maybe<Scalars['String']['output']>
+  status?: Maybe<Scalars['String']['output']>
+}
+
+/** Guest point balance at one location. */
+export type MyPointBalanceType = {
+  __typename?: 'MyPointBalanceType'
+  balance: Scalars['Int']['output']
+  locationId: Scalars['Int']['output']
+  locationName: Scalars['String']['output']
+}
+
+/** One ledger credit/debit for the authenticated guest. */
+export type MyPointEntryType = {
+  __typename?: 'MyPointEntryType'
+  actionKey: Scalars['String']['output']
+  amount: Scalars['Int']['output']
+  createdAt: Scalars['DateTime']['output']
+  id: Scalars['String']['output']
+  label?: Maybe<Scalars['String']['output']>
+  locationId: Scalars['Int']['output']
+  locationName: Scalars['String']['output']
 }
 
 export type NormalizedLineItem = {
@@ -1546,6 +1950,22 @@ export type PeriodHeadlineType = {
   totalRevenue: Scalars['Float']['output']
 }
 
+/** A location pickup offer guests can discover and collect. */
+export type PickupOfferType = {
+  __typename?: 'PickupOfferType'
+  availableFrom: Scalars['DateTime']['output']
+  availableUntil: Scalars['DateTime']['output']
+  createdAt: Scalars['DateTime']['output']
+  description: Scalars['String']['output']
+  id: Scalars['Int']['output']
+  isLive: Scalars['Boolean']['output']
+  locationId: Scalars['Int']['output']
+  locationName: Scalars['String']['output']
+  price?: Maybe<Scalars['Float']['output']>
+  status: Scalars['String']['output']
+  title: Scalars['String']['output']
+}
+
 /** A saved playbook instance for a location and date window. */
 export type PlaybookType = {
   __typename?: 'PlaybookType'
@@ -1555,6 +1975,33 @@ export type PlaybookType = {
   name: Scalars['String']['output']
   playbookType: Scalars['String']['output']
   startDate: Scalars['String']['output']
+}
+
+/** Upsert payload for one point earn rule. */
+export type PointEarnRuleInput = {
+  actionKey: Scalars['String']['input']
+  enabled: Scalars['Boolean']['input']
+  points: Scalars['Int']['input']
+}
+
+/** Earn rule for one known Point System action at a location. */
+export type PointEarnRuleType = {
+  __typename?: 'PointEarnRuleType'
+  actionKey: Scalars['String']['output']
+  enabled: Scalars['Boolean']['output']
+  points: Scalars['Int']['output']
+}
+
+/** Append-only POS audit event. */
+export type PosAuditEventType = {
+  __typename?: 'PosAuditEventType'
+  action: Scalars['String']['output']
+  actorClerkUserId: Scalars['String']['output']
+  createdAt: Scalars['DateTime']['output']
+  id: Scalars['Int']['output']
+  locationId: Scalars['Int']['output']
+  payloadJson: Scalars['String']['output']
+  posOrderId?: Maybe<Scalars['Int']['output']>
 }
 
 /** Day close / Z-lite summary for native POS. */
@@ -1580,6 +2027,32 @@ export type PosDaySummaryType = {
   voidCount: Scalars['Int']['output']
 }
 
+/** Fiscalization / TSE process snapshot for a POS ticket. */
+export type PosFiscalProcessType = {
+  __typename?: 'PosFiscalProcessType'
+  certificateSerial?: Maybe<Scalars['String']['output']>
+  clientId?: Maybe<Scalars['String']['output']>
+  finishedAt?: Maybe<Scalars['DateTime']['output']>
+  id: Scalars['Int']['output']
+  kind: Scalars['String']['output']
+  lastError?: Maybe<Scalars['String']['output']>
+  processType: Scalars['String']['output']
+  provider: Scalars['String']['output']
+  qrPayload?: Maybe<Scalars['String']['output']>
+  signatureCounter?: Maybe<Scalars['Int']['output']>
+  startedAt?: Maybe<Scalars['DateTime']['output']>
+  state: Scalars['String']['output']
+  tseSignature?: Maybe<Scalars['String']['output']>
+  tseTransactionId?: Maybe<Scalars['String']['output']>
+}
+
+/** How a digital-menu (or similar) ticket should be fulfilled. */
+export enum PosFulfillmentMode {
+  Delivery = 'DELIVERY',
+  DineIn = 'DINE_IN',
+  Pickup = 'PICKUP',
+}
+
 /** Selected modifier snapshot on a POS line. */
 export type PosOrderLineModifierType = {
   __typename?: 'PosOrderLineModifierType'
@@ -1591,7 +2064,7 @@ export type PosOrderLineModifierType = {
   sortOrder: Scalars['Int']['output']
 }
 
-/** One line on a POS ticket with price/name snapshots. */
+/** One line on a POS ticket with price/name/tax snapshots. */
 export type PosOrderLineType = {
   __typename?: 'PosOrderLineType'
   id: Scalars['Int']['output']
@@ -1601,17 +2074,15 @@ export type PosOrderLineType = {
   menuItemId: Scalars['Int']['output']
   modifiers: Array<PosOrderLineModifierType>
   nameSnapshot: Scalars['String']['output']
+  net: Scalars['Float']['output']
   note?: Maybe<Scalars['String']['output']>
   posOrderId: Scalars['Int']['output']
   qty: Scalars['Int']['output']
   sortOrder: Scalars['Int']['output']
+  tax: Scalars['Float']['output']
+  taxClass: Scalars['String']['output']
+  taxRateBps: Scalars['Int']['output']
   unitPrice: Scalars['Float']['output']
-}
-
-/** How a digital-menu (or similar) ticket should be fulfilled. */
-export enum PosFulfillmentMode {
-  DineIn = 'DINE_IN',
-  Pickup = 'PICKUP',
 }
 
 /** Lifecycle status of a POS ticket. */
@@ -1627,18 +2098,28 @@ export type PosOrderType = {
   __typename?: 'PosOrderType'
   billNumber: Scalars['String']['output']
   closedAt?: Maybe<Scalars['DateTime']['output']>
+  deliveryAddress?: Maybe<Scalars['String']['output']>
+  deliveryNotes?: Maybe<Scalars['String']['output']>
+  deliveryPhone?: Maybe<Scalars['String']['output']>
   discountAmount: Scalars['Float']['output']
+  fiscalProcesses: Array<PosFiscalProcessType>
   fulfillmentMode?: Maybe<PosFulfillmentMode>
+  gross: Scalars['Float']['output']
   id: Scalars['Int']['output']
   lines: Array<PosOrderLineType>
   locationId: Scalars['Int']['output']
+  net: Scalars['Float']['output']
   note?: Maybe<Scalars['String']['output']>
   openedAt: Scalars['DateTime']['output']
   openedByClerkUserId: Scalars['String']['output']
   paymentMethod?: Maybe<PosPaymentMethod>
+  prepStatus?: Maybe<PosPrepStatus>
   refundedAt?: Maybe<Scalars['DateTime']['output']>
+  registerId?: Maybe<Scalars['Int']['output']>
   status: PosOrderStatus
   tableLabel?: Maybe<Scalars['String']['output']>
+  tax: Scalars['Float']['output']
+  taxBreakdown: Array<PosTaxBreakdownType>
 }
 
 /** Recorded payment method on close (no processor in v1). */
@@ -1646,6 +2127,25 @@ export enum PosPaymentMethod {
   Card = 'CARD',
   Cash = 'CASH',
   Other = 'OTHER',
+}
+
+/** Kitchen / fulfillment prep status (independent of payment). */
+export enum PosPrepStatus {
+  Delivered = 'DELIVERED',
+  PickedUp = 'PICKED_UP',
+  Preparing = 'PREPARING',
+  Ready = 'READY',
+  Received = 'RECEIVED',
+  Served = 'SERVED',
+}
+
+/** VAT breakdown bucket for a POS ticket (euros). */
+export type PosTaxBreakdownType = {
+  __typename?: 'PosTaxBreakdownType'
+  gross: Scalars['Float']['output']
+  net: Scalars['Float']['output']
+  tax: Scalars['Float']['output']
+  taxRateBps: Scalars['Int']['output']
 }
 
 /** A single generated image version for a post page. */
@@ -1685,6 +2185,43 @@ export type PostType = {
   title?: Maybe<Scalars['String']['output']>
   updatedAt?: Maybe<Scalars['DateTime']['output']>
   workspaceId?: Maybe<Scalars['ID']['output']>
+}
+
+/** One outcome option on a prediction. */
+export type PredictionOutcomeType = {
+  __typename?: 'PredictionOutcomeType'
+  id: Scalars['Int']['output']
+  label: Scalars['String']['output']
+  sortOrder: Scalars['Int']['output']
+}
+
+/** A location prediction guests can vote on. */
+export type PredictionType = {
+  __typename?: 'PredictionType'
+  closesAt: Scalars['DateTime']['output']
+  createdAt: Scalars['DateTime']['output']
+  id: Scalars['Int']['output']
+  locationId: Scalars['Int']['output']
+  locationName: Scalars['String']['output']
+  myVote?: Maybe<PredictionVoteType>
+  outcomes: Array<PredictionOutcomeType>
+  pointsForCorrect: Scalars['Int']['output']
+  pointsForVote: Scalars['Int']['output']
+  question: Scalars['String']['output']
+  resolvedAt?: Maybe<Scalars['DateTime']['output']>
+  rewardMode: Scalars['String']['output']
+  status: Scalars['String']['output']
+  voteCount: Scalars['Int']['output']
+  winningOutcomeId?: Maybe<Scalars['Int']['output']>
+}
+
+/** A guest's vote on a prediction. */
+export type PredictionVoteType = {
+  __typename?: 'PredictionVoteType'
+  clerkUserId: Scalars['String']['output']
+  createdAt: Scalars['DateTime']['output']
+  id: Scalars['Int']['output']
+  outcomeId: Scalars['Int']['output']
 }
 
 /** Per-menu signals for choosing promotion content: sales totals, optional menu-engineering classification when COGS exist, and optional peak demand timing. */
@@ -1730,9 +2267,34 @@ export type PublicHolidayType = {
   name: Scalars['String']['output']
 }
 
+/** One discoverable venue card for the public explore directory. */
+export type PublicLocationDirectoryItemType = {
+  __typename?: 'PublicLocationDirectoryItemType'
+  city?: Maybe<Scalars['String']['output']>
+  hasPickupOffer: Scalars['Boolean']['output']
+  headerImageFilename?: Maybe<Scalars['String']['output']>
+  id: Scalars['Int']['output']
+  mediaOwnerClerkUserId?: Maybe<Scalars['String']['output']>
+  menuDishCount: Scalars['Int']['output']
+  name: Scalars['String']['output']
+  pickupOfferAvailableUntil?: Maybe<Scalars['DateTime']['output']>
+  pickupOfferPrice?: Maybe<Scalars['Float']['output']>
+  pickupOfferTitle?: Maybe<Scalars['String']['output']>
+  publicSlug: Scalars['String']['output']
+  workspaceId?: Maybe<Scalars['ID']['output']>
+}
+
+/** Public explore directory: distinct cities for chips plus matching venues with a published digital menu. */
+export type PublicLocationDirectoryType = {
+  __typename?: 'PublicLocationDirectoryType'
+  cities: Array<Scalars['String']['output']>
+  locations: Array<PublicLocationDirectoryItemType>
+}
+
 /** Public digital menu for a location. Null when the slug is unknown or the menu is not published. */
 export type PublicLocationMenuType = {
   __typename?: 'PublicLocationMenuType'
+  allowDelivery: Scalars['Boolean']['output']
   allowDineIn: Scalars['Boolean']['output']
   allowPickup: Scalars['Boolean']['output']
   categories: Array<PublicMenuCategoryType>
@@ -1741,8 +2303,61 @@ export type PublicLocationMenuType = {
   locationId: Scalars['Int']['output']
   mediaOwnerClerkUserId?: Maybe<Scalars['String']['output']>
   name: Scalars['String']['output']
+  orderingEnabled: Scalars['Boolean']['output']
   publicSlug: Scalars['String']['output']
   workspaceId?: Maybe<Scalars['ID']['output']>
+}
+
+/** Teaser for a live pickup offer shown on the public location hub. */
+export type PublicLocationPickupOfferTeaserType = {
+  __typename?: 'PublicLocationPickupOfferTeaserType'
+  availableUntil: Scalars['DateTime']['output']
+  price?: Maybe<Scalars['Float']['output']>
+  title: Scalars['String']['output']
+}
+
+/** Teaser for open predictions shown on the public location hub. */
+export type PublicLocationPredictionTeaserType = {
+  __typename?: 'PublicLocationPredictionTeaserType'
+  openCount: Scalars['Int']['output']
+  pointsForCorrect: Scalars['Int']['output']
+  pointsForVote: Scalars['Int']['output']
+  question: Scalars['String']['output']
+  rewardMode: Scalars['String']['output']
+}
+
+/** One guest-facing service entry on a public location hub. */
+export type PublicLocationServiceType = {
+  __typename?: 'PublicLocationServiceType'
+  available: Scalars['Boolean']['output']
+  hrefSegment: Scalars['String']['output']
+  key: Scalars['String']['output']
+}
+
+/** Public location hub by slug. Returned when the slug exists; services may all be unavailable (greeting-only home). */
+export type PublicLocationType = {
+  __typename?: 'PublicLocationType'
+  headerImageFilename?: Maybe<Scalars['String']['output']>
+  id: Scalars['Int']['output']
+  mediaOwnerClerkUserId?: Maybe<Scalars['String']['output']>
+  menuDishCount?: Maybe<Scalars['Int']['output']>
+  menuOpenPoints?: Maybe<Scalars['Int']['output']>
+  name: Scalars['String']['output']
+  pickupOfferTeaser?: Maybe<PublicLocationPickupOfferTeaserType>
+  predictionTeaser?: Maybe<PublicLocationPredictionTeaserType>
+  publicSlug: Scalars['String']['output']
+  services: Array<PublicLocationServiceType>
+  votingTeaser?: Maybe<PublicLocationVotingTeaserType>
+  workspaceId?: Maybe<Scalars['ID']['output']>
+}
+
+/** Teaser for open votings shown on the public location hub. */
+export type PublicLocationVotingTeaserType = {
+  __typename?: 'PublicLocationVotingTeaserType'
+  openCount: Scalars['Int']['output']
+  pointsForVote: Scalars['Int']['output']
+  question: Scalars['String']['output']
+  rewardMode: Scalars['String']['output']
 }
 
 /** One category section on the public digital menu. */
@@ -1753,14 +2368,57 @@ export type PublicMenuCategoryType = {
   sortOrder: Scalars['Int']['output']
 }
 
+/** One published guest note shown on the public menu item. */
+export type PublicMenuItemFeedbackType = {
+  __typename?: 'PublicMenuItemFeedbackType'
+  body: Scalars['String']['output']
+  createdAt: Scalars['DateTime']['output']
+  guestDisplayName?: Maybe<Scalars['String']['output']>
+  ownerReply?: Maybe<Scalars['String']['output']>
+  sentiment?: Maybe<MenuItemFeedbackSentiment>
+}
+
 /** One available item on the public digital menu. */
 export type PublicMenuItemType = {
   __typename?: 'PublicMenuItemType'
+  allergens: Array<MenuAllergen>
   description: Scalars['String']['output']
+  dietaryTags: Array<MenuDietaryTag>
+  id: Scalars['Int']['output']
   imageFilename?: Maybe<Scalars['String']['output']>
   name: Scalars['String']['output']
   price: Scalars['Float']['output']
+  publishedFeedbackCount: Scalars['Int']['output']
+  publishedFeedbacks: Array<PublicMenuItemFeedbackType>
   sortOrder: Scalars['Int']['output']
+}
+
+/** Guest-facing line on a digital-menu ticket. */
+export type PublicMenuOrderLineGuestType = {
+  __typename?: 'PublicMenuOrderLineGuestType'
+  menuItemId: Scalars['Int']['output']
+  name: Scalars['String']['output']
+}
+
+/** One line on a guest digital-menu order. */
+export type PublicMenuOrderLineInput = {
+  menuItemId: Scalars['Int']['input']
+  qty?: Scalars['Int']['input']
+}
+
+/** Guest-facing digital-menu order status. Lines are included when loading the caller's open ticket; status polls may return an empty line list. */
+export type PublicMenuOrderStatusType = {
+  __typename?: 'PublicMenuOrderStatusType'
+  billNumber: Scalars['String']['output']
+  deliveryAddress?: Maybe<Scalars['String']['output']>
+  deliveryNotes?: Maybe<Scalars['String']['output']>
+  deliveryPhone?: Maybe<Scalars['String']['output']>
+  fulfillmentMode?: Maybe<PosFulfillmentMode>
+  id: Scalars['Int']['output']
+  lines: Array<PublicMenuOrderLineGuestType>
+  prepStatus?: Maybe<PosPrepStatus>
+  status: PosOrderStatus
+  tableLabel?: Maybe<Scalars['String']['output']>
 }
 
 /** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
@@ -1774,14 +2432,6 @@ export type Query = {
   analyticsRuns: Array<AnalyticsRunListItemType>
   /** Revenue and quantity share per menu category for an analytics run. Returns null when the run has no order lines. */
   categoryMix?: Maybe<CategoryMixPayloadType>
-  /** Fetch one CRM app by id. Null when missing or access denied. */
-  crmApp?: Maybe<CrmAppType>
-  /** List CRM apps in workspaces the current user belongs to. */
-  crmApps: Array<CrmAppType>
-  /** CRM customer detail with devices. Null when missing or access denied. */
-  crmCustomer?: Maybe<CrmCustomerType>
-  /** List customers enrolled in a CRM app. Empty when missing or access denied. */
-  crmCustomers: Array<CrmCustomerType>
   /** Composite Instagram signals for an analytics run: content heroes, trending items, avoid list, category focus, best posting window, and period headline. Requires order facts; returns null if none. */
   instagramSignals?: Maybe<InstagramSignalsType>
   /** Pantry catalog for a workspace. Empty when unauthenticated or not a member. */
@@ -1800,6 +2450,10 @@ export type Query = {
   locationMenu?: Maybe<MenuType>
   /** Location-scoped COGS catalog. Empty when unauthenticated or not an owner. */
   locationMenuItemCogs: Array<LocationMenuItemCogsType>
+  /** Location owner: count of pending (new) menu item feedback. */
+  locationMenuItemFeedbackPendingCount: Scalars['Int']['output']
+  /** Location owner: list menu item feedback for the digital menu inbox. Optional status filter. Returns empty when unauthenticated or not owner. */
+  locationMenuItemFeedbacks: Array<MenuItemFeedbackType>
   /** All locations the current user can access (direct owner or workspace member). */
   locations: Array<LocationType>
   /** List media assets (photos) in the caller's workspaces. When collectionId is set, only members of that collection. */
@@ -1820,37 +2474,79 @@ export type Query = {
   menuItemsCatalogForRun?: Maybe<MenuCatalogPayloadType>
   /** Aggregated AI usage for the authenticated user in [startDate, endDate] (UTC dates). */
   myAiUsageSummary?: Maybe<AiUsageSummaryType>
+  /** One Food Profile preference by id for the authenticated guest. */
+  myFoodPreference?: Maybe<FoodPreferenceType>
+  /** List Food Profile preferences for the authenticated guest. Empty when unauthenticated. */
+  myFoodPreferences: Array<FoodPreferenceType>
+  /** Food Profile summary for the authenticated Clerk guest (global switch + active consents). Empty fields when unauthenticated. */
+  myFoodProfile?: Maybe<MyFoodProfileType>
+  /** Guest predictions at locations the authenticated guest has visited (point ledger or digital-menu orders), with an active prediction subscription. Includes open predictions, plus closed and recently resolved ones the guest voted on. Empty when unauthenticated. */
+  myOpenPredictions: Array<PredictionType>
+  /** Signed-in guest: latest open digital-menu ticket at this location (for restoring My order after reload when local storage is empty). */
+  myOpenPublicMenuOrder?: Maybe<PublicMenuOrderStatusType>
+  /** Open guest votings at locations the authenticated guest has visited (point ledger or digital-menu orders), with an active voting subscription. Closed votings are hidden. Empty when unauthenticated. */
+  myOpenVotings: Array<VotingType>
+  /** Point balances for the authenticated Clerk user, one row per location with ledger activity. Empty when unauthenticated or no activity. */
+  myPointBalances: Array<MyPointBalanceType>
+  /** Recent point ledger entries for the authenticated Clerk user (newest first). Empty when unauthenticated. */
+  myPointEntries: Array<MyPointEntryType>
+  /** Service subscriptions for workspaces the current user belongs to. Defaults to active only; set includeCanceled for history. */
+  myServiceSubscriptions: Array<ServiceSubscriptionType>
   myWorkspace?: Maybe<WorkspaceType>
   operatingProfile?: Maybe<OperatingProfileType>
   /** Compute average order size and revenue for an analytics run. Returns None if the run has no order data. */
   orderMetrics?: Maybe<AnalyticsRunOrderMetricsType>
+  /** List pickup offers for a location. Requires location ownership. Empty when unauthenticated or not an owner. */
+  pickupOffers: Array<PickupOfferType>
   /** A single playbook instance by id, if the caller can access it. */
   playbook?: Maybe<PlaybookType>
   /** Playbook instances of a given type for all locations the caller can access. */
   playbooks: Array<PlaybookType>
+  /** Point earn rules for a location (full catalog merged with saved values). Requires ownership and an active point_system subscription; otherwise []. */
+  pointEarnRules: Array<PointEarnRuleType>
+  /** Append-only audit events for a POS ticket (owner-only). */
+  posAuditEvents: Array<PosAuditEventType>
   /** Day close / Z-lite summary for native POS tickets. */
   posDaySummary?: Maybe<PosDaySummaryType>
   /** Load a single POS ticket by id. */
   posOrder?: Maybe<PosOrderType>
-  /** List POS tickets for a location. Defaults to tickets opened since start of the current UTC day. */
+  /** List POS tickets for a location. Defaults to tickets opened since start of the current Europe/Berlin business day. Optional note and prepStatus filter digital-menu Order board tickets. */
   posOrders: Array<PosOrderType>
   /** A single post in the caller's workspace, with pages. */
   post?: Maybe<PostType>
   /** Posts in workspaces the current user belongs to, newest first. */
   posts: Array<PostType>
+  /** List predictions for a location. Requires location ownership. Empty when unauthenticated or not an owner. */
+  predictions: Array<PredictionType>
   /** Return per-menu promotion signals for an analytics run: volume and revenue, optional BCG-style menu-engineering metrics when COGS allow, and peak hour/day from demand heatmaps. When locationId is set, the run must belong to that location (otherwise returns null). */
   promotionMenuItems?: Maybe<PromotionMenuItemsPayloadType>
   publicHolidays: Array<PublicHolidayType>
+  /** Public location hub by slug. Returns null when the slug is unknown. No authentication required. */
+  publicLocation?: Maybe<PublicLocationType>
   /** Public digital menu by location slug. Returns null when the slug is missing or the menu is not published. No authentication required. */
   publicLocationMenu?: Maybe<PublicLocationMenuType>
+  /** Live pickup offer for a public location slug when pickup_offer is active and the offer window is open. Null when unknown, inactive, or no live offer. */
+  publicLocationPickupOffer?: Maybe<PickupOfferType>
+  /** Guest-visible predictions for a public location slug when Prediction is active: open, closed (awaiting result), and recently resolved. Empty when the slug is unknown or Prediction is off. Includes myVote when the caller is authenticated. */
+  publicLocationPredictions: Array<PredictionType>
+  /** Guest-visible open votings for a public location slug when Voting is active. Closed votings are hidden from guests. Empty when the slug is unknown or Voting is off. Includes myVote when the caller is authenticated. */
+  publicLocationVotings: Array<VotingType>
+  /** Discoverable venues with a published digital menu. Optional city (exact, case-insensitive) and free-text query on name/city. No authentication required. */
+  publicLocations: PublicLocationDirectoryType
+  /** Guest status poll for a digital-menu order the caller opened. Returns null if unauthenticated, not the opener, or not a digital-menu ticket. */
+  publicMenuOrder?: Maybe<PublicMenuOrderStatusType>
   /** Compare per-menu revenue for an analytics run against the previous run for the same location (or an explicit previousRunId). Returns null when the current run has no order lines. */
   revenueTrends?: Maybe<RevenueTrendsPayloadType>
   /** Manual calendar entries for a location. Returns an empty payload when the caller is unauthenticated, does not own the location, or there are no manual entries. */
   schedulerCalendar: SchedulerCalendarPayload
+  /** Semantic search over published knowledge (domain, KPI, playbook). Returns only chunks the caller may access (global + authorized scopes). */
+  searchKnowledge: Array<KnowledgeSearchHitType>
   /** Fetch one visual style pack by id. Null when missing or access denied. */
   style?: Maybe<StyleType>
   /** List visual style packs in workspaces the current user belongs to. */
   styles: Array<StyleType>
+  /** List votings for a location. Requires location ownership. Empty when unauthenticated or not an owner. */
+  votings: Array<VotingType>
   workspaceMembers: Array<WorkspaceMembershipType>
 }
 
@@ -1876,28 +2572,6 @@ export type QueryAnalyticsRunsArgs = {
 export type QueryCategoryMixArgs = {
   analyticsRunId: Scalars['ID']['input']
   locationId?: InputMaybe<Scalars['ID']['input']>
-}
-
-/** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
-export type QueryCrmAppArgs = {
-  id: Scalars['Int']['input']
-}
-
-/** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
-export type QueryCrmAppsArgs = {
-  first?: InputMaybe<Scalars['Int']['input']>
-}
-
-/** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
-export type QueryCrmCustomerArgs = {
-  id: Scalars['UUID']['input']
-}
-
-/** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
-export type QueryCrmCustomersArgs = {
-  appId: Scalars['Int']['input']
-  first?: InputMaybe<Scalars['Int']['input']>
-  search?: InputMaybe<Scalars['String']['input']>
 }
 
 /** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
@@ -1950,6 +2624,17 @@ export type QueryLocationMenuArgs = {
 /** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryLocationMenuItemCogsArgs = {
   locationId: Scalars['ID']['input']
+}
+
+/** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+export type QueryLocationMenuItemFeedbackPendingCountArgs = {
+  locationId: Scalars['Int']['input']
+}
+
+/** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+export type QueryLocationMenuItemFeedbacksArgs = {
+  locationId: Scalars['Int']['input']
+  status?: InputMaybe<MenuItemFeedbackStatus>
 }
 
 /** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
@@ -2009,6 +2694,31 @@ export type QueryMyAiUsageSummaryArgs = {
 }
 
 /** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+export type QueryMyFoodPreferenceArgs = {
+  id: Scalars['ID']['input']
+}
+
+/** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+export type QueryMyFoodPreferencesArgs = {
+  includeRemoved?: Scalars['Boolean']['input']
+}
+
+/** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+export type QueryMyOpenPublicMenuOrderArgs = {
+  locationId: Scalars['Int']['input']
+}
+
+/** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+export type QueryMyPointEntriesArgs = {
+  limit?: Scalars['Int']['input']
+}
+
+/** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+export type QueryMyServiceSubscriptionsArgs = {
+  includeCanceled?: Scalars['Boolean']['input']
+}
+
+/** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryOperatingProfileArgs = {
   analyticsRunId: Scalars['ID']['input']
   locationId: Scalars['ID']['input']
@@ -2020,6 +2730,11 @@ export type QueryOrderMetricsArgs = {
 }
 
 /** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+export type QueryPickupOffersArgs = {
+  locationId: Scalars['Int']['input']
+}
+
+/** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryPlaybookArgs = {
   id: Scalars['Int']['input']
 }
@@ -2027,6 +2742,16 @@ export type QueryPlaybookArgs = {
 /** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryPlaybooksArgs = {
   playbookType: Scalars['String']['input']
+}
+
+/** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+export type QueryPointEarnRulesArgs = {
+  locationId: Scalars['Int']['input']
+}
+
+/** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+export type QueryPosAuditEventsArgs = {
+  orderId: Scalars['Int']['input']
 }
 
 /** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
@@ -2043,6 +2768,8 @@ export type QueryPosOrderArgs = {
 /** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryPosOrdersArgs = {
   locationId: Scalars['Int']['input']
+  note?: InputMaybe<Scalars['String']['input']>
+  prepStatus?: InputMaybe<PosPrepStatus>
   since?: InputMaybe<Scalars['DateTime']['input']>
   status?: InputMaybe<PosOrderStatus>
 }
@@ -2055,6 +2782,11 @@ export type QueryPostArgs = {
 /** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryPostsArgs = {
   first?: InputMaybe<Scalars['Int']['input']>
+}
+
+/** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+export type QueryPredictionsArgs = {
+  locationId: Scalars['Int']['input']
 }
 
 /** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
@@ -2071,8 +2803,41 @@ export type QueryPublicHolidaysArgs = {
 }
 
 /** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+export type QueryPublicLocationArgs = {
+  slug: Scalars['String']['input']
+}
+
+/** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryPublicLocationMenuArgs = {
   slug: Scalars['String']['input']
+}
+
+/** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+export type QueryPublicLocationPickupOfferArgs = {
+  slug: Scalars['String']['input']
+}
+
+/** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+export type QueryPublicLocationPredictionsArgs = {
+  slug: Scalars['String']['input']
+}
+
+/** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+export type QueryPublicLocationVotingsArgs = {
+  slug: Scalars['String']['input']
+}
+
+/** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+export type QueryPublicLocationsArgs = {
+  city?: InputMaybe<Scalars['String']['input']>
+  first?: InputMaybe<Scalars['Int']['input']>
+  hasPickupOffer?: InputMaybe<Scalars['Boolean']['input']>
+  query?: InputMaybe<Scalars['String']['input']>
+}
+
+/** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+export type QueryPublicMenuOrderArgs = {
+  orderId: Scalars['Int']['input']
 }
 
 /** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
@@ -2088,6 +2853,15 @@ export type QuerySchedulerCalendarArgs = {
 }
 
 /** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+export type QuerySearchKnowledgeArgs = {
+  categories?: InputMaybe<Array<Scalars['String']['input']>>
+  chartIds?: InputMaybe<Array<Scalars['String']['input']>>
+  limit?: InputMaybe<Scalars['Int']['input']>
+  locationId?: InputMaybe<Scalars['Int']['input']>
+  query: Scalars['String']['input']
+}
+
+/** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryStyleArgs = {
   id: Scalars['Int']['input']
 }
@@ -2098,9 +2872,21 @@ export type QueryStylesArgs = {
 }
 
 /** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+export type QueryVotingsArgs = {
+  locationId: Scalars['Int']['input']
+}
+
+/** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryWorkspaceMembersArgs = {
   first?: InputMaybe<Scalars['Int']['input']>
   workspaceId: Scalars['ID']['input']
+}
+
+/** Result of recording a guest point-earn event. */
+export type RecordPointEarnEventResultType = {
+  __typename?: 'RecordPointEarnEventResultType'
+  awarded: Scalars['Boolean']['output']
+  balance: Scalars['Int']['output']
 }
 
 /** Per-menu revenue comparison between two analytics periods. */
@@ -2154,6 +2940,19 @@ export type SchedulerCalendarSlotType = {
   title: Scalars['String']['output']
 }
 
+/** Entitlement for a catalog service on one location (digital_menu, stamp_card, voting, …). */
+export type ServiceSubscriptionType = {
+  __typename?: 'ServiceSubscriptionType'
+  canceledAt?: Maybe<Scalars['DateTime']['output']>
+  createdAt?: Maybe<Scalars['DateTime']['output']>
+  id: Scalars['ID']['output']
+  locationId: Scalars['ID']['output']
+  serviceKey: Scalars['String']['output']
+  status: Scalars['String']['output']
+  updatedAt?: Maybe<Scalars['DateTime']['output']>
+  workspaceId: Scalars['ID']['output']
+}
+
 export type SignalConfidenceType = {
   __typename?: 'SignalConfidenceType'
   coverageNotes: Array<Scalars['String']['output']>
@@ -2196,6 +2995,43 @@ export type TrendingItemType = {
   rankCurrent: Scalars['Int']['output']
   rankPrevious: Scalars['Int']['output']
   trendLabel: Scalars['String']['output']
+}
+
+/** One option on a voting. */
+export type VotingOptionType = {
+  __typename?: 'VotingOptionType'
+  id: Scalars['Int']['output']
+  label: Scalars['String']['output']
+  sortOrder: Scalars['Int']['output']
+}
+
+/** A location voting guests can vote on. */
+export type VotingType = {
+  __typename?: 'VotingType'
+  closesAt?: Maybe<Scalars['DateTime']['output']>
+  createdAt: Scalars['DateTime']['output']
+  id: Scalars['Int']['output']
+  locationId: Scalars['Int']['output']
+  locationName: Scalars['String']['output']
+  myVote?: Maybe<VotingVoteType>
+  options: Array<VotingOptionType>
+  pointsForCorrect: Scalars['Int']['output']
+  pointsForVote: Scalars['Int']['output']
+  question: Scalars['String']['output']
+  resolvedAt?: Maybe<Scalars['DateTime']['output']>
+  rewardMode: Scalars['String']['output']
+  status: Scalars['String']['output']
+  voteCount: Scalars['Int']['output']
+  winningOptionId?: Maybe<Scalars['Int']['output']>
+}
+
+/** A guest's vote on a voting. */
+export type VotingVoteType = {
+  __typename?: 'VotingVoteType'
+  clerkUserId: Scalars['String']['output']
+  createdAt: Scalars['DateTime']['output']
+  id: Scalars['Int']['output']
+  optionId: Scalars['Int']['output']
 }
 
 /** Day-of-week demand distribution for a menu item. */

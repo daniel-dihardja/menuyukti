@@ -36,7 +36,6 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools]
 packages = [
     "graphql",
-    "graphql.crm_auth",
     "graphql.schema",
     "graphql.resolvers",
     "graphql.data_sources",
@@ -48,7 +47,6 @@ packages = [
 
 [tool.setuptools.package-dir]
 "graphql" = "."
-"graphql.crm_auth" = "crm_auth"
 "graphql.schema" = "schema"
 "graphql.resolvers" = "resolvers"
 "graphql.data_sources" = "data_sources"

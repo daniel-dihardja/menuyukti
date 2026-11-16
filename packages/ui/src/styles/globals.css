@@ -172,7 +172,7 @@
 
 @layer utilities {
   /**
-   * Semantic type roles (aligned with apps/mobile-app theme/tokens.ts):
+   * Semantic type roles (semantic type scale for product UI):
    * - type-body: 16px / lh 1.5 — long-form & readable content
    * - type-chrome: 14px — dense SaaS UI (buttons, labels, descriptions)
    * - type-caption: 12px — meta / secondary (readable UI floor)

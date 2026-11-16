@@ -3,7 +3,6 @@
 export const SERVICE_KEY_DIGITAL_MENU = 'digital_menu' as const
 export const SERVICE_KEY_POINT_SYSTEM = 'point_system' as const
 export const SERVICE_KEY_STAMP_CARD = 'stamp_card' as const
-export const SERVICE_KEY_CASHBACK = 'cashback' as const
 export const SERVICE_KEY_PICK_AND_WIN = 'pick_and_win' as const
 export const SERVICE_KEY_VOTING = 'voting' as const
 export const SERVICE_KEY_PICKUP_OFFER = 'pickup_offer' as const
@@ -12,7 +11,6 @@ export const SERVICE_KEYS = [
   SERVICE_KEY_DIGITAL_MENU,
   SERVICE_KEY_POINT_SYSTEM,
   SERVICE_KEY_STAMP_CARD,
-  SERVICE_KEY_CASHBACK,
   SERVICE_KEY_PICK_AND_WIN,
   SERVICE_KEY_VOTING,
   SERVICE_KEY_PICKUP_OFFER,

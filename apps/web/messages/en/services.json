@@ -20,7 +20,6 @@
         "digital_menu": "Digital Menu",
         "point_system": "Point System",
         "stamp_card": "Stamp Card",
-        "cashback": "Cashback",
         "pick_and_win": "Pick & Win",
         "voting": "Voting",
         "pickup_offer": "Pickup Offer"
@@ -50,10 +49,6 @@
       "stampCard": {
         "title": "Stamp Card",
         "benefit": "Digital loyalty stamps guests collect toward a free item — classic punch-card rewards, without paper cards."
-      },
-      "cashback": {
-        "title": "Cashback",
-        "benefit": "Reward returning guests with a cashback balance they can redeem on a later visit."
       },
       "prediction": {
         "title": "Pick & Win",

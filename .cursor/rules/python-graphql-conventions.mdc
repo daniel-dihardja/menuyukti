@@ -11,7 +11,7 @@ alwaysApply: false
 - **Strawberry** for GraphQL schema and resolvers.
 - **SQLAlchemy** (via `graphql.data_sources`) for persistence:
   - Polymorphic **`node`** rows (`node_type` + JSON `data`) for some product entities.
-  - **Dedicated tables** for domains such as native POS (`pos_order`, `pos_fiscal_process`, …), CRM, inventory, and related audit/register models — not everything is a `Node`.
+  - **Dedicated tables** for domains such as native POS (`pos_order`, `pos_fiscal_process`, …), inventory, and related audit/register models — not everything is a `Node`.
 - **ASGI app** exposed as `graphql.server:app` (`uvicorn graphql.server:app`, port **8000**).
 
 ## Directory layout

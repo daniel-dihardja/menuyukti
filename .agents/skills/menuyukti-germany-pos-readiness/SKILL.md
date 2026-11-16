@@ -145,7 +145,7 @@ Audit Progress:
 | Register / sequences | `data_sources/models/pos_register.py`, `pos_bill_sequence.py`                                               |
 | Migrations           | `apps/graphql/alembic/versions/*pos*`                                                                       |
 | Tests                | `apps/graphql/tests/` (POS-related)                                                                         |
-| Clients              | `apps/web`, `apps/mobile-app` (POS UI/API consumers only — no direct DB)                                    |
+| Clients              | `apps/web` (POS UI/API consumers only — no direct DB)                                                       |
 
 Expand search as needed; do not limit evidence to this map.
 

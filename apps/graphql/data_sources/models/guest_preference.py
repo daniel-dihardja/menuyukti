@@ -1,7 +1,7 @@
 """Guest preference network: optional profile, consent, and derived signals.
 
-Boundary B/C — separate from restaurant operational data (votes, POS, CRM).
-Keyed by Clerk ``clerk_user_id`` only; never silently merge CRM customers.
+Boundary B/C — separate from restaurant operational data (votes, POS).
+Keyed by Clerk ``clerk_user_id`` only.
 """
 
 from __future__ import annotations

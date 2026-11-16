@@ -5,7 +5,6 @@ import {
   BookOpen,
   CalendarDays,
   ChevronRight,
-  Contact,
   Image,
   LayoutDashboard,
   MapPin,
@@ -128,27 +127,6 @@ const NAV_WORKSPACE: NavItem[] = [
     href: routes.analytics.branches,
     icon: <MapPin />,
     group: 'analytics',
-  },
-  {
-    key: 'crm',
-    labelKey: 'crm',
-    href: routes.crm,
-    icon: <Contact />,
-    group: 'operations',
-    children: [
-      {
-        key: 'crmApps',
-        labelKey: 'crmApps',
-        href: routes.crmApps,
-        group: 'operations',
-      },
-      {
-        key: 'crmRegistrations',
-        labelKey: 'crmRegistrations',
-        href: routes.crmRegistrations,
-        group: 'operations',
-      },
-    ],
   },
   {
     key: 'printShop',
@@ -280,9 +258,6 @@ export function NavMain() {
     if (!url) return false
     if (url === routes.shop) {
       return pathname === routes.shop || pathname.startsWith(`${routes.shop}/`)
-    }
-    if (url === routes.crm) {
-      return pathname === routes.crm || pathname.startsWith(`${routes.crm}/`)
     }
     return pathname.startsWith(url)
   }

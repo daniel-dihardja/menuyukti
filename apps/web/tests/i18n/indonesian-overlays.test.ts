@@ -105,7 +105,7 @@ describe('Indonesian message overlays', () => {
       platform: Record<string, unknown>
     }
     expect(Object.keys(platformOverlay.platform).toSorted()).toEqual(
-      ['calendar', 'crm', 'printOrders'].toSorted(),
+      ['calendar', 'printOrders'].toSorted(),
     )
   })
 })

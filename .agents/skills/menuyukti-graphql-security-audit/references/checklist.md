@@ -5,13 +5,13 @@ Use check IDs in findings (`AUTH-01`, `AZ-03`, …). Map to categories in [scori
 
 ## Identity and authentication trust (`identity`)
 
-| ID      | Check                                                                         | Evidence tips                                                    |
-| ------- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| AUTH-01 | GraphQL context derives `user_id` only from trusted request path              | `server.py` `GraphQLWithUserContext`; who may set `X-User-Id`    |
-| AUTH-02 | `INTERNAL_API_KEY` / `X-Internal-Api-Key` required in production-like configs | Middleware; what happens when env unset                          |
-| AUTH-03 | Exceptions to internal key (e.g. `/crm/v1/`) are intentional and scoped       | Path allowlist; no operator GraphQL bypass                       |
-| AUTH-04 | Unauthenticated requests cannot run privileged operations                     | Missing `user_id` → empty query / mutation raise per conventions |
-| AUTH-05 | User id is not accepted from client-controlled GraphQL variables alone        | Variables vs context                                             |
+| ID      | Check                                                                                | Evidence tips                                                    |
+| ------- | ------------------------------------------------------------------------------------ | ---------------------------------------------------------------- |
+| AUTH-01 | GraphQL context derives `user_id` only from trusted request path                     | `server.py` `GraphQLWithUserContext`; who may set `X-User-Id`    |
+| AUTH-02 | `INTERNAL_API_KEY` / `X-Internal-Api-Key` required in production-like configs        | Middleware; what happens when env unset                          |
+| AUTH-03 | No path exceptions bypass the internal API key (aside from intentional public reads) | Middleware path allowlist empty or documented                    |
+| AUTH-04 | Unauthenticated requests cannot run privileged operations                            | Missing `user_id` → empty query / mutation raise per conventions |
+| AUTH-05 | User id is not accepted from client-controlled GraphQL variables alone               | Variables vs context                                             |
 
 ## Authorization / IDOR / tenant isolation (`authorization`)
 
@@ -23,7 +23,7 @@ Use check IDs in findings (`AUTH-01`, `AZ-03`, …). Map to categories in [scori
 | AZ-04 | Analytics runs / child resources checked via owner helpers                              | `get_analytics_run_if_owner` etc.             |
 | AZ-05 | IDOR: foreign integer/UUID ids yield deny (empty / error), not other tenants’ data      | Cross-user tests; sequential `locationId`     |
 | AZ-06 | Nested field resolvers cannot widen access beyond parent authorization                  | Parent allowed but child loads by raw id      |
-| AZ-07 | Public / CRM customer operations cannot escalate to operator GraphQL data               | Enrollment tokens, public menu, CRM routes    |
+| AZ-07 | Public operations cannot escalate to operator GraphQL data                              | Public menu / holidays vs operator schema     |
 | AZ-08 | Silent deny (queries) vs raise (mutations) consistent; no existence oracle if sensitive | Error message diffs for foreign ids           |
 
 ## Abuse and DoS controls (`abuse-controls`)
@@ -60,7 +60,7 @@ Use check IDs in findings (`AUTH-01`, `AZ-03`, …). Map to categories in [scori
 | ID     | Check                                                        | Evidence tips              |
 | ------ | ------------------------------------------------------------ | -------------------------- |
 | SEC-01 | Secrets not in schema defaults, tests fixtures committed raw | `.env` patterns, test keys |
-| SEC-02 | PII/CRM fields not over-exposed on broad queries             | CRM customer queries       |
+| SEC-02 | PII fields not over-exposed on broad queries                 | Guest/profile queries      |
 | SEC-03 | Internal API key not logged in clear text                    | Logging helpers            |
 
 ## Client / BFF / agents trust boundary (`trust-boundary`)
@@ -74,9 +74,9 @@ Use check IDs in findings (`AUTH-01`, `AZ-03`, …). Map to categories in [scori
 
 ## Authz automated testing (`testing`)
 
-| ID     | Check                                                                   | Evidence tips                   |
-| ------ | ----------------------------------------------------------------------- | ------------------------------- |
-| TST-01 | Negative authz tests exist for representative mutations                 | `OTHER_USER` patterns           |
-| TST-02 | Negative authz tests exist for representative queries / IDOR            | Foreign `location_id`           |
-| TST-03 | Internal key / unauthenticated behavior covered                         | Middleware or integration tests |
-| TST-04 | High-risk domains (POS refunds, delete location, CRM) have denial tests | Domain test modules             |
+| ID     | Check                                                              | Evidence tips                   |
+| ------ | ------------------------------------------------------------------ | ------------------------------- |
+| TST-01 | Negative authz tests exist for representative mutations            | `OTHER_USER` patterns           |
+| TST-02 | Negative authz tests exist for representative queries / IDOR       | Foreign `location_id`           |
+| TST-03 | Internal key / unauthenticated behavior covered                    | Middleware or integration tests |
+| TST-04 | High-risk domains (POS refunds, delete location) have denial tests | Domain test modules             |

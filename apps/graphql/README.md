@@ -5,11 +5,9 @@ A minimal starter for the Strawberry GraphQL endpoint. The service currently exp
 
 ## Security and query limits
 
-**Trust model.** The API is intended for **server-to-server** use from the Next.js app (or other trusted callers). When `INTERNAL_API_KEY` (or `GRAPHQL_INTERNAL_API_KEY`) is set in the environment, [`server.py`](./server.py) requires matching header `X-Internal-Api-Key` on every request **except** CRM customer routes under `/crm/v1/` (passwordless enroll + device auth). In **production** (`GRAPHQL_ENV` / `ENV` / `VERCEL_ENV` / `NODE_ENV=production`, or `GRAPHQL_REQUIRE_INTERNAL_API_KEY=1`), startup **fails** if neither key is set. The authenticated Clerk user is passed as **`X-User-Id`**; the GraphQL layer **trusts** that value after the internal key gate. Do not expose this endpoint directly to browsers without a gateway that validates callers. Rotate `INTERNAL_API_KEY` if it may have leaked.
+**Trust model.** The API is intended for **server-to-server** use from the Next.js app (or other trusted callers). When `INTERNAL_API_KEY` (or `GRAPHQL_INTERNAL_API_KEY`) is set in the environment, [`server.py`](./server.py) requires matching header `X-Internal-Api-Key` on every request. In **production** (`GRAPHQL_ENV` / `ENV` / `VERCEL_ENV` / `NODE_ENV=production`, or `GRAPHQL_REQUIRE_INTERNAL_API_KEY=1`), startup **fails** if neither key is set. The authenticated Clerk user is passed as **`X-User-Id`**; the GraphQL layer **trusts** that value after the internal key gate. Do not expose this endpoint directly to browsers without a gateway that validates callers. Rotate `INTERNAL_API_KEY` if it may have leaked.
 
 **Public catalog reads.** `publicHolidays` is intentionally unauthenticated (static holiday JSON).
-
-**CRM customer JWT.** Device access tokens are HS256 JWTs signed with **`CRM_JWT_SECRET`** (required, at least 32 characters). Set it in root `.env` or as an override in `apps/graphql/.env` for local runs. Claims: `sub` (customer UUID), `did` (device UUID), `app_id` (public CRM app UUID), `exp` (~15 minutes). Refresh tokens are opaque secrets stored as SHA-256 hashes on `crm_device`.
 
 **Query protections.** The schema enables depth, alias count, token count, and maximum field-selection limits (see [`limits.py`](./limits.py) and [`schema/__init__.py`](./schema/__init__.py)). Oversized documents fail validation before execution.
 
@@ -42,7 +40,7 @@ Misconfigured env fails with a clear `CONFIG ERROR` message (exit code 2).
 Schema changes are **versioned** under [`alembic/`](./alembic/) (revision scripts in `alembic/versions/`). Production and shared PostgreSQL databases should use Alembic, not ad-hoc `ALTER` scripts, for DDL.
 
 1. Install dependencies with `make install` (`uv sync --all-groups`, including Ruff and mypy) or your normal workflow.
-2. Set `DATABASE_URL` in the **repo-root** `.env` (canonical). GraphQL loads root `.env` then optional `apps/graphql/.env` overrides via `graphql.env_bootstrap` (database + Alembic). Use a PostgreSQL URL, e.g. `postgresql+psycopg2://user:pass@host:5432/dbname`. See `apps/graphql/.env.example` for GraphQL-only keys (`CRM_JWT_SECRET`, etc.).
+2. Set `DATABASE_URL` in the **repo-root** `.env` (canonical). GraphQL loads root `.env` then optional `apps/graphql/.env` overrides via `graphql.env_bootstrap` (database + Alembic). Use a PostgreSQL URL, e.g. `postgresql+psycopg2://user:pass@host:5432/dbname`. See `apps/graphql/.env.example` for GraphQL-only keys.
 3. Apply migrations: `make db-upgrade` (or `PYTHONPATH=../.. uv run alembic upgrade head` from `apps/graphql`).
 4. After a model change, generate a revision: `make db-generate MSG=short_description`, then review the file under `alembic/versions/`, run `make db-upgrade`, and commit the new revision.
 5. **Existing databases** that were created with `create_all` before Alembic: if `make db-upgrade` fails with **DuplicateTable** (tables exist but Alembic has no version), the live schema likely already matches an older revision. Stamp that revision, then upgrade:

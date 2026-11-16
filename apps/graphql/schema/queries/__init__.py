@@ -2,8 +2,6 @@ from .ai_usage import AiUsageQuery
 from .analytics_bundle import AnalyticsBundleQuery
 from .analytics_run import AnalyticsRunQuery
 from .category_mix import CategoryMixQuery
-from .crm_apps import CrmAppsQuery
-from .crm_customers import CrmCustomersQuery
 from .instagram_signals import InstagramSignalsQuery
 from .inventory_catalog import InventoryCatalogQuery
 from .inventory_refill_forecast import InventoryRefillForecastQuery
@@ -44,8 +42,6 @@ __all__ = [
     "AnalyticsBundleQuery",
     "AnalyticsRunQuery",
     "CategoryMixQuery",
-    "CrmAppsQuery",
-    "CrmCustomersQuery",
     "InstagramSignalsQuery",
     "InventoryCatalogQuery",
     "KnowledgeSearchQuery",

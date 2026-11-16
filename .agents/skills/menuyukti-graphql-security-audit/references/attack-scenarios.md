@@ -26,9 +26,9 @@ Do not ship runnable exploit PoCs. High-level reproduction steps for engineers a
 
 ### S03 — Child resource IDOR (analytics run, node, order)
 
-**Threat:** Pass a foreign analytics run id, node id, POS order id, or CRM customer id while authenticated as another user.  
+**Threat:** Pass a foreign analytics run id, node id, POS order id, while authenticated as another user.  
 **Expected:** Ownership check on the parent resource before return/mutate.  
-**Inspect:** `get_analytics_run_if_owner`, POS/CRM query modules.  
+**Inspect:** `get_analytics_run_if_owner`, POS query modules.  
 **Scopes:** `authorization`
 
 ### S04 — Missing mutation guard
@@ -73,9 +73,8 @@ Do not ship runnable exploit PoCs. High-level reproduction steps for engineers a
 **Inspect:** `apps/web/lib/graphql/client.ts`, representative `app/api` routes, agents GraphQL helper.  
 **Scopes:** `trust-boundary`
 
-### S10 — CRM / public path escape
+### S10 — Public path escape
 
-**Threat:** Public CRM or menu path skips internal key and reaches operator-only data or mutations.  
-**Expected:** `/crm/v1/` (and similar) strictly scoped; no shared unsafe resolvers.  
-**Inspect:** CRM route handlers vs GraphQL operator schema.  
-**Scopes:** `identity`, `authorization`, `trust-boundary`
+**Threat:** A public path skips the internal key and reaches operator-only data or mutations.
+**Expected:** Public routes (if any) are strictly scoped; no shared unsafe resolvers.
+**Inspect:** Public holiday/menu handlers vs GraphQL operator schema.

@@ -1,7 +1,6 @@
 /** Web-only service catalog grouping (not stored in GraphQL). */
 
 import {
-  SERVICE_KEY_CASHBACK,
   SERVICE_KEY_DIGITAL_MENU,
   SERVICE_KEY_POINT_SYSTEM,
   SERVICE_KEY_PICK_AND_WIN,
@@ -30,7 +29,6 @@ export const SERVICE_CATEGORY_BY_KEY: Record<ServiceKey, ServiceCategory> = {
   [SERVICE_KEY_DIGITAL_MENU]: SERVICE_CATEGORY_GUEST_EXPERIENCE,
   [SERVICE_KEY_PICKUP_OFFER]: SERVICE_CATEGORY_GUEST_EXPERIENCE,
   [SERVICE_KEY_STAMP_CARD]: SERVICE_CATEGORY_CLASSIC_LOYALTY,
-  [SERVICE_KEY_CASHBACK]: SERVICE_CATEGORY_CLASSIC_LOYALTY,
 }
 
 export function categoryForServiceKey(serviceKey: string): ServiceCategory | null {

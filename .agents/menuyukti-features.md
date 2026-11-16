@@ -23,9 +23,8 @@ Use this when the user names a product feature, alias, or asks where something l
 
 ### Deprecated / inactive (keep in repo; not active product track)
 
-| Terms / aliases                    | Status                                                                                                                                                                                                                            |
-| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Expo mobile app, `apps/mobile-app` | **Deprecated / inactive.** Customer focus is the **web PWA** (`apps/web` customer shell + Serwist). Do not expand native mobile as primary; skill [`menuyukti-mobile`](skills/menuyukti-mobile/SKILL.md) is for maintenance only. |
+| Terms / aliases | Status |
+| --------------- | ------ |
 
 ### Removed (do not implement as live product)
 
