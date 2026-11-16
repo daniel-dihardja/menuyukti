@@ -6,28 +6,14 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
-from starlette.routing import Mount, Route
+from starlette.routing import Mount
 from strawberry.asgi import GraphQL
 from strawberry.http import GraphQLHTTPResponse
 
 from graphql import GraphQLError
 
 from .context import init_request_context
-from .crm_auth.challenge import challenge_endpoint
-from .crm_auth.enroll import enroll_endpoint
-from .crm_auth.me_cashback import me_cashback_endpoint
-from .crm_auth.refresh import refresh_endpoint
-from .crm_auth.revoke import revoke_endpoint
-from .crm_auth.verify import verify_endpoint
 from .schema import schema
-
-# Local Expo web (and similar) call CRM REST from the browser; override via CRM_CORS_ORIGINS.
-_DEFAULT_CRM_CORS_ORIGINS = (
-    "http://localhost:8081",
-    "http://localhost:8082",
-    "http://127.0.0.1:8081",
-    "http://127.0.0.1:8082",
-)
 
 
 def _env_flag_true(name: str) -> bool:
@@ -81,19 +67,16 @@ def _validate_production_fiscal_provider() -> None:
 
 
 def _cors_allow_origins() -> list[str]:
-    raw = os.environ.get("CRM_CORS_ORIGINS", "").strip()
+    raw = os.environ.get("GRAPHQL_CORS_ORIGINS", "").strip()
     if raw:
         return [origin.strip() for origin in raw.split(",") if origin.strip()]
-    return list(_DEFAULT_CRM_CORS_ORIGINS)
+    return []
 
 
 class InternalApiKeyMiddleware(BaseHTTPMiddleware):
-    """When INTERNAL_API_KEY is set, require X-Internal-Api-Key except CRM customer auth."""
+    """When INTERNAL_API_KEY is set, require X-Internal-Api-Key on every request."""
 
     async def dispatch(self, request: Request, call_next):
-        path = request.url.path
-        if path.startswith("/crm/v1/"):
-            return await call_next(request)
         expected = INTERNAL_API_KEY or expected_internal_api_key()
         if expected and request.headers.get("X-Internal-Api-Key", "") != expected:
             return Response(status_code=403)
@@ -151,12 +134,6 @@ _graphql_app = GraphQLWithUserContext(schema, multipart_uploads_enabled=True)
 
 _starlette_app = Starlette(
     routes=[
-        Route("/crm/v1/enroll", enroll_endpoint, methods=["POST"]),
-        Route("/crm/v1/auth/challenge", challenge_endpoint, methods=["POST"]),
-        Route("/crm/v1/auth/verify", verify_endpoint, methods=["POST"]),
-        Route("/crm/v1/auth/refresh", refresh_endpoint, methods=["POST"]),
-        Route("/crm/v1/auth/revoke", revoke_endpoint, methods=["POST"]),
-        Route("/crm/v1/me/cashback", me_cashback_endpoint, methods=["GET"]),
         Mount("/", app=_graphql_app),
     ],
     lifespan=_lifespan,

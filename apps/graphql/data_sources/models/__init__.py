@@ -3,13 +3,6 @@
 from graphql.data_sources.models.ai_usage_event import AiUsageEvent
 from graphql.data_sources.models.analytics import AnalyticsRun, MenuItemCogs, OrderFact
 from graphql.data_sources.models.calendar_entry import CalendarEntry
-from graphql.data_sources.models.crm_app import CrmApp
-from graphql.data_sources.models.crm_audit_event import CrmAuditEvent
-from graphql.data_sources.models.crm_auth_challenge import CrmAuthChallenge
-from graphql.data_sources.models.crm_cashback_entry import CrmCashbackEntry
-from graphql.data_sources.models.crm_customer import CrmCustomer
-from graphql.data_sources.models.crm_device import CrmDevice
-from graphql.data_sources.models.crm_enrollment_token import CrmEnrollmentToken
 from graphql.data_sources.models.guest_preference import (
     GuestPreferenceConsent,
     GuestPreferenceProfile,
@@ -76,13 +69,6 @@ __all__ = [
     "AiUsageEvent",
     "AnalyticsRun",
     "CalendarEntry",
-    "CrmApp",
-    "CrmAuditEvent",
-    "CrmAuthChallenge",
-    "CrmCashbackEntry",
-    "CrmCustomer",
-    "CrmDevice",
-    "CrmEnrollmentToken",
     "GuestPreferenceConsent",
     "GuestPreferenceProfile",
     "GuestPreferenceSignal",

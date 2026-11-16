@@ -7,17 +7,14 @@ alwaysApply: true
 
 ## Product
 
-Menuyukti is an **agentic AI platform for data-driven restaurant marketing and operations**. Operators use a **chat-first** home (`/advisor`, modes `general` | `image_assistant`) plus analytics, **digital-menu Order board**, inventar, media, IG Studio, calendar, and CRM — without a live campaign-workflow / milestone pipeline or native POS cashier UI.
+Menuyukti is an **agentic AI platform for data-driven restaurant marketing and operations**. Operators use a **chat-first** home (`/advisor`, modes `general` | `image_assistant`) plus analytics, **digital-menu Order board**, inventar, media, IG Studio, calendar — without a live campaign-workflow / milestone pipeline or native POS cashier UI.
 
-**Customer-facing focus** is the **web PWA** (`apps/web` customer shell + Serwist). The Expo native app remains in the repo but is **deprecated / inactive** (not the product focus).
-
-## Apps and frameworks
+**Customer-facing focus** is the **web PWA** (`apps/web` customer shell + Serwist). ## Apps and frameworks
 
 | App | Path | Role |
 |-----|------|------|
-| **GraphQL API** | `apps/graphql` | Python backend: structured data, analytics, POS, inventory, CRM, persistence. **Single source of truth** for reads/writes used by the web app and agent services. |
+| **GraphQL API** | `apps/graphql` | Python backend: structured data, analytics, POS, inventory, persistence. **Single source of truth** for reads/writes used by the web app and agent services. |
 | **Web (operator + PWA)** | `apps/web` | Next.js: operator shell (`/advisor`, analytics/POS, inventar, …) and **customer PWA** shell. Calls GraphQL. |
-| **Mobile (deprecated)** | `apps/mobile-app` | Expo (React Native) CRM client — **kept in repo, inactive**. Prefer web PWA for customer work. No direct DB. |
 | **LangGraph agents** | `apps/agents` | Python FastAPI: LangChain / LangGraph **streaming chat** (`general` \| `image_assistant` \| `inventar`) via AI Gateway. Calls GraphQL over HTTP. |
 
 ## Agentic patterns in use
@@ -29,14 +26,15 @@ Menuyukti is an **agentic AI platform for data-driven restaurant marketing and o
 
 ## Layering and boundaries
 
-- **`apps/graphql`:** Strawberry schema, SQLAlchemy persistence (polymorphic `node` rows **and** dedicated tables such as POS/CRM/inventory), analytics — the database and migrations live here; other apps call GraphQL over HTTP.
+- **`apps/graphql`:** Strawberry schema, SQLAlchemy persistence (polymorphic `node` rows **and** dedicated tables such as POS/inventory), analytics — the database and migrations live here; other apps call GraphQL over HTTP.
 - **`apps/web`:** Primary client (operator + customer PWA). GraphQL only — no direct DB access.
-- **`apps/mobile-app`:** Deprecated / inactive; if touched, still GraphQL/BFF only — no direct DB.
 - **`apps/agents`:** FastAPI routers validate DTOs and delegate to compiled graphs / runnables; keep prompts, model config, and graph topology in separate modules — not monolithic route handlers. Agents use `httpx` to call GraphQL; they do not open DB connections.
 
 ## Further reading
 
 - Root [`README.md`](../../README.md) — features and high-level architecture.
+- Platform architecture: [`backlog/docs/architecture/doc-8`](../../backlog/docs/architecture/doc-8%20-%20Menuyukti-platform-architecture.md).
+- Advisor agent + AG-UI: [`backlog/docs/agents/doc-9`](../../backlog/docs/agents/doc-9%20-%20Advisor-agent-runtime-and-AG-UI-sync.md).
 - Feature glossary: [`.agents/menuyukti-features.md`](../../.agents/menuyukti-features.md).
 - Cleanup history (milestones removed): [`packages/docs/menuyukti/remove-milestones.md`](../../packages/docs/menuyukti/remove-milestones.md).
 - Germany POS readiness audits: [`.agents/skills/menuyukti-germany-pos-readiness/SKILL.md`](../../.agents/skills/menuyukti-germany-pos-readiness/SKILL.md).

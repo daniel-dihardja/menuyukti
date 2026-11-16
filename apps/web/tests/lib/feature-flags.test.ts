@@ -24,9 +24,8 @@ describe('feature-flags', () => {
     expect(isNavKeyEnabled('branches')).toBe(true)
     expect(isNavKeyEnabled('services')).toBe(false)
     expect(isNavKeyEnabled('playbooks')).toBe(true)
-    expect(isNavKeyEnabled('crm')).toBe(true)
     expect(isNavKeyEnabled('usage')).toBe(true)
-    expect(isNavKeyEnabled('inventar')).toBe(false)
+    expect(isNavKeyEnabled('inventar')).toBe(true)
     expect(isNavKeyEnabled('team')).toBe(false)
   })
 
@@ -39,8 +38,6 @@ describe('feature-flags', () => {
     expect(isPathnameFeatureEnabled('/ig-studio')).toBe(true)
     expect(isPathnameFeatureEnabled('/ig-studio/styles')).toBe(true)
     expect(isPathnameFeatureEnabled('/calendar')).toBe(true)
-    expect(isPathnameFeatureEnabled('/crm')).toBe(true)
-    expect(isPathnameFeatureEnabled('/crm/registrations')).toBe(true)
     expect(isPathnameFeatureEnabled('/media')).toBe(true)
     expect(isPathnameFeatureEnabled('/shop')).toBe(true)
     expect(isPathnameFeatureEnabled('/print-orders')).toBe(true)
@@ -51,11 +48,19 @@ describe('feature-flags', () => {
     expect(isPathnameFeatureEnabled('/services/digital-menu')).toBe(true)
     expect(isPathnameFeatureEnabled('/playbooks')).toBe(true)
     expect(isPathnameFeatureEnabled('/usage')).toBe(true)
+    expect(isPathnameFeatureEnabled('/inventar')).toBe(true)
+    expect(isPathnameFeatureEnabled('/inventar/catalog')).toBe(true)
   })
 
-  it('disables MVP-off inventar, team, guests, customer home, pos, explore, and image assistant', () => {
-    expect(isPathnameFeatureEnabled('/inventar')).toBe(false)
-    expect(isPathnameFeatureEnabled('/inventar/catalog')).toBe(false)
+  it('enables inventar for all operators', () => {
+    expect(isFeatureEnabled('inventar')).toBe(true)
+    expect(isNavKeyEnabled('inventar')).toBe(true)
+    expect(isPathnameFeatureEnabled('/inventar')).toBe(true)
+    expect(isPathnameFeatureEnabled('/inventar/catalog')).toBe(true)
+    expect(pathnameRequiresAdmin('/inventar')).toBe(false)
+  })
+
+  it('disables MVP-off team, guests, customer home, pos, explore, and image assistant', () => {
     expect(isFeatureEnabled('team')).toBe(false)
     expect(isPathnameFeatureEnabled('/team')).toBe(false)
     expect(isNavKeyEnabled('team')).toBe(false)
@@ -121,9 +126,6 @@ describe('feature-flags', () => {
     expect(isNavItemHiddenFromNonAdmin('usage')).toBe(false)
     expect(isNavItemHiddenFromNonAdmin('media')).toBe(true)
     expect(isNavItemHiddenFromNonAdmin('calendar')).toBe(true)
-    expect(isNavItemHiddenFromNonAdmin('crm')).toBe(true)
-    expect(isNavItemHiddenFromNonAdmin('crmApps')).toBe(true)
-    expect(isNavItemHiddenFromNonAdmin('crmRegistrations')).toBe(true)
     expect(isNavItemHiddenFromNonAdmin('printShop')).toBe(true)
     expect(isNavItemHiddenFromNonAdmin('staff')).toBe(true)
     expect(isNavItemHiddenFromNonAdmin('home')).toBe(false)
@@ -136,8 +138,6 @@ describe('feature-flags', () => {
   it('requires admin for admin-audience route prefixes', () => {
     expect(pathnameRequiresAdmin('/media')).toBe(true)
     expect(pathnameRequiresAdmin('/calendar')).toBe(true)
-    expect(pathnameRequiresAdmin('/crm')).toBe(true)
-    expect(pathnameRequiresAdmin('/crm/apps')).toBe(true)
     expect(pathnameRequiresAdmin('/shop')).toBe(true)
     expect(pathnameRequiresAdmin('/shop/poster-1')).toBe(true)
     expect(pathnameRequiresAdmin('/staff')).toBe(true)
@@ -168,7 +168,6 @@ describe('feature-flags', () => {
     expect(isFeatureEnabled('servicePointSystem')).toBe(false)
     expect(isFeatureEnabled('servicePickupOffer')).toBe(false)
     expect(isFeatureEnabled('serviceStampCard')).toBe(false)
-    expect(isFeatureEnabled('serviceCashback')).toBe(false)
 
     expect(isServiceKeyFeatureEnabled('digital_menu')).toBe(true)
     expect(isServiceKeyFeatureEnabled('voting')).toBe(true)
@@ -176,7 +175,6 @@ describe('feature-flags', () => {
     expect(isServiceKeyFeatureEnabled('point_system')).toBe(false)
     expect(isServiceKeyFeatureEnabled('pickup_offer')).toBe(false)
     expect(isServiceKeyFeatureEnabled('stamp_card')).toBe(false)
-    expect(isServiceKeyFeatureEnabled('cashback')).toBe(false)
 
     expect(isPathnameFeatureEnabled('/services')).toBe(false)
     expect(isPathnameFeatureEnabled('/services/digital-menu')).toBe(true)

@@ -89,3 +89,5 @@ See [`apps/agents/README.md`](../../../apps/agents/README.md) and [`.env.example
 
 - [`apps/agents/README.md`](../../../apps/agents/README.md)
 - [`.cursor/rules/agents-conventions.mdc`](../../../.cursor/rules/agents-conventions.mdc)
+- Advisor runtime + AG-UI: [`doc-9`](../../../backlog/docs/agents/doc-9%20-%20Advisor-agent-runtime-and-AG-UI-sync.md)
+- Platform architecture: [`doc-8`](../../../backlog/docs/architecture/doc-8%20-%20Menuyukti-platform-architecture.md)

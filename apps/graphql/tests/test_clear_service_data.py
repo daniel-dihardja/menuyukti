@@ -35,7 +35,6 @@ from graphql.services.predictions import (
     ACTION_KEY_PREDICTION_VOTE,
 )
 from graphql.services.service_subscriptions import (
-    SERVICE_KEY_CASHBACK,
     SERVICE_KEY_DIGITAL_MENU,
     SERVICE_KEY_PICK_AND_WIN,
     SERVICE_KEY_POINT_SYSTEM,
@@ -236,11 +235,6 @@ def test_clear_missing_workspace():
     assert result.errors
     assert "No workspace found" in str(result.errors[0])
 
-
-def test_clear_cashback_rejected(clear_workspace):
-    result = _run_clear(clear_workspace["clerk_user_id"], SERVICE_KEY_CASHBACK)
-    assert result.errors
-    assert "CRM" in str(result.errors[0])
 
 
 def test_clear_stamp_card_noop(clear_workspace):

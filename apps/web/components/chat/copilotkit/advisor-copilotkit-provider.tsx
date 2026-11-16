@@ -41,7 +41,12 @@ export function AdvisorCopilotKitProvider({
   })
 
   return (
-    <CopilotKit headers={headers} runtimeUrl="/api/copilotkit">
+    <CopilotKit
+      enableInspector={false}
+      headers={headers}
+      runtimeUrl="/api/copilotkit"
+      showDevConsole={false}
+    >
       {children}
     </CopilotKit>
   )

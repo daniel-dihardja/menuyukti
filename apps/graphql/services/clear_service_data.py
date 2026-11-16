@@ -37,7 +37,6 @@ from graphql.services.predictions import (
 )
 from graphql.services.service_subscriptions import (
     KNOWN_SERVICE_KEYS,
-    SERVICE_KEY_CASHBACK,
     SERVICE_KEY_DIGITAL_MENU,
     SERVICE_KEY_PICK_AND_WIN,
     SERVICE_KEY_PICKUP_OFFER,
@@ -314,23 +313,12 @@ def _clear_pickup_offer(
     result.pickup_offers_deleted += int(deleted or 0)
 
 
-def _clear_cashback(
-    session: Session, location_ids: list[int], result: ClearServiceDataResult
-) -> None:
-    del session, location_ids, result
-    raise ValueError(
-        "cashback data is workspace CRM-scoped, not location service tables. "
-        "Use CRM staff tools (e.g. deleteCrmApp) instead."
-    )
-
-
 _CLEAR_HANDLERS: dict[str, Callable[[Session, list[int], ClearServiceDataResult], None]] = {
     SERVICE_KEY_PICK_AND_WIN: _clear_pick_and_win,
     SERVICE_KEY_VOTING: _clear_voting,
     SERVICE_KEY_POINT_SYSTEM: _clear_point_system,
     SERVICE_KEY_DIGITAL_MENU: _clear_digital_menu,
     SERVICE_KEY_STAMP_CARD: _clear_stamp_card,
-    SERVICE_KEY_CASHBACK: _clear_cashback,
     SERVICE_KEY_PICKUP_OFFER: _clear_pickup_offer,
 }
 
@@ -398,7 +386,7 @@ def clear_workspace_service_data(
 
     handler = _CLEAR_HANDLERS[key]
     handler(session, location_ids, result)
-    # cashback raises before we get here; stamp_card is a domain no-op but still cancel entitlements
+    # stamp_card is a domain no-op but still cancel entitlements
     _cancel_service_subscriptions(
         session,
         location_ids=location_ids,

@@ -13,7 +13,6 @@ from graphql.data_sources.models.service_subscription import ServiceSubscription
 SERVICE_KEY_DIGITAL_MENU = "digital_menu"
 SERVICE_KEY_POINT_SYSTEM = "point_system"
 SERVICE_KEY_STAMP_CARD = "stamp_card"
-SERVICE_KEY_CASHBACK = "cashback"
 SERVICE_KEY_PICK_AND_WIN = "pick_and_win"
 SERVICE_KEY_VOTING = "voting"
 SERVICE_KEY_PICKUP_OFFER = "pickup_offer"
@@ -23,7 +22,6 @@ KNOWN_SERVICE_KEYS = frozenset(
         SERVICE_KEY_DIGITAL_MENU,
         SERVICE_KEY_POINT_SYSTEM,
         SERVICE_KEY_STAMP_CARD,
-        SERVICE_KEY_CASHBACK,
         SERVICE_KEY_PICK_AND_WIN,
         SERVICE_KEY_VOTING,
         SERVICE_KEY_PICKUP_OFFER,

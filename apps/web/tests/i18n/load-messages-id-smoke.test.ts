@@ -15,9 +15,9 @@ describe('loadMessages id smoke', () => {
     const publicMessages = messages.public as { menu?: { empty?: string } }
     expect(publicMessages.menu?.empty).toBe('Belum ada menu — cek lagi nanti.')
 
-    // Disabled inventar catalog stays English via base merge
+    // Inventar overlay is enabled for id
     const inventar = messages.inventar as { title?: string }
-    expect(inventar?.title).toBe('Inventar')
+    expect(inventar?.title).toBe('Inventaris')
 
     const legal = messages.legal as { impressum?: { title?: string } }
     expect(legal.impressum?.title).toBe('Impressum')

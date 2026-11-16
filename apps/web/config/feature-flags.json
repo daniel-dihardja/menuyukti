@@ -161,16 +161,6 @@
       "serviceKeys": ["stamp_card"]
     },
     {
-      "id": "serviceCashback",
-      "description": "Cashback coming-soon catalog card (MVP off).",
-      "enabled": false,
-      "audience": "all",
-      "routePrefixes": [],
-      "navKeys": [],
-      "actionMenuKeys": [],
-      "serviceKeys": ["cashback"]
-    },
-    {
       "id": "explore",
       "description": "Guest venue directory (MVP off; depends on migrated public menus).",
       "enabled": false,
@@ -190,8 +180,8 @@
     },
     {
       "id": "inventar",
-      "description": "Inventory assistant (MVP off; code retained).",
-      "enabled": false,
+      "description": "Inventory stock, catalog, and refill assistant for operators.",
+      "enabled": true,
       "audience": "all",
       "routePrefixes": ["/inventar"],
       "navKeys": ["inventar"],
@@ -269,15 +259,6 @@
       "audience": "admin",
       "routePrefixes": ["/calendar"],
       "navKeys": ["calendar"],
-      "actionMenuKeys": []
-    },
-    {
-      "id": "crm",
-      "description": "CRM apps and registrations (operator console).",
-      "enabled": true,
-      "audience": "admin",
-      "routePrefixes": ["/crm"],
-      "navKeys": ["crm", "crmApps", "crmRegistrations"],
       "actionMenuKeys": []
     },
     {

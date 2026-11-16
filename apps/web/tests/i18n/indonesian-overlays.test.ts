@@ -21,6 +21,7 @@ const EXPECTED_ID_FILES = [
   'docs.json',
   'errorBoundary.json',
   'igStudio.json',
+  'inventar.json',
   'landing.json',
   'legal.json',
   'login.json',
@@ -46,7 +47,6 @@ const EXPECTED_ID_FILES = [
 
 /** Disabled-feature catalogs must not be required as id overlays. */
 const DISABLED_FEATURE_FILES = [
-  'inventar.json',
   'playbooks.json',
   'explore.json',
   'guestHome.json',
@@ -105,7 +105,7 @@ describe('Indonesian message overlays', () => {
       platform: Record<string, unknown>
     }
     expect(Object.keys(platformOverlay.platform).toSorted()).toEqual(
-      ['calendar', 'crm', 'printOrders'].toSorted(),
+      ['calendar', 'printOrders'].toSorted(),
     )
   })
 })

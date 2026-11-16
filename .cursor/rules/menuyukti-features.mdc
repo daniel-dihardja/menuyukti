@@ -8,4 +8,4 @@ alwaysApply: false
 
 # Menuyukti feature glossary (pointer)
 
-For aliases, key symbols, and UI touchpoints, read the canonical table in [`.agents/menuyukti-features.md`](../../.agents/menuyukti-features.md). Add new features there; keep this rule as a short pointer only. Milestone / workflow-container rows are **removed**. Expo `apps/mobile-app` is **deprecated / inactive** — customer focus is the web PWA.
+For aliases, key symbols, and UI touchpoints, read the canonical table in [`.agents/menuyukti-features.md`](../../.agents/menuyukti-features.md). Add new features there; keep this rule as a short pointer only. Milestone / workflow-container rows are **removed**.

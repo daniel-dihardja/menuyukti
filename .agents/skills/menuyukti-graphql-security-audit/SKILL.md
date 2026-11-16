@@ -25,7 +25,7 @@ Creating or updating this skill is not an audit. Run an audit only when the user
 ## Primary questions every audit must answer
 
 1. Can an unauthenticated or spoofed caller reach GraphQL operations that should require a real user?
-2. Can user A read or mutate location/workspace/CRM/POS/analytics data belonging to user B (IDOR / tenant isolation)?
+2. Can user A read or mutate location/workspace/POS/analytics data belonging to user B (IDOR / tenant isolation)?
 3. Are query abuse controls (depth, complexity, aliases, tokens, field selection) present and effective?
 4. Does the API leak sensitive schema, stack traces, or cross-tenant existence signals?
 5. Are JSON/`Node` and other flexible inputs safe against mass-assignment / injection style abuse?
@@ -121,7 +121,7 @@ Audit Progress:
 - [ ] 2. Capture git metadata (branch, SHA, dirty flag)
 - [ ] 3. Load prior comparable audit (if any) from history/
 - [ ] 4. Inspect identity path (server context, internal key middleware)
-- [ ] 5. Sample authorization across location/workspace/CRM/POS/analytics/Node APIs
+- [ ] 5. Sample authorization across location/workspace/POS/analytics/Node APIs
 - [ ] 6. Verify abuse extensions and limits
 - [ ] 7. Review error shaping, introspection, public surfaces
 - [ ] 8. Review flexible inputs (Node JSON, bulk mutations) and secrets handling
@@ -137,18 +137,17 @@ Audit Progress:
 
 ### Repo map (starting points)
 
-| Area                  | Paths                                                                                     |
-| --------------------- | ----------------------------------------------------------------------------------------- |
-| ASGI / context        | `apps/graphql/server.py`, `apps/graphql/context.py`                                       |
-| Auth helpers          | `apps/graphql/schema/auth.py`, `apps/graphql/access.py`                                   |
-| Limits / complexity   | `apps/graphql/limits.py`, `apps/graphql/schema/__init__.py`, `schema/query_complexity.py` |
-| Queries / mutations   | `apps/graphql/schema/queries/`, `apps/graphql/schema/mutations/`                          |
-| Node handlers         | `apps/graphql/schema/node_handlers/`                                                      |
-| CRM public / customer | `apps/graphql` CRM routes (`/crm/v1/…`), related schema modules                           |
-| Tests                 | `apps/graphql/tests/` (esp. cross-user contexts), `apps/graphql/tests/auth_context.py`    |
-| Web BFF client        | `apps/web/lib/graphql/client.ts`, `apps/web/app/api/**`                                   |
-| Agents caller         | `apps/agents` GraphQL HTTP helpers (`graphql_post` or equivalent)                         |
-| Conventions           | `.cursor/rules/python-graphql-conventions.mdc`                                            |
+| Area                | Paths                                                                                     |
+| ------------------- | ----------------------------------------------------------------------------------------- |
+| ASGI / context      | `apps/graphql/server.py`, `apps/graphql/context.py`                                       |
+| Auth helpers        | `apps/graphql/schema/auth.py`, `apps/graphql/access.py`                                   |
+| Limits / complexity | `apps/graphql/limits.py`, `apps/graphql/schema/__init__.py`, `schema/query_complexity.py` |
+| Queries / mutations | `apps/graphql/schema/queries/`, `apps/graphql/schema/mutations/`                          |
+| Node handlers       | `apps/graphql/schema/node_handlers/`                                                      |
+| Tests               | `apps/graphql/tests/` (esp. cross-user contexts), `apps/graphql/tests/auth_context.py`    |
+| Web BFF client      | `apps/web/lib/graphql/client.ts`, `apps/web/app/api/**`                                   |
+| Agents caller       | `apps/agents` GraphQL HTTP helpers (`graphql_post` or equivalent)                         |
+| Conventions         | `.cursor/rules/python-graphql-conventions.mdc`                                            |
 
 Expand search as needed; do not limit evidence to this map.
 
@@ -162,8 +161,7 @@ Expand search as needed; do not limit evidence to this map.
 6. Introspection or error extensions leak internals in production config
 7. Flexible `Node` / JSON create-update mass-assigns privileged fields
 8. Agents or web BFF forwards attacker-controlled user id
-9. CRM public path bypasses internal key and escalates to operator data
-10. ID enumeration via sequential integer IDs + distinguishable error responses
+9. ID enumeration via sequential integer IDs + distinguishable error responses
 
 Details: [references/attack-scenarios.md](references/attack-scenarios.md), [references/checklist.md](references/checklist.md).
 
@@ -172,8 +170,8 @@ Details: [references/attack-scenarios.md](references/attack-scenarios.md), [refe
 For FULL audits, do **not** claim 100% resolver coverage unless enumerated. Instead:
 
 1. Inventory root Query/Mutation mixins from `schema/query.py` / `schema/mutation.py`.
-2. Classify each as: location-scoped, workspace-scoped, user-scoped, public/CRM, internal/admin, or unclear.
-3. Deep-inspect a **representative sample** plus any high-risk domains (POS money, CRM PII, delete mutations, bulk upserts, analytics runs).
+2. Classify each as: location-scoped, workspace-scoped, user-scoped, public, internal/admin, or unclear.
+3. Deep-inspect a **representative sample** plus any high-risk domains (POS money, delete mutations, bulk upserts, analytics runs).
 4. Flag unsampled mixins as residual risk in `executive-summary.md` (coverage %).
 
 Prefer negative tests (`OTHER_USER` / foreign `location_id`) as strongest evidence.

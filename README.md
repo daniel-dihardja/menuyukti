@@ -27,4 +27,9 @@ Agent-first workflow for this monorepo:
 - Inventory chat mode with refill-forecast tools
 - Public location hub + explore (customer PWA)
 
-Expo (`apps/mobile-app`) remains in the repo but is inactive; customer focus is the web PWA.
+Customer focus is the web PWA.
+
+## Architecture docs
+
+- [Platform architecture](backlog/docs/architecture/doc-8%20-%20Menuyukti-platform-architecture.md) — agent infrastructure at a glance, services, data ownership, auth trust boundary
+- [Advisor agent runtime and AG-UI sync](backlog/docs/agents/doc-9%20-%20Advisor-agent-runtime-and-AG-UI-sync.md) — operator tasks (promotion / menu compact), tool selection, CopilotKit ↔ agents sync
