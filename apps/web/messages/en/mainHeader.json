@@ -8,14 +8,14 @@
     "navChat": "Advisor",
     "navShop": "Print Shop",
     "landingNav": {
-      "services": "Workspace",
-      "why": "Why Menuyukti",
-      "mobileDescription": "AI for restaurants — Advisor, analytics, POS, inventory, and a guest digital menu."
+      "services": "Services",
+      "why": "Approach",
+      "mobileDescription": "Custom AI solutions for hospitality — from strategy to delivery."
     },
-    "getStarted": "Get started",
+    "getStarted": "Sign in",
     "mobileMenuTriggerAria": "Open main navigation menu",
     "mobileMenuTitle": "Navigation",
-    "mobileMenuDescription": "Studio for AI brand visuals and Print Shop for merch.",
+    "mobileMenuDescription": "Agency for custom AI solutions in hospitality.",
     "mobileMenuSignIn": "Sign in",
     "signInMenuTriggerAria": "Sign in options"
   }

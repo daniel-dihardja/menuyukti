@@ -3,7 +3,6 @@
 import { Suspense } from 'react'
 import { usePathname } from 'next/navigation'
 
-import { BetaStatusBanner } from '@/components/beta-status-banner'
 import { MainHeader } from '@/components/main-header'
 import { isOperatorAppShellPath } from '@/lib/routes'
 
@@ -38,7 +37,6 @@ function AppChromeInner({ children }: { children: React.ReactNode }) {
     <div>
       <MainHeader />
       <div>{children}</div>
-      <BetaStatusBanner />
     </div>
   )
 }

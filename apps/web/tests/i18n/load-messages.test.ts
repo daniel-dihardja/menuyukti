@@ -12,7 +12,7 @@ import {
 describe('SUPPORTED_LOCALES', () => {
   it('includes en, de, and id', () => {
     expect(SUPPORTED_LOCALES).toEqual(['en', 'de', 'id'])
-    expect(DEFAULT_LOCALE).toBe('en')
+    expect(DEFAULT_LOCALE).toBe('de')
   })
 
   it('isAppLocale accepts supported tags only', () => {
@@ -25,9 +25,9 @@ describe('SUPPORTED_LOCALES', () => {
 })
 
 describe('resolveLocaleFromAcceptLanguage', () => {
-  it('defaults to en when header is missing', () => {
-    expect(resolveLocaleFromAcceptLanguage(null)).toBe('en')
-    expect(resolveLocaleFromAcceptLanguage('')).toBe('en')
+  it('defaults to de when header is missing', () => {
+    expect(resolveLocaleFromAcceptLanguage(null)).toBe('de')
+    expect(resolveLocaleFromAcceptLanguage('')).toBe('de')
   })
 
   it('picks id from id and id-* tags', () => {

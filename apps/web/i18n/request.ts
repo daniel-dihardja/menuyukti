@@ -3,7 +3,7 @@ import { getRequestConfig } from 'next-intl/server'
 import { DEFAULT_LOCALE, loadMessages } from './load-messages'
 
 /**
- * Language selector is hidden for now — always serve English.
+ * Language selector is hidden for now — always serve the default locale (de).
  * Cookie / Accept-Language resolution remains in load-messages for when the
  * account-menu locale switcher is re-enabled.
  */

@@ -30,10 +30,12 @@ describe('loadMessages de smoke', () => {
     const legal = messages.legal as {
       impressum?: { title?: string; sections?: { address?: { title?: string } } }
       privacy?: { title?: string }
+      terms?: { title?: string }
     }
     expect(legal.impressum?.title).toBe('Impressum')
     expect(legal.impressum?.sections?.address?.title).toBe('Anschrift')
-    expect(legal.privacy?.title).toBe('Privacy Policy')
+    expect(legal.privacy?.title).toBe('Datenschutzerklärung')
+    expect(legal.terms?.title).toBe('Nutzungsbedingungen')
 
     const siteFooter = messages.siteFooter as { impressum?: string; privacy?: string }
     expect(siteFooter.impressum).toBe('Impressum')

@@ -9,14 +9,11 @@ import * as React from 'react'
 
 import { AccountMenu } from '@/components/account/account-menu'
 import { MenuyuktiBrandIcon } from '@/components/menuyukti-brand-icon'
-import { GuestSignInMenu } from '@/components/guest-sign-in-menu'
 import { usePublicGuestPoints } from '@/components/public-guest-points-context'
 import { isFeatureEnabled, isServiceKeyFeatureEnabled } from '@/lib/feature-flags'
 import { SERVICE_KEY_POINT_SYSTEM } from '@/lib/graphql/queries/service-subscriptions'
-import { isMarketingSignInEnabled } from '@/lib/marketing-sign-in'
 import { isPublicLocationSurfacePath, routes } from '@/lib/routes'
 import { getDefaultPathForPlan } from '@/lib/workspace-plan'
-import { Button } from '@workspace/ui/components/button'
 import { cn } from '@workspace/ui/lib/utils'
 
 export function MainHeader() {
@@ -25,12 +22,8 @@ export function MainHeader() {
   const { isSignedIn, isLoaded: authLoaded } = useAuth()
   const { balance: guestPointBalance } = usePublicGuestPoints()
   const tPublic = useTranslations('public.locationHome')
-  const isLogin = pathname === routes.login || (pathname?.startsWith(`${routes.login}/`) ?? false)
-  const isSignUp =
-    pathname === routes.signUp || (pathname?.startsWith(`${routes.signUp}/`) ?? false)
   const isExplore =
     pathname === routes.explore || (pathname?.startsWith(`${routes.explore}/`) ?? false)
-  const isLanding = pathname === routes.root
   const isGuestLocation = isPublicLocationSurfacePath(pathname)
   const pointSystemFeatureEnabled = isServiceKeyFeatureEnabled(SERVICE_KEY_POINT_SYSTEM)
   const guestPointsToShow =
@@ -41,9 +34,6 @@ export function MainHeader() {
     Number.isFinite(guestPointBalance)
       ? guestPointBalance
       : null
-  /** Hide sign-in chrome on auth pages (user is already signing in / up). */
-  const showSignIn = !isLogin && !isSignUp && isMarketingSignInEnabled()
-  const showLandingGetStarted = isLanding && showSignIn
   /** Explore is Clerk-protected and feature-flagged — only tease when enabled. */
   const showExplore = Boolean(isSignedIn) && isFeatureEnabled('explore')
   const [isScrolled, setIsScrolled] = React.useState(false)
@@ -110,23 +100,9 @@ export function MainHeader() {
           {!authLoaded ? (
             <div className="size-8 shrink-0 animate-pulse rounded-full bg-muted" aria-hidden />
           ) : (
-            <>
-              <Show when="signed-out">
-                {showSignIn ? (
-                  <div className="flex items-center gap-2">
-                    <GuestSignInMenu />
-                    {showLandingGetStarted ? (
-                      <Button asChild size="sm" className="hero-btn-primary hidden sm:inline-flex">
-                        <Link href={routes.login}>{t('getStarted')}</Link>
-                      </Button>
-                    ) : null}
-                  </div>
-                ) : null}
-              </Show>
-              <Show when="signed-in">
-                <AccountMenu />
-              </Show>
-            </>
+            <Show when="signed-in">
+              <AccountMenu />
+            </Show>
           )}
         </div>
       </div>

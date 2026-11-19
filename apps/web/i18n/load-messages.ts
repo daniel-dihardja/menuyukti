@@ -1,6 +1,6 @@
 import type { AbstractIntlMessages } from 'next-intl'
 
-export const DEFAULT_LOCALE = 'en'
+export const DEFAULT_LOCALE = 'de'
 export const SUPPORTED_LOCALES = ['en', 'de', 'id'] as const
 export type AppLocale = (typeof SUPPORTED_LOCALES)[number]
 
@@ -131,16 +131,29 @@ async function loadIndonesianOverlays(): Promise<AbstractIntlMessages[]> {
 export async function loadMessages(locale: string): Promise<AbstractIntlMessages> {
   const base = await loadEnglishMessages()
   if (locale === 'de') {
-    const [dePublic, deExplore, deLegal, deSiteFooter, deLogin, deCommon, deLanding] =
-      await Promise.all([
-        import('../messages/de/public.json'),
-        import('../messages/de/explore.json'),
-        import('../messages/de/legal.json'),
-        import('../messages/de/siteFooter.json'),
-        import('../messages/de/login.json'),
-        import('../messages/de/common.json'),
-        import('../messages/de/landing.json'),
-      ])
+    const [
+      dePublic,
+      deExplore,
+      deLegal,
+      deSiteFooter,
+      deLogin,
+      deCommon,
+      deLanding,
+      deMetadata,
+      deMainHeader,
+      deCookieConsent,
+    ] = await Promise.all([
+      import('../messages/de/public.json'),
+      import('../messages/de/explore.json'),
+      import('../messages/de/legal.json'),
+      import('../messages/de/siteFooter.json'),
+      import('../messages/de/login.json'),
+      import('../messages/de/common.json'),
+      import('../messages/de/landing.json'),
+      import('../messages/de/metadata.json'),
+      import('../messages/de/mainHeader.json'),
+      import('../messages/de/cookieConsent.json'),
+    ])
     return [
       dePublic.default,
       deExplore.default,
@@ -149,6 +162,9 @@ export async function loadMessages(locale: string): Promise<AbstractIntlMessages
       deLogin.default,
       deCommon.default,
       deLanding.default,
+      deMetadata.default,
+      deMainHeader.default,
+      deCookieConsent.default,
     ].reduce((acc, overlay) => deepMergeMessages(acc, overlay), base)
   }
   if (locale === 'id') {
