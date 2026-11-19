@@ -47,6 +47,7 @@ export function LandingHeroVideo({ ariaLabel, className }: LandingHeroVideoProps
       motionQuery.removeEventListener('change', update)
       desktopQuery.removeEventListener('change', update)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- syncPlayback is useEffectEvent
   }, [])
 
   return (
