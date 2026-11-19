@@ -34,9 +34,9 @@ function AppChromeInner({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div>
+    <div className="flex min-h-svh flex-col">
       <MainHeader />
-      <div>{children}</div>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">{children}</div>
     </div>
   )
 }
