@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react'
-import { BarChart3, MapPin, Sparkles, Users } from 'lucide-react'
+import { CalendarDays, Globe, Sparkles, UtensilsCrossed } from 'lucide-react'
 
 import { cn } from '@workspace/ui/lib/utils'
 
@@ -13,7 +13,7 @@ type LandingCapabilityHighlightsProps = {
   items: readonly CapabilityItem[]
 }
 
-const ICONS: readonly LucideIcon[] = [BarChart3, Sparkles, MapPin, Users]
+const ICONS: readonly LucideIcon[] = [Sparkles, Globe, CalendarDays, UtensilsCrossed]
 
 const ICON_WELL_CLASS = [
   'bg-[color:var(--color-accent-soft)] text-primary',

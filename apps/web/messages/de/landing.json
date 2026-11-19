@@ -1,7 +1,35 @@
 {
   "landing": {
+    "skipToContent": "Zum Inhalt springen",
     "hero": {
-      "eyebrow": "Öffentliche Beta · KI-gestützte Restaurant-Analytik"
+      "eyebrow": "Agentur für Gastronomie",
+      "headline": "menuyukti.",
+      "subtitle": "Individuelle KI-Lösungen für die Gastronomie.",
+      "primaryCta": "Kontakt",
+      "productImageAlt": "Atmosphäre in der Gastronomie — Menuyukti Agentur für individuelle KI-Lösungen"
+    },
+    "capabilities": {
+      "ariaLabel": "Leistungen",
+      "reports": {
+        "title": "SEO-optimierte Website",
+        "description": "Auffindbare Gastro-Websites, die Gäste zu Ihnen führen — klar, schnell und suchmaschinenfreundlich."
+      },
+      "advisor": {
+        "title": "Social-Media-Planung",
+        "description": "Content-Kalender und Kampagnen für Instagram & Co. — geplant, vorbereitet, bereit zum Veröffentlichen."
+      },
+      "locations": {
+        "title": "Digitales Menü & Loyalty",
+        "description": "Digitale Menüs mit Online-Bestellung und Loyalty-Punkten — Gäste bestellen, sammeln und kommen wieder."
+      },
+      "workspace": {
+        "title": "Individuelle KI-Lösungen",
+        "description": "Maßgeschneiderte KI für Marketing und Betrieb — von der Idee bis zur Umsetzung."
+      }
+    },
+    "midIntro": {
+      "title": "KI, die zu Ihrer Gastronomie passt",
+      "subtitle": "Menuyukti verbindet Agenturarbeit mit datengetriebener KI — individuelle Lösungen statt Standardsoftware, damit Sie sich aufs Gastgeben konzentrieren können."
     }
   }
 }

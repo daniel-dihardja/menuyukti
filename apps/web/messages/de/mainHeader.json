@@ -1,0 +1,18 @@
+{
+  "mainHeader": {
+    "brand": "Menuyukti",
+    "brandAria": "Menuyukti Startseite",
+    "navAria": "Hauptnavigation",
+    "landingNav": {
+      "services": "Leistungen",
+      "why": "Ansatz",
+      "mobileDescription": "Individuelle KI-Lösungen für die Gastronomie — von der Strategie bis zur Umsetzung."
+    },
+    "getStarted": "Anmelden",
+    "mobileMenuTriggerAria": "Hauptmenü öffnen",
+    "mobileMenuTitle": "Navigation",
+    "mobileMenuDescription": "Agentur für individuelle KI-Lösungen in der Gastronomie.",
+    "mobileMenuSignIn": "Anmelden",
+    "signInMenuTriggerAria": "Anmeldeoptionen"
+  }
+}

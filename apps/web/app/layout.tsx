@@ -6,7 +6,7 @@ import '@workspace/ui/globals.css'
 import { RootIntlFallback, RootIntlShell } from '@/app/_components/root-shell'
 import { fontDisplay, fontMono, fontSans } from '@/lib/fonts'
 import { routes } from '@/lib/routes'
-import { getTranslations } from 'next-intl/server'
+import { getLocale, getTranslations } from 'next-intl/server'
 
 const siteUrl = 'https://menuyukti.com'
 
@@ -59,19 +59,22 @@ export async function generateMetadata(): Promise<Metadata> {
     alternates: {
       canonical: siteUrl,
       languages: {
+        de: siteUrl,
         en: siteUrl,
       },
     },
   }
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const locale = await getLocale()
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <body
         className={`${fontSans.variable} ${fontDisplay.variable} ${fontMono.variable} font-sans antialiased `}
       >

@@ -1,0 +1,14 @@
+{
+  "cookieConsent": {
+    "title": "Wesentliches Tracking",
+    "description": "Menuyukti nutzt Google Analytics 4, um Seitenaufrufe auf öffentlichen Seiten und im angemeldeten Workspace zu zählen und die Nutzung zu verstehen. Der Print Shop wird nicht erfasst.",
+    "privacyLink": "Datenschutzerklärung lesen",
+    "dismiss": "Verstanden",
+    "settingsLink": "Cookie-Einstellungen",
+    "preferences": {
+      "essentialTitle": "Wesentlich",
+      "essentialDescription": "Umfasst Anmeldung, Sicherheit, Kernfunktionen der Plattform und Nutzungsmessung (Seitenaufrufe auf öffentlichen Seiten und im Workspace). Immer aktiv. Der Print Shop ist nicht enthalten.",
+      "essentialAria": "Wesentliche Cookies (immer aktiv)"
+    }
+  }
+}
