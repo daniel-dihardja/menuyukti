@@ -24,6 +24,7 @@ export default async function LandingPage() {
           subtitle={t('hero.subtitle')}
           primaryCta={t('hero.primaryCta')}
           primaryCtaHref={MARKETING_CONTACT_MAILTO}
+          videoAriaLabel={t('hero.videoAriaLabel')}
         />
 
         <LandingCapabilityHighlights
