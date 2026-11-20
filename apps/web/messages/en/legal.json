@@ -4,11 +4,11 @@
       "metaTitle": "Privacy Policy | Menuyukti",
       "metaDescription": "How Menuyukti collects, uses, and protects data in your workspace.",
       "title": "Privacy Policy",
-      "lastUpdated": "Last updated: October 31, 2026.",
+      "lastUpdated": "Last updated: November 20, 2026.",
       "sections": {
         "data": {
           "title": "Data we process",
-          "body": "Menuyukti processes information you provide when you use the product—including account details, location and sales data you upload, workflow and milestone content, and usage needed to run the service. We process this data to deliver analytics, workflows, and AI-assisted features you request."
+          "body": "Menuyukti processes information you provide when you use the product—including account details, location and sales data you upload, workspace content, and usage needed to run the service. We process this data to deliver analytics and AI-assisted features you request."
         },
         "salesUploads": {
           "title": "Sales report uploads",
@@ -40,11 +40,11 @@
       "metaTitle": "Terms of Service | Menuyukti",
       "metaDescription": "Terms governing use of the Menuyukti platform.",
       "title": "Terms of Service",
-      "lastUpdated": "Last updated: October 31, 2026.",
+      "lastUpdated": "Last updated: November 20, 2026.",
       "sections": {
         "service": {
           "title": "The service",
-          "body": "Menuyukti provides software for restaurant marketing and operations—including analytics, AI-assisted features, POS, inventory, and guest digital experiences. Features may change as the product evolves."
+          "body": "Menuyukti provides software and AI solutions for hospitality—including analytics, AI-assisted features, inventory, and guest digital experiences. Deliverables may include reusable modules with venue-specific configuration. Features may change as the product evolves."
         },
         "beta": {
           "title": "Beta / public preview",
@@ -72,7 +72,7 @@
       "metaTitle": "Imprint | Menuyukti",
       "metaDescription": "Legal notice and provider identification for Menuyukti.",
       "title": "Imprint",
-      "lastUpdated": "Last updated: October 31, 2026.",
+      "lastUpdated": "Last updated: November 20, 2026.",
       "sections": {
         "provider": {
           "title": "Provider",
