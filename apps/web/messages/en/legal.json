@@ -8,7 +8,7 @@
       "sections": {
         "data": {
           "title": "Data we process",
-          "body": "Menuyukti processes information you provide when you use the product—including account details, location and sales data you upload, workspace content, and usage needed to run the service. We process this data to deliver analytics and AI-assisted features you request."
+          "body": "Menuyukti processes information you provide when you use the service—including account details, location and sales data you upload, workspace content, and usage needed to run the service. We process this data to deliver analytics and AI-assisted features you request."
         },
         "salesUploads": {
           "title": "Sales report uploads",
@@ -28,7 +28,7 @@
         },
         "cookies": {
           "title": "Cookies and analytics",
-          "body": "Menuyukti uses Google Analytics 4 for basic usage measurement (page views) on public pages and the signed-in workspace so we can understand how the product is used. The print shop is not included. You can review or dismiss the cookie notice via the Cookie settings link in the footer."
+          "body": "Menuyukti uses Google Analytics 4 for basic usage measurement (page views) on public pages and the signed-in workspace so we can understand how the service is used. The print shop is not included. You can review or dismiss the cookie notice via the Cookie settings link in the footer."
         },
         "contact": {
           "title": "Contact",
@@ -38,33 +38,29 @@
     },
     "terms": {
       "metaTitle": "Terms of Service | Menuyukti",
-      "metaDescription": "Terms governing use of the Menuyukti platform.",
+      "metaDescription": "Terms governing access to and use of the Menuyukti platform.",
       "title": "Terms of Service",
       "lastUpdated": "Last updated: November 20, 2026.",
       "sections": {
         "service": {
-          "title": "The service",
-          "body": "Menuyukti provides software and AI solutions for hospitality—including analytics, AI-assisted features, inventory, and guest digital experiences. Deliverables may include reusable modules with venue-specific configuration. Features may change as the product evolves."
-        },
-        "beta": {
-          "title": "Beta / public preview",
-          "body": "Menuyukti is currently offered as a public beta / preview. Features may change, break, or be withdrawn without notice. There is no uptime or feature warranty. Test data may be reset. Feedback you share may be used to improve the product. AI and analytics outputs are informational only; you remain responsible for business and compliance decisions."
+          "title": "The platform",
+          "body": "Clients receive access to the Menuyukti platform—a workspace with AI solutions for hospitality, including analytics, AI-assisted features, inventory, and guest digital experiences. Access may include reusable modules with venue-specific configuration. Platform features and scope may change as the offering evolves."
         },
         "account": {
           "title": "Your account",
-          "body": "You are responsible for activity under your account and for keeping credentials secure. You agree to provide accurate information and to use the service in compliance with applicable law."
+          "body": "Access to the platform requires an account. You are responsible for activity under your account and for keeping credentials secure. You agree to provide accurate information and to use the platform in compliance with applicable law."
         },
         "acceptable": {
           "title": "Acceptable use",
-          "body": "You may not misuse the service, attempt to access others’ data without permission, interfere with operation of the platform, or use the service to violate law or third-party rights."
+          "body": "You may not misuse the platform, attempt to access others’ data without permission, interfere with operation of the platform, or use the platform to violate law or third-party rights."
         },
         "disclaimer": {
           "title": "Disclaimer",
-          "body": "The service and any AI-generated outputs are provided on an “as is” basis. Analytics and suggestions are informational; you remain responsible for business and compliance decisions."
+          "body": "The platform and any AI-generated outputs are provided on an “as is” basis. Analytics and suggestions in the platform are informational; you remain responsible for business and compliance decisions."
         },
         "changes": {
           "title": "Changes",
-          "body": "We may update these terms or the service. Continued use after changes constitutes acceptance of the updated terms where permitted by law."
+          "body": "We may update these terms or the platform. Continued use of the platform after changes constitutes acceptance of the updated terms where permitted by law."
         }
       }
     },
@@ -93,10 +89,6 @@
         "registry": {
           "title": "Register and tax identifiers",
           "body": "Commercial register: not entered in the commercial register\nVAT ID (USt-IdNr.): DE297803875"
-        },
-        "beta": {
-          "title": "Public beta",
-          "body": "Menuyukti is publicly reachable as a beta / preview product. It is not presented as a finished commercial launch. Features and availability may change."
         }
       }
     }

@@ -28,7 +28,7 @@
         },
         "cookies": {
           "title": "Cookies und Analytik",
-          "body": "Menuyukti nutzt Google Analytics 4 zur grundlegenden Nutzungsmessung (Seitenaufrufe) auf öffentlichen Seiten und im angemeldeten Workspace, um zu verstehen, wie das Produkt genutzt wird. Der Print Shop ist davon ausgenommen. Über den Link „Cookie-Einstellungen“ im Footer können Sie den Cookie-Hinweis prüfen oder schließen."
+          "body": "Menuyukti nutzt Google Analytics 4 zur grundlegenden Nutzungsmessung (Seitenaufrufe) auf öffentlichen Seiten und im angemeldeten Workspace, um zu verstehen, wie der Dienst genutzt wird. Der Print Shop ist davon ausgenommen. Über den Link „Cookie-Einstellungen“ im Footer können Sie den Cookie-Hinweis prüfen oder schließen."
         },
         "contact": {
           "title": "Kontakt",
@@ -38,33 +38,29 @@
     },
     "terms": {
       "metaTitle": "Nutzungsbedingungen | Menuyukti",
-      "metaDescription": "Bedingungen für die Nutzung der Menuyukti-Plattform.",
+      "metaDescription": "Bedingungen für den Zugang zur und die Nutzung der Menuyukti-Plattform.",
       "title": "Nutzungsbedingungen",
       "lastUpdated": "Zuletzt aktualisiert: 20. November 2026.",
       "sections": {
         "service": {
-          "title": "Der Dienst",
-          "body": "Menuyukti bietet Software und KI-Lösungen für die Gastronomie — einschließlich Analytik, KI-gestützter Funktionen, Inventar und digitaler Gäste-Erlebnisse. Leistungen können wiederverwendbare Module mit betriebsbezogener Konfiguration umfassen. Funktionen können sich mit der Weiterentwicklung des Angebots ändern."
-        },
-        "beta": {
-          "title": "Beta / öffentliche Vorschau",
-          "body": "Menuyukti wird derzeit als öffentliche Beta / Vorschau angeboten. Funktionen können sich ohne Vorankündigung ändern, ausfallen oder entfallen. Es gibt keine Zusicherung für Verfügbarkeit oder Funktionsumfang. Testdaten können zurückgesetzt werden. Feedback darf zur Produktverbesserung genutzt werden. KI- und Analyseergebnisse sind nur informativ; geschäftliche und Compliance-Entscheidungen bleiben Ihre Verantwortung."
+          "title": "Die Plattform",
+          "body": "Kunden erhalten Zugang zur Menuyukti-Plattform — einem Workspace mit KI-Lösungen für die Gastronomie, einschließlich Analytik, KI-gestützter Funktionen, Inventar und digitaler Gäste-Erlebnisse. Der Zugang kann wiederverwendbare Module mit betriebsbezogener Konfiguration umfassen. Funktionen und Umfang der Plattform können sich mit der Weiterentwicklung des Angebots ändern."
         },
         "account": {
           "title": "Ihr Konto",
-          "body": "Sie sind für Aktivitäten unter Ihrem Konto und für die Sicherheit Ihrer Zugangsdaten verantwortlich. Sie verpflichten sich, korrekte Angaben zu machen und den Dienst im Einklang mit geltendem Recht zu nutzen."
+          "body": "Für den Zugang zur Plattform benötigen Sie ein Konto. Sie sind für Aktivitäten unter Ihrem Konto und für die Sicherheit Ihrer Zugangsdaten verantwortlich. Sie verpflichten sich, korrekte Angaben zu machen und die Plattform im Einklang mit geltendem Recht zu nutzen."
         },
         "acceptable": {
           "title": "Zulässige Nutzung",
-          "body": "Sie dürfen den Dienst nicht missbrauchen, ohne Erlaubnis auf fremde Daten zugreifen, den Betrieb der Plattform stören oder den Dienst zur Verletzung von Recht oder Rechten Dritter nutzen."
+          "body": "Sie dürfen die Plattform nicht missbrauchen, ohne Erlaubnis auf fremde Daten zugreifen, den Betrieb der Plattform stören oder die Plattform zur Verletzung von Recht oder Rechten Dritter nutzen."
         },
         "disclaimer": {
           "title": "Haftungsausschluss",
-          "body": "Der Dienst und alle KI-generierten Ausgaben werden „wie besehen“ bereitgestellt. Analytik und Vorschläge sind informativ; geschäftliche und Compliance-Entscheidungen bleiben Ihre Verantwortung."
+          "body": "Die Plattform und alle KI-generierten Ausgaben werden „wie besehen“ bereitgestellt. Analytik und Vorschläge in der Plattform sind informativ; geschäftliche und Compliance-Entscheidungen bleiben Ihre Verantwortung."
         },
         "changes": {
           "title": "Änderungen",
-          "body": "Wir können diese Bedingungen oder den Dienst aktualisieren. Die fortgesetzte Nutzung nach Änderungen gilt — soweit gesetzlich zulässig — als Annahme der aktualisierten Bedingungen."
+          "body": "Wir können diese Bedingungen oder die Plattform aktualisieren. Die fortgesetzte Nutzung der Plattform nach Änderungen gilt — soweit gesetzlich zulässig — als Annahme der aktualisierten Bedingungen."
         }
       }
     },
@@ -93,10 +89,6 @@
         "registry": {
           "title": "Register und Steuerangaben",
           "body": "Handelsregister: nicht eingetragen\nUSt-IdNr.: DE297803875"
-        },
-        "beta": {
-          "title": "Öffentliche Beta",
-          "body": "Menuyukti ist öffentlich als Beta-/Vorschau-Produkt erreichbar. Es wird nicht als fertiger kommerzieller Launch dargestellt. Funktionen und Verfügbarkeit können sich ändern."
         }
       }
     }
