@@ -63,14 +63,14 @@
       "subtitle": "Agency craft with data-driven AI — so you can stay focused on guests."
     },
     "why": {
-      "title": "Why Menuyukti exists",
-      "subtitle": "Restaurants sell in the dining room—not a checkout cart. Operators juggle marketing, the floor, and inventory. Menuyukti’s AI takes the repetitive decisions off your plate so you can stay on food.",
-      "item1Title": "Offline businesses need a different playbook",
-      "item1Description": "Online brands optimize for clicks and carts. Restaurants optimize for foot traffic, tables, and reputation—so generic software and social playbooks miss how hospitality actually grows.",
-      "item2Title": "Marketing and ops compete for the same attention",
-      "item2Description": "What to post, what to stock, and what to push on the menu—again and again. That cognitive load competes with the kitchen and the floor.",
-      "item3Title": "AI for the repetitive decisions",
-      "item3Description": "Menuyukti uses your sales and inventory data to choose the right time, topic, and menu item—so marketing stays sharp while your team stays focused on food."
+      "title": "Why menuyukti",
+      "subtitle": "We focus solely on AI for hospitality—so domain knowledge and reusable solutions go deep, not just the surface.",
+      "item1Title": "Sole focus on gastro AI",
+      "item1Description": "No general-purpose tools stretched to fit restaurants. Every workflow is built for hospitality operators.",
+      "item2Title": "Domain knowledge that compounds",
+      "item2Description": "Sales patterns, service rhythms, menus, and guest behavior—expertise that stays in the product, not a one-off deck.",
+      "item3Title": "Solutions with substance",
+      "item3Description": "What we solve for one venue becomes reusable building blocks—grounded and practical, not demo theater."
     },
     "foundation": {
       "title": "Built on a unique foundation",
@@ -216,7 +216,7 @@
     },
     "footer": {
       "navLabel": "Footer",
-      "why": "Why Menuyukti",
+      "why": "Why menuyukti",
       "services": "Workspace",
       "platform": "Platform",
       "faq": "FAQ",

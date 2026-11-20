@@ -15,15 +15,10 @@ import { useChatVisualizationsState } from '@/components/chat/visualizations/cha
 import { useAnalyticsList } from '@/hooks/use-analytics-list'
 import {
   defaultAdvisorWorkspaceTab,
-  isAdvisorWorkspaceTabId,
   type AdvisorWorkspaceTabId,
 } from '@/lib/chat/advisor-workspace-tabs'
 import { isFeatureEnabled } from '@/lib/feature-flags'
 import { Field, FieldLabel } from '@workspace/ui/components/field'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
-
-import { AdvisorWorkspaceCogsTab } from './advisor-workspace-cogs-tab'
-import { AdvisorWorkspaceVenueTab } from './advisor-workspace-venue-tab'
 
 const ChatVisualizationsPaneLazy = dynamic(
   () =>
@@ -63,6 +58,7 @@ export function AdvisorWorkspaceRail() {
   )
 
   const isImage = chatMode === 'image_assistant'
+  const panelTab: AdvisorWorkspaceTabId = isImage ? 'story' : 'insights'
 
   useEffect(() => {
     if (!hydrated) return
@@ -77,13 +73,10 @@ export function AdvisorWorkspaceRail() {
   }, [addedIds.length, hydrated, isImage, setWorkspaceTab])
 
   useEffect(() => {
-    const allowed: AdvisorWorkspaceTabId[] = isImage
-      ? ['story', 'venue', 'cogs']
-      : ['insights', 'venue', 'cogs']
-    if (!allowed.includes(workspaceTab)) {
+    if (workspaceTab !== panelTab) {
       setWorkspaceTab(defaultAdvisorWorkspaceTab(chatMode))
     }
-  }, [chatMode, isImage, setWorkspaceTab, workspaceTab])
+  }, [chatMode, panelTab, setWorkspaceTab, workspaceTab])
 
   const handleVenueChange = useCallback(
     (nextId: number | null) => {
@@ -91,15 +84,6 @@ export function AdvisorWorkspaceRail() {
       setLocationId(nextId)
     },
     [locationId, setLocationId],
-  )
-
-  const handleTabChange = useCallback(
-    (value: string) => {
-      if (isAdvisorWorkspaceTabId(value)) {
-        setWorkspaceTab(value)
-      }
-    },
-    [setWorkspaceTab],
   )
 
   return (
@@ -153,65 +137,17 @@ export function AdvisorWorkspaceRail() {
         ) : null}
       </div>
 
-      <Tabs
-        className="flex min-h-0 flex-1 flex-col overflow-hidden"
-        value={workspaceTab}
-        onValueChange={handleTabChange}
-      >
-        <TabsList className="mx-3 mt-2 h-10 w-auto shrink-0 justify-start self-start">
-          {isImage ? (
-            <TabsTrigger value="story" className="min-h-8 touch-manipulation">
-              {t('tabs.story')}
-            </TabsTrigger>
-          ) : (
-            <TabsTrigger value="insights" className="min-h-8 touch-manipulation">
-              {t('tabs.insights')}
-            </TabsTrigger>
-          )}
-          <TabsTrigger value="venue" className="min-h-8 touch-manipulation">
-            {t('tabs.venue')}
-          </TabsTrigger>
-          <TabsTrigger value="cogs" className="min-h-8 touch-manipulation">
-            {t('tabs.cogs')}
-          </TabsTrigger>
-        </TabsList>
-
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         {isImage ? (
-          <TabsContent
-            className="mt-0 flex min-h-0 flex-1 flex-col overflow-hidden data-[state=inactive]:hidden"
-            forceMount
-            value="story"
-          >
-            <div className="min-h-0 flex-1 overflow-hidden">
-              <AdvisorChatKitPreview />
-            </div>
-          </TabsContent>
+          <div className="min-h-0 flex-1 overflow-hidden">
+            <AdvisorChatKitPreview />
+          </div>
         ) : (
-          <TabsContent
-            className="mt-0 flex min-h-0 flex-1 flex-col overflow-hidden data-[state=inactive]:hidden"
-            forceMount
-            value="insights"
-          >
-            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-              <ChatVisualizationsPaneLazy />
-            </div>
-          </TabsContent>
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            <ChatVisualizationsPaneLazy />
+          </div>
         )}
-
-        <TabsContent
-          className="mt-0 flex min-h-0 flex-1 flex-col overflow-hidden data-[state=inactive]:hidden"
-          value="venue"
-        >
-          <AdvisorWorkspaceVenueTab locationId={locationId} />
-        </TabsContent>
-
-        <TabsContent
-          className="mt-0 flex min-h-0 flex-1 flex-col overflow-hidden data-[state=inactive]:hidden"
-          value="cogs"
-        >
-          <AdvisorWorkspaceCogsTab activeAnalyticsRunId={analyticsRunId} />
-        </TabsContent>
-      </Tabs>
+      </div>
     </div>
   )
 }

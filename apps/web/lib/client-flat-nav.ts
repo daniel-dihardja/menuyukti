@@ -1,11 +1,11 @@
 /**
- * Restaurant client sidebar order: AI Analytics → Locations → Guests → Playbooks → AI usage.
+ * Restaurant client sidebar order: Venue settings → AI Analytics → Guests → Playbooks → AI usage.
  * Unexpected keys keep relative order after these.
  */
-export const CLIENT_NAV_ORDER = ['chat', 'home', 'services', 'playbooks', 'usage'] as const
+export const CLIENT_NAV_ORDER = ['home', 'chat', 'services', 'playbooks', 'usage'] as const
 
-/** Keys paired first: AI Analytics + Locations. */
-export const CLIENT_ANALYTICS_NAV_KEYS = new Set<string>(['chat', 'home'])
+/** Keys paired first: Venue settings + AI Analytics. */
+export const CLIENT_ANALYTICS_NAV_KEYS = new Set<string>(['home', 'chat'])
 
 /** Keys paired next: Guests + Playbooks. */
 export const CLIENT_GUESTS_NAV_KEYS = new Set<string>(['services', 'playbooks'])
@@ -21,7 +21,7 @@ type FlatNavItem = { key: string }
 const NAV_RANK = new Map<string, number>(CLIENT_NAV_ORDER.map((key, index) => [key, index]))
 
 /**
- * Sort client sidebar into AI Analytics → Locations → Guests → Playbooks → AI usage.
+ * Sort client sidebar into Venue settings → AI Analytics → Guests → Playbooks → AI usage.
  * Other keys keep their relative input order after those.
  */
 export function orderClientFlatNav<T extends FlatNavItem>(items: readonly T[]): T[] {
@@ -36,7 +36,7 @@ export function orderClientFlatNav<T extends FlatNavItem>(items: readonly T[]): 
 }
 
 /**
- * Split ordered client nav into analytics (AI + Locations), guests (Guests + Playbooks),
+ * Split ordered client nav into primary (Venue settings + AI Analytics), guests (Guests + Playbooks),
  * and usage groups (separators between each section).
  */
 export function splitClientNavAtAi<T extends FlatNavItem>(

@@ -31,6 +31,16 @@
     "midIntro": {
       "title": "KI, die zu Ihrer Gastronomie passt",
       "subtitle": "Agenturarbeit mit datengetriebener KI — damit Sie sich aufs Gastgeben konzentrieren können."
+    },
+    "why": {
+      "title": "Warum menuyukti",
+      "subtitle": "Wir konzentrieren uns ausschließlich auf KI für die Gastronomie — damit Domänenwissen und wiederverwendbare Lösungen in die Tiefe gehen, nicht nur an der Oberfläche.",
+      "item1Title": "Ausschließlich Gastro-KI",
+      "item1Description": "Keine Allzweck-Tools, die irgendwie passen sollen. Jeder Workflow ist für Gastronomen gebaut.",
+      "item2Title": "Domänenwissen, das wächst",
+      "item2Description": "Verkaufsmuster, Service-Rhythmen, Menüs und Gästeverhalten — Expertise, die im Produkt bleibt, nicht in einer einmaligen Präsentation.",
+      "item3Title": "Lösungen mit Substanz",
+      "item3Description": "Was wir für einen Betrieb lösen, fließt in wiederverwendbare Bausteine — fundiert und praxistauglich, keine Show-Demos."
     }
   }
 }

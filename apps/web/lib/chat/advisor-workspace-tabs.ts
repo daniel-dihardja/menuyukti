@@ -1,4 +1,4 @@
-export const ADVISOR_WORKSPACE_TAB_IDS = ['insights', 'story', 'venue', 'cogs'] as const
+export const ADVISOR_WORKSPACE_TAB_IDS = ['insights', 'story'] as const
 
 export type AdvisorWorkspaceTabId = (typeof ADVISOR_WORKSPACE_TAB_IDS)[number]
 
@@ -6,7 +6,7 @@ export function isAdvisorWorkspaceTabId(value: string): value is AdvisorWorkspac
   return (ADVISOR_WORKSPACE_TAB_IDS as readonly string[]).includes(value)
 }
 
-/** Default tab for general vs image_assistant chat modes. */
+/** Default panel for general vs image_assistant chat modes. */
 export function defaultAdvisorWorkspaceTab(chatMode: string): AdvisorWorkspaceTabId {
   return chatMode === 'image_assistant' ? 'story' : 'insights'
 }

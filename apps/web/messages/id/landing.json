@@ -62,14 +62,14 @@
       "subtitle": "Menuyukti menggabungkan BI restoran dengan Advisor yang bekerja di samping angka Anda — agar manusia dan AI memutuskan bersama."
     },
     "why": {
-      "title": "Mengapa Menuyukti ada",
-      "subtitle": "Restoran menjual di ruang makan—bukan keranjang checkout. Operator mengelola pemasaran, lantai restoran, dan inventaris. AI Menuyukti mengambil keputusan berulang dari Anda agar Anda tetap fokus pada makanan.",
-      "item1Title": "Bisnis offline butuh playbook yang berbeda",
-      "item1Description": "Merek online mengoptimalkan klik dan keranjang. Restoran mengoptimalkan lalu lintas kaki, meja, dan reputasi—sehingga perangkat lunak generik dan playbook media sosial melewatkan cara hospitality benar-benar tumbuh.",
-      "item2Title": "Pemasaran dan operasional bersaing untuk perhatian yang sama",
-      "item2Description": "Apa yang diposting, apa yang distok, dan apa yang didorong di menu—berulang kali. Beban kognitif itu bersaing dengan dapur dan lantai restoran.",
-      "item3Title": "AI untuk keputusan berulang",
-      "item3Description": "Menuyukti menggunakan data penjualan dan inventaris Anda untuk memilih waktu, topik, dan item menu yang tepat—agar pemasaran tetap tajam sementara tim Anda tetap fokus pada makanan."
+      "title": "Mengapa menuyukti",
+      "subtitle": "Kami fokus semata pada AI untuk hospitality—sehingga pengetahuan domain dan solusi yang dapat digunakan ulang masuk ke kedalaman, bukan hanya permukaan.",
+      "item1Title": "Fokus semata pada AI gastro",
+      "item1Description": "Bukan alat serba guna yang dipaksakan untuk restoran. Setiap alur kerja dibangun untuk operator hospitality.",
+      "item2Title": "Pengetahuan domain yang berkembang",
+      "item2Description": "Pola penjualan, ritme layanan, menu, dan perilaku tamu—keahlian yang tinggal di produk, bukan dek sekali pakai.",
+      "item3Title": "Solusi dengan substansi",
+      "item3Description": "Yang kami selesaikan untuk satu venue menjadi blok bangunan yang bisa dipakai ulang—mendasar dan praktis, bukan demo show."
     },
     "foundation": {
       "title": "Dibangun di atas fondasi unik",
@@ -215,7 +215,7 @@
     },
     "footer": {
       "navLabel": "Footer",
-      "why": "Mengapa Menuyukti",
+      "why": "Mengapa menuyukti",
       "services": "Workspace",
       "platform": "Platform",
       "faq": "FAQ",

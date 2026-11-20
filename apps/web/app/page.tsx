@@ -3,6 +3,7 @@ import { getTranslations } from 'next-intl/server'
 import { LandingCapabilityHighlights } from '@/app/_components/landing/landing-capability-highlights'
 import { LandingHero } from '@/app/_components/landing/landing-hero'
 import { LandingMidIntro } from '@/app/_components/landing/landing-mid-intro'
+import { LandingWhy } from '@/app/_components/landing/landing-why'
 import { SiteFooter } from '@/components/site-footer'
 import { MARKETING_CONTACT_MAILTO } from '@/lib/marketing-contact'
 
@@ -50,6 +51,25 @@ export default async function LandingPage() {
         />
 
         <LandingMidIntro title={t('midIntro.title')} subtitle={t('midIntro.subtitle')} />
+
+        <LandingWhy
+          title={t('why.title')}
+          subtitle={t('why.subtitle')}
+          items={[
+            {
+              title: t('why.item1Title'),
+              description: t('why.item1Description'),
+            },
+            {
+              title: t('why.item2Title'),
+              description: t('why.item2Description'),
+            },
+            {
+              title: t('why.item3Title'),
+              description: t('why.item3Description'),
+            },
+          ]}
+        />
       </main>
 
       <SiteFooter />

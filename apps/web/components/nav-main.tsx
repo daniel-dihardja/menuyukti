@@ -75,7 +75,7 @@ const NAV_GROUP_LABEL_KEYS: Record<NavGroupId, string> = {
 
 /**
  * Sidebar catalog. Restaurant clients (non-admin) see a flat MVP list via
- * feature flags + {@link orderClientFlatNav}: (AI Analytics + Locations) →
+ * feature flags + {@link orderClientFlatNav}: (Venue settings + AI Analytics) →
  * (Guests + Playbooks) → AI usage. Platform admins keep grouped overview → create → … → platform.
  */
 const NAV_WORKSPACE: NavItem[] = [
