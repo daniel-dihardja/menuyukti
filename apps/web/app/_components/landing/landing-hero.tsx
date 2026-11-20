@@ -41,9 +41,9 @@ export function LandingHero({
         <div className="landing-menu-mock-enter flex w-full max-w-2xl flex-col items-start text-left">
           <LandingHeroHeadline>{headline}</LandingHeroHeadline>
 
-          <p className="landing-hero-subtitle mt-5 max-w-xl text-pretty text-xl font-medium text-foreground md:mt-6 md:text-2xl">
+          <h2 className="landing-hero-subtitle mt-5 max-w-xl text-pretty text-xl font-medium text-foreground md:mt-6 md:text-2xl">
             {subtitle}
-          </p>
+          </h2>
 
           <div className="mt-8 flex w-full max-w-md">
             <Button asChild size="lg" className="hero-btn-primary w-full sm:w-auto">

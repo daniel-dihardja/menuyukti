@@ -60,7 +60,7 @@ export async function generateMetadata(): Promise<Metadata> {
       canonical: siteUrl,
       languages: {
         de: siteUrl,
-        en: siteUrl,
+        'x-default': siteUrl,
       },
     },
   }

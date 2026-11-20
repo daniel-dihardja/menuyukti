@@ -2,13 +2,13 @@
   "landing": {
     "skipToContent": "Skip to content",
     "hero": {
-      "eyebrow": "Hospitality agency",
+      "eyebrow": "AI for hospitality",
       "headline": "menuyukti.",
-      "subtitle": "AI solutions for hospitality.",
+      "subtitle": "AI solutions for hospitality operations and marketing.",
       "primaryCta": "Contact",
-      "videoAriaLabel": "Menuyukti video — AI solutions for hospitality",
+      "videoAriaLabel": "Menuyukti video — AI solutions for hospitality operations and marketing",
       "secondaryCta": "Open sample menu",
-      "productImageAlt": "Hospitality atmosphere — Menuyukti agency for AI solutions",
+      "productImageAlt": "Hospitality atmosphere — Menuyukti AI solutions for operations and marketing",
       "trust": {
         "salesImport": "Sales report analytics",
         "advisorInsights": "AI assistance on your numbers",
@@ -54,27 +54,27 @@
         "description": "Digital menus with online ordering and loyalty points — guests order, earn, and come back."
       },
       "workspace": {
-        "title": "AI solutions",
-        "description": "Tailored AI for operations and marketing — from idea to delivery."
+        "title": "AI solutions for operations & marketing",
+        "description": "Tailored AI for day-to-day operations and your marketing — from idea to delivery."
       }
     },
     "midIntro": {
-      "title": "AI that fits your hospitality",
+      "title": "AI solutions for operations and marketing",
       "subtitle": "Reusable modules — with the configuration that fits your concept."
     },
     "why": {
       "title": "Why menuyukti",
-      "subtitle": "Hospitality deserves AI that knows the floor—not tools that fit everywhere a little.",
+      "subtitle": "Hospitality deserves AI for operations and marketing that knows the floor—not tools that fit everywhere a little.",
       "item1Title": "Sole focus on gastro AI",
-      "item1Description": "No general-purpose tools stretched to fit restaurants. Every workflow is built for hospitality operators.",
+      "item1Description": "No general-purpose tools stretched to fit restaurants. Every AI solution is built for hospitality — service, workflows, and visibility.",
       "item2Title": "Domain knowledge that compounds",
-      "item2Description": "Sales patterns, service rhythms, menus, and guest behavior—expertise that stays in the product, not a one-off deck.",
+      "item2Description": "Sales patterns, service rhythms, menus, and guest behavior—expertise that stays in the AI solutions, not a one-off deck.",
       "item3Title": "Modules plus configuration",
-      "item3Description": "Proven building blocks as the base, plus the custom configuration your venue needs."
+      "item3Description": "Proven AI building blocks for operations and marketing as the base, plus the custom configuration your venue needs."
     },
     "foundation": {
       "title": "Built on a unique foundation",
-      "subtitle": "Menuyukti is built on enterprise engineering and proprietary AI—bringing Advisor chat, sales reports, POS, inventory, and location insights together in one workspace.",
+      "subtitle": "Menuyukti is built on enterprise engineering and proprietary AI—bringing Advisor chat, sales reports, and location insights together for hospitality teams.",
       "item1Title": "Enterprise-grade engineering",
       "item1Description": "More than a decade building platforms for banking, industrial companies, and the public sector—enterprise-grade software engineering behind how your restaurant runs.",
       "item2Title": "Proprietary AI platform",
@@ -87,7 +87,7 @@
       "items": [
         {
           "value": "Integrated",
-          "label": "Advisor, Reports, Locations, POS, and inventory in one workspace—planning and performance under the same roof."
+          "label": "Advisor, Reports, and Locations in one workspace—planning and performance under the same roof."
         },
         {
           "value": "Consistent",
@@ -146,7 +146,7 @@
         },
         "strategy": {
           "title": "Operations",
-          "description": "Digital-menu Order board and inventar tools that start from sales reality—so the floor and the stockroom share the same signals as your marketing.",
+          "description": "Digital-menu Order board workflows that start from sales reality—so the floor shares the same signals as your marketing.",
           "bullets": [
             "Digital-menu Order board",
             "Inventory refill forecasts",
@@ -190,24 +190,27 @@
       "title": "Agentic restaurant software built for operators",
       "description": "Menuyukti turns sales data into Advisor plans and clear Reports—so restaurants, cafés, and bars act on what’s already selling, across every Location, with the Team who runs the floor."
     },
+    "facts": {
+      "title": "In short",
+      "item1": "Menuyukti offers AI solutions for hospitality — with a focus on Germany.",
+      "item2": "The AI solutions cover operations and marketing: workflows, digital menu & loyalty, websites, and social media.",
+      "item3": "Built exclusively for restaurants, cafés, and bars — not generic all-purpose AI tools.",
+      "item4": "Get started via Contact: tell us about your concept and we outline the right AI solution."
+    },
     "faq": {
       "title": "Common questions",
-      "q1": "Who is Menuyukti for?",
-      "a1": "Restaurant owners, operators, and marketers at restaurants, cafés, and bars who want plans and reports grounded in their sales data—not a separate Instagram agency.",
-      "q2": "How is Menuyukti different from a typical marketing tool?",
-      "a2": "Menuyukti is restaurant-only software with proprietary AI. Advisor, Reports, Locations, POS, inventory, and Team live in one workspace—built for hospitality, not generic social posting.",
-      "q3": "What does “AI-assisted” mean in practice?",
-      "a3": "Advisor helps plan from your sales context; Reports surface patterns and opportunities in your orders. You review and decide—AI speeds the work; your judgment shapes the strategy.",
-      "q4": "What can I do in the app today?",
-      "a4": "Use Advisor for planning, Reports for sales insight, Locations to manage venues, POS and inventar for operations, and Team to invite people to your workspace. Guests get a living digital menu.",
+      "q1": "What does Menuyukti offer?",
+      "a1": "Menuyukti offers AI solutions for hospitality — for operations and marketing: tailored modules for workflows, guest experiences, SEO websites, social media planning, and digital menu with loyalty.",
+      "q2": "Who is Menuyukti for?",
+      "a2": "For restaurant operators and owners of restaurants, cafés, and bars who want AI for operations and marketing.",
+      "q3": "How is Menuyukti different from generic AI tools?",
+      "a3": "We deliver AI solutions exclusively for hospitality. Modules and configuration are built around operations, marketing, menus, and guest behavior — not every industry.",
+      "q4": "Which AI services are included?",
+      "a4": "Typical building blocks are AI-supported operations and guest experiences (e.g. digital menu & loyalty) plus marketing modules such as SEO websites and social media planning — combined and configured for your concept.",
       "q5": "How do we get started?",
-      "a5": "Menuyukti is preparing for launch. If you already have platform access, sign in from the header or the buttons on this page.",
-      "q6": "I already use the Menuyukti platform. Where do I sign in?",
-      "a6": "Existing platform users can sign in from the header to access Advisor, Reports, Locations, and Team.",
-      "q7": "How does Menuyukti compare on cost?",
-      "a7": "Menuyukti focuses exclusively on restaurants and runs on a proprietary AI platform built for hospitality. Packages are designed for restaurant economics; pricing details will be shared when onboarding opens for new clients.",
-      "q8": "Who can sign in today?",
-      "a8": "The platform is currently available to existing customers and early partners only. A broader public launch is in preparation—check back soon for when sign-up opens more widely."
+      "a5": "Use the Contact button on this page. We discuss your concept and propose the right AI solutions for operations and marketing.",
+      "q6": "How do you handle privacy?",
+      "a6": "Menuyukti is based in Germany. Details on personal data processing are in our privacy policy at /privacy."
     },
     "cta": {
       "title": "Ready for restaurant software that starts from your sales data?",

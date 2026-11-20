@@ -1,0 +1,16 @@
+# Menuyukti
+
+> Menuyukti offers AI solutions for hospitality (KI-Lösungen für die Gastronomie), with a focus on Germany. The AI solutions cover operations and marketing: workflows, digital menu & loyalty, SEO websites, and social media planning — for restaurants, cafés, and bars.
+
+Menuyukti bietet KI-Lösungen für die Gastronomie — für Betrieb und Marketing. Ausschließlich für Restaurants, Cafés und Bars — keine generischen Allzweck-KI-Tools.
+
+## Public pages
+
+- [Home](https://menuyukti.com/): AI solutions for hospitality operations and marketing
+- [Impressum](https://menuyukti.com/impressum): Legal provider information (Germany)
+- [Privacy](https://menuyukti.com/privacy): Privacy policy
+- [Terms](https://menuyukti.com/terms): Terms of service
+
+## Contact
+
+- Email: daniel@dihardja.de
