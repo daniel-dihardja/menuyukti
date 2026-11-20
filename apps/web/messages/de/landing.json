@@ -2,12 +2,12 @@
   "landing": {
     "skipToContent": "Zum Inhalt springen",
     "hero": {
-      "eyebrow": "Agentur für Gastronomie",
+      "eyebrow": "KI für die Gastronomie",
       "headline": "menuyukti.",
-      "subtitle": "KI-Lösungen für die Gastronomie.",
+      "subtitle": "KI-Lösungen für Betrieb und Marketing in der Gastronomie.",
       "primaryCta": "Kontakt",
-      "videoAriaLabel": "Menuyukti Video — KI-Lösungen für die Gastronomie",
-      "productImageAlt": "Atmosphäre in der Gastronomie — Menuyukti Agentur für KI-Lösungen"
+      "videoAriaLabel": "Menuyukti Video — KI-Lösungen für Betrieb und Marketing in der Gastronomie",
+      "productImageAlt": "Atmosphäre in der Gastronomie — Menuyukti KI-Lösungen für Betrieb und Marketing"
     },
     "capabilities": {
       "ariaLabel": "Leistungen",
@@ -24,23 +24,45 @@
         "description": "Digitale Menüs mit Online-Bestellung und Loyalty-Punkten — Gäste bestellen, sammeln und kommen wieder."
       },
       "workspace": {
-        "title": "KI-Lösungen",
-        "description": "Maßgeschneiderte KI für Betrieb und Marketing — von der Idee bis zur Umsetzung."
+        "title": "KI-Lösungen für Betrieb & Marketing",
+        "description": "Maßgeschneiderte KI für den Gastro-Alltag und Ihre Vermarktung — von der Idee bis zur Umsetzung."
       }
     },
     "midIntro": {
-      "title": "KI, die zu Ihrer Gastronomie passt",
+      "title": "KI-Lösungen für Betrieb und Marketing",
       "subtitle": "Wiederverwendbare Module — mit der Konfiguration, die zu Ihrem Konzept passt."
     },
     "why": {
       "title": "Warum menuyukti",
-      "subtitle": "Die Gastronomie verdient KI, die ihren Alltag kennt — nicht Tools, die überall ein bisschen passen.",
+      "subtitle": "Die Gastronomie verdient KI für Betrieb und Marketing, die den Alltag kennt — nicht Tools, die überall ein bisschen passen.",
       "item1Title": "Ausschließlich Gastro-KI",
-      "item1Description": "Keine Allzweck-Tools, die irgendwie passen sollen. Jeder Workflow ist für Gastronomen gebaut.",
+      "item1Description": "Keine Allzweck-Tools, die irgendwie passen sollen. Jede KI-Lösung ist für Gastronomen gebaut — für Service, Abläufe und Sichtbarkeit.",
       "item2Title": "Domänenwissen, das wächst",
-      "item2Description": "Verkaufsmuster, Service-Rhythmen, Menüs und Gästeverhalten — Expertise, die im Produkt bleibt, nicht in einer einmaligen Präsentation.",
+      "item2Description": "Verkaufsmuster, Service-Rhythmen, Menüs und Gästeverhalten — Expertise, die in den KI-Lösungen bleibt, nicht in einer einmaligen Präsentation.",
       "item3Title": "Module plus Konfiguration",
-      "item3Description": "Bewährte Bausteine als Basis, dazu der Anteil individueller Konfiguration für Ihren Betrieb."
+      "item3Description": "Bewährte KI-Bausteine für Betrieb und Marketing als Basis, dazu der Anteil individueller Konfiguration für Ihren Betrieb."
+    },
+    "facts": {
+      "title": "Kurz gesagt",
+      "item1": "Menuyukti bietet KI-Lösungen für die Gastronomie — mit Fokus auf Deutschland.",
+      "item2": "Die KI-Lösungen decken Betrieb und Marketing ab: Abläufe, digitales Menü & Loyalty, Websites und Social Media.",
+      "item3": "Ausschließlich für Restaurants, Cafés und Bars — keine generischen Allzweck-KI-Tools.",
+      "item4": "Start per Kontakt: schreiben Sie uns, und wir klären die passende KI-Lösung für Ihr Konzept."
+    },
+    "faq": {
+      "title": "Häufige Fragen",
+      "q1": "Was bietet Menuyukti?",
+      "a1": "Menuyukti bietet KI-Lösungen für die Gastronomie — für Betrieb und Marketing: maßgeschneiderte Module für Abläufe, Gäste-Erlebnisse, SEO-Websites, Social-Media-Planung sowie digitales Menü und Loyalty.",
+      "q2": "Für wen ist Menuyukti?",
+      "a2": "Für Gastronomen und Betreiber von Restaurants, Cafés und Bars in Deutschland, die KI für Betrieb und Marketing einsetzen wollen.",
+      "q3": "Wie unterscheidet sich Menuyukti von generischen KI-Tools?",
+      "a3": "Wir liefern KI-Lösungen ausschließlich für die Gastronomie. Module und Konfiguration sind auf Betrieb, Marketing, Menüs und Gästeverhalten ausgelegt — nicht auf beliebige Branchen.",
+      "q4": "Welche KI-Leistungen gehören dazu?",
+      "a4": "Typische Bausteine sind KI-unterstützte Abläufe und Gäste-Erlebnisse (z. B. digitales Menü & Loyalty) sowie Marketing-Module wie SEO-Websites und Social-Media-Planung — kombiniert und konfiguriert für Ihr Konzept.",
+      "q5": "Wie starten wir eine Zusammenarbeit?",
+      "a5": "Über den Kontakt-Button auf dieser Seite. Wir besprechen Ihr Konzept und schlagen passende KI-Lösungen für Betrieb und Marketing vor.",
+      "q6": "Wie steht es um Datenschutz?",
+      "a6": "Menuyukti ist in Deutschland ansässig. Details zur Verarbeitung personenbezogener Daten finden Sie in unserer Datenschutzerklärung unter /privacy."
     }
   }
 }

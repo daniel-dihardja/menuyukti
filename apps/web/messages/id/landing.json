@@ -53,27 +53,27 @@
         "description": "Jaga analitik dan chat terikat ke lokasi yang tepat agar setiap venue tetap dalam konteks yang benar."
       },
       "workspace": {
-        "title": "Workspace manusia + AI",
-        "description": "Grafik, laporan, dan chat Advisor berdampingan — Anda mengarahkan; AI mempercepat analisis."
+        "title": "Solusi AI untuk operasional & pemasaran",
+        "description": "AI khusus untuk operasional harian dan pemasaran Anda — dari ide hingga implementasi."
       }
     },
     "midIntro": {
-      "title": "Analitik yang bisa diajak bicara",
+      "title": "Solusi AI untuk operasional dan pemasaran",
       "subtitle": "Modul yang dapat dipakai ulang — dengan konfigurasi yang cocok dengan konsep Anda."
     },
     "why": {
       "title": "Mengapa menuyukti",
-      "subtitle": "Hospitality pantas mendapat AI yang mengenal lantai restoran—bukan alat yang cocok di mana-mana sedikit.",
+      "subtitle": "Hospitality pantas mendapat AI untuk operasional dan pemasaran yang mengenal lantai restoran—bukan alat yang cocok di mana-mana sedikit.",
       "item1Title": "Fokus semata pada AI gastro",
-      "item1Description": "Bukan alat serba guna yang dipaksakan untuk restoran. Setiap alur kerja dibangun untuk operator hospitality.",
+      "item1Description": "Bukan alat serba guna yang dipaksakan untuk restoran. Setiap solusi AI dibangun untuk hospitality — layanan, alur kerja, dan visibilitas.",
       "item2Title": "Pengetahuan domain yang berkembang",
-      "item2Description": "Pola penjualan, ritme layanan, menu, dan perilaku tamu—keahlian yang tinggal di produk, bukan dek sekali pakai.",
+      "item2Description": "Pola penjualan, ritme layanan, menu, dan perilaku tamu—keahlian yang tinggal di solusi AI, bukan dek sekali pakai.",
       "item3Title": "Modul plus konfigurasi",
-      "item3Description": "Blok bangunan terbukti sebagai basis, plus bagian konfigurasi khusus yang dibutuhkan venue Anda."
+      "item3Description": "Blok bangunan AI terbukti untuk operasional dan pemasaran sebagai basis, plus konfigurasi khusus yang dibutuhkan venue Anda."
     },
     "foundation": {
       "title": "Dibangun di atas fondasi unik",
-      "subtitle": "Menuyukti dibangun di atas rekayasa enterprise dan AI proprietari—menggabungkan chat Advisor, laporan penjualan, POS, inventaris, dan wawasan lokasi dalam satu workspace.",
+      "subtitle": "Menuyukti dibangun di atas rekayasa enterprise dan AI proprietari—menggabungkan chat Advisor, laporan penjualan, dan wawasan lokasi untuk tim hospitality.",
       "item1Title": "Rekayasa setara enterprise",
       "item1Description": "Lebih dari satu dekade membangun platform untuk perbankan, perusahaan industri, dan sektor publik—rekayasa perangkat lunak setara enterprise di balik cara restoran Anda beroperasi.",
       "item2Title": "Platform AI proprietari",
@@ -86,7 +86,7 @@
       "items": [
         {
           "value": "Terintegrasi",
-          "label": "Advisor, Laporan, Lokasi, POS, dan inventaris dalam satu workspace—perencanaan dan kinerja di bawah atap yang sama."
+          "label": "Advisor, Laporan, dan Lokasi dalam satu workspace—perencanaan dan kinerja di bawah atap yang sama."
         },
         {
           "value": "Konsisten",
@@ -145,7 +145,7 @@
         },
         "strategy": {
           "title": "Operasional",
-          "description": "Papan Pesanan menu digital dan alat inventaris yang berawal dari realitas penjualan—agar lantai restoran dan gudang berbagi sinyal yang sama dengan pemasaran Anda.",
+          "description": "Alur Papan Pesanan menu digital yang berawal dari realitas penjualan—agar lantai restoran berbagi sinyal yang sama dengan pemasaran Anda.",
           "bullets": [
             "Papan Pesanan menu digital",
             "Prakiraan isi ulang inventaris",
@@ -189,24 +189,27 @@
       "title": "Perangkat lunak restoran agentik untuk operator",
       "description": "Menuyukti mengubah data penjualan menjadi rencana Advisor dan Laporan yang jelas—agar restoran, kafe, dan bar bertindak berdasarkan apa yang sudah laku, di setiap Lokasi, bersama Tim yang mengelola lantai restoran."
     },
+    "facts": {
+      "title": "Singkatnya",
+      "item1": "Menuyukti menawarkan solusi AI untuk hospitality — dengan fokus di Jerman.",
+      "item2": "Solusi AI mencakup operasional dan pemasaran: alur kerja, menu digital & loyalty, situs web, dan media sosial.",
+      "item3": "Dibangun khusus untuk restoran, kafe, dan bar — bukan alat AI generik untuk semua industri.",
+      "item4": "Mulai lewat Kontak: ceritakan konsep Anda, lalu kami susun solusi AI yang tepat."
+    },
     "faq": {
       "title": "Pertanyaan umum",
-      "q1": "Untuk siapa Menuyukti?",
-      "a1": "Pemilik restoran, operator, dan pemasar di restoran, kafe, dan bar yang ingin rencana dan laporan berpijak pada data penjualan mereka—bukan agensi Instagram terpisah.",
-      "q2": "Bagaimana Menuyukti berbeda dari alat pemasaran biasa?",
-      "a2": "Menuyukti adalah perangkat lunak khusus restoran dengan AI proprietari. Advisor, Laporan, Lokasi, POS, inventaris, dan Tim berada dalam satu workspace—dibangun untuk hospitality, bukan posting media sosial generik.",
-      "q3": "Apa arti “dibantu AI” dalam praktik?",
-      "a3": "Advisor membantu merencanakan dari konteks penjualan Anda; Laporan menampilkan pola dan peluang di pesanan Anda. Anda meninjau dan memutuskan—AI mempercepat pekerjaan; penilaian Anda membentuk strategi.",
-      "q4": "Apa yang bisa saya lakukan di aplikasi hari ini?",
-      "a4": "Gunakan Advisor untuk perencanaan, Laporan untuk wawasan penjualan, Lokasi untuk mengelola tempat usaha, POS dan inventaris untuk operasional, serta Tim untuk mengundang orang ke workspace Anda. Tamu mendapatkan menu digital yang hidup.",
+      "q1": "Apa yang ditawarkan Menuyukti?",
+      "a1": "Menuyukti menawarkan solusi AI untuk hospitality — untuk operasional dan pemasaran: modul khusus untuk alur kerja, pengalaman tamu, situs SEO, perencanaan media sosial, serta menu digital dengan loyalty.",
+      "q2": "Untuk siapa Menuyukti?",
+      "a2": "Untuk operator dan pemilik restoran, kafe, dan bar yang ingin AI untuk operasional dan pemasaran.",
+      "q3": "Apa bedanya Menuyukti dari alat AI generik?",
+      "a3": "Kami menyediakan solusi AI khusus untuk hospitality. Modul dan konfigurasi dibangun di sekitar operasional, pemasaran, menu, dan perilaku tamu — bukan untuk semua industri.",
+      "q4": "Layanan AI apa saja yang termasuk?",
+      "a4": "Bangunan tipikal meliputi operasional dan pengalaman tamu berbantuan AI (mis. menu digital & loyalty) plus modul pemasaran seperti situs SEO dan perencanaan media sosial — digabung dan dikonfigurasi untuk konsep Anda.",
       "q5": "Bagaimana kami memulai?",
-      "a5": "Menuyukti sedang mempersiapkan peluncuran. Jika Anda sudah memiliki akses platform, masuk dari header atau tombol di halaman ini.",
-      "q6": "Saya sudah menggunakan platform Menuyukti. Di mana saya masuk?",
-      "a6": "Pengguna platform yang sudah ada dapat masuk dari header untuk mengakses Advisor, Laporan, Lokasi, dan Tim.",
-      "q7": "Bagaimana Menuyukti dibandingkan dari segi biaya?",
-      "a7": "Menuyukti berfokus secara eksklusif pada restoran dan berjalan di atas platform AI proprietari yang dibangun untuk hospitality. Paket dirancang untuk ekonomi restoran; detail harga akan dibagikan saat onboarding dibuka untuk klien baru.",
-      "q8": "Siapa yang dapat masuk hari ini?",
-      "a8": "Platform saat ini hanya tersedia untuk pelanggan yang sudah ada dan mitra awal. Peluncuran publik yang lebih luas sedang dipersiapkan—kembali lagi segera untuk mengetahui kapan pendaftaran dibuka lebih luas."
+      "a5": "Gunakan tombol Kontak di halaman ini. Kami bahas konsep Anda dan usulkan solusi AI untuk operasional dan pemasaran.",
+      "q6": "Bagaimana dengan privasi data?",
+      "a6": "Menuyukti berbasis di Jerman. Detail pemrosesan data pribadi ada di kebijakan privasi di /privacy."
     },
     "cta": {
       "title": "Siap untuk perangkat lunak restoran yang berawal dari data penjualan Anda?",
