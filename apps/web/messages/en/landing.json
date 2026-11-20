@@ -4,11 +4,11 @@
     "hero": {
       "eyebrow": "Hospitality agency",
       "headline": "menuyukti.",
-      "subtitle": "Custom AI solutions for hospitality.",
+      "subtitle": "AI solutions for hospitality.",
       "primaryCta": "Contact",
-      "videoAriaLabel": "Menuyukti video — custom AI solutions for hospitality",
+      "videoAriaLabel": "Menuyukti video — AI solutions for hospitality",
       "secondaryCta": "Open sample menu",
-      "productImageAlt": "Hospitality atmosphere — Menuyukti agency for custom AI solutions",
+      "productImageAlt": "Hospitality atmosphere — Menuyukti agency for AI solutions",
       "trust": {
         "salesImport": "Sales report analytics",
         "advisorInsights": "AI assistance on your numbers",
@@ -54,13 +54,13 @@
         "description": "Digital menus with online ordering and loyalty points — guests order, earn, and come back."
       },
       "workspace": {
-        "title": "Custom AI solutions",
+        "title": "AI solutions",
         "description": "Tailored AI for operations and marketing — from idea to delivery."
       }
     },
     "midIntro": {
       "title": "AI that fits your hospitality",
-      "subtitle": "Agency craft with data-driven AI — custom solutions instead of generic software, so you can stay focused on guests."
+      "subtitle": "Agency craft with data-driven AI — so you can stay focused on guests."
     },
     "why": {
       "title": "Why Menuyukti exists",

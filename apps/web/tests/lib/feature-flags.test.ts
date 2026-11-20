@@ -23,7 +23,7 @@ describe('feature-flags', () => {
     expect(isNavKeyEnabled('chat')).toBe(true)
     expect(isNavKeyEnabled('branches')).toBe(true)
     expect(isNavKeyEnabled('services')).toBe(false)
-    expect(isNavKeyEnabled('playbooks')).toBe(true)
+    expect(isNavKeyEnabled('playbooks')).toBe(false)
     expect(isNavKeyEnabled('usage')).toBe(true)
     expect(isNavKeyEnabled('inventar')).toBe(true)
     expect(isNavKeyEnabled('team')).toBe(false)
@@ -46,7 +46,7 @@ describe('feature-flags', () => {
     expect(isPathnameFeatureEnabled('/analytics/locations')).toBe(true)
     expect(isPathnameFeatureEnabled('/analytics/locations/1/menu')).toBe(true)
     expect(isPathnameFeatureEnabled('/services/digital-menu')).toBe(true)
-    expect(isPathnameFeatureEnabled('/playbooks')).toBe(true)
+    expect(isPathnameFeatureEnabled('/playbooks')).toBe(false)
     expect(isPathnameFeatureEnabled('/usage')).toBe(true)
     expect(isPathnameFeatureEnabled('/inventar')).toBe(true)
     expect(isPathnameFeatureEnabled('/inventar/catalog')).toBe(true)
@@ -60,7 +60,7 @@ describe('feature-flags', () => {
     expect(pathnameRequiresAdmin('/inventar')).toBe(false)
   })
 
-  it('disables MVP-off team, guests, customer home, pos, explore, and image assistant', () => {
+  it('disables MVP-off team, guests, customer home, pos, explore, playbooks, and image assistant', () => {
     expect(isFeatureEnabled('team')).toBe(false)
     expect(isPathnameFeatureEnabled('/team')).toBe(false)
     expect(isNavKeyEnabled('team')).toBe(false)
@@ -72,21 +72,21 @@ describe('feature-flags', () => {
     expect(isActionMenuKeyEnabled('pos')).toBe(false)
     expect(isFeatureEnabled('explore')).toBe(false)
     expect(isPathnameFeatureEnabled('/explore')).toBe(false)
+    expect(isFeatureEnabled('playbooks')).toBe(false)
+    expect(isPathnameFeatureEnabled('/playbooks')).toBe(false)
+    expect(isNavKeyEnabled('playbooks')).toBe(false)
     expect(isFeatureEnabled('chatImageAssistant')).toBe(false)
   })
 
-  it('enables playbooks routes and nav', () => {
-    expect(isFeatureEnabled('playbooks')).toBe(true)
-    expect(isPathnameFeatureEnabled('/playbooks')).toBe(true)
-    expect(isNavKeyEnabled('playbooks')).toBe(true)
-  })
-
-  it('disables nearby locations scan under playbookNearbyLocations', () => {
+  it('disables playbooks routes including nested playbook surfaces', () => {
+    expect(isFeatureEnabled('playbooks')).toBe(false)
+    expect(isPathnameFeatureEnabled('/playbooks')).toBe(false)
+    expect(isNavKeyEnabled('playbooks')).toBe(false)
     expect(isFeatureEnabled('playbookNearbyLocations')).toBe(false)
     expect(isPathnameFeatureEnabled('/playbooks/nearby-locations')).toBe(false)
     expect(isPathnameFeatureEnabled('/playbooks/nearby-locations/new')).toBe(false)
     expect(isPathnameFeatureEnabled('/api/playbooks/nearby-locations/scan')).toBe(false)
-    expect(isPathnameFeatureEnabled('/playbooks/public-holidays')).toBe(true)
+    expect(isPathnameFeatureEnabled('/playbooks/public-holidays')).toBe(false)
   })
 
   it('enables sales reports and COGS for advisor sales-report workflows', () => {

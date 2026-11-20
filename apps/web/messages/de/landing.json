@@ -4,10 +4,10 @@
     "hero": {
       "eyebrow": "Agentur für Gastronomie",
       "headline": "menuyukti.",
-      "subtitle": "Individuelle KI-Lösungen für die Gastronomie.",
+      "subtitle": "KI-Lösungen für die Gastronomie.",
       "primaryCta": "Kontakt",
-      "videoAriaLabel": "Menuyukti Video — individuelle KI-Lösungen für die Gastronomie",
-      "productImageAlt": "Atmosphäre in der Gastronomie — Menuyukti Agentur für individuelle KI-Lösungen"
+      "videoAriaLabel": "Menuyukti Video — KI-Lösungen für die Gastronomie",
+      "productImageAlt": "Atmosphäre in der Gastronomie — Menuyukti Agentur für KI-Lösungen"
     },
     "capabilities": {
       "ariaLabel": "Leistungen",
@@ -24,13 +24,13 @@
         "description": "Digitale Menüs mit Online-Bestellung und Loyalty-Punkten — Gäste bestellen, sammeln und kommen wieder."
       },
       "workspace": {
-        "title": "Individuelle KI-Lösungen",
+        "title": "KI-Lösungen",
         "description": "Maßgeschneiderte KI für Betrieb und Marketing — von der Idee bis zur Umsetzung."
       }
     },
     "midIntro": {
       "title": "KI, die zu Ihrer Gastronomie passt",
-      "subtitle": "Agenturarbeit mit datengetriebener KI — individuelle Lösungen statt Standardsoftware, damit Sie sich aufs Gastgeben konzentrieren können."
+      "subtitle": "Agenturarbeit mit datengetriebener KI — damit Sie sich aufs Gastgeben konzentrieren können."
     }
   }
 }
