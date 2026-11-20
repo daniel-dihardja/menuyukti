@@ -4,11 +4,11 @@
       "metaTitle": "Kebijakan Privasi | Menuyukti",
       "metaDescription": "Bagaimana Menuyukti mengumpulkan, menggunakan, dan melindungi data di workspace Anda.",
       "title": "Kebijakan Privasi",
-      "lastUpdated": "Terakhir diperbarui: 31 Oktober 2026.",
+      "lastUpdated": "Terakhir diperbarui: 20 November 2026.",
       "sections": {
         "data": {
           "title": "Data yang kami proses",
-          "body": "Menuyukti memproses informasi yang Anda berikan saat menggunakan produk—termasuk detail akun, data lokasi dan penjualan yang Anda unggah, konten alur kerja, serta penggunaan yang diperlukan untuk menjalankan layanan. Kami memproses data ini untuk menyediakan analitik, alur kerja, dan fitur berbantuan AI yang Anda minta."
+          "body": "Menuyukti memproses informasi yang Anda berikan saat menggunakan layanan—termasuk detail akun, data lokasi dan penjualan yang Anda unggah, konten workspace, serta penggunaan yang diperlukan untuk menjalankan layanan. Kami memproses data ini untuk menyediakan analitik dan fitur berbantuan AI yang Anda minta."
         },
         "salesUploads": {
           "title": "Unggahan laporan penjualan",
@@ -28,7 +28,7 @@
         },
         "cookies": {
           "title": "Cookie dan analitik",
-          "body": "Menuyukti menggunakan Google Analytics 4 untuk pengukuran penggunaan dasar (tampilan halaman) di halaman publik dan workspace saat masuk agar kami memahami bagaimana produk digunakan. Toko cetak tidak termasuk. Anda dapat meninjau atau menutup pemberitahuan cookie melalui tautan Pengaturan cookie di footer."
+          "body": "Menuyukti menggunakan Google Analytics 4 untuk pengukuran penggunaan dasar (tampilan halaman) di halaman publik dan workspace saat masuk agar kami memahami bagaimana layanan digunakan. Toko cetak tidak termasuk. Anda dapat meninjau atau menutup pemberitahuan cookie melalui tautan Pengaturan cookie di footer."
         },
         "contact": {
           "title": "Kontak",
@@ -38,33 +38,29 @@
     },
     "terms": {
       "metaTitle": "Ketentuan Layanan | Menuyukti",
-      "metaDescription": "Ketentuan yang mengatur penggunaan platform Menuyukti.",
+      "metaDescription": "Ketentuan akses dan penggunaan platform Menuyukti.",
       "title": "Ketentuan Layanan",
-      "lastUpdated": "Terakhir diperbarui: 31 Oktober 2026.",
+      "lastUpdated": "Terakhir diperbarui: 20 November 2026.",
       "sections": {
         "service": {
-          "title": "Layanan",
-          "body": "Menuyukti menyediakan perangkat lunak untuk pemasaran dan operasional restoran—termasuk analitik, fitur berbantuan AI, POS, inventaris, dan pengalaman digital tamu. Fitur dapat berubah seiring perkembangan produk."
-        },
-        "beta": {
-          "title": "Beta / pratinjau publik",
-          "body": "Menuyukti saat ini ditawarkan sebagai beta / pratinjau publik. Fitur dapat berubah, rusak, atau dihentikan tanpa pemberitahuan. Tidak ada jaminan uptime atau fitur. Data uji coba dapat direset. Masukan yang Anda bagikan dapat digunakan untuk meningkatkan produk. Keluaran AI dan analitik bersifat informatif; Anda tetap bertanggung jawab atas keputusan bisnis dan kepatuhan."
+          "title": "Platform",
+          "body": "Klien mendapatkan akses ke platform Menuyukti—sebuah workspace dengan solusi AI untuk hospitality, termasuk analitik, fitur berbantuan AI, inventaris, dan pengalaman digital tamu. Akses dapat mencakup modul yang dapat dipakai ulang dengan konfigurasi khusus venue. Fitur dan ruang lingkup platform dapat berubah seiring perkembangan penawaran."
         },
         "account": {
           "title": "Akun Anda",
-          "body": "Anda bertanggung jawab atas aktivitas di bawah akun Anda dan menjaga keamanan kredensial. Anda setuju untuk memberikan informasi yang akurat dan menggunakan layanan sesuai hukum yang berlaku."
+          "body": "Akses ke platform memerlukan akun. Anda bertanggung jawab atas aktivitas di bawah akun Anda dan menjaga keamanan kredensial. Anda setuju untuk memberikan informasi yang akurat dan menggunakan platform sesuai hukum yang berlaku."
         },
         "acceptable": {
           "title": "Penggunaan yang dapat diterima",
-          "body": "Anda tidak boleh menyalahgunakan layanan, mencoba mengakses data orang lain tanpa izin, mengganggu operasi platform, atau menggunakan layanan untuk melanggar hukum atau hak pihak ketiga."
+          "body": "Anda tidak boleh menyalahgunakan platform, mencoba mengakses data orang lain tanpa izin, mengganggu operasi platform, atau menggunakan platform untuk melanggar hukum atau hak pihak ketiga."
         },
         "disclaimer": {
           "title": "Penafian",
-          "body": "Layanan dan setiap keluaran yang dihasilkan AI disediakan “sebagaimana adanya”. Analitik dan saran bersifat informatif; Anda tetap bertanggung jawab atas keputusan bisnis dan kepatuhan."
+          "body": "Platform dan setiap keluaran yang dihasilkan AI disediakan “sebagaimana adanya”. Analitik dan saran di platform bersifat informatif; Anda tetap bertanggung jawab atas keputusan bisnis dan kepatuhan."
         },
         "changes": {
           "title": "Perubahan",
-          "body": "Kami dapat memperbarui ketentuan ini atau layanan. Penggunaan berkelanjutan setelah perubahan merupakan penerimaan atas ketentuan yang diperbarui sejauh diizinkan oleh hukum."
+          "body": "Kami dapat memperbarui ketentuan ini atau platform. Penggunaan platform secara berkelanjutan setelah perubahan merupakan penerimaan atas ketentuan yang diperbarui sejauh diizinkan oleh hukum."
         }
       }
     },
@@ -72,7 +68,7 @@
       "metaTitle": "Impressum | Menuyukti",
       "metaDescription": "Pemberitahuan hukum dan identitas penyedia untuk Menuyukti.",
       "title": "Impressum",
-      "lastUpdated": "Terakhir diperbarui: 31 Oktober 2026.",
+      "lastUpdated": "Terakhir diperbarui: 20 November 2026.",
       "sections": {
         "provider": {
           "title": "Penyedia",
@@ -93,10 +89,6 @@
         "registry": {
           "title": "Register dan identitas pajak",
           "body": "Register komersial: tidak terdaftar di Handelsregister\nID PPN (USt-IdNr.): DE297803875"
-        },
-        "beta": {
-          "title": "Beta publik",
-          "body": "Menuyukti dapat diakses publik sebagai produk beta / pratinjau. Ini tidak disajikan sebagai peluncuran komersial yang selesai. Fitur dan ketersediaan dapat berubah."
         }
       }
     }

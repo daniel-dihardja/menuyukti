@@ -1,8 +1,5 @@
 {
   "common": {
-    "beta": {
-      "badge": "Beta",
-      "message": "Menuyukti befindet sich in einer öffentlichen Beta. Funktionen können sich ändern."
-    }
+    "close": "Schließen"
   }
 }
