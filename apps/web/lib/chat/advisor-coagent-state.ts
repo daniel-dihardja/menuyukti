@@ -7,7 +7,7 @@ import type { AdvisorWorkspaceTabId } from '@/lib/chat/advisor-workspace-tabs'
  * Schema:
  * - locationId — selected venue (shell always has a concrete branch id)
  * - analyticsRunId — pinned sales report, or null when unset
- * - workspaceTab — right-rail tab (`insights` | `story` | `venue` | `cogs`)
+ * - workspaceTab — right-rail panel (`insights` | `story`)
  * - chatMode — `general` | `image_assistant` | `inventar` (shell owns picker;
  *   agent reads it; UI does not auto-flip mode from agent writes — TASK-10)
  *

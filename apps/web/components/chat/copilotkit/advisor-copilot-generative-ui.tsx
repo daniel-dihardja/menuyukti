@@ -25,19 +25,12 @@ function resolveChartId(
   return typeof raw === 'string' && raw.trim() ? raw.trim() : null
 }
 
-function OpenWorkspaceTabOnComplete({
-  status,
-  tab,
-}: {
-  status: string
-  tab: 'insights' | 'story' | 'cogs'
-}) {
+function OpenWorkspaceOnComplete({ status }: { status: string }) {
   const shell = useAdvisorChatKitShell()
   useEffect(() => {
     if (status !== 'complete') return
-    shell.setWorkspaceTab(tab)
     shell.openMobileWorkspace()
-  }, [status, tab, shell])
+  }, [status, shell])
   return null
 }
 
@@ -127,7 +120,7 @@ export function AdvisorCopilotGenerativeUi() {
       parameters: emptyParams,
       render: ({ status }) => (
         <>
-          <OpenWorkspaceTabOnComplete status={status} tab="cogs" />
+          <OpenWorkspaceOnComplete status={status} />
           <AdvisorCopilotToolStatus
             status={status === 'complete' ? 'done' : 'running'}
             message={tCogs('cogsSectionTitle')}
@@ -145,7 +138,7 @@ export function AdvisorCopilotGenerativeUi() {
       parameters: emptyParams,
       render: ({ status }) => (
         <>
-          <OpenWorkspaceTabOnComplete status={status} tab="cogs" />
+          <OpenWorkspaceOnComplete status={status} />
           <AdvisorCopilotToolStatus
             status={status === 'complete' ? 'done' : 'running'}
             message={

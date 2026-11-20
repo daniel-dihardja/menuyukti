@@ -70,6 +70,7 @@ function LocationBasicsFields() {
   const { setName, setStreet, setCity, setCountryId, setCurrency, setPublicSlug } =
     useLocationFormActions()
   const showAddressFields = mode === 'edit'
+  const showMenuLink = mode === 'create'
   const [slugEditorOpen, setSlugEditorOpen] = useState(false)
   const hasAddressDetails = Boolean(
     street.trim() || city.trim() || countryId.trim() || currency.trim(),
@@ -94,43 +95,45 @@ function LocationBasicsFields() {
         />
       </Field>
 
-      <Field className="sm:col-span-2 gap-2">
-        <div className="flex items-center justify-between gap-2">
-          <FieldLabel htmlFor="public-slug">{t('publicSlugLabel')}</FieldLabel>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="h-9 touch-manipulation shrink-0 px-2"
-            disabled={loading}
-            onClick={() => setSlugEditorOpen((open) => !open)}
-            aria-expanded={slugEditorOpen}
-          >
-            {slugEditorOpen ? t('hideEditLink') : t('editLink')}
-          </Button>
-        </div>
-        <MenuLinkPreview publicSlug={publicSlug} />
-        {slugEditorOpen ? (
-          <>
-            <Input
-              id="public-slug"
-              name="publicSlug"
-              value={publicSlug}
-              onChange={(e) => setPublicSlug(e.target.value)}
-              placeholder={t('publicSlugPlaceholder')}
-              maxLength={128}
+      {showMenuLink ? (
+        <Field className="sm:col-span-2 gap-2">
+          <div className="flex items-center justify-between gap-2">
+            <FieldLabel htmlFor="public-slug">{t('publicSlugLabel')}</FieldLabel>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-9 touch-manipulation shrink-0 px-2"
               disabled={loading}
-              autoCapitalize="none"
-              autoCorrect="off"
-              spellCheck={false}
-              className="h-11 text-base md:h-9"
-            />
-            <FieldDescription>{t('publicSlugHint')}</FieldDescription>
-          </>
-        ) : (
-          <input type="hidden" name="publicSlug" value={publicSlug} />
-        )}
-      </Field>
+              onClick={() => setSlugEditorOpen((open) => !open)}
+              aria-expanded={slugEditorOpen}
+            >
+              {slugEditorOpen ? t('hideEditLink') : t('editLink')}
+            </Button>
+          </div>
+          <MenuLinkPreview publicSlug={publicSlug} />
+          {slugEditorOpen ? (
+            <>
+              <Input
+                id="public-slug"
+                name="publicSlug"
+                value={publicSlug}
+                onChange={(e) => setPublicSlug(e.target.value)}
+                placeholder={t('publicSlugPlaceholder')}
+                maxLength={128}
+                disabled={loading}
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                className="h-11 text-base md:h-9"
+              />
+              <FieldDescription>{t('publicSlugHint')}</FieldDescription>
+            </>
+          ) : (
+            <input type="hidden" name="publicSlug" value={publicSlug} />
+          )}
+        </Field>
+      ) : null}
 
       {showAddressFields ? (
         <Collapsible

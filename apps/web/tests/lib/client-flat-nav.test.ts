@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { orderClientFlatNav, partitionClientNav, splitClientNavAtAi } from '@/lib/client-flat-nav'
 
 describe('orderClientFlatNav', () => {
-  it('orders AI Analytics, Locations, Guests, Playbooks, then AI usage', () => {
+  it('orders Venue settings, AI Analytics, Guests, Playbooks, then AI usage', () => {
     const ordered = orderClientFlatNav([
       { key: 'usage' },
       { key: 'playbooks' },
@@ -12,8 +12,8 @@ describe('orderClientFlatNav', () => {
       { key: 'home' },
     ])
     expect(ordered.map((item) => item.key)).toEqual([
-      'chat',
       'home',
+      'chat',
       'services',
       'playbooks',
       'usage',
@@ -46,15 +46,15 @@ describe('partitionClientNav', () => {
 })
 
 describe('splitClientNavAtAi', () => {
-  it('pairs AI Analytics with Locations, Guests with Playbooks, then AI usage', () => {
+  it('pairs Venue settings with AI Analytics, Guests with Playbooks, then AI usage', () => {
     const split = splitClientNavAtAi([
-      { key: 'chat' },
       { key: 'home' },
+      { key: 'chat' },
       { key: 'services' },
       { key: 'playbooks' },
       { key: 'usage' },
     ])
-    expect(split.primary.map((item) => item.key)).toEqual(['chat', 'home'])
+    expect(split.primary.map((item) => item.key)).toEqual(['home', 'chat'])
     expect(split.guests.map((item) => item.key)).toEqual(['services', 'playbooks'])
     expect(split.usage.map((item) => item.key)).toEqual(['usage'])
   })
