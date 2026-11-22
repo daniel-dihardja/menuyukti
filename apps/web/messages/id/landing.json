@@ -39,27 +39,39 @@
       }
     },
     "capabilities": {
-      "ariaLabel": "Kemampuan produk",
-      "reports": {
-        "title": "Analitik restoran",
-        "description": "Ubah laporan penjualan menjadi gambaran jelas tentang apa yang laris, kapan permintaan memuncak, dan di mana peluang berada."
-      },
-      "advisor": {
-        "title": "AI pada analitik Anda",
-        "description": "Tanyakan Advisor tentang laporan dan grafik yang sama yang Anda lihat — rekomendasi berpijak pada data Anda."
-      },
-      "locations": {
-        "title": "Wawasan per venue",
-        "description": "Jaga analitik dan chat terikat ke lokasi yang tepat agar setiap venue tetap dalam konteks yang benar."
-      },
+      "ariaLabel": "Layanan",
       "workspace": {
         "title": "Solusi AI untuk operasional & pemasaran",
-        "description": "AI khusus untuk operasional harian dan pemasaran Anda — dari ide hingga implementasi."
+        "description": "AI untuk keseharian hospitality: analisis penjualan, rekomendasi, dan dukungan untuk operasional serta pemasaran."
+      },
+      "reports": {
+        "title": "Situs web ber-SEO",
+        "description": "Situs hospitality yang mudah ditemukan dan membawa tamu ke Anda — jelas, cepat, dan ramah mesin pencari."
+      },
+      "advisor": {
+        "title": "Perencanaan media sosial",
+        "description": "Kalender konten dan kampanye untuk Instagram dan lainnya — direncanakan, disiapkan, siap dipublikasikan."
+      },
+      "locations": {
+        "title": "Menu digital & loyalty",
+        "description": "Menu digital dengan pemesanan online dan poin loyalty — tamu memesan, mengumpulkan, dan kembali lagi."
       }
     },
     "midIntro": {
       "title": "Solusi AI untuk operasional dan pemasaran",
       "subtitle": "Modul yang dapat dipakai ulang — dengan konfigurasi yang cocok dengan konsep Anda."
+    },
+    "howItWorks": {
+      "title": "Cara kerja menuyukti",
+      "subtitle": "Bagikan laporan penjualan — AI memberi rekomendasi dan mengerjakan tugas. Plus chat Advisor kapan pun Anda membutuhkannya.",
+      "step1Title": "Hubungkan Google Drive",
+      "step1Description": "Hubungkan folder Drive — dokumen Anda tetap milik Anda; menuyukti hanya bekerja di sana.",
+      "step2Title": "Sediakan laporan penjualan bulanan",
+      "step2Description": "Tempatkan laporan penjualan bulanan di folder. Itu saja yang Anda butuhkan untuk memulai.",
+      "step3Title": "Laporan & rekomendasi",
+      "step3Description": "AI membuat laporan PDF dengan analisis dan rekomendasi yang dapat ditindaklanjuti. Tinjau kapan pun Anda punya waktu.",
+      "step4Title": "Chat Advisor",
+      "step4Description": "Di chat Anda punya Advisor untuk pertanyaan, ide, dan keputusan seputar venue Anda."
     },
     "why": {
       "title": "Mengapa menuyukti",
@@ -191,25 +203,22 @@
     },
     "facts": {
       "title": "Singkatnya",
-      "item1": "Menuyukti menawarkan solusi AI untuk hospitality — dengan fokus di Jerman.",
-      "item2": "Solusi AI mencakup operasional dan pemasaran: alur kerja, menu digital & loyalty, situs web, dan media sosial.",
-      "item3": "Dibangun khusus untuk restoran, kafe, dan bar — bukan alat AI generik untuk semua industri.",
-      "item4": "Mulai lewat Kontak: ceritakan konsep Anda, lalu kami susun solusi AI yang tepat."
+      "item1": "menuyukti menyediakan solusi AI untuk operasional dan pemasaran hospitality.",
+      "item2": "Khusus untuk restoran, kafe, dan bar — bukan alat serba guna generik.",
+      "item3": "Tulis kepada kami, dan kami temukan solusi yang tepat untuk venue Anda."
     },
     "faq": {
       "title": "Pertanyaan umum",
-      "q1": "Apa yang ditawarkan Menuyukti?",
-      "a1": "Menuyukti menawarkan solusi AI untuk hospitality — untuk operasional dan pemasaran: modul khusus untuk alur kerja, pengalaman tamu, situs SEO, perencanaan media sosial, serta menu digital dengan loyalty.",
-      "q2": "Untuk siapa Menuyukti?",
+      "q1": "Apa yang ditawarkan menuyukti?",
+      "a1": "menuyukti menyediakan solusi AI untuk operasional dan pemasaran hospitality — dengan modul yang dapat dipakai ulang, konfigurasi individual, dan prompt khusus untuk venue Anda.",
+      "q2": "Untuk siapa menuyukti?",
       "a2": "Untuk operator dan pemilik restoran, kafe, dan bar yang ingin AI untuk operasional dan pemasaran.",
-      "q3": "Apa bedanya Menuyukti dari alat AI generik?",
-      "a3": "Kami menyediakan solusi AI khusus untuk hospitality. Modul dan konfigurasi dibangun di sekitar operasional, pemasaran, menu, dan perilaku tamu — bukan untuk semua industri.",
+      "q3": "Apa bedanya menuyukti dari alat AI generik?",
+      "a3": "Bukan alat serba guna untuk semua industri: menuyukti menyediakan modul yang dapat dipakai ulang dengan konfigurasi dan prompt — khusus untuk operasional dan pemasaran hospitality.",
       "q4": "Layanan AI apa saja yang termasuk?",
-      "a4": "Bangunan tipikal meliputi operasional dan pengalaman tamu berbantuan AI (mis. menu digital & loyalty) plus modul pemasaran seperti situs SEO dan perencanaan media sosial — digabung dan dikonfigurasi untuk konsep Anda.",
+      "a4": "Laporan PDF tentang angka penjualan bulanan Anda — dengan chart, visualisasi, dan interpretasi yang jelas, sebagai satu dokumen atau beberapa sesuai kebutuhan. Plus rekomendasi pemasaran seperti rencana Instagram mingguan, dan chat Advisor untuk gambaran keseluruhan.",
       "q5": "Bagaimana kami memulai?",
-      "a5": "Gunakan tombol Kontak di halaman ini. Kami bahas konsep Anda dan usulkan solusi AI untuk operasional dan pemasaran.",
-      "q6": "Bagaimana dengan privasi data?",
-      "a6": "Menuyukti berbasis di Jerman. Detail pemrosesan data pribadi ada di kebijakan privasi di /privacy."
+      "a5": "Tulis kepada kami — kami bahas venue Anda dan usulkan solusi AI yang tepat untuk operasional dan pemasaran."
     },
     "cta": {
       "title": "Siap untuk perangkat lunak restoran yang berawal dari data penjualan Anda?",
