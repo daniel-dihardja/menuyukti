@@ -10,7 +10,7 @@ export function LandingFacts({ title, items }: LandingFactsProps) {
     <section
       id="facts"
       className={cn(
-        'border-t border-border bg-muted/40 py-20 md:py-24',
+        'border-t border-border bg-surface py-20 md:py-24',
         'pl-[max(1.5rem,env(safe-area-inset-left,0px))] pr-[max(1.5rem,env(safe-area-inset-right,0px))]',
       )}
       aria-labelledby="landing-facts-heading"

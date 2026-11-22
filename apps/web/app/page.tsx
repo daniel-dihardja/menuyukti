@@ -2,7 +2,10 @@ import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 
 import { LandingCapabilityHighlights } from '@/app/_components/landing/landing-capability-highlights'
+import { LandingFacts } from '@/app/_components/landing/landing-facts'
+import { LandingFaq } from '@/app/_components/landing/landing-faq'
 import { LandingHero } from '@/app/_components/landing/landing-hero'
+import { LandingHowItWorks } from '@/app/_components/landing/landing-how-it-works'
 import { LandingMidIntro } from '@/app/_components/landing/landing-mid-intro'
 import { LandingWhy } from '@/app/_components/landing/landing-why'
 import { JsonLd } from '@/components/seo/json-ld'
@@ -110,6 +113,29 @@ export default async function LandingPage() {
 
         <LandingMidIntro title={t('midIntro.title')} subtitle={t('midIntro.subtitle')} />
 
+        <LandingHowItWorks
+          title={t('howItWorks.title')}
+          subtitle={t('howItWorks.subtitle')}
+          steps={[
+            {
+              title: t('howItWorks.step1Title'),
+              description: t('howItWorks.step1Description'),
+            },
+            {
+              title: t('howItWorks.step2Title'),
+              description: t('howItWorks.step2Description'),
+            },
+            {
+              title: t('howItWorks.step3Title'),
+              description: t('howItWorks.step3Description'),
+            },
+            {
+              title: t('howItWorks.step4Title'),
+              description: t('howItWorks.step4Description'),
+            },
+          ]}
+        />
+
         <LandingWhy
           title={t('why.title')}
           subtitle={t('why.subtitle')}
@@ -126,6 +152,22 @@ export default async function LandingPage() {
               title: t('why.item3Title'),
               description: t('why.item3Description'),
             },
+          ]}
+        />
+
+        <LandingFacts
+          title={t('facts.title')}
+          items={[t('facts.item1'), t('facts.item2'), t('facts.item3')]}
+        />
+
+        <LandingFaq
+          title={t('faq.title')}
+          items={[
+            { question: t('faq.q1'), answer: t('faq.a1') },
+            { question: t('faq.q2'), answer: t('faq.a2') },
+            { question: t('faq.q3'), answer: t('faq.a3') },
+            { question: t('faq.q4'), answer: t('faq.a4') },
+            { question: t('faq.q5'), answer: t('faq.a5') },
           ]}
         />
       </main>
